@@ -1,26 +1,26 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { signOut } from '@/app/sign-in/actions';
+import { startProviderOnboarding } from './actions';
 
-export default async function AccountPage() {
+export default async function ProviderOnboardingPage() {
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
   const userId = data?.claims?.sub;
 
   if (!userId) {
-    redirect('/sign-in?next=/account');
+    redirect('/sign-in?next=/provider/onboarding');
   }
 
   const { data: providerPage, error } = await supabase
     .schema('ceaute')
     .from('provider_page')
-    .select('id')
+    .select('id, status')
     .eq('owner_profile_id', userId)
     .maybeSingle();
 
   if (error) {
-    throw new Error('Could not load your account.');
+    throw new Error('Could not load provider onboarding.');
   }
 
   return (
@@ -29,22 +29,21 @@ export default async function AccountPage() {
         <Link className="wordmark" href="/account">
           Ceaute
         </Link>
-        <form action={signOut}>
-          <button className="secondary-button" type="submit">
-            Sign out
-          </button>
-        </form>
+        <Link href="/account">Account</Link>
       </nav>
-      <section className="card stack content-card">
-        <h1>Account</h1>
+      <section className="plain-content stack">
+        <h1>Provider onboarding</h1>
         {providerPage ? (
-          <Link className="button-link" href="/provider">
-            Manage your business
-          </Link>
+          <>
+            <p>Status: {providerPage.status}</p>
+            <Link className="button-link" href="/provider">
+              Return to provider Home
+            </Link>
+          </>
         ) : (
-          <Link className="button-link" href="/provider/onboarding">
-            Become a provider
-          </Link>
+          <form action={startProviderOnboarding}>
+            <button type="submit">Begin onboarding</button>
+          </form>
         )}
       </section>
     </main>

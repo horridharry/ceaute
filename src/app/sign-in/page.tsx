@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { safeNextPath } from '@/lib/auth/redirect';
+import { validatedNextPath } from '@/lib/auth/redirect';
 import { createClient } from '@/lib/supabase/server';
 import { requestSignIn } from './actions';
 
@@ -13,12 +13,27 @@ type SignInPageProps = {
 
 export default async function SignInPage({ searchParams }: SignInPageProps) {
   const params = await searchParams;
-  const next = safeNextPath(params.next ?? null);
+  const next = validatedNextPath(params.next ?? null);
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
 
   if (data?.claims?.sub) {
-    redirect(next);
+    if (next) {
+      redirect(next);
+    }
+
+    const { data: providerPage, error } = await supabase
+      .schema('ceaute')
+      .from('provider_page')
+      .select('id')
+      .eq('owner_profile_id', data.claims.sub)
+      .maybeSingle();
+
+    if (error) {
+      throw new Error('Could not choose your sign-in destination.');
+    }
+
+    redirect(providerPage ? '/provider' : '/account');
   }
 
   const errorMessage =
@@ -29,19 +44,19 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
         : null;
 
   return (
-    <main className="">
-      <section className="">
-        <span className="">Ceaute</span>
+    <main className="page-shell auth-shell">
+      <section className="auth-form">
+        <span className="wordmark">Ceaute</span>
         <h1>Sign in</h1>
 
         {params.sent === '1' ? (
-          <div className="" role="status">
+          <div className="notice" role="status">
             <strong>Check your email.</strong>
             <span>Use the secure link we sent to continue.</span>
           </div>
         ) : (
           <form action={requestSignIn} className="stack">
-            <input name="next" type="hidden" value={next} />
+            <input name="next" type="hidden" value={next ?? ''} />
             <input
               aria-label="Email address"
               autoComplete="email"

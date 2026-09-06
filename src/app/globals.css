@@ -161,6 +161,11 @@ h1 {
   padding: clamp(1.5rem, 5vw, 3rem);
 }
 
+.plain-content {
+  width: min(100%, 34rem);
+  margin: clamp(4rem, 12vh, 8rem) auto 0;
+}
+
 .notice {
   display: grid;
   gap: 0.35rem;

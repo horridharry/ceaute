@@ -3,13 +3,13 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 
-export async function startProviderSetup() {
+export async function startProviderOnboarding() {
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
   const userId = data?.claims?.sub;
 
   if (!userId) {
-    redirect('/sign-in?next=/provider/setup');
+    redirect('/sign-in?next=/provider/onboarding');
   }
 
   const { error } = await supabase
@@ -21,8 +21,8 @@ export async function startProviderSetup() {
     );
 
   if (error) {
-    throw new Error('Could not start provider setup.');
+    throw new Error('Could not start provider onboarding.');
   }
 
-  redirect('/provider/setup');
+  redirect('/provider');
 }

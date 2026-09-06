@@ -1,26 +1,30 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { createClient } from '@/lib/supabase/server';
 import { signOut } from '@/app/sign-in/actions';
+import { createClient } from '@/lib/supabase/server';
 
-export default async function AccountPage() {
+export default async function ProviderHomePage() {
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
   const userId = data?.claims?.sub;
 
   if (!userId) {
-    redirect('/sign-in?next=/account');
+    redirect('/sign-in?next=/provider');
   }
 
   const { data: providerPage, error } = await supabase
     .schema('ceaute')
     .from('provider_page')
-    .select('id')
+    .select('id, status')
     .eq('owner_profile_id', userId)
     .maybeSingle();
 
   if (error) {
-    throw new Error('Could not load your account.');
+    throw new Error('Could not load provider workspace.');
+  }
+
+  if (!providerPage) {
+    redirect('/provider/onboarding');
   }
 
   return (
@@ -35,17 +39,16 @@ export default async function AccountPage() {
           </button>
         </form>
       </nav>
-      <section className="card stack content-card">
-        <h1>Account</h1>
-        {providerPage ? (
-          <Link className="button-link" href="/provider">
-            Manage your business
-          </Link>
-        ) : (
+      <section className="plain-content stack">
+        <h1>Home</h1>
+        <p>Status: {providerPage.status}</p>
+        {providerPage.status === 'draft' ? (
           <Link className="button-link" href="/provider/onboarding">
-            Become a provider
+            Continue onboarding
           </Link>
-        )}
+        ) : null}
+        <Link href="/account">Account</Link>
+        <Link href="/">Go to Ceaute</Link>
       </section>
     </main>
   );
