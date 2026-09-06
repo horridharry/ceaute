@@ -29,7 +29,7 @@ export default async function ProviderSetupPage() {
   return (
     <main className="page-shell">
       <nav className="topbar">
-        <Link className="wordmark" href="/">
+        <Link className="wordmark" href="/account">
           Ceaute
         </Link>
         <Link href="/account">Account</Link>

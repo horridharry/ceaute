@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { safeNextPath } from '@/lib/auth/redirect';
 import { createClient } from '@/lib/supabase/server';
@@ -30,31 +29,22 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
         : null;
 
   return (
-    <main className="page-shell auth-shell">
-      <section className="card auth-card">
-        <Link className="wordmark" href="/">
-          Ceaute
-        </Link>
-        <div className="stack">
-          <p className="eyebrow">One account for everything</p>
-          <h1>Sign in or create your account</h1>
-          <p className="muted">
-            Use the same account to book appointments and manage your own provider page.
-          </p>
-        </div>
+    <main className="">
+      <section className="">
+        <span className="">Ceaute</span>
+        <h1>Sign in</h1>
 
         {params.sent === '1' ? (
-          <div className="notice" role="status">
+          <div className="" role="status">
             <strong>Check your email.</strong>
             <span>Use the secure link we sent to continue.</span>
           </div>
         ) : (
           <form action={requestSignIn} className="stack">
             <input name="next" type="hidden" value={next} />
-            <label htmlFor="email">Email address</label>
             <input
+              aria-label="Email address"
               autoComplete="email"
-              id="email"
               name="email"
               placeholder="you@example.com"
               required
@@ -65,7 +55,7 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
                 {errorMessage}
               </p>
             ) : null}
-            <button type="submit">Email me a sign-in link</button>
+            <button type="submit">Continue</button>
           </form>
         )}
       </section>

@@ -27,7 +27,7 @@ export default async function AccountPage() {
   return (
     <main className="page-shell">
       <nav className="topbar">
-        <Link className="wordmark" href="/">
+        <Link className="wordmark" href="/account">
           Ceaute
         </Link>
         <form action={signOut}>
@@ -37,11 +37,7 @@ export default async function AccountPage() {
         </form>
       </nav>
       <section className="card stack content-card">
-        <p className="eyebrow">Your Ceaute account</p>
-        <h1>Book beauty. Build your business.</h1>
-        <p className="muted">
-          This one account works for customer bookings and your provider page.
-        </p>
+        <h1>Account</h1>
         {providerPage ? (
           <Link className="button-link" href="/provider/setup">
             Continue provider setup
