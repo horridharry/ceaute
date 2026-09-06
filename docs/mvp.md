@@ -26,7 +26,7 @@ The initial provider is usually:
 
 - Working alone rather than running a multi-person salon.
 - Finding customers through Instagram, TikTok or word of mouth.
-- Using Acuity, another generic scheduler or manual messages.
+- Using Acuity, another generic scheduler or manual messages (Instagram DMs).
 - Selling services under their own name or personal brand.
 - Working from one location at a time.
 - Taking a deposit online, then collecting the balance in cash or by bank transfer.
@@ -154,13 +154,13 @@ These groups do not affect the wider marketplace and do not need Ceaute approval
 
 For example:
 
-| What the customer sees | Value |
-| --- | --- |
-| Treatment | French Tips Long |
-| Discovery category | Acrylic nails |
-| Provider's treatment group | French tips |
-| Duration | 2 hours 30 minutes |
-| Price | £51 |
+| What the customer sees     | Value              |
+| -------------------------- | ------------------ |
+| Treatment                  | French Tips Long   |
+| Discovery category         | Acrylic nails      |
+| Provider's treatment group | French tips        |
+| Duration                   | 2 hours 30 minutes |
+| Price                      | £51                |
 
 Put simply:
 
@@ -625,13 +625,13 @@ These are exclusions, not forgotten requirements. We add them only when real usa
 
 These decisions do not block implementation. They are starting assumptions that the product is designed to change safely.
 
-| Assumption | MVP decision | Evidence we will watch |
-| --- | --- | --- |
-| Deposit calculation | One fixed page-wide amount | Do providers repeatedly ask for percentages or different deposits per service? |
-| Commission | Calculated from total booking value | Does the fee make reasonable deposits too small or confusing? |
-| Customer phone | Required but not verified at checkout | Do providers use it, and how often is it wrong? |
-| Provider-cancellation costs | Customer gets a full refund; Ceaute absorbs unrecoverable costs during alpha | How often does this happen and what does it cost? |
-| Rolling availability | 30, 60 or 90-day rolling window | Does the lack of monthly slot releases stop providers switching? |
+| Assumption                  | MVP decision                                                                 | Evidence we will watch                                                         |
+| --------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| Deposit calculation         | One fixed page-wide amount                                                   | Do providers repeatedly ask for percentages or different deposits per service? |
+| Commission                  | Calculated from total booking value                                          | Does the fee make reasonable deposits too small or confusing?                  |
+| Customer phone              | Required but not verified at checkout                                        | Do providers use it, and how often is it wrong?                                |
+| Provider-cancellation costs | Customer gets a full refund; Ceaute absorbs unrecoverable costs during alpha | How often does this happen and what does it cost?                              |
+| Rolling availability        | 30, 60 or 90-day rolling window                                              | Does the lack of monthly slot releases stop providers switching?               |
 
 The rule is simple: configuration may change, but a completed booking never changes underneath the people who made it.
 

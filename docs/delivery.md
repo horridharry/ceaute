@@ -2,7 +2,7 @@
 
 This plan turns the product specification into a build order that one developer can understand and follow.
 
-The goal is not to describe every technical task in advance. The goal is to make the product behaviour clear enough that a developerâ€”or an AI working with that developerâ€”can implement it without guessing what Ceaute is meant to do.
+The goal is not to describe every technical task in advance. The goal is to make the product behaviour clear enough that a developer or an AI working with that developerâ€”can implement it without guessing what Ceaute is meant to do.
 
 ## How we will manage the work
 
