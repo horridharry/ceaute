@@ -24,8 +24,8 @@ export function SigninForm({
     initialState,
   );
   return (
-    <main className="container mx-auto max-w-md p-5">
-      <div className="mt-12 flex flex-col">
+    <main className="container mx-auto max-w-md p-5 ">
+      <div className="flex flex-col border rounded-2xl border-black/10 bg-white p-8">
         <Link href={"/"} className="flex w-max items-center gap-x-1">
           <span hidden className="relative h-6 w-6 overflow-hidden">
             <Image
@@ -37,13 +37,13 @@ export function SigninForm({
             />
           </span>
           <h2 className="select-none text-xs font-bold uppercase tracking-widest opacity-70">
-            fleekd
+            ceaute
           </h2>
         </Link>
         <h1 className="mt-8 text-2xl font-bold tracking-tight text-black/90">
           Log in
         </h1>
-        <p className="font-medium text-black/70">Continue to Fleekd</p>
+        <p className="font-medium text-black/60">Continue to Ceaute account</p>
 
         <form className="mt-6 grid gap-2" action={authenticateUserAction}>
           <label htmlFor="email" className="text-sm">
@@ -63,7 +63,7 @@ export function SigninForm({
         </form>
 
         <p className="mt-6 text-sm">
-          New to Fleekd?{" "}
+          New to Ceaute?{" "}
           <Link
             href={signUpHref(next)}
             className="mt-4 text-pink-600 duration-200 hover:text-pink-700"
@@ -100,11 +100,12 @@ const SubmitButton = ({ pending }) => {
   return (
     <button
       type="submit"
-      className="mt-4 rounded-lg bg-pink-600 p-2.5 text-sm font-medium text-white shadow-sm duration-200 hover:bg-pink-700 disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+      className="mt-4 rounded-lg bg-pink-800 p-2.5 text-sm font-medium text-white shadow-sm duration-200 hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-30 aria-disabled:cursor-not-allowed aria-disabled:opacity-30
+      active:opacity-60"
       aria-disabled={pending}
       disabled={pending}
     >
-      {!pending ? "Sign In" : "Submitting..."}
+      {!pending ? "Continue with email" : "Submitting..."}
     </button>
   );
 };
