@@ -1,0 +1,1 @@
+export { createTreatment } from "../../actions";
