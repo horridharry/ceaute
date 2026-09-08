@@ -1,9 +1,3 @@
-import { redirect } from 'next/navigation';
-import { createClient } from '@/lib/supabase/server';
-
-export default async function Home() {
-  const supabase = await createClient();
-  const { data } = await supabase.auth.getClaims();
-
-  redirect(data?.claims?.sub ? '/account' : '/sign-in');
+export default function Home() {
+  return <main className="flex-1" />;
 }
