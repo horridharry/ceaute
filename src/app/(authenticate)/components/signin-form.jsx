@@ -24,8 +24,8 @@ export function SigninForm({
     initialState,
   );
   return (
-    <main className="container mx-auto max-w-md p-5 ">
-      <div className="flex flex-col border rounded-2xl border-black/10 bg-white p-8">
+    <main className="container mx-auto flex min-h-screen max-w-md items-center justify-center p-2">
+      <div className="flex w-full flex-col border rounded-2xl border-black/10 bg-white p-8">
         <Link href={"/"} className="flex w-max items-center gap-x-1">
           <span hidden className="relative h-6 w-6 overflow-hidden">
             <Image
@@ -55,7 +55,7 @@ export function SigninForm({
             type="email"
             required
             autoFocus
-            className="appearance-none rounded-xl border p-3 outline-none ring-2 ring-transparent duration-200 hover:border-black/30 focus:border-pink-600 focus:ring-pink-200"
+            className="appearance-none rounded-xl border border-black/20 p-3 outline-none ring-2 ring-transparent duration-200 hover:border-black/30 focus:border-pink-600 focus:ring-pink-200"
           />
 
           <p className="text-sm text-red-600">{state?.message}</p>
@@ -100,7 +100,7 @@ const SubmitButton = ({ pending }) => {
   return (
     <button
       type="submit"
-      className="mt-4 rounded-lg bg-pink-800 p-2.5 text-sm font-medium text-white shadow-sm duration-200 hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-30 aria-disabled:cursor-not-allowed aria-disabled:opacity-30
+      className="cursor-pointer mt-4 rounded-lg bg-pink-800 p-2.5 text-sm font-medium text-white shadow-sm duration-200 hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-30 aria-disabled:cursor-not-allowed aria-disabled:opacity-30
       active:opacity-60"
       aria-disabled={pending}
       disabled={pending}
