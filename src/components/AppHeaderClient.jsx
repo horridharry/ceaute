@@ -11,7 +11,7 @@ const HomeLogo = () => (
   </Link>
 );
 
-const hiddenHeaderPrefixes = ["/sign-in", "/sign-up", "/auth", "/provider"];
+const hiddenHeaderPrefixes = ["/sign-in", "/sign-up", "/auth"];
 
 function HeaderLink({ href, children }) {
   return (
@@ -101,7 +101,7 @@ function AccountMenu({ user, hasProviderPage }) {
   );
 }
 
-export default function NavbarClient({ user, hasProviderPage = false }) {
+export default function AppHeaderClient({ user, hasProviderPage = false }) {
   const pathname = usePathname();
 
   if (hiddenHeaderPrefixes.some((prefix) => pathname.startsWith(prefix))) {

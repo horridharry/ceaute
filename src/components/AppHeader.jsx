@@ -1,7 +1,7 @@
-import NavbarClient from "@/components/NavbarClient";
+import AppHeaderClient from "@/components/AppHeaderClient";
 import { createClient } from "@/lib/supabase/server";
 
-export default async function AppHeaderServer() {
+export default async function AppHeader() {
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
   const claims = data?.claims;
@@ -21,7 +21,7 @@ export default async function AppHeaderServer() {
   }
 
   return (
-    <NavbarClient
+    <AppHeaderClient
       hasProviderPage={hasProviderPage}
       user={
         userId
