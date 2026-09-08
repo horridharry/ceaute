@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { signOut } from '@/app/sign-in/actions';
+import { signOut } from '@/app/(authenticate)/actions';
 
 export default async function AccountPage() {
   const supabase = await createClient();
