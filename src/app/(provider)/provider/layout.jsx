@@ -1,4 +1,4 @@
-import { DashboardNav } from "./components/dashboard-nav";
+import { DashboardNav } from "./_components/dashboard-nav";
 
 export default async function DashboardLayout({ children }) {
   return (

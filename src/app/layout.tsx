@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Inter } from "next/font/google";
-import AppHeader from "@/components/AppHeader";
+import AppHeader from "@/components/app-header/app-header";
 
 import "./globals.css";
 

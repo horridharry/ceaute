@@ -5,7 +5,7 @@ import {
   getSignedInProvider,
   normalizeUsername,
   providerPageToDashboardProfile,
-} from "../lib/provider-data";
+} from "../_lib/provider-data";
 
 export const getProfile = async () => {
   const { providerPage } = await getSignedInProvider({

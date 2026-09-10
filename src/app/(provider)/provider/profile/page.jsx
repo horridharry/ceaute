@@ -1,5 +1,5 @@
 import { getProfile } from "./actions";
-import { ProfileFormUI } from "./components/profile-form-ui";
+import { ProfileFormUI } from "./_components/profile-form-ui";
 import { updateProfile } from "./actions";
 
 export default async function Page() {

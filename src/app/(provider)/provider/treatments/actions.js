@@ -6,7 +6,7 @@ import {
   getSignedInProvider,
   priceToPence,
   treatmentToDashboardTreatment,
-} from "../lib/provider-data";
+} from "../_lib/provider-data";
 
 export const createTreatment = async (_currentState, formData) => {
   const pricePence = priceToPence(formData.get("price"));

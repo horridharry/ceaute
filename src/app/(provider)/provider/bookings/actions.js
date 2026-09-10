@@ -1,5 +1,5 @@
 "use server";
-import { getSignedInProvider, minutesToDuration } from "../lib/provider-data";
+import { getSignedInProvider, minutesToDuration } from "../_lib/provider-data";
 
 export const getAllBookings = async () => {
   const { supabase, providerPage } = await getSignedInProvider({

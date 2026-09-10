@@ -1,5 +1,5 @@
 import { getAllTreatments } from "./actions";
-import { TreatmentsUI } from "./components/treatments-page";
+import { TreatmentsUI } from "./_components/treatments-page";
 
 export default async function TreatmentsPage() {
   const allTreatments = await getAllTreatments();

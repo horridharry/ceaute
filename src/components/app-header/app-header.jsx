@@ -1,4 +1,4 @@
-import AppHeaderClient from "@/components/AppHeaderClient";
+import AppHeaderClient from "@/components/app-header/app-header-client";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function AppHeader() {

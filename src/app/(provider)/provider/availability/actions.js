@@ -5,7 +5,7 @@ import {
   getSignedInProvider,
   weekdayNameToNumber,
   weekdayNumberToName,
-} from "../lib/provider-data";
+} from "../_lib/provider-data";
 
 export const getSchedule = async () => {
   const { supabase, providerPage } = await getSignedInProvider({

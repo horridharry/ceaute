@@ -1,7 +1,7 @@
 import { getTreatment } from "../../actions";
-import { getSignedInProvider } from "../../../lib/provider-data";
+import { getSignedInProvider } from "../../../_lib/provider-data";
 
-import { UpdateTreatmentUI } from "./components/update-treatment-ui";
+import { UpdateTreatmentUI } from "./_components/update-treatment-ui";
 
 export default async function Page({ params }) {
   const { treatmentId } = await params;

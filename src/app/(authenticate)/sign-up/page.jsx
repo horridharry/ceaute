@@ -1,4 +1,4 @@
-import { SignupForm } from "../components/signup-form";
+import { SignupForm } from "../_components/signup-form";
 import { createUser } from "../actions";
 import { redirect } from "next/navigation";
 import { validatedNextPath } from "@/lib/auth/redirect";

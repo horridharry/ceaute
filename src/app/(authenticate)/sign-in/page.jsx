@@ -1,4 +1,4 @@
-import { SigninForm } from "../components/signin-form";
+import { SigninForm } from "../_components/signin-form";
 import { authenticateUser } from "../actions";
 import { redirect } from "next/navigation";
 import { validatedNextPath } from "@/lib/auth/redirect";
