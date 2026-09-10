@@ -1,6 +1,7 @@
 "use server";
-import { redirect } from "next/navigation";
+
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import {
   durationToMinutes,
   getSignedInProvider,
@@ -8,48 +9,196 @@ import {
   treatmentToProviderTreatment,
 } from "../_lib/provider-data";
 
-export const createTreatment = async (_currentState, formData) => {
-  const pricePence = priceToPence(formData.get("price"));
-  const durationMinutes = durationToMinutes(formData.get("duration"));
+const treatmentSelect = `
+  id,
+  provider_page_id,
+  name,
+  description,
+  price_pence,
+  duration_minutes,
+  discovery_category_id,
+  treatment_group_id,
+  is_active,
+  updated_at
+`;
 
-  if (!String(formData.get("name") ?? "").trim()) {
-    return "Please give your treatment a name";
+function getString(formData, key) {
+  return String(formData.get(key) ?? "").trim();
+}
+
+function getOptionalId(formData, key) {
+  const value = getString(formData, key);
+  return value || null;
+}
+
+async function validateTreatmentForm({ formData, supabase, providerPage }) {
+  const name = getString(formData, "name");
+  const description = getString(formData, "description");
+  const pricePence = priceToPence(formData.get("price"));
+  const durationMinutes = durationToMinutes(formData.get("duration_minutes"));
+  const discoveryCategoryId = getString(formData, "discovery_category_id");
+  const treatmentGroupId = getOptionalId(formData, "treatment_group_id");
+
+  if (name.length < 2) {
+    return { error: "Please give your treatment a name." };
+  }
+
+  if (name.length > 140) {
+    return { error: "Treatment name must be 140 characters or fewer." };
+  }
+
+  if (!description) {
+    return { error: "Please add a treatment description." };
   }
 
   if (!pricePence) {
-    return "Please enter a valid price.";
+    return { error: "Please enter a valid price in pounds." };
   }
 
-  if (durationMinutes < 5) {
-    return "Duration must be at least 5 minutes";
+  if (!Number.isInteger(durationMinutes) || durationMinutes <= 0) {
+    return { error: "Please enter a duration greater than zero." };
   }
 
-  const newTreatment = {
-    name: String(formData.get("name") ?? "").trim(),
-    price_pence: pricePence,
-    duration_minutes: durationMinutes,
-    description: String(formData.get("description") ?? "").trim() || null,
-    image_url: String(formData.get("image_url") ?? "").trim() || null,
+  if (!discoveryCategoryId) {
+    return { error: "Please choose a Ceaute discovery category." };
+  }
+
+  const { data: discoveryCategory, error: discoveryCategoryError } =
+    await supabase
+      .schema("ceaute")
+      .from("discovery_category")
+      .select("id")
+      .eq("id", discoveryCategoryId)
+      .eq("is_active", true)
+      .maybeSingle();
+
+  if (discoveryCategoryError) {
+    return { error: "Could not check the discovery category." };
+  }
+
+  if (!discoveryCategory) {
+    return { error: "Please choose an active Ceaute discovery category." };
+  }
+
+  if (treatmentGroupId) {
+    const { data: treatmentGroup, error: treatmentGroupError } = await supabase
+      .schema("ceaute")
+      .from("treatment_group")
+      .select("id")
+      .eq("id", treatmentGroupId)
+      .eq("provider_page_id", providerPage.id)
+      .eq("is_active", true)
+      .maybeSingle();
+
+    if (treatmentGroupError) {
+      return { error: "Could not check the treatment group." };
+    }
+
+    if (!treatmentGroup) {
+      return { error: "Please choose one of your active treatment groups." };
+    }
+  }
+
+  return {
+    values: {
+      name,
+      description,
+      price_pence: pricePence,
+      duration_minutes: durationMinutes,
+      discovery_category_id: discoveryCategoryId,
+      treatment_group_id: treatmentGroupId,
+    },
   };
+}
 
+async function getTreatmentFormOptionsForProvider({ supabase, providerPage }) {
+  const [discoveryCategoriesResult, treatmentGroupsResult] = await Promise.all([
+    supabase
+      .schema("ceaute")
+      .from("discovery_category")
+      .select("id, name")
+      .eq("is_active", true)
+      .order("display_order", { ascending: true })
+      .order("name", { ascending: true }),
+    supabase
+      .schema("ceaute")
+      .from("treatment_group")
+      .select("id, name")
+      .eq("provider_page_id", providerPage.id)
+      .eq("is_active", true)
+      .order("display_order", { ascending: true })
+      .order("name", { ascending: true }),
+  ]);
+
+  if (discoveryCategoriesResult.error) {
+    throw new Error("Could not load discovery categories.");
+  }
+
+  if (treatmentGroupsResult.error) {
+    throw new Error("Could not load treatment groups.");
+  }
+
+  return {
+    discoveryCategories: discoveryCategoriesResult.data ?? [],
+    treatmentGroups: treatmentGroupsResult.data ?? [],
+  };
+}
+
+function decorateTreatment(treatment, { discoveryCategories, treatmentGroups }) {
+  const discoveryCategory = discoveryCategories.find(
+    (category) => category.id === treatment.discovery_category_id,
+  );
+  const treatmentGroup = treatmentGroups.find(
+    (group) => group.id === treatment.treatment_group_id,
+  );
+
+  return treatmentToProviderTreatment({
+    ...treatment,
+    discovery_category: discoveryCategory ?? null,
+    treatment_group: treatmentGroup ?? null,
+  });
+}
+
+function refreshTreatmentPages() {
+  revalidatePath("/provider/treatments");
+  revalidatePath("/[username]", "layout");
+}
+
+export async function getTreatmentFormOptions({
+  next = "/provider/treatments",
+} = {}) {
+  const { supabase, providerPage } = await getSignedInProvider({ next });
+
+  return getTreatmentFormOptionsForProvider({ supabase, providerPage });
+}
+
+export async function createTreatment(_currentState, formData) {
   const { supabase, providerPage } = await getSignedInProvider({
     next: "/provider/treatments/create",
   });
+  const result = await validateTreatmentForm({ formData, supabase, providerPage });
+
+  if (result.error) {
+    return result.error;
+  }
 
   const { error } = await supabase
     .schema("ceaute")
     .from("treatment")
-    .insert({ ...newTreatment, provider_page_id: providerPage.id });
+    .insert({
+      ...result.values,
+      provider_page_id: providerPage.id,
+    });
 
   if (error) {
-    return "Something went wrong.";
+    return "Could not create the treatment.";
   }
 
-  revalidatePath("/", "layout");
+  refreshTreatmentPages();
   redirect("/provider/treatments");
-};
+}
 
-export const getTreatment = async (treatmentId) => {
+export async function getTreatment(treatmentId) {
   const { supabase, providerPage } = await getSignedInProvider({
     next: "/provider/treatments",
   });
@@ -57,66 +206,54 @@ export const getTreatment = async (treatmentId) => {
   const { data: treatment, error } = await supabase
     .schema("ceaute")
     .from("treatment")
-    .select("id, provider_page_id, name, description, price_pence, duration_minutes, image_url, updated_at")
+    .select(treatmentSelect)
     .eq("id", treatmentId)
     .eq("provider_page_id", providerPage.id)
-    .eq("is_active", true)
     .maybeSingle();
 
   if (error || !treatment) {
     redirect("/provider/treatments");
   }
 
-  return treatmentToProviderTreatment(treatment);
-};
+  const options = await getTreatmentFormOptionsForProvider({
+    supabase,
+    providerPage,
+  });
 
-export const updateTreatment = async (_currentState, formData) => {
-  const treatmentId = formData.get("treatment_id");
-  const pricePence = priceToPence(formData.get("price"));
-  const durationMinutes = durationToMinutes(formData.get("duration"));
+  return decorateTreatment(treatment, options);
+}
 
-  if (!String(formData.get("name") ?? "").trim()) {
-    return "Please give your treatment a name";
-  }
-
-  if (!pricePence) {
-    return "Please enter a valid price.";
-  }
-
-  if (durationMinutes < 5) {
-    return "Duration must be at least 5 minutes";
-  }
-
-  const newTreatment = {
-    name: String(formData.get("name") ?? "").trim(),
-    price_pence: pricePence,
-    duration_minutes: durationMinutes,
-    description: String(formData.get("description") ?? "").trim() || null,
-    image_url: String(formData.get("image_url") ?? "").trim() || null,
-  };
-
+export async function updateTreatment(_currentState, formData) {
+  const treatmentId = getString(formData, "treatment_id");
   const { supabase, providerPage } = await getSignedInProvider({
     next: `/provider/treatments/update/${treatmentId}`,
   });
 
+  const result = await validateTreatmentForm({ formData, supabase, providerPage });
+
+  if (result.error) {
+    return result.error;
+  }
+
   const { error } = await supabase
     .schema("ceaute")
     .from("treatment")
-    .update({ ...newTreatment })
+    .update(result.values)
     .eq("id", treatmentId)
     .eq("provider_page_id", providerPage.id);
 
   if (error) {
-    return "Something went wrong.";
+    return "Could not update the treatment.";
   }
 
-  revalidatePath("/", "layout");
+  refreshTreatmentPages();
   redirect("/provider/treatments");
-};
+}
 
-export const deleteTreatment = async (treatmentId) => {
+export async function archiveTreatment(_currentState, formData) {
+  const treatmentId = getString(formData, "treatment_id");
   const { supabase, providerPage } = await getSignedInProvider({
-    next: "/provider/treatments",
+    next: `/provider/treatments/update/${treatmentId}`,
   });
 
   const { error } = await supabase
@@ -127,14 +264,35 @@ export const deleteTreatment = async (treatmentId) => {
     .eq("provider_page_id", providerPage.id);
 
   if (error) {
-    return "Something went wrong.";
+    return "Could not archive the treatment.";
   }
 
-  revalidatePath("/", "layout");
+  refreshTreatmentPages();
   redirect("/provider/treatments");
-};
+}
 
-export const getAllTreatments = async () => {
+export async function restoreTreatment(_currentState, formData) {
+  const treatmentId = getString(formData, "treatment_id");
+  const { supabase, providerPage } = await getSignedInProvider({
+    next: `/provider/treatments/update/${treatmentId}`,
+  });
+
+  const { error } = await supabase
+    .schema("ceaute")
+    .from("treatment")
+    .update({ is_active: true })
+    .eq("id", treatmentId)
+    .eq("provider_page_id", providerPage.id);
+
+  if (error) {
+    return "Could not restore the treatment.";
+  }
+
+  refreshTreatmentPages();
+  redirect("/provider/treatments");
+}
+
+export async function getAllTreatments() {
   const { supabase, providerPage } = await getSignedInProvider({
     next: "/provider/treatments",
   });
@@ -142,14 +300,20 @@ export const getAllTreatments = async () => {
   const { data: treatments, error } = await supabase
     .schema("ceaute")
     .from("treatment")
-    .select("id, provider_page_id, name, description, price_pence, duration_minutes, image_url, updated_at")
+    .select(treatmentSelect)
     .eq("provider_page_id", providerPage.id)
-    .eq("is_active", true)
+    .order("is_active", { ascending: false })
+    .order("display_order", { ascending: true })
     .order("updated_at", { ascending: false });
 
   if (error) {
-    return [];
+    throw new Error("Could not load treatments.");
   }
 
-  return treatments.map(treatmentToProviderTreatment);
-};
+  const options = await getTreatmentFormOptionsForProvider({
+    supabase,
+    providerPage,
+  });
+
+  return treatments.map((treatment) => decorateTreatment(treatment, options));
+}

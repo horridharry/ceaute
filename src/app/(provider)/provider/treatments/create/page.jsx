@@ -1,10 +1,16 @@
-import { CreateTreatmentUI } from "./_components/create-treatment-ui";
-import { getSignedInProvider } from "../../_lib/provider-data";
+import { TreatmentForm } from "../_components/treatment-form";
+import { createTreatment, getTreatmentFormOptions } from "../actions";
 
 export default async function Page() {
-  const { user } = await getSignedInProvider({
-    next: "/provider/treatments/create",
-  });
+  const { discoveryCategories, treatmentGroups } =
+    await getTreatmentFormOptions({ next: "/provider/treatments/create" });
 
-  return <CreateTreatmentUI userId={user.id} />;
+  return (
+    <TreatmentForm
+      action={createTreatment}
+      discoveryCategories={discoveryCategories}
+      treatmentGroups={treatmentGroups}
+      mode="create"
+    />
+  );
 }

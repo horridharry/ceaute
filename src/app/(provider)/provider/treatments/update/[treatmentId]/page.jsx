@@ -1,24 +1,30 @@
-import { getTreatment } from "../../actions";
-import { getSignedInProvider } from "../../../_lib/provider-data";
-
-import { UpdateTreatmentUI } from "./_components/update-treatment-ui";
+import { TreatmentForm } from "../../_components/treatment-form";
+import {
+  archiveTreatment,
+  getTreatment,
+  getTreatmentFormOptions,
+  restoreTreatment,
+  updateTreatment,
+} from "../../actions";
 
 export default async function Page({ params }) {
   const { treatmentId } = await params;
-  const { user } = await getSignedInProvider({
-    next: `/provider/treatments/update/${treatmentId}`,
-  });
+  const [treatment, options] = await Promise.all([
+    getTreatment(treatmentId),
+    getTreatmentFormOptions({
+      next: `/provider/treatments/update/${treatmentId}`,
+    }),
+  ]);
 
-  const treatment = await getTreatment(treatmentId);
-
-  const formattedTreatment = {
-    ...treatment,
-    hour: parseInt(treatment.duration.split(":")[1]),
-    minute: parseInt(treatment.duration.split(":")[2]),
-    duration:
-      parseInt(treatment.duration.split(":")[1]) * 60 +
-      parseInt(treatment.duration.split(":")[2]),
-  };
-
-  return <UpdateTreatmentUI treatment={formattedTreatment} userId={user.id} />;
+  return (
+    <TreatmentForm
+      action={updateTreatment}
+      archiveAction={archiveTreatment}
+      restoreAction={restoreTreatment}
+      discoveryCategories={options.discoveryCategories}
+      treatmentGroups={options.treatmentGroups}
+      mode="edit"
+      treatment={treatment}
+    />
+  );
 }

@@ -26,7 +26,7 @@ export function minutesToDuration(minutes) {
 export function durationToMinutes(value) {
   const minutes = Number(value);
 
-  if (Number.isFinite(minutes)) {
+  if (Number.isInteger(minutes)) {
     return minutes;
   }
 
@@ -43,18 +43,43 @@ export function durationToMinutes(value) {
 }
 
 export function priceToPence(value) {
-  const amount = Number.parseFloat(String(value ?? "").replace(/[^0-9.]/g, ""));
+  const normalizedValue = String(value ?? "").trim();
 
-  if (!Number.isFinite(amount) || amount <= 0) {
+  if (!/^\d+(\.\d{1,2})?$/.test(normalizedValue)) {
     return null;
   }
 
-  return Math.round(amount * 100);
+  const [pounds, pence = ""] = normalizedValue.split(".");
+  const pricePence =
+    Number(pounds) * 100 + Number(pence.padEnd(2, "0").slice(0, 2));
+
+  if (!Number.isInteger(pricePence) || pricePence <= 0) {
+    return null;
+  }
+
+  return pricePence;
 }
 
 export function penceToPrice(value) {
   const pence = Number(value);
   return Number.isFinite(pence) ? pence / 100 : 0;
+}
+
+export function minutesToDurationParts(minutes) {
+  const safeMinutes = Number.isFinite(Number(minutes)) ? Number(minutes) : 0;
+
+  return {
+    hours: Math.floor(safeMinutes / 60),
+    minutes: safeMinutes % 60,
+  };
+}
+
+export function formatDurationMinutes(minutes) {
+  const { hours, minutes: remainingMinutes } = minutesToDurationParts(minutes);
+
+  return [hours ? `${hours} hours` : "", remainingMinutes ? `${remainingMinutes} minutes` : ""]
+    .filter(Boolean)
+    .join(" ");
 }
 
 export function normalizeUsername(value) {
@@ -120,13 +145,22 @@ export function providerPageToProviderProfile(providerPage) {
 }
 
 export function treatmentToProviderTreatment(treatment) {
+  const durationMinutes = Number(treatment.duration_minutes ?? 0);
+
   return {
     treatment_id: treatment.id,
     profile_id: treatment.provider_page_id,
     name: treatment.name,
     description: treatment.description ?? "",
     price: penceToPrice(treatment.price_pence),
-    duration: minutesToDuration(treatment.duration_minutes),
+    price_pence: treatment.price_pence,
+    duration: minutesToDuration(durationMinutes),
+    duration_minutes: durationMinutes,
+    discovery_category_id: treatment.discovery_category_id ?? "",
+    discovery_category_name: treatment.discovery_category?.name ?? "",
+    treatment_group_id: treatment.treatment_group_id ?? "",
+    treatment_group_name: treatment.treatment_group?.name ?? "",
+    is_active: Boolean(treatment.is_active),
     image_url: treatment.image_url ?? "",
     updated_at: treatment.updated_at,
   };
