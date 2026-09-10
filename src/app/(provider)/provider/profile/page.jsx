@@ -1,15 +1,6 @@
-import { getProfile } from "./actions";
-import { ProfileFormUI } from "./_components/profile-form-ui";
-import { updateProfile } from "./actions";
+import { redirect } from "next/navigation";
 
-export default async function Page() {
-  const profile = await getProfile();
-
-  const formattedProfile = {
-    ...profile,
-  };
-
-  return (
-    <ProfileFormUI profile={formattedProfile} updateProfile={updateProfile} />
-  );
+export default function ProviderProfileRedirectPage() {
+  redirect("/provider/page");
 }
+

@@ -1,16 +1,16 @@
-import DashboardUI from "./_components/dashboard-ui";
+import ProviderHome from "./_components/provider-home";
 import {
   getSignedInProvider,
-  providerPageToDashboardProfile,
+  providerPageToProviderProfile,
 } from "./_lib/provider-data";
 
-export default async function Dashboard() {
+export default async function ProviderHomePage() {
   const { user, providerPage } = await getSignedInProvider();
 
   return (
-    <DashboardUI
+    <ProviderHome
       user={user}
-      profile={providerPageToDashboardProfile(providerPage)}
+      profile={providerPageToProviderProfile(providerPage)}
     />
   );
 }

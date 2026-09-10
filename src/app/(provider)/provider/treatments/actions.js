@@ -5,7 +5,7 @@ import {
   durationToMinutes,
   getSignedInProvider,
   priceToPence,
-  treatmentToDashboardTreatment,
+  treatmentToProviderTreatment,
 } from "../_lib/provider-data";
 
 export const createTreatment = async (_currentState, formData) => {
@@ -67,7 +67,7 @@ export const getTreatment = async (treatmentId) => {
     redirect("/provider/treatments");
   }
 
-  return treatmentToDashboardTreatment(treatment);
+  return treatmentToProviderTreatment(treatment);
 };
 
 export const updateTreatment = async (_currentState, formData) => {
@@ -151,5 +151,5 @@ export const getAllTreatments = async () => {
     return [];
   }
 
-  return treatments.map(treatmentToDashboardTreatment);
+  return treatments.map(treatmentToProviderTreatment);
 };

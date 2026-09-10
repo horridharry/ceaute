@@ -1,9 +1,9 @@
-import { DashboardNav } from "./_components/dashboard-nav";
+import { ProviderNav } from "./_components/provider-nav";
 
-export default async function DashboardLayout({ children }) {
+export default async function ProviderLayout({ children }) {
   return (
     <div>
-      <DashboardNav />
+      <ProviderNav />
       {children}
     </div>
   );

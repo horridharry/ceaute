@@ -13,11 +13,19 @@ const HomeLogo = () => (
 
 const hiddenHeaderPrefixes = ["/sign-in", "/sign-up", "/auth"];
 
-function HeaderLink({ href, children }) {
+function HeaderLink({ href, children, exact = false }) {
+  const pathname = usePathname();
+  const isActive = exact
+    ? pathname === href
+    : pathname === href || pathname.startsWith(`${href}/`);
+
   return (
     <Link
       href={href}
-      className="relative rounded-full px-3 py-1.5 text-sm font-medium text-black/70 transition hover:bg-black/[0.04] hover:text-black"
+      aria-current={isActive ? "page" : undefined}
+      className={`relative rounded-full px-3 py-1.5 text-sm font-medium transition hover:bg-black/[0.04] hover:text-black ${
+        isActive ? "text-black" : "text-black/70"
+      }`}
     >
       {children}
       <LinkPendingDot />
@@ -65,20 +73,12 @@ function AccountMenu({ user, hasProviderPage }) {
         >
           <div className="mt-12" />
           <Link
-            href="/"
+            href="/discover"
             role="menuitem"
             onClick={() => setOpen(false)}
             className="block px-4 py-2 text-xl font-medium text-black/60 hover:text-black"
           >
-            Home
-          </Link>
-          <Link
-            href="/account"
-            role="menuitem"
-            onClick={() => setOpen(false)}
-            className="block px-4 py-2 text-xl font-medium text-black/60 hover:text-black/80"
-          >
-            Profile
+            Go to Ceaute
           </Link>
           <Link
             href="/account/bookings"
@@ -86,7 +86,15 @@ function AccountMenu({ user, hasProviderPage }) {
             onClick={() => setOpen(false)}
             className="block px-4 py-2 text-xl font-medium text-black/60 hover:text-black/80"
           >
-            Bookings
+            My bookings
+          </Link>
+          <Link
+            href="/account"
+            role="menuitem"
+            onClick={() => setOpen(false)}
+            className="block px-4 py-2 text-xl font-medium text-black/60 hover:text-black/80"
+          >
+            My account
           </Link>
 
           <div className="mt-auto" />
@@ -126,9 +134,19 @@ export default function AppHeaderClient({ user, hasProviderPage = false }) {
         <HomeLogo />
         <div className="flex items-center gap-1.5">
           {user ? (
-            <AccountMenu user={user} hasProviderPage={hasProviderPage} />
+            <>
+              <div className="hidden items-center gap-1.5 sm:flex">
+                <HeaderLink href="/discover">Discover</HeaderLink>
+                <HeaderLink href="/account/bookings">Bookings</HeaderLink>
+                <HeaderLink href="/account" exact>
+                  Account
+                </HeaderLink>
+              </div>
+              <AccountMenu user={user} hasProviderPage={hasProviderPage} />
+            </>
           ) : (
             <>
+              <HeaderLink href="/discover">Discover</HeaderLink>
               <HeaderLink href="/sign-in">Sign in</HeaderLink>
               <Link
                 href="/sign-up"

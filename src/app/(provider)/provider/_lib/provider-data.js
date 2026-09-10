@@ -90,7 +90,7 @@ export async function getSignedInProvider({ next = "/provider" } = {}) {
     .maybeSingle();
 
   if (error) {
-    throw new Error("Could not load provider dashboard.");
+    throw new Error("Could not load provider workspace.");
   }
 
   if (!providerPage) {
@@ -108,7 +108,7 @@ export async function getSignedInProvider({ next = "/provider" } = {}) {
   };
 }
 
-export function providerPageToDashboardProfile(providerPage) {
+export function providerPageToProviderProfile(providerPage) {
   return {
     profile_id: providerPage.id,
     user_id: providerPage.owner_profile_id,
@@ -119,7 +119,7 @@ export function providerPageToDashboardProfile(providerPage) {
   };
 }
 
-export function treatmentToDashboardTreatment(treatment) {
+export function treatmentToProviderTreatment(treatment) {
   return {
     treatment_id: treatment.id,
     profile_id: treatment.provider_page_id,

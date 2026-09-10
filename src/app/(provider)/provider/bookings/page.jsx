@@ -45,7 +45,10 @@ const NoBookings = () => (
 );
 
 const BookingItem = ({ booking }) => (
-  <Link key={booking.treatment_id} href={`/appointments/${booking.booking_id}`}>
+  <Link
+    key={booking.treatment_id}
+    href={`/provider/bookings/${booking.booking_id}`}
+  >
     <div className="appearance-none list-none rounded-xl border p-2.5 duration-200 hover:border-black/20 hover:bg-black/5 ">
       <div className="flex h-full">
         <div className="max-w-sm flex-1 overflow-hidden text-ellipsis">

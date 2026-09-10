@@ -151,7 +151,7 @@ export default function SchedulePage() {
     <main className="p-5">
       <h1 className="text-3xl font-bold tracking-tighter mt-6">Availability</h1>
       <p className="text-sm mt-1">Adjust your schedule to suit your routine</p>
-      <form id="availability" className action={handleSubmit}>
+      <form id="availability" action={handleSubmit}>
         <div className="mt-12 grid gap-4">
           {DAYS_OF_WEEK.map((dayOfWeek) => {
             const checked = openHours.some(
