@@ -68,14 +68,22 @@ export function TreatmentsUI({ treatments }) {
       <div className="mt-6 flex flex-col">
         <div className="flex items-end justify-between">
           <h1 className="text-3xl font-bold tracking-tighter">Treatments</h1>
-          {treatments.length !== 0 ? (
+          <div className="flex items-center gap-2">
             <Link
-              href="/provider/treatments/create"
+              href="/provider/treatments/groups"
               className="flex w-max items-center overflow-hidden rounded-3xl bg-white p-1.5 px-3 text-center text-sm font-semibold text-pink-600 duration-300 hover:bg-pink-500/10"
             >
-              Create
+              Manage groups
             </Link>
-          ) : null}
+            {treatments.length !== 0 ? (
+              <Link
+                href="/provider/treatments/create"
+                className="flex w-max items-center overflow-hidden rounded-3xl bg-white p-1.5 px-3 text-center text-sm font-semibold text-pink-600 duration-300 hover:bg-pink-500/10"
+              >
+                Create
+              </Link>
+            ) : null}
+          </div>
         </div>
 
         <div className="mt-12 flex flex-col gap-4">
