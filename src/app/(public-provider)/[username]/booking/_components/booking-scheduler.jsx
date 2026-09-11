@@ -25,6 +25,7 @@ function formatDateParts(localDate) {
 
 export default function BookingScheduler({
   availableDates,
+  selectedAddOnIds,
   treatment,
   username,
 }) {
@@ -41,7 +42,17 @@ export default function BookingScheduler({
 
   const handleSlotSelection = async (slot) => {
     await storeSelectedBookingTime(slot.start_at);
-    router.push(`/@${username}/booking/${treatment.id}/details`);
+    const searchParams = new URLSearchParams({
+      start_at: slot.start_at,
+    });
+
+    for (const addOnId of selectedAddOnIds) {
+      searchParams.append("add_on", addOnId);
+    }
+
+    router.push(
+      `/@${username}/booking/${treatment.id}/details?${searchParams.toString()}`,
+    );
   };
 
   return (

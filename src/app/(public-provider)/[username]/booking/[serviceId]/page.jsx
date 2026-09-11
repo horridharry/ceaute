@@ -84,6 +84,7 @@ export default async function UsernameBookingPage({ params, searchParams }) {
           <BookingScheduler
             username={providerPage.username}
             treatment={treatment}
+            selectedAddOnIds={selectedAddOns.map((addOn) => addOn.id)}
             availableDates={availableDates}
           />
         </div>

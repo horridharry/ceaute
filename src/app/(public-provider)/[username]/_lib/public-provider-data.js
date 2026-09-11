@@ -181,6 +181,47 @@ export const getActiveBookingsForProvider = cache(async (providerPageId) => {
   return bookings ?? [];
 });
 
+export const getPublicLocationForProvider = cache(async (providerPageId) => {
+  const supabase = await createClient();
+  const { data: location, error } = await supabase.schema("ceaute").rpc(
+    "get_public_provider_location",
+    {
+      target_provider_page_id: providerPageId,
+    },
+  );
+
+  if (error) {
+    throw new Error("Could not load provider location.");
+  }
+
+  return location?.[0] ?? { public_area: "" };
+});
+
+export const getPublicBookingSettingsForProvider = cache(
+  async (providerPageId) => {
+    const supabase = await createClient();
+    const { data: settings, error } = await supabase.schema("ceaute").rpc(
+      "get_public_booking_settings",
+      {
+        target_provider_page_id: providerPageId,
+      },
+    );
+
+    if (error) {
+      throw new Error("Could not load booking settings.");
+    }
+
+    return (
+      settings?.[0] ?? {
+        payment_mode: "full",
+        commitment_amount_pence: null,
+        cancellation_window_hours: 24,
+        written_policy: "",
+      }
+    );
+  },
+);
+
 export async function getPublicProviderCatalogue(username) {
   const providerPage = await getPublishedProviderPageByUsername(username);
   const treatments = await getPublicTreatmentsForProvider(providerPage.id);
@@ -241,6 +282,60 @@ export async function getPublicBookingPage(username, treatmentId, addOnIds = [])
       appointments: bookings,
       durationMinutes: totalDurationMinutes,
     }),
+  };
+}
+
+export async function getPublicBookingDetailsPage(
+  username,
+  treatmentId,
+  addOnIds = [],
+) {
+  const providerPage = await getPublishedProviderPageByUsername(username);
+  const [
+    treatment,
+    availabilityRules,
+    selectedAddOns,
+    blockedDates,
+    bookings,
+    location,
+    bookingSettings,
+  ] = await Promise.all([
+    getPublicTreatmentForProvider(providerPage.id, treatmentId),
+    getAvailabilityRulesForProvider(providerPage.id),
+    getActiveAddOnsForTreatment(providerPage.id, treatmentId, addOnIds),
+    getBlockedDatesForProvider(providerPage.id),
+    getActiveBookingsForProvider(providerPage.id),
+    getPublicLocationForProvider(providerPage.id),
+    getPublicBookingSettingsForProvider(providerPage.id),
+  ]);
+  const totalDurationMinutes =
+    treatment.duration_minutes +
+    selectedAddOns.reduce(
+      (total, addOn) => total + Number(addOn.additional_duration_minutes ?? 0),
+      0,
+    );
+  const totalPricePence =
+    treatment.price_pence +
+    selectedAddOns.reduce(
+      (total, addOn) => total + Number(addOn.additional_price_pence ?? 0),
+      0,
+    );
+  const availableDates = calculateAvailableAppointmentTimes({
+    availabilityRules,
+    blockedDates,
+    appointments: bookings,
+    durationMinutes: totalDurationMinutes,
+  });
+
+  return {
+    providerPage,
+    treatment,
+    selectedAddOns,
+    totalDurationMinutes,
+    totalPricePence,
+    location,
+    bookingSettings,
+    availableDates,
   };
 }
 
