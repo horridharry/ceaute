@@ -75,6 +75,12 @@ export function TreatmentsUI({ treatments }) {
             >
               Manage groups
             </Link>
+            <Link
+              href="/provider/treatments/add-ons"
+              className="flex w-max items-center overflow-hidden rounded-3xl bg-white p-1.5 px-3 text-center text-sm font-semibold text-pink-600 duration-300 hover:bg-pink-500/10"
+            >
+              Manage add-ons
+            </Link>
             {treatments.length !== 0 ? (
               <Link
                 href="/provider/treatments/create"

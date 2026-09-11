@@ -35,6 +35,29 @@ function normalizeName(value) {
   return String(value ?? "").trim().toLowerCase();
 }
 
+function nonNegativePriceToPence(value) {
+  const normalizedValue = String(value ?? "").trim();
+
+  if (!/^\d+(\.\d{1,2})?$/.test(normalizedValue)) {
+    return null;
+  }
+
+  const [pounds, pence = ""] = normalizedValue.split(".");
+  const pricePence =
+    Number(pounds) * 100 + Number(pence.padEnd(2, "0").slice(0, 2));
+
+  if (!Number.isInteger(pricePence) || pricePence < 0) {
+    return null;
+  }
+
+  return pricePence;
+}
+
+function penceToPrice(value) {
+  const pence = Number(value);
+  return Number.isFinite(pence) ? pence / 100 : 0;
+}
+
 async function findDuplicateTreatmentGroup({
   supabase,
   providerPage,
@@ -63,6 +86,11 @@ async function findDuplicateTreatmentGroup({
 function refreshTreatmentGroupPages() {
   revalidatePath("/provider/treatments");
   revalidatePath("/provider/treatments/groups");
+}
+
+function refreshTreatmentAddOnPages() {
+  revalidatePath("/provider/treatments");
+  revalidatePath("/provider/treatments/add-ons");
 }
 
 async function validateTreatmentForm({ formData, supabase, providerPage }) {
@@ -384,6 +412,411 @@ export async function restoreTreatmentGroup(_currentState, formData) {
 
   refreshTreatmentGroupPages();
   return "Group restored.";
+}
+
+async function findDuplicateTreatmentAddOn({
+  supabase,
+  providerPage,
+  name,
+  exceptAddOnId = "",
+}) {
+  const { data: addOns, error } = await supabase
+    .schema("ceaute")
+    .from("treatment_add_on")
+    .select("id, name")
+    .eq("provider_page_id", providerPage.id);
+
+  if (error) {
+    return { error: "Could not check existing add-ons." };
+  }
+
+  const normalizedName = normalizeName(name);
+  const duplicate = (addOns ?? []).find(
+    (addOn) =>
+      addOn.id !== exceptAddOnId && normalizeName(addOn.name) === normalizedName,
+  );
+
+  return { duplicate };
+}
+
+async function getActiveProviderTreatmentIds({ supabase, providerPage }) {
+  const { data: treatments, error } = await supabase
+    .schema("ceaute")
+    .from("treatment")
+    .select("id")
+    .eq("provider_page_id", providerPage.id)
+    .eq("is_active", true);
+
+  if (error) {
+    return { error: "Could not check compatible treatments." };
+  }
+
+  return { treatmentIds: new Set((treatments ?? []).map((treatment) => treatment.id)) };
+}
+
+function getSelectedTreatmentIds(formData) {
+  return formData
+    .getAll("compatible_treatment_ids")
+    .map((value) => String(value).trim())
+    .filter(Boolean);
+}
+
+async function validateTreatmentAddOnForm({
+  formData,
+  supabase,
+  providerPage,
+  exceptAddOnId = "",
+}) {
+  const name = getString(formData, "name");
+  const additionalPricePence = nonNegativePriceToPence(
+    formData.get("additional_price"),
+  );
+  const additionalDurationMinutes = durationToMinutes(
+    formData.get("additional_duration_minutes"),
+  );
+  const selectedTreatmentIds = getSelectedTreatmentIds(formData);
+
+  if (!name) {
+    return { error: "Please enter an add-on name." };
+  }
+
+  if (name.length > 100) {
+    return { error: "Add-on name must be 100 characters or fewer." };
+  }
+
+  if (additionalPricePence === null) {
+    return { error: "Please enter a valid additional price in pounds." };
+  }
+
+  if (
+    !Number.isInteger(additionalDurationMinutes) ||
+    additionalDurationMinutes < 0
+  ) {
+    return { error: "Additional duration must be zero or more whole minutes." };
+  }
+
+  if (additionalPricePence === 0 && additionalDurationMinutes === 0) {
+    return { error: "Add-ons must increase the price, duration or both." };
+  }
+
+  const duplicateResult = await findDuplicateTreatmentAddOn({
+    supabase,
+    providerPage,
+    name,
+    exceptAddOnId,
+  });
+
+  if (duplicateResult.error) {
+    return { error: duplicateResult.error };
+  }
+
+  if (duplicateResult.duplicate) {
+    return { error: "You already have an add-on with that name." };
+  }
+
+  const treatmentIdsResult = await getActiveProviderTreatmentIds({
+    supabase,
+    providerPage,
+  });
+
+  if (treatmentIdsResult.error) {
+    return { error: treatmentIdsResult.error };
+  }
+
+  const uniqueSelectedTreatmentIds = [...new Set(selectedTreatmentIds)];
+  const hasInvalidTreatment = uniqueSelectedTreatmentIds.some(
+    (treatmentId) => !treatmentIdsResult.treatmentIds.has(treatmentId),
+  );
+
+  if (hasInvalidTreatment) {
+    return { error: "Choose only your active treatments for compatibility." };
+  }
+
+  return {
+    values: {
+      name,
+      additional_price_pence: additionalPricePence,
+      additional_duration_minutes: additionalDurationMinutes,
+    },
+    compatibleTreatmentIds: uniqueSelectedTreatmentIds,
+  };
+}
+
+async function replaceAddOnCompatibility({
+  supabase,
+  providerPage,
+  addOnId,
+  compatibleTreatmentIds,
+}) {
+  const { error: deleteError } = await supabase
+    .schema("ceaute")
+    .from("treatment_add_on_compatibility")
+    .delete()
+    .eq("provider_page_id", providerPage.id)
+    .eq("treatment_add_on_id", addOnId);
+
+  if (deleteError) {
+    return { error: "Could not update compatible treatments." };
+  }
+
+  if (compatibleTreatmentIds.length === 0) {
+    return {};
+  }
+
+  const { error: insertError } = await supabase
+    .schema("ceaute")
+    .from("treatment_add_on_compatibility")
+    .insert(
+      compatibleTreatmentIds.map((treatmentId) => ({
+        provider_page_id: providerPage.id,
+        treatment_add_on_id: addOnId,
+        treatment_id: treatmentId,
+      })),
+    );
+
+  if (insertError) {
+    return { error: "Could not save compatible treatments." };
+  }
+
+  return {};
+}
+
+export async function getTreatmentAddOnOptions({ next = "/provider/treatments/add-ons" } = {}) {
+  const { supabase, providerPage } = await getSignedInProvider({ next });
+  const { data: treatments, error } = await supabase
+    .schema("ceaute")
+    .from("treatment")
+    .select("id, name, is_active")
+    .eq("provider_page_id", providerPage.id)
+    .eq("is_active", true)
+    .order("display_order", { ascending: true })
+    .order("name", { ascending: true });
+
+  if (error) {
+    throw new Error("Could not load treatments.");
+  }
+
+  return { treatments: treatments ?? [] };
+}
+
+export async function getAllTreatmentAddOns() {
+  const { supabase, providerPage } = await getSignedInProvider({
+    next: "/provider/treatments/add-ons",
+  });
+
+  const [addOnsResult, compatibilityResult] = await Promise.all([
+    supabase
+      .schema("ceaute")
+      .from("treatment_add_on")
+      .select("id, name, additional_price_pence, additional_duration_minutes, is_active, updated_at")
+      .eq("provider_page_id", providerPage.id)
+      .order("is_active", { ascending: false })
+      .order("display_order", { ascending: true })
+      .order("name", { ascending: true }),
+    supabase
+      .schema("ceaute")
+      .from("treatment_add_on_compatibility")
+      .select("treatment_add_on_id")
+      .eq("provider_page_id", providerPage.id),
+  ]);
+
+  if (addOnsResult.error) {
+    throw new Error("Could not load add-ons.");
+  }
+
+  if (compatibilityResult.error) {
+    throw new Error("Could not load add-on compatibility.");
+  }
+
+  const treatmentCounts = new Map();
+
+  for (const compatibility of compatibilityResult.data ?? []) {
+    treatmentCounts.set(
+      compatibility.treatment_add_on_id,
+      (treatmentCounts.get(compatibility.treatment_add_on_id) ?? 0) + 1,
+    );
+  }
+
+  return (addOnsResult.data ?? []).map((addOn) => ({
+    add_on_id: addOn.id,
+    name: addOn.name,
+    additional_price: penceToPrice(addOn.additional_price_pence),
+    additional_price_pence: addOn.additional_price_pence,
+    additional_duration_minutes: addOn.additional_duration_minutes,
+    is_active: Boolean(addOn.is_active),
+    compatible_treatment_count: treatmentCounts.get(addOn.id) ?? 0,
+    updated_at: addOn.updated_at,
+  }));
+}
+
+export async function getTreatmentAddOn(addOnId) {
+  const { supabase, providerPage } = await getSignedInProvider({
+    next: "/provider/treatments/add-ons",
+  });
+
+  const [addOnResult, compatibilityResult] = await Promise.all([
+    supabase
+      .schema("ceaute")
+      .from("treatment_add_on")
+      .select("id, name, additional_price_pence, additional_duration_minutes, is_active, updated_at")
+      .eq("id", addOnId)
+      .eq("provider_page_id", providerPage.id)
+      .maybeSingle(),
+    supabase
+      .schema("ceaute")
+      .from("treatment_add_on_compatibility")
+      .select("treatment_id")
+      .eq("treatment_add_on_id", addOnId)
+      .eq("provider_page_id", providerPage.id),
+  ]);
+
+  if (addOnResult.error || !addOnResult.data) {
+    redirect("/provider/treatments/add-ons");
+  }
+
+  if (compatibilityResult.error) {
+    throw new Error("Could not load add-on compatibility.");
+  }
+
+  return {
+    add_on_id: addOnResult.data.id,
+    name: addOnResult.data.name,
+    additional_price: penceToPrice(addOnResult.data.additional_price_pence),
+    additional_price_pence: addOnResult.data.additional_price_pence,
+    additional_duration_minutes: addOnResult.data.additional_duration_minutes,
+    is_active: Boolean(addOnResult.data.is_active),
+    compatible_treatment_ids: (compatibilityResult.data ?? []).map(
+      (compatibility) => compatibility.treatment_id,
+    ),
+    updated_at: addOnResult.data.updated_at,
+  };
+}
+
+export async function createTreatmentAddOn(_currentState, formData) {
+  const { supabase, providerPage } = await getSignedInProvider({
+    next: "/provider/treatments/add-ons/create",
+  });
+  const result = await validateTreatmentAddOnForm({
+    formData,
+    supabase,
+    providerPage,
+  });
+
+  if (result.error) {
+    return result.error;
+  }
+
+  const { data: addOn, error } = await supabase
+    .schema("ceaute")
+    .from("treatment_add_on")
+    .insert({
+      ...result.values,
+      provider_page_id: providerPage.id,
+    })
+    .select("id")
+    .single();
+
+  if (error) {
+    return "Could not create the add-on.";
+  }
+
+  const compatibilityResult = await replaceAddOnCompatibility({
+    supabase,
+    providerPage,
+    addOnId: addOn.id,
+    compatibleTreatmentIds: result.compatibleTreatmentIds,
+  });
+
+  if (compatibilityResult.error) {
+    return compatibilityResult.error;
+  }
+
+  refreshTreatmentAddOnPages();
+  redirect("/provider/treatments/add-ons");
+}
+
+export async function updateTreatmentAddOn(_currentState, formData) {
+  const addOnId = getString(formData, "add_on_id");
+  const { supabase, providerPage } = await getSignedInProvider({
+    next: `/provider/treatments/add-ons/update/${addOnId}`,
+  });
+  const result = await validateTreatmentAddOnForm({
+    formData,
+    supabase,
+    providerPage,
+    exceptAddOnId: addOnId,
+  });
+
+  if (result.error) {
+    return result.error;
+  }
+
+  const { error } = await supabase
+    .schema("ceaute")
+    .from("treatment_add_on")
+    .update(result.values)
+    .eq("id", addOnId)
+    .eq("provider_page_id", providerPage.id);
+
+  if (error) {
+    return "Could not update the add-on.";
+  }
+
+  const compatibilityResult = await replaceAddOnCompatibility({
+    supabase,
+    providerPage,
+    addOnId,
+    compatibleTreatmentIds: result.compatibleTreatmentIds,
+  });
+
+  if (compatibilityResult.error) {
+    return compatibilityResult.error;
+  }
+
+  refreshTreatmentAddOnPages();
+  redirect("/provider/treatments/add-ons");
+}
+
+export async function archiveTreatmentAddOn(_currentState, formData) {
+  const addOnId = getString(formData, "add_on_id");
+  const { supabase, providerPage } = await getSignedInProvider({
+    next: `/provider/treatments/add-ons/update/${addOnId}`,
+  });
+
+  const { error } = await supabase
+    .schema("ceaute")
+    .from("treatment_add_on")
+    .update({ is_active: false })
+    .eq("id", addOnId)
+    .eq("provider_page_id", providerPage.id);
+
+  if (error) {
+    return "Could not archive the add-on.";
+  }
+
+  refreshTreatmentAddOnPages();
+  redirect("/provider/treatments/add-ons");
+}
+
+export async function restoreTreatmentAddOn(_currentState, formData) {
+  const addOnId = getString(formData, "add_on_id");
+  const { supabase, providerPage } = await getSignedInProvider({
+    next: `/provider/treatments/add-ons/update/${addOnId}`,
+  });
+
+  const { error } = await supabase
+    .schema("ceaute")
+    .from("treatment_add_on")
+    .update({ is_active: true })
+    .eq("id", addOnId)
+    .eq("provider_page_id", providerPage.id);
+
+  if (error) {
+    return "Could not restore the add-on.";
+  }
+
+  refreshTreatmentAddOnPages();
+  redirect("/provider/treatments/add-ons");
 }
 
 export async function getTreatmentFormOptions({
