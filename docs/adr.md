@@ -35,13 +35,16 @@ Build Ceaute as one full-stack Next.js application.
 
 The application contains:
 
-- Public pages.
-- Customer and provider interfaces.
+- Customer-facing Ceaute, including account and booking journeys.
+- Public provider pages at `/@[username]`.
+- A protected provider workspace rooted at `/provider`, with provider onboarding at `/provider/onboarding` and a temporary redirect from `/provider/setup`.
 - Server-side booking logic.
 - API endpoints and payment webhooks.
 - The small internal administrator interface.
 
 Sensitive work happens on the server. The browser does not receive payment secrets or privileged database access.
+
+Customer and provider describe how one signed-in account is acting, not separate account types. An explicit validated authentication return path takes priority; otherwise providers enter `/provider` and other users enter `/account`.
 
 ### Why this fits Ceaute
 

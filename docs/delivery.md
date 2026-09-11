@@ -46,12 +46,12 @@ Providers need to start setting up Ceaute without completing everything in one s
 - Passwordless email sign-in.
 - A Ceaute profile linked to the signed-in account.
 - One provider page per account.
-- Provider setup that saves as a draft and can be resumed.
+- Provider onboarding that creates or resumes a draft under the shared account and continues into the protected provider workspace.
 - Ownership rules that prevent another account from viewing or editing the draft.
 
 ### Done when
 
-- A new user can sign in and begin provider setup.
+- A new user can sign in, begin provider onboarding and reach the provider Home.
 - Their progress remains after signing out and returning.
 - The same account cannot create a second provider page.
 - Another account cannot access the draft.
