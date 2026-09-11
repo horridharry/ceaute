@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import Link from "next/link";
 
 const PROVIDER_CATEGORIES = [
   "Nails",
@@ -193,6 +194,12 @@ export function ProfileFormUI({ profile, updateProfile }) {
           ) : null}
 
           <div className="mt-8 flex items-center justify-end">
+            <Link
+              href="/provider/page/location"
+              className="mr-auto w-max rounded-lg border border-black/10 p-3 px-6 text-sm font-semibold text-pink-600 duration-200 hover:border-black/20 active:border-transparent active:bg-pink-500/10 active:text-pink-500"
+            >
+              Location
+            </Link>
             <button
               form="update_details"
               type="submit"
