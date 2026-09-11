@@ -62,7 +62,7 @@ The provider completes these parts:
 2. **Profile** — choose a display name, username, primary beauty category and short bio.
 3. **Active location** — provide the exact private address and approve the public area customers will see.
 4. **Working hours** — choose working days and one continuous period for each day.
-5. **Booking window** — choose whether appointments open 30, 60 or 90 days ahead.
+5. **Blocked dates** — block whole dates for holidays, sickness or personal commitments.
 6. **Services** — create treatment groups, treatments and any relevant add-ons.
 7. **Payment rules** — choose full payment or a fixed deposit.
 8. **Cancellation rules** — choose a 12, 24 or 48-hour deadline.
@@ -212,11 +212,10 @@ Split shifts are not supported in the MVP.
 The provider can also:
 
 - Block a whole date for holidays, sickness or personal commitments.
-- Choose a rolling 30, 60 or 90-day booking window.
 
-Ceaute applies a fixed 24-hour minimum notice. A customer cannot book a slot that begins less than 24 hours away.
+Ceaute uses a fixed 60-day booking window and fixed 24-hour minimum notice. A customer cannot book a slot that starts less than 24 hours away or more than 60 days ahead.
 
-The rolling window deliberately replaces monthly slot releases. Providers no longer need to reopen the next month manually; a new day becomes available automatically as the calendar moves forward. We will track whether this is genuinely a switching objection.
+The fixed rolling window deliberately replaces monthly slot releases. Providers no longer need to reopen the next month manually; a new day becomes available automatically as the calendar moves forward. Provider controls for booking window and minimum notice are deferred until real usage shows they are needed.
 
 ### How start times work
 
@@ -631,7 +630,7 @@ These decisions do not block implementation. They are starting assumptions that 
 | Commission                  | Calculated from total booking value                                          | Does the fee make reasonable deposits too small or confusing?                  |
 | Customer phone              | Required but not verified at checkout                                        | Do providers use it, and how often is it wrong?                                |
 | Provider-cancellation costs | Customer gets a full refund; Ceaute absorbs unrecoverable costs during alpha | How often does this happen and what does it cost?                              |
-| Rolling availability        | 30, 60 or 90-day rolling window                                              | Does the lack of monthly slot releases stop providers switching?               |
+| Rolling availability        | Fixed 60-day rolling window and fixed 24-hour minimum notice                  | Do providers need configurable booking windows or notice periods?              |
 
 The rule is simple: configuration may change, but a completed booking never changes underneath the people who made it.
 
@@ -642,7 +641,7 @@ The rule is simple: configuration may change, but a completed booking never chan
 Implementation should happen in vertical slices. Each slice should leave behind something understandable and testable.
 
 1. **Provider presence** — account, provider setup, active location, treatments, policies and public page.
-2. **Availability** — weekly hours, blocked dates, rolling window and overlap-safe slot generation.
+2. **Availability** — weekly hours, blocked dates, fixed 60-day window and overlap-safe slot generation.
 3. **Booking** — customer account, contact details, temporary hold and confirmed booking without real money.
 4. **Payments** — Stripe Connect, full payment, deposits, commission and immediate confirmation.
 5. **Booking management** — customer/provider views, cancellation and refunds.

@@ -17,6 +17,34 @@ const DAYS_OF_WEEK = [
 ];
 
 const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
+const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+function todayInLondon() {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/London",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+  const getPart = (type) => parts.find((part) => part.type === type)?.value;
+
+  return `${getPart("year")}-${getPart("month")}-${getPart("day")}`;
+}
+
+function isValidLocalDate(value) {
+  if (!DATE_PATTERN.test(value)) {
+    return false;
+  }
+
+  const [year, month, day] = value.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+
+  return (
+    date.getUTCFullYear() === year &&
+    date.getUTCMonth() === month - 1 &&
+    date.getUTCDate() === day
+  );
+}
 
 export const getSchedule = async () => {
   const { supabase, providerPage } = await getSignedInProvider({
@@ -41,6 +69,26 @@ export const getSchedule = async () => {
       end_time: entry.ends_at,
     }))
     .filter((entry) => entry.day_of_week);
+};
+
+export const getBlockedDates = async () => {
+  const { supabase, providerPage } = await getSignedInProvider({
+    next: "/provider/availability",
+  });
+
+  const { data: blockedDates, error } = await supabase
+    .schema("ceaute")
+    .from("blocked_date")
+    .select("id, local_date")
+    .eq("provider_page_id", providerPage.id)
+    .gte("local_date", todayInLondon())
+    .order("local_date", { ascending: true });
+
+  if (error) {
+    throw new Error("Could not load blocked dates.");
+  }
+
+  return blockedDates ?? [];
 };
 
 function parseSchedule(formData) {
@@ -114,4 +162,61 @@ export const updateSchedule = async (_currentState, formData) => {
   revalidatePath("/provider/availability");
   revalidatePath("/", "layout");
   return "Saved.";
+};
+
+export const blockDate = async (_currentState, formData) => {
+  const { supabase, providerPage } = await getSignedInProvider({
+    next: "/provider/availability",
+  });
+  const localDate = String(formData.get("local_date") ?? "").trim();
+
+  if (!isValidLocalDate(localDate)) {
+    return "Choose a valid date to block.";
+  }
+
+  if (localDate < todayInLondon()) {
+    return "Choose today or a future date.";
+  }
+
+  const { error } = await supabase.schema("ceaute").from("blocked_date").insert({
+    provider_page_id: providerPage.id,
+    local_date: localDate,
+  });
+
+  if (error) {
+    if (error.code === "23505") {
+      return "That date is already blocked.";
+    }
+
+    return "Could not block that date.";
+  }
+
+  revalidatePath("/provider/availability");
+  revalidatePath("/", "layout");
+  return "Date blocked.";
+};
+
+export const removeBlockedDate = async (formData) => {
+  const { supabase, providerPage } = await getSignedInProvider({
+    next: "/provider/availability",
+  });
+  const blockedDateId = String(formData.get("blocked_date_id") ?? "").trim();
+
+  if (!blockedDateId) {
+    return;
+  }
+
+  const { error } = await supabase
+    .schema("ceaute")
+    .from("blocked_date")
+    .delete()
+    .eq("provider_page_id", providerPage.id)
+    .eq("id", blockedDateId);
+
+  if (error) {
+    throw new Error("Could not remove blocked date.");
+  }
+
+  revalidatePath("/provider/availability");
+  revalidatePath("/", "layout");
 };
