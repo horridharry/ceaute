@@ -4,9 +4,9 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getSignedInProvider } from "../../_lib/provider-data";
 import {
-  getStripeAccountInclude,
+  classifyStripePaymentAccount,
   getStripe,
-  isStripeRecipientReady,
+  retrieveStripeAccount,
   stripeAccountToPaymentAccount,
 } from "@/lib/stripe/server";
 
@@ -49,7 +49,7 @@ export async function getPaymentSettings() {
   return {
     configured: Boolean(process.env.STRIPE_SECRET_KEY),
     paymentAccount,
-    ready: isStripeRecipientReady(paymentAccount),
+    state: classifyStripePaymentAccount(paymentAccount),
   };
 }
 
@@ -69,11 +69,9 @@ export async function refreshPaymentStatus() {
   }
 
   const stripe = getStripe();
-  const account = await stripe.v2.core.accounts.retrieve(
+  const account = await retrieveStripeAccount(
+    stripe,
     paymentAccount.stripe_account_id,
-    {
-      include: getStripeAccountInclude(),
-    },
   );
   await upsertPaymentAccount({
     supabase,
@@ -140,7 +138,11 @@ export async function startOrResumeOnboarding() {
           losses_collector: "application",
         },
       },
-      include: getStripeAccountInclude(),
+      include: [
+        "configuration.recipient",
+        "identity",
+        "requirements",
+      ],
       metadata: {
         provider_page_id: providerPage.id,
       },
@@ -152,6 +154,18 @@ export async function startOrResumeOnboarding() {
       providerPageId: providerPage.id,
       account,
     });
+  } else {
+    const account = await retrieveStripeAccount(stripe, accountId);
+    const values = await upsertPaymentAccount({
+      supabase,
+      providerPageId: providerPage.id,
+      account,
+    });
+    const state = classifyStripePaymentAccount(values);
+
+    if (!state.canCreateOnboardingLink) {
+      throw new Error("Stripe onboarding is not currently available.");
+    }
   }
 
   const accountLink = await stripe.v2.core.accountLinks.create({

@@ -6,10 +6,16 @@ import {
 } from "./actions";
 
 export default async function ProviderPaymentsPage() {
-  const { configured, paymentAccount, ready } = await getPaymentSettings();
+  const { configured, paymentAccount, state } = await getPaymentSettings();
   const hasAccount = Boolean(paymentAccount?.stripe_account_id);
   const currentlyDue = paymentAccount?.requirements_currently_due ?? [];
   const pastDue = paymentAccount?.requirements_past_due ?? [];
+  const titleByState = {
+    needs_information: hasAccount ? "Setup incomplete" : "Not connected",
+    pending_review: "Stripe is reviewing your information",
+    ready: "Payments ready",
+    restricted: "Payments restricted",
+  };
 
   return (
     <main className="container max-w-md p-5">
@@ -30,13 +36,9 @@ export default async function ProviderPaymentsPage() {
 
         <section className="mt-8 rounded-xl border p-4 text-sm">
           <h2 className="text-lg font-semibold">
-            {ready ? "Ready" : hasAccount ? "Setup incomplete" : "Not connected"}
+            {titleByState[state.state]}
           </h2>
-          <p className="mt-2 text-black/60">
-            {ready
-              ? "Your Stripe account can receive transferred customer payments and payouts."
-              : "Complete Stripe-hosted onboarding to receive transferred customer payments and payouts."}
-          </p>
+          <p className="mt-2 text-black/60">{state.message}</p>
           {hasAccount ? (
             <dl className="mt-4 grid gap-2">
               <div className="flex justify-between gap-4">
@@ -77,15 +79,17 @@ export default async function ProviderPaymentsPage() {
               </button>
             </form>
           ) : null}
-          <form action={startOrResumeOnboarding}>
-            <button
-              type="submit"
-              disabled={!configured}
-              className="rounded-lg bg-pink-700 p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-pink-800 disabled:opacity-50"
-            >
-              {hasAccount ? "Resume onboarding" : "Connect Stripe"}
-            </button>
-          </form>
+          {state.canCreateOnboardingLink ? (
+            <form action={startOrResumeOnboarding}>
+              <button
+                type="submit"
+                disabled={!configured}
+                className="rounded-lg bg-pink-700 p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-pink-800 disabled:opacity-50"
+              >
+                {hasAccount ? "Resume onboarding" : "Connect Stripe"}
+              </button>
+            </form>
+          ) : null}
         </div>
       </div>
     </main>

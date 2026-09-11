@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { createServiceRoleClient } from '@/lib/supabase/service-role';
 import {
   getStripe,
+  retrieveStripeAccount,
   stripeAccountToPaymentAccount,
 } from '@/lib/stripe/server';
 
@@ -98,9 +99,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ received: true });
   }
 
-  const account = await stripe.v2.core.accounts.retrieve(stripeAccountId, {
-    include: ['configuration.recipient', 'identity', 'requirements'],
-  });
+  const account = await retrieveStripeAccount(stripe, stripeAccountId);
 
   const update = await supabase
     .schema('ceaute')

@@ -23,6 +23,12 @@ export function getStripeAccountInclude() {
   return STRIPE_ACCOUNT_INCLUDE;
 }
 
+export function retrieveStripeAccount(stripe, accountId) {
+  return stripe.v2.core.accounts.retrieve(accountId, {
+    include: STRIPE_ACCOUNT_INCLUDE,
+  });
+}
+
 export function stripeAccountToPaymentAccount(account) {
   const recipient = account.configuration?.recipient;
   const stripeBalance = recipient?.capabilities?.stripe_balance;
@@ -44,10 +50,71 @@ export function stripeAccountToPaymentAccount(account) {
   };
 }
 
-export function isStripeRecipientReady(paymentAccount) {
+function hasActionableRequirements(paymentAccount) {
   return Boolean(
-    paymentAccount?.recipient_applied &&
-      paymentAccount?.stripe_transfers_status === "active" &&
-      paymentAccount?.payouts_status === "active",
+    paymentAccount?.requirements_currently_due?.length ||
+      paymentAccount?.requirements_past_due?.length,
   );
+}
+
+function hasRestrictedCapability(paymentAccount) {
+  return (
+    paymentAccount?.stripe_transfers_status === "restricted" ||
+    paymentAccount?.stripe_transfers_status === "unsupported" ||
+    paymentAccount?.payouts_status === "restricted" ||
+    paymentAccount?.payouts_status === "unsupported"
+  );
+}
+
+export function classifyStripePaymentAccount(paymentAccount) {
+  if (!paymentAccount?.stripe_account_id) {
+    return {
+      state: "needs_information",
+      canCreateOnboardingLink: true,
+      message:
+        "Complete Stripe-hosted onboarding to receive transferred customer payments and payouts.",
+    };
+  }
+
+  const actionable = hasActionableRequirements(paymentAccount);
+  const ready = Boolean(
+    paymentAccount.recipient_applied &&
+      paymentAccount.stripe_transfers_status === "active" &&
+      paymentAccount.payouts_status === "active",
+  );
+
+  if (ready) {
+    return {
+      state: "ready",
+      canCreateOnboardingLink: false,
+      message:
+        "Your Stripe account can receive transferred customer payments and payouts.",
+    };
+  }
+
+  if (hasRestrictedCapability(paymentAccount)) {
+    return {
+      state: "restricted",
+      canCreateOnboardingLink: actionable,
+      message: actionable
+        ? "Stripe needs more information before payments can be enabled."
+        : "Stripe has restricted payments for this account. Check Stripe for next steps.",
+    };
+  }
+
+  if (actionable) {
+    return {
+      state: "needs_information",
+      canCreateOnboardingLink: true,
+      message:
+        "Stripe needs more information before payments can be enabled.",
+    };
+  }
+
+  return {
+    state: "pending_review",
+    canCreateOnboardingLink: false,
+    message:
+      "Stripe is reviewing your information. Payments will be enabled when Stripe finishes its checks.",
+  };
 }
