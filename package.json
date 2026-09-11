@@ -10,6 +10,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "node --experimental-default-type=module --test",
     "test:db": "supabase test db",
     "typecheck": "tsc --noEmit"
   },
