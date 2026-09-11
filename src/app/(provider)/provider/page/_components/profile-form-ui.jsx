@@ -200,6 +200,12 @@ export function ProfileFormUI({ profile, updateProfile }) {
             >
               Location
             </Link>
+            <Link
+              href="/provider/page/portfolio"
+              className="mr-2 w-max rounded-lg border border-black/10 p-3 px-6 text-sm font-semibold text-pink-600 duration-200 hover:border-black/20 active:border-transparent active:bg-pink-500/10 active:text-pink-500"
+            >
+              Portfolio
+            </Link>
             <button
               form="update_details"
               type="submit"
