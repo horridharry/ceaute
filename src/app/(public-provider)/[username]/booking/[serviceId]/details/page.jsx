@@ -1,6 +1,10 @@
 import { redirect, notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { updateBookingCustomerDetails } from "../../actions";
+import {
+  confirmTestBookingHold,
+  createBookingHoldFromDetails,
+  getBookingHoldSummary,
+} from "../../actions";
 import { getPublicBookingDetailsPage } from "../../../_lib/public-provider-data";
 import {
   addMinutes,
@@ -25,6 +29,18 @@ function buildDetailsPath({ username, serviceId, startAt, addOnIds }) {
   for (const addOnId of addOnIds) {
     searchParams.append("add_on", addOnId);
   }
+
+  return `/@${username}/booking/${serviceId}/details?${searchParams.toString()}`;
+}
+
+function buildReturnPath({ username, serviceId, startAt, addOnIds, holdId }) {
+  const searchParams = new URLSearchParams({ start_at: startAt });
+
+  for (const addOnId of addOnIds) {
+    searchParams.append("add_on", addOnId);
+  }
+
+  searchParams.set("hold", holdId);
 
   return `/@${username}/booking/${serviceId}/details?${searchParams.toString()}`;
 }
@@ -66,6 +82,9 @@ export default async function UsernameDetailsPage({ params, searchParams }) {
   const decodedUsername = normalizePublicUsername(username);
   const selectedAddOnIds = normalizeAddOnSearch(resolvedSearchParams);
   const selectedStartAt = String(resolvedSearchParams?.start_at ?? "").trim();
+  const holdId = String(
+    resolvedSearchParams?.booking ?? resolvedSearchParams?.hold ?? "",
+  ).trim();
   const detailsPath = buildDetailsPath({
     username: decodedUsername,
     serviceId,
@@ -78,6 +97,161 @@ export default async function UsernameDetailsPage({ params, searchParams }) {
 
   if (!profileId) {
     redirect(`/sign-in?next=${encodeURIComponent(detailsPath)}`);
+  }
+
+  if (holdId) {
+    const holdSummary = await getBookingHoldSummary(holdId);
+
+    if (!holdSummary) {
+      redirect(`/@${decodedUsername}/booking/${serviceId}`);
+    }
+
+    const holdStartAt = new Date(holdSummary.start_at);
+    const holdEndAt = new Date(holdSummary.end_at);
+    const serviceSnapshot = holdSummary.service_snapshot ?? {};
+    const selectedAddOns = serviceSnapshot.selected_add_ons ?? [];
+    const isConfirmed = holdSummary.status === "confirmed";
+    const returnPath = buildReturnPath({
+      username: decodedUsername,
+      serviceId,
+      startAt: selectedStartAt || holdSummary.start_at,
+      addOnIds: selectedAddOnIds,
+      holdId: holdSummary.id,
+    });
+
+    return (
+      <main className="container max-w-md p-5">
+        <div className="mt-6 flex flex-col">
+          <h1 className="text-3xl font-bold tracking-tighter">
+            {isConfirmed ? "Booking confirmed" : "Booking held"}
+          </h1>
+          <p className="mt-1 text-sm">
+            {isConfirmed
+              ? "Your test booking is confirmed."
+              : "This time is held for 10 minutes while you continue."}
+          </p>
+
+          <section className="mt-8 rounded-xl border p-4">
+            <h2 className="text-lg font-semibold tracking-tighter">
+              Booking summary
+            </h2>
+            <div className="mt-4 flex flex-col gap-3 text-sm">
+              <div>
+                <p className="font-semibold">
+                  {serviceSnapshot.provider_display_name}
+                </p>
+                <p className="text-black/60">
+                  @{serviceSnapshot.provider_username}
+                </p>
+                <p className="text-black/60">{serviceSnapshot.public_area}</p>
+              </div>
+              <div>
+                <p className="font-semibold">{serviceSnapshot.treatment_name}</p>
+                {selectedAddOns.length ? (
+                  <ul className="mt-1 text-black/60">
+                    {selectedAddOns.map((addOn) => (
+                      <li key={addOn.id}>
+                        + {addOn.name} (
+                        {formatPricePence(addOn.additional_price_pence)},{" "}
+                        {formatDurationMinutes(
+                          addOn.additional_duration_minutes,
+                        )}
+                        )
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+              </div>
+              <div>
+                <p className="font-semibold">
+                  {formatDateLabel(holdStartAt)} · {formatTimeLabel(holdStartAt)}{" "}
+                  - {formatTimeLabel(holdEndAt)}
+                </p>
+                <p className="text-black/60">
+                  Total duration:{" "}
+                  {formatDurationMinutes(serviceSnapshot.duration_minutes)}
+                </p>
+              </div>
+              <div className="border-t pt-3">
+                <p className="flex justify-between">
+                  <span>Total price</span>
+                  <span className="font-semibold">
+                    {formatPricePence(serviceSnapshot.total_price_pence)}
+                  </span>
+                </p>
+                <p className="flex justify-between">
+                  <span>Due now</span>
+                  <span className="font-semibold">
+                    {formatPricePence(
+                      serviceSnapshot.payment_mode === "fixed_deposit"
+                        ? Math.min(
+                            Number(
+                              serviceSnapshot.commitment_amount_pence ?? 0,
+                            ),
+                            Number(serviceSnapshot.total_price_pence ?? 0),
+                          )
+                        : serviceSnapshot.total_price_pence,
+                    )}
+                  </span>
+                </p>
+              </div>
+              <div className="border-t pt-3 text-black/60">
+                <p>
+                  Cancellation window:{" "}
+                  {serviceSnapshot.cancellation_window_hours ?? 24} hours.
+                </p>
+                {serviceSnapshot.written_policy ? (
+                  <p className="mt-2 whitespace-pre-wrap">
+                    {serviceSnapshot.written_policy}
+                  </p>
+                ) : null}
+              </div>
+              {isConfirmed ? (
+                <div className="border-t pt-3">
+                  <p className="font-semibold">Exact address</p>
+                  <p>{serviceSnapshot.address_line_1}</p>
+                  {serviceSnapshot.address_line_2 ? (
+                    <p>{serviceSnapshot.address_line_2}</p>
+                  ) : null}
+                  <p>
+                    {serviceSnapshot.city} {serviceSnapshot.postcode}
+                  </p>
+                  {serviceSnapshot.access_instructions ? (
+                    <p className="mt-2 text-black/60">
+                      {serviceSnapshot.access_instructions}
+                    </p>
+                  ) : null}
+                </div>
+              ) : (
+                <p className="border-t pt-3 text-black/60">
+                  Exact address and access instructions are shown after
+                  confirmation.
+                </p>
+              )}
+              {!isConfirmed && holdSummary.expires_at ? (
+                <p className="text-black/60">
+                  Hold expires at{" "}
+                  {formatTimeLabel(new Date(holdSummary.expires_at))}.
+                </p>
+              ) : null}
+            </div>
+          </section>
+
+          {!isConfirmed ? (
+            <form action={confirmTestBookingHold} className="mt-8 ml-auto">
+              <input type="hidden" name="booking_id" value={holdSummary.id} />
+              <input type="hidden" name="return_path" value={returnPath} />
+              <button
+                type="submit"
+                className="w-max rounded-lg bg-pink-700 p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-pink-800"
+              >
+                Confirm test booking
+              </button>
+            </form>
+          ) : null}
+        </div>
+      </main>
+    );
   }
 
   const [
@@ -209,10 +383,16 @@ export default async function UsernameDetailsPage({ params, searchParams }) {
         </section>
 
         <form
-          action={updateBookingCustomerDetails}
+          action={createBookingHoldFromDetails}
           id="booking_details"
           className="mt-8 flex flex-col gap-4"
         >
+          <input type="hidden" name="username" value={providerPage.username} />
+          <input type="hidden" name="treatment_id" value={treatment.id} />
+          <input type="hidden" name="start_at" value={startAt.toISOString()} />
+          {selectedAddOns.map((addOn) => (
+            <input key={addOn.id} type="hidden" name="add_on" value={addOn.id} />
+          ))}
           <span className="field-set">
             <label htmlFor="full_name" className="label">
               Full name
@@ -255,7 +435,7 @@ const SubmitButton = () => {
       type="submit"
       className="w-max rounded-lg bg-pink-700 p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-pink-800 disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
     >
-      Save details
+      Continue
     </button>
   );
 };
