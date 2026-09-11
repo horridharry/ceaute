@@ -3,31 +3,6 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { getAllBookings } from "./actions";
 
-const convertDuration = (duration) => {
-  const treatmentDuration = duration.split(":");
-  const hours = parseInt(treatmentDuration[1]);
-  const minutes = parseInt(treatmentDuration[2]);
-
-  return [hours ? `${hours} hours` : "", minutes ? `${minutes} minutes` : ""]
-    .filter(Boolean)
-    .join(" ");
-};
-
-const addDuration = (dateTime, duration) => {
-  const treatmentDuration = duration.split(":");
-  const hours = parseInt(treatmentDuration[1]);
-  const minutes = parseInt(treatmentDuration[2]);
-  const date = new Date(dateTime);
-
-  date.setMinutes(date.getMinutes() + hours * 60 + minutes);
-
-  return date;
-};
-
-const formatDate = (dateTime, options) => {
-  return new Intl.DateTimeFormat("en-GB", options).format(new Date(dateTime));
-};
-
 const BookingsLoading = () => (
   <div className="duration-200 rounded-xl border p-2 h-52 flex animate-pulse">
     <p className="text-sm font-medium opacity-50 text-center m-auto">
@@ -46,39 +21,21 @@ const NoBookings = () => (
 
 const BookingItem = ({ booking }) => (
   <Link
-    key={booking.treatment_id}
     href={`/provider/bookings/${booking.booking_id}`}
   >
     <div className="appearance-none list-none rounded-xl border p-2.5 duration-200 hover:border-black/20 hover:bg-black/5 ">
       <div className="flex h-full">
         <div className="max-w-sm flex-1 overflow-hidden text-ellipsis">
-          <h2 className="font-semibold">{booking?.customer_fullname}</h2>
-          <p className=" text-sm mt-3">{booking?.treatments?.name}</p>
+          <h2 className="font-semibold">{booking.customer_name}</h2>
+          <p className="mt-3 text-sm">{booking.treatment_name}</p>
 
-          <span className="flex gap-1 text-sm">
-            <p className="font-semibold">
-              {" "}
-              {`${formatDate(booking.booking_time, {
-                weekday: "long",
-                day: "2-digit",
-                month: "short",
-              })},`}
-            </p>
-            <p className="font-semibold">
-              {" "}
-              {` ${formatDate(booking.booking_time, {
-                hour: "numeric",
-                minute: "2-digit",
-                hour12: true,
-              })} - 
-                ${formatDate(addDuration(booking.booking_time, booking.treatments.duration), {
-                  hour: "numeric",
-                  minute: "2-digit",
-                  hour12: true,
-                })}`}
-            </p>{" "}
-            <p className=""> {`(${convertDuration(booking?.duration)})`}</p>
+          <span className="flex flex-wrap gap-1 text-sm">
+            <p className="font-semibold">{booking.date_label},</p>
+            <p className="font-semibold">{booking.time_label}</p>
+            <p>{`(${booking.duration_label})`}</p>
           </span>
+          <p className="mt-2 text-sm font-medium">{booking.total_price_label}</p>
+          <p className="text-xs capitalize text-black/60">{booking.status}</p>
         </div>
       </div>
     </div>
