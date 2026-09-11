@@ -1,14 +1,38 @@
 "use client";
-import Link from "next/link";
-import { useState } from "react";
-import { useActionState } from "react";
 
-const cleanUsername = (username) => {
-  return username
+import { useActionState, useState } from "react";
+
+const PROVIDER_CATEGORIES = [
+  "Nails",
+  "Lashes",
+  "Hair",
+  "Brows",
+  "Skincare",
+  "Makeup",
+];
+
+const cleanUsername = (value) => {
+  return value
     .trim()
     .toLowerCase()
     .replace(/[^a-z0-9._]+/g, "")
     .slice(0, 30);
+};
+
+const validateUsername = (username) => {
+  if (!username) {
+    return null;
+  }
+
+  if (!/^[a-z0-9._]+$/.test(username)) {
+    return "Username can only contain lowercase letters, numbers, full stops, and underscores.";
+  }
+
+  if (username.length < 3 || username.length > 30) {
+    return "Username must be between 3 and 30 characters long.";
+  }
+
+  return null;
 };
 
 export function ProfileFormUI({ profile, updateProfile }) {
@@ -16,153 +40,171 @@ export function ProfileFormUI({ profile, updateProfile }) {
     updateProfile,
     "",
   );
-
-  const loading = false;
-
-  const [username, setUsername] = useState(profile.username || "");
   const [businessName, setBusinessName] = useState(profile.business_name || "");
-  const [potentialUsername, setPotentialUsername] = useState("");
-
-  const [usernameError, setUsernameError] = useState(null);
+  const [username, setUsername] = useState(profile.username || "");
+  const [usernameWasEdited, setUsernameWasEdited] = useState(
+    Boolean(profile.username),
+  );
   const [businessNameError, setBusinessNameError] = useState(null);
+  const [usernameError, setUsernameError] = useState(null);
+  const [biographyError, setBiographyError] = useState(null);
 
-  const validateUsername = (username) => {
-    const usernameRegex = /^[a-zA-Z0-9_-]+$/;
-    if (!usernameRegex.test(username)) {
-      return "Username can only contain letters, numbers, hyphens, and underscores.";
-    }
-    if (username.length < 3 || username.length > 30) {
-      return "Username must be between 3 and 30 characters long.";
-    }
-    // Add check for uniqueness against your database here
-    return null; // No error
-  };
+  const updateBusinessName = (event) => {
+    const nextBusinessName = event.target.value;
+    setBusinessName(nextBusinessName);
 
-  const handleUsernameChange = (event) => {
-    const inputValue = event.target.value;
-    setUsernameError(validateUsername(inputValue));
-    setUsername(inputValue);
-  };
-
-  const handleBusinessNameChange = (event) => {
-    const inputValue = event.target.value;
-    setBusinessName(inputValue);
-
-    setPotentialUsername(cleanUsername(inputValue));
-
-    if (inputValue === "") {
-      setBusinessNameError("Please give your treatment a name");
+    if (nextBusinessName && nextBusinessName.trim().length < 2) {
+      setBusinessNameError("Business name must be at least 2 characters long.");
     } else {
       setBusinessNameError(null);
     }
-  };
 
-  const handleBusinessNameBlur = () => {
-    // Validate potential username
-    const usernameError = validateUsername(potentialUsername);
-    //setUsernameError(usernameError);
-
-    // If valid, update the actual username
-    if (!usernameError) {
-      setUsername(potentialUsername);
+    if (!usernameWasEdited) {
+      const suggestedUsername = cleanUsername(nextBusinessName);
+      setUsername(suggestedUsername);
+      setUsernameError(validateUsername(suggestedUsername));
     }
   };
+
+  const updateUsername = (event) => {
+    const nextUsername = cleanUsername(event.target.value);
+    setUsernameWasEdited(true);
+    setUsername(nextUsername);
+    setUsernameError(validateUsername(nextUsername));
+  };
+
+  const updateBiography = (event) => {
+    if (event.target.value.length > 500) {
+      setBiographyError("Biography must be 500 characters or fewer.");
+      return;
+    }
+
+    setBiographyError(null);
+  };
+
+  const hasClientError = businessNameError || usernameError || biographyError;
 
   return (
     <main className="container max-w-md p-5">
       <div className="mt-6 flex flex-col">
-        <h1 className="text-3xl font-bold tracking-tighter ">Details</h1>
-        <p className="text-sm mt-1">
-          Manage details for your public Ceaute page.{" "}
-        </p>
+        <h1 className="text-3xl font-bold tracking-tighter">Page identity</h1>
+
         <form
           id="update_details"
-          className="flex flex-col gap-4 mt-12"
+          className="mt-12 flex flex-col gap-4"
           action={updateProfileAction}
         >
           <span className="field-set">
             <label className="label" htmlFor="business_name">
-              {"Business Name"}
+              Business name
             </label>
             <p
               className={
                 businessNameError
-                  ? "text-sm transition-opacity ease-in opacity-100 duration-500 text-red-600"
-                  : "text-sm transition-opacity ease-in opacity-0 duration-500 text-red-600"
+                  ? "text-sm text-red-600 opacity-100 transition-opacity duration-500 ease-in"
+                  : "text-sm text-red-600 opacity-0 transition-opacity duration-500 ease-in"
               }
             >
-              {businessNameError}
+              {businessNameError || "Business name is valid"}
             </p>
             <input
               id="business_name"
               name="business_name"
-              required
-              defaultValue={businessName}
-              onBlur={handleBusinessNameBlur}
+              value={businessName}
+              onChange={updateBusinessName}
               className="field"
-              onChange={(event) => handleBusinessNameChange(event)}
             />
           </span>
+
           <span className="field-set">
             <label className="label" htmlFor="username">
-              Fleekd Username
+              Username
             </label>
             <p
               className={
                 usernameError
-                  ? "text-sm transition-opacity ease-in opacity-100 duration-500 text-red-600"
-                  : "text-sm transition-opacity ease-in opacity-0 duration-500 text-red-600"
+                  ? "text-sm text-red-600 opacity-100 transition-opacity duration-500 ease-in"
+                  : "text-sm text-red-600 opacity-0 transition-opacity duration-500 ease-in"
               }
             >
-              {usernameError}
+              {usernameError || "Username is valid"}
             </p>
             <div className="relative flex items-center rounded-lg">
-              <span className="absolute z-40 ml-3 text-sm opacity-80">
-                {"ceaute.com / @"}
-              </span>
+              <span className="absolute z-40 ml-3 text-sm opacity-80">/@</span>
               <input
                 id="username"
                 name="username"
                 autoComplete="username"
-                className="relative w-full appearance-none ring-1 ring-transparent rounded-lg border p-2.5 pl-24 outline-none duration-200 hover:border-black/25 focus:border-pink-600 focus:ring-pink-600"
                 value={username}
-                required
-                onChange={(event) => {
-                  handleUsernameChange(event);
-                }}
+                onChange={updateUsername}
+                className="relative w-full appearance-none rounded-lg border p-2.5 pl-10 outline-none ring-1 ring-transparent duration-200 hover:border-black/25 focus:border-pink-600 focus:ring-pink-600"
               />
             </div>
           </span>
-          <p className="mt-4 text-sm text-red-600">{stateMessage}</p>
-          <div className="mt-8 flex gap-2 items-center justify-end">
-            <Link
-              href="/provider"
-              className="w-max rounded-lg font-semibold hover:border-black/20 border-black/10 text-pink-600 p-3 px-6 text-sm border duration-200 active:bg-pink-500/10  active:border-transparent active:text-pink-500 disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+
+          <span className="field-set">
+            <label className="label" htmlFor="provider_category">
+              Provider category
+            </label>
+            <select
+              id="provider_category"
+              name="provider_category"
+              defaultValue={profile.provider_category || ""}
+              className="field cursor-pointer"
             >
-              Back
-            </Link>
-            <SubmitButton
-              error={usernameError || businessNameError}
-              loading={loading}
-              pending={pending}
+              <option value="">Select a category</option>
+              {PROVIDER_CATEGORIES.map((category) => (
+                <option key={category} value={category}>
+                  {category}
+                </option>
+              ))}
+            </select>
+          </span>
+
+          <span className="field-set">
+            <label className="label" htmlFor="biography">
+              Biography
+            </label>
+            <p
+              className={
+                biographyError
+                  ? "text-sm text-red-600 opacity-100 transition-opacity duration-500 ease-in"
+                  : "text-sm text-red-600 opacity-0 transition-opacity duration-500 ease-in"
+              }
+            >
+              {biographyError || "Biography is valid"}
+            </p>
+            <textarea
+              id="biography"
+              name="biography"
+              rows={5}
+              maxLength={500}
+              defaultValue={profile.biography || ""}
+              onChange={updateBiography}
+              className="field resize-none"
             />
+          </span>
+
+          <p className="mt-4 text-sm text-red-600">{stateMessage}</p>
+          {username ? (
+            <p className="text-sm text-black/60">
+              Future public URL: /@{username}
+            </p>
+          ) : null}
+
+          <div className="mt-8 flex items-center justify-end">
+            <button
+              form="update_details"
+              type="submit"
+              disabled={pending || Boolean(hasClientError)}
+              aria-disabled={pending || Boolean(hasClientError)}
+              className="w-max rounded-lg bg-pink-700 p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-pink-800 disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+            >
+              {pending ? "Saving..." : "Save"}
+            </button>
           </div>
         </form>
       </div>
     </main>
   );
 }
-
-const SubmitButton = ({ loading, error, pending }) => {
-  return (
-    <button
-      form="update_details"
-      type="submit"
-      className="w-max rounded-lg font-semibold bg-pink-700 bg- p-3 px-4 text-sm  text-white shadow-sm duration-200 hover:bg-pink-800 disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
-      aria-disabled={pending || error}
-      disabled={pending || loading || error}
-    >
-      {!pending ? "Update details" : "Updating..."}
-    </button>
-  );
-};

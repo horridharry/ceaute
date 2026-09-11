@@ -110,7 +110,7 @@ export async function getSignedInProvider({ next = "/provider" } = {}) {
   const { data: providerPage, error } = await supabase
     .schema("ceaute")
     .from("provider_page")
-    .select("id, owner_profile_id, username, display_name, biography, status")
+    .select("id, owner_profile_id, username, display_name, provider_category, biography, status")
     .eq("owner_profile_id", userId)
     .maybeSingle();
 
@@ -139,6 +139,7 @@ export function providerPageToProviderProfile(providerPage) {
     user_id: providerPage.owner_profile_id,
     username: providerPage.username ?? "",
     business_name: providerPage.display_name ?? "",
+    provider_category: providerPage.provider_category ?? "",
     biography: providerPage.biography ?? "",
     status: providerPage.status,
   };
