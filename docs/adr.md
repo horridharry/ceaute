@@ -169,7 +169,7 @@ Some information is duplicated. That is intentional. The alternative is smaller 
 
 ---
 
-## ADR 5: Use Stripe Connect direct charges
+## ADR 5: Use Stripe Connect destination charges
 
 **Status:** Accepted for the MVP; confirm legal and account configuration before live payments
 
@@ -179,28 +179,27 @@ Each booking involves one independent provider delivering a service to one custo
 
 ### The decision
 
-Use Stripe Connect connected accounts and create each payment as a direct charge on the provider's connected account.
+Ceaute uses Stripe Accounts v2 with destination charges. Customer payments occur on Ceaute’s platform account, which transfers the provider share and carries platform payment fees and charge-related risk.
 
 For each payment:
 
-- The charge belongs to that connected account.
-- Stripe places the provider's funds in its connected balance.
-- Ceaute collects its commission using an application fee.
-- Stripe handles the provider's verification and payout setup.
-- Ceaute creates refunds against the connected-account charge.
-- When customer policy requires the platform fee to be returned, Ceaute explicitly refunds the application fee as part of the refund flow.
+- The charge belongs to Ceaute's platform account.
+- Stripe transfers the provider share to the provider's connected account.
+- Ceaute keeps its commission from the platform-side payment flow.
+- Stripe handles the provider's verification and payout setup through Accounts v2 hosted onboarding.
+- Ceaute creates refunds against the platform charge and handles transfer/application-fee effects explicitly.
 
 Payment objects remain Stripe's record of movement. Ceaute also stores its own booking-level amounts and Stripe references so support and reconciliation do not depend on querying Stripe for every screen.
 
 ### Why this fits Ceaute
 
-Direct charges are designed for a transaction involving one connected account and its customer. The money flow matches Ceaute's provider-by-provider booking model, while application fees support commission without a manual payout system.
+Destination charges fit Ceaute's customer-facing booking flow: customers pay Ceaute, and Ceaute routes the provider share to the connected account attached to the booked provider page.
 
 ### What we accept
 
-Payment records are distributed across connected accounts, making reporting and cross-provider saved-payment experiences less straightforward. Refund responsibility, disputes, statement details and who is treated as the settlement merchant depend on the final Connect account configuration. Those details must be checked with Stripe and reflected in Ceaute's legal terms before real payments launch.
+Because Ceaute owns the platform charge, it also carries platform payment fees and charge-related risk. Refunds, disputes, transfer reversals, statement details and legal terms must be checked carefully before real payments launch.
 
-References: [Stripe direct charges](https://docs.stripe.com/connect/direct-charges), [Connect charge types](https://docs.stripe.com/connect/charges), [Application fees](https://docs.stripe.com/connect/marketplace/tasks/app-fees).
+References: [Stripe Accounts v2](https://docs.stripe.com/connect/accounts-v2), [Connect charge types](https://docs.stripe.com/connect/charges), [Destination charges](https://docs.stripe.com/connect/destination-charges).
 
 ---
 
