@@ -17,14 +17,10 @@ const STRIPE_ACCOUNT_EVENT_TYPES = new Set([
 ]);
 
 type StripeAccountEvent = {
+  id: string;
   type: string;
-  data?: {
-    account_id?: unknown;
-  };
-  related_object?: {
-    type?: unknown;
-    id?: unknown;
-  } | null;
+  data?: { account_id?: unknown };
+  related_object?: { type?: unknown; id?: unknown } | null;
 };
 
 function getRelatedAccountId(event: StripeAccountEvent) {
@@ -42,6 +38,33 @@ function getRelatedAccountId(event: StripeAccountEvent) {
   return null;
 }
 
+async function checkedRpc(
+  name: string,
+  parameters: Record<string, unknown>,
+  errorMessage: string,
+) {
+  const supabase = createServiceRoleClient();
+  const result = await supabase.schema('ceaute').rpc(name, parameters);
+
+  if (result.error) {
+    throw new Error(result.error.message || errorMessage);
+  }
+
+  return result.data;
+}
+
+async function failEvent(eventId: string, error: unknown) {
+  await checkedRpc(
+    'fail_stripe_connect_event',
+    {
+      target_event_id: eventId,
+      target_error:
+        error instanceof Error ? error.message : 'Stripe Connect event processing failed.',
+    },
+    'Could not mark Stripe Connect event retryable.',
+  );
+}
+
 export async function POST(request: NextRequest) {
   const signature = request.headers.get('stripe-signature');
   const webhookSecret = process.env.STRIPE_CONNECT_WEBHOOK_SECRET;
@@ -52,63 +75,98 @@ export async function POST(request: NextRequest) {
 
   const stripe = getStripe();
   const rawBody = await request.text();
-  let event;
+  let event: StripeAccountEvent;
 
   try {
-    event = stripe.parseEventNotification(rawBody, signature, webhookSecret);
+    event = stripe.parseEventNotification(
+      rawBody,
+      signature,
+      webhookSecret,
+    ) as StripeAccountEvent;
   } catch {
     return NextResponse.json({ error: 'Invalid signature.' }, { status: 400 });
   }
 
-  const supabase = createServiceRoleClient();
+  if (!STRIPE_ACCOUNT_EVENT_TYPES.has(event.type)) {
+    return NextResponse.json({ received: true, ignored: true });
+  }
+
   const stripeAccountId = getRelatedAccountId(event);
 
-  const insertEvent = await supabase
-    .schema('ceaute')
-    .from('stripe_connect_event')
-    .insert({
-      id: event.id,
-      type: event.type,
-      stripe_account_id: stripeAccountId,
-    });
-
-  if (insertEvent.error?.code === '23505') {
-    return NextResponse.json({ received: true });
+  if (!stripeAccountId) {
+    return NextResponse.json({ received: true, ignored: true });
   }
-
-  if (insertEvent.error) {
-    return NextResponse.json({ error: 'Could not record event.' }, { status: 500 });
-  }
-
-  if (!STRIPE_ACCOUNT_EVENT_TYPES.has(event.type) || !stripeAccountId) {
-    return NextResponse.json({ received: true });
-  }
-
-  const { data: paymentAccount, error: lookupError } = await supabase
-    .schema('ceaute')
-    .from('provider_payment_account')
-    .select('provider_page_id')
-    .eq('stripe_account_id', stripeAccountId)
-    .maybeSingle();
-
-  if (lookupError) {
-    return NextResponse.json({ error: 'Could not process event.' }, { status: 500 });
-  }
-
-  if (!paymentAccount) {
-    return NextResponse.json({ received: true });
-  }
-
-  const account = await retrieveStripeAccount(stripe, stripeAccountId);
 
   try {
+    const claimRows = await checkedRpc(
+      'claim_stripe_connect_event',
+      {
+        target_event_id: event.id,
+        target_event_type: event.type,
+        target_stripe_account_id: stripeAccountId,
+      },
+      'Could not claim Stripe Connect event.',
+    );
+    const claim = claimRows?.[0];
+
+    if (!claim) {
+      throw new Error('Stripe Connect event claim returned no state.');
+    }
+
+    if (claim.action === 'complete') {
+      return NextResponse.json({ received: true });
+    }
+
+    if (claim.action === 'processing') {
+      return NextResponse.json(
+        { error: 'Event is already processing.' },
+        { status: 409 },
+      );
+    }
+
+    const supabase = createServiceRoleClient();
+    const { data: paymentAccount, error: lookupError } = await supabase
+      .schema('ceaute')
+      .from('provider_payment_account')
+      .select('provider_page_id')
+      .eq('stripe_account_id', stripeAccountId)
+      .maybeSingle();
+
+    if (lookupError) {
+      throw new Error('Could not find the provider payment account.');
+    }
+
+    if (!paymentAccount) {
+      await checkedRpc(
+        'complete_stripe_connect_event',
+        { target_event_id: event.id, target_final_status: 'ignored' },
+        'Could not ignore Stripe Connect event.',
+      );
+      return NextResponse.json({ received: true, ignored: true });
+    }
+
+    const account = await retrieveStripeAccount(stripe, stripeAccountId);
     await syncProviderPaymentAccount({
       providerPageId: paymentAccount.provider_page_id,
       account,
     });
-  } catch {
-    return NextResponse.json({ error: 'Could not update account.' }, { status: 500 });
-  }
+    await checkedRpc(
+      'complete_stripe_connect_event',
+      { target_event_id: event.id, target_final_status: 'completed' },
+      'Could not complete Stripe Connect event.',
+    );
 
-  return NextResponse.json({ received: true });
+    return NextResponse.json({ received: true });
+  } catch (error) {
+    try {
+      await failEvent(event.id, error);
+    } catch {
+      // The non-2xx response remains retryable if failure persistence also fails.
+    }
+
+    return NextResponse.json(
+      { error: 'Could not process Stripe Connect event.' },
+      { status: 500 },
+    );
+  }
 }

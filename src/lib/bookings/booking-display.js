@@ -140,9 +140,10 @@ export async function getPaymentAttemptsForBookings(bookingIds) {
     .schema("ceaute")
     .from("booking_payment_attempt")
     .select(
-      "booking_id, amount_charged_pence, total_booking_value_pence, amount_due_later_pence, ceaute_fee_pence, payment_status, refund_amount_pence, retained_amount_pence, refund_requested_at, refunded_at, refund_failed_at, failure_reason",
+      "booking_id, attempt_number, amount_charged_pence, total_booking_value_pence, amount_due_later_pence, ceaute_fee_pence, payment_status, refund_amount_pence, retained_amount_pence, refund_requested_at, refunded_at, refund_failed_at, failure_reason",
     )
-    .in("booking_id", bookingIds);
+    .in("booking_id", bookingIds)
+    .order("attempt_number", { ascending: true });
 
   if (error) {
     throw new Error("Could not load booking payment summaries.");

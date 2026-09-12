@@ -224,6 +224,8 @@ values
 insert into ceaute.booking_payment_attempt (
   id,
   booking_id,
+  attempt_number,
+  checkout_idempotency_key,
   stripe_checkout_session_id,
   stripe_payment_intent_id,
   amount_charged_pence,
@@ -233,9 +235,9 @@ insert into ceaute.booking_payment_attempt (
   provider_stripe_account_id
 )
 values
-  ('40000000-0000-0000-0000-000000000002', '30000000-0000-0000-0000-000000000002', 'cs_security_2', 'pi_security_2', 5000, 5000, 0, 'succeeded', 'acct_security_provider_one'),
-  ('40000000-0000-0000-0000-000000000003', '30000000-0000-0000-0000-000000000003', 'cs_security_3', 'pi_security_3', 5000, 5000, 0, 'succeeded', 'acct_security_provider_one'),
-  ('40000000-0000-0000-0000-000000000004', '30000000-0000-0000-0000-000000000004', 'cs_security_4', 'pi_security_4', 5000, 5000, 0, 'checkout_created', 'acct_security_provider_one');
+  ('40000000-0000-0000-0000-000000000002', '30000000-0000-0000-0000-000000000002', 1, 'ceaute-checkout-40000000-0000-0000-0000-000000000002', 'cs_security_2', 'pi_security_2', 5000, 5000, 0, 'succeeded', 'acct_security_provider_one'),
+  ('40000000-0000-0000-0000-000000000003', '30000000-0000-0000-0000-000000000003', 1, 'ceaute-checkout-40000000-0000-0000-0000-000000000003', 'cs_security_3', 'pi_security_3', 5000, 5000, 0, 'succeeded', 'acct_security_provider_one'),
+  ('40000000-0000-0000-0000-000000000004', '30000000-0000-0000-0000-000000000004', 1, 'ceaute-checkout-40000000-0000-0000-0000-000000000004', 'cs_security_4', 'pi_security_4', 5000, 5000, 0, 'checkout_created', 'acct_security_provider_one');
 
 select hasnt_function(
   'ceaute',
@@ -254,7 +256,7 @@ select throws_matching(
   'Customers cannot confirm a booking by updating the table'
 );
 select throws_matching(
-  $$select * from ceaute.complete_booking_payment_attempt('40000000-0000-0000-0000-000000000004', 'pi_forged', 'cs_forged')$$,
+  $$select * from ceaute.complete_booking_payment_attempt('40000000-0000-0000-0000-000000000004', 'pi_forged', 'cs_forged', 'paid', 'gbp', 5000)$$,
   'permission denied',
   'Customers cannot invoke payment completion'
 );
@@ -464,7 +466,10 @@ select lives_ok(
   $$select * from ceaute.complete_booking_payment_attempt(
     '40000000-0000-0000-0000-000000000004',
     'pi_security_4',
-    'cs_security_4'
+    'cs_security_4',
+    'paid',
+    'gbp',
+    5000
   )$$,
   'The trusted paid-webhook operation can confirm a live hold'
 );
