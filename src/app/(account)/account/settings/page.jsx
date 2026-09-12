@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import PersonalDetailsForm from "./personal-details-form";
 
 export default async function AccountSettingsPage() {
   const supabase = await createClient();
@@ -30,71 +30,38 @@ export default async function AccountSettingsPage() {
   }
 
   const phone = "07342207772";
-
   return (
-    <main className="container max-w-md p-5 bg-white">
-      <div className="mt-6 flex flex-col">
-        <h1 className="text-4xl font-bold tracking-tight">{name}</h1>
-        <p className="mt-1 opacity-60">{email}</p>
+    <main className="container max-w-lg p-5 bg-white mx-auto">
+      <div className="flex flex-col">
+        <h1 className="text-3xl font-bold tracking-tighter">Settings</h1>
+        <p className="mt-1 opacity-70">
+          Manage your personal details and account preferences
+        </p>
 
         <div className="mt-12">
-          <h2 className="text-2xl font-semibold tracking-tight">
+          <h2 className="text-2xl font-semibold tracking-tighter">
             Personal Details
           </h2>
-          <div className="mt-6 flex items-start">
-            <div className="flex-1">
-              <h3 className="font-medium">Name</h3>
-              <p className="opacity-60">{name}</p>
-            </div>
-            <button className="font-medium bg-amber-100">Edit</button>
-          </div>
-          <div className="mt-6">
-            <div>
-              <h3 className="font-medium">Email address</h3>
-              <p>{email}</p>
-            </div>
-            <button className="font-medium">Edit</button>
-          </div>
-          <div className="mt-6">
-            <div>
-              <h3 className="font-medium">Phone number</h3>
-              <p>{phone}</p>
-            </div>
-            <button className="font-medium">Edit</button>
-          </div>
+          <PersonalDetailsForm name={name} phone={phone} email={email} />
         </div>
 
-        <div className="mt-6 grid gap-4">
-          <div className="rounded-xl border p-3">
-            <h2 className="text-sm font-semibold text-pink-600">
-              Personal Details
-            </h2>
-            <p className="mt-1 text-sm">{name || email || "Your account"}</p>
-          </div>
-
-          <Link href="/account/bookings">
-            <div className="h-full items-end flex p-3 duration-200 hover:border-black/20 border rounded-xl">
-              <article className="mt-8">
-                <h3 className="text-pink-600 font-semibold">My bookings</h3>
-                <p className="text-xs mt-1">View your personal bookings</p>
-              </article>
-            </div>
-          </Link>
-
-          {providerPage ? (
-            <Link href="/provider">
-              <div className="h-full items-end flex p-3 duration-200 hover:border-black/20 border rounded-xl">
-                <article className="mt-8">
-                  <h3 className="text-pink-600 font-semibold">
-                    Provider workspace
-                  </h3>
-                  <p className="text-xs mt-1">
-                    Return to the provider side of your account
-                  </p>
-                </article>
+        <div className="mt-12">
+          <h2 className="text-2xl font-semibold tracking-tighter">
+            Manage account
+          </h2>
+          <div className="grid mt-6 gap-6">
+            <div className="flex gap-2 items-start">
+              <div className="flex-1">
+                <p className="font-medium tracking-tight">Delete account</p>
+                <p className="opacity-70 text-sm">
+                  Permanently delete your Ceaute account
+                </p>
               </div>
-            </Link>
-          ) : null}
+              <button className="text-sm font-medium cursor-pointer text-red-600 hover:underline">
+                Delete
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </main>
