@@ -1,7 +1,31 @@
 "use client"
 import { useState } from "react";
 
-function SettingField({ label, value, field, editing, onToggle, onSave }) {
+type SettingFieldName = "name" | "email" | "phone";
+
+type SettingFieldProps = {
+  label: string;
+  value: string;
+  field: SettingFieldName;
+  editing: boolean;
+  onToggle: (field: SettingFieldName) => void;
+  onSave: (field: SettingFieldName, value: string) => void;
+};
+
+type AccountSettingsFormProps = {
+  name: string;
+  email: string;
+  phone: string;
+};
+
+function SettingField({
+  label,
+  value,
+  field,
+  editing,
+  onToggle,
+  onSave,
+}: SettingFieldProps) {
   const [draft, setDraft] = useState(value);
 
   return (
@@ -34,10 +58,14 @@ function SettingField({ label, value, field, editing, onToggle, onSave }) {
   );
 }
 
-export default function AccountSettingsForm({name, email, phone}) {
+export default function AccountSettingsForm({
+  name,
+  email,
+  phone,
+}: AccountSettingsFormProps) {
 const [editing, setEditing] = useState({ name: false, email: false, phone: false });
 
-const toggleEdit = (field) => {
+const toggleEdit = (field: SettingFieldName) => {
   setEditing(prev => ({ ...prev, [field]: !prev[field] }));
 };
 
