@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getProviderBooking } from "../actions";
+import { getCustomerBooking } from "../actions";
 
 const canShowExactAddress = (booking) =>
   booking.status === "confirmed" || booking.status === "completed";
@@ -35,9 +35,9 @@ function ExactLocation({ booking }) {
   );
 }
 
-export default async function ProviderBookingPage({ params }) {
+export default async function CustomerBookingPage({ params }) {
   const { bookingId } = await params;
-  const booking = await getProviderBooking(bookingId);
+  const booking = await getCustomerBooking(bookingId);
 
   if (!booking) {
     notFound();
@@ -51,7 +51,7 @@ export default async function ProviderBookingPage({ params }) {
             Booking details
           </h1>
           <Link
-            href="/provider/bookings"
+            href="/account/bookings"
             className="text-sm font-semibold text-pink-600"
           >
             Back
@@ -59,7 +59,7 @@ export default async function ProviderBookingPage({ params }) {
         </div>
 
         <section className="mt-6 rounded-xl border p-4 text-sm">
-          <h2 className="text-lg font-semibold">{booking.customer_name}</h2>
+          <h2 className="text-lg font-semibold">{booking.provider_name}</h2>
           <p className="mt-3 font-medium">{booking.treatment_name}</p>
           <p className="mt-3">
             <span className="font-semibold">{booking.date_label}</span>
@@ -91,13 +91,6 @@ export default async function ProviderBookingPage({ params }) {
             </div>
           ) : null}
 
-          <div className="mt-4 border-t pt-4">
-            <p className="font-semibold">Customer</p>
-            <p className="mt-2">{booking.customer_name}</p>
-            <p className="text-black/60">{booking.customer_email}</p>
-            <p className="text-black/60">{booking.customer_phone}</p>
-          </div>
-
           <ExactLocation booking={booking} />
 
           <div className="mt-4 border-t pt-4">
@@ -114,3 +107,4 @@ export default async function ProviderBookingPage({ params }) {
     </main>
   );
 }
+
