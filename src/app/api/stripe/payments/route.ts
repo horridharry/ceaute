@@ -1,236 +1,208 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import Stripe from 'stripe';
 import { enqueueBookingTransactionalEmails } from '@/lib/emails/booking-emails';
+import {
+  getStripeObjectId,
+  processBookingRefund,
+  recordBookingRefundState,
+} from '@/lib/payments/refunds';
 import { createServiceRoleClient } from '@/lib/supabase/service-role';
 import { getStripe } from '@/lib/stripe/server';
 
 const PAYMENT_EVENT_TYPES = new Set([
   'checkout.session.completed',
   'checkout.session.expired',
-  'charge.refund.updated',
   'payment_intent.payment_failed',
   'payment_intent.canceled',
+  'refund.updated',
+  'refund.failed',
 ]);
-
-function getStringId(value: string | Stripe.PaymentIntent | null | undefined) {
-  if (!value) {
-    return null;
-  }
-
-  return typeof value === 'string' ? value : value.id;
-}
 
 function getAttemptIdFromEvent(event: Stripe.Event) {
   const object = event.data.object;
+  return 'metadata' in object
+    ? (object.metadata?.payment_attempt_id ?? null)
+    : null;
+}
 
-  if (
-    event.type.startsWith('checkout.session.') &&
-    'metadata' in object &&
-    object.metadata?.payment_attempt_id
-  ) {
-    return object.metadata.payment_attempt_id;
+function getPaymentIntentIdFromEvent(event: Stripe.Event) {
+  const object = event.data.object;
+
+  if (event.type.startsWith('payment_intent.') && 'id' in object) {
+    return object.id;
   }
 
-  if (
-    (event.type.startsWith('payment_intent.') ||
-      event.type.startsWith('charge.refund.')) &&
-    'metadata' in object &&
-    object.metadata?.payment_attempt_id
-  ) {
-    return object.metadata.payment_attempt_id;
+  if (event.type === 'checkout.session.completed') {
+    return getStripeObjectId((object as Stripe.Checkout.Session).payment_intent);
+  }
+
+  if (event.type.startsWith('refund.')) {
+    return getStripeObjectId((object as Stripe.Refund).payment_intent);
   }
 
   return null;
 }
 
-async function processUpdatedRefund({
-  event,
-  refund,
-}: {
-  event: Stripe.Event;
-  refund: Stripe.Refund;
-}) {
-  const paymentAttemptId = refund.metadata?.payment_attempt_id ?? null;
-  const stripePaymentIntentId = getStringId(refund.payment_intent);
-  const { supabase, duplicate } = await recordEvent({
-    event,
-    paymentAttemptId,
-    stripePaymentIntentId,
-  });
-
-  if (duplicate) {
-    return NextResponse.json({ received: true });
-  }
-
-  let query = supabase
-    .schema('ceaute')
-    .from('booking_payment_attempt')
-    .update({
-      ...(refund.status === 'succeeded'
-        ? {
-            payment_status: 'refunded',
-            refunded_at: new Date().toISOString(),
-            refund_failed_at: null,
-            failure_reason: null,
-          }
-        : refund.status === 'failed' || refund.status === 'canceled'
-          ? {
-              payment_status: 'refund_failed',
-              refund_failed_at: new Date().toISOString(),
-              failure_reason: `Stripe refund ${refund.status}.`,
-            }
-          : {}),
-      stripe_refund_id: refund.id,
-    });
-
-  if (paymentAttemptId) {
-    query = query.eq('id', paymentAttemptId);
-  } else {
-    query = query.eq('stripe_refund_id', refund.id);
-  }
-
-  await query.in('payment_status', ['refund_required', 'refund_failed', 'refunded']);
-
-  return NextResponse.json({ received: true });
-}
-
-async function recordEvent({
-  event,
-  paymentAttemptId,
-  stripePaymentIntentId,
-}: {
-  event: Stripe.Event;
-  paymentAttemptId: string | null;
-  stripePaymentIntentId: string | null;
-}) {
+async function checkedRpc(
+  name: string,
+  parameters: Record<string, unknown>,
+  errorMessage: string,
+) {
   const supabase = createServiceRoleClient();
-  const { error } = await supabase.schema('ceaute').from('stripe_payment_event').insert({
-    id: event.id,
-    type: event.type,
-    booking_payment_attempt_id: paymentAttemptId,
-    stripe_payment_intent_id: stripePaymentIntentId,
-  });
+  const result = await supabase.schema('ceaute').rpc(name, parameters);
 
-  if (error?.code === '23505') {
-    return { supabase, duplicate: true };
+  if (result.error) {
+    throw new Error(result.error.message || errorMessage);
   }
 
-  if (error) {
-    throw new Error('Could not record payment event.');
+  return result.data;
+}
+
+async function claimEvent(event: Stripe.Event) {
+  const rows = await checkedRpc(
+    'claim_stripe_payment_event',
+    {
+      target_event_id: event.id,
+      target_event_type: event.type,
+      target_payment_attempt_id: getAttemptIdFromEvent(event),
+      target_stripe_payment_intent_id: getPaymentIntentIdFromEvent(event),
+    },
+    'Could not claim Stripe payment event.',
+  );
+  const claim = rows?.[0];
+
+  if (!claim) {
+    throw new Error('Stripe payment event claim returned no state.');
   }
 
-  return { supabase, duplicate: false };
+  return claim;
 }
 
-async function markPaymentFailed({
-  paymentAttemptId,
-  stripePaymentIntentId,
-  reason,
-}: {
-  paymentAttemptId: string;
-  stripePaymentIntentId: string | null;
-  reason: string;
-}) {
-  const supabase = createServiceRoleClient();
-
-  await supabase
-    .schema('ceaute')
-    .from('booking_payment_attempt')
-    .update({
-      payment_status: 'failed',
-      stripe_payment_intent_id: stripePaymentIntentId,
-      failure_reason: reason,
-    })
-    .eq('id', paymentAttemptId)
-    .not('payment_status', 'in', '("succeeded","refunded")');
+async function completeEvent(eventId: string) {
+  await checkedRpc(
+    'complete_stripe_payment_event',
+    { target_event_id: eventId, target_final_status: 'completed' },
+    'Could not complete Stripe payment event.',
+  );
 }
 
-async function processCompletedCheckout({
-  event,
-  session,
-}: {
-  event: Stripe.Event;
-  session: Stripe.Checkout.Session;
-}) {
+async function failEvent(eventId: string, error: unknown) {
+  await checkedRpc(
+    'fail_stripe_payment_event',
+    {
+      target_event_id: eventId,
+      target_error:
+        error instanceof Error ? error.message : 'Stripe event processing failed.',
+    },
+    'Could not mark Stripe payment event retryable.',
+  );
+}
+
+async function processCompletedCheckout(session: Stripe.Checkout.Session) {
   const paymentAttemptId = session.metadata?.payment_attempt_id ?? null;
-  const stripePaymentIntentId = getStringId(session.payment_intent);
-  const { supabase, duplicate } = await recordEvent({
-    event,
-    paymentAttemptId,
-    stripePaymentIntentId,
-  });
+  const stripePaymentIntentId = getStripeObjectId(session.payment_intent);
 
-  if (duplicate || !paymentAttemptId || !stripePaymentIntentId) {
-    return NextResponse.json({ received: true });
+  if (!paymentAttemptId || !stripePaymentIntentId) {
+    throw new Error('Paid Checkout Session is missing persisted payment metadata.');
   }
 
-  if (session.payment_status !== 'paid') {
-    await markPaymentFailed({
-      paymentAttemptId,
-      stripePaymentIntentId,
-      reason: 'Checkout completed without paid status.',
-    });
-    return NextResponse.json({ received: true });
-  }
-
-  const { data: results, error } = await supabase
-    .schema('ceaute')
-    .rpc('complete_booking_payment_attempt', {
+  const rows = await checkedRpc(
+    'complete_booking_payment_attempt',
+    {
       target_payment_attempt_id: paymentAttemptId,
       target_stripe_payment_intent_id: stripePaymentIntentId,
       target_stripe_checkout_session_id: session.id,
-    });
+      target_payment_status: session.payment_status,
+      target_currency: session.currency,
+      target_amount_total: session.amount_total,
+    },
+    'Could not complete booking payment.',
+  );
+  const result = rows?.[0];
 
-  if (error) {
-    return NextResponse.json({ error: 'Could not complete payment.' }, { status: 500 });
+  if (!result) {
+    throw new Error('Payment completion returned no result.');
   }
 
-  const result = results?.[0];
-
-  if (result?.booking_id && result?.outcome !== 'refund_required') {
+  if (result.outcome === 'confirmed') {
     await enqueueBookingTransactionalEmails({
       bookingId: result.booking_id,
       event: 'booking_confirmed',
     });
   }
 
-  if (result?.outcome !== 'refund_required') {
-    return NextResponse.json({ received: true });
+  if (result.refund_operation_id) {
+    const refundResult = await processBookingRefund(result.refund_operation_id);
+
+    if (refundResult.action === 'processing') {
+      throw new Error('The required Stripe refund is still being processed.');
+    }
+  }
+}
+
+async function processRefundEvent(refund: Stripe.Refund) {
+  const stripePaymentIntentId = getStripeObjectId(refund.payment_intent);
+  let refundOperationId = refund.metadata?.refund_operation_id ?? null;
+
+  if (!refundOperationId && stripePaymentIntentId) {
+    refundOperationId = await checkedRpc(
+      'find_booking_refund_operation',
+      {
+        target_stripe_refund_id: refund.id,
+        target_stripe_payment_intent_id: stripePaymentIntentId,
+        target_amount_pence: refund.amount,
+      },
+      'Could not match legacy Stripe refund.',
+    );
   }
 
-  const stripe = getStripe();
-
-  try {
-    const refund = await stripe.refunds.create({
-      payment_intent: stripePaymentIntentId,
-      amount: result.amount_charged_pence,
-      reverse_transfer: true,
-      ...(result.ceaute_fee_pence > 0 ? { refund_application_fee: true } : {}),
-    });
-
-    await supabase
-      .schema('ceaute')
-      .from('booking_payment_attempt')
-      .update({
-        payment_status: 'refunded',
-        stripe_refund_id: refund.id,
-        failure_reason: 'Payment succeeded after the booking could no longer be confirmed.',
-      })
-      .eq('id', paymentAttemptId)
-      .eq('payment_status', 'refund_required');
-  } catch {
-    await supabase
-      .schema('ceaute')
-      .from('booking_payment_attempt')
-      .update({
-        payment_status: 'refund_failed',
-        failure_reason: 'Payment succeeded after the booking could no longer be confirmed; automatic refund failed.',
-      })
-      .eq('id', paymentAttemptId)
-      .eq('payment_status', 'refund_required');
+  if (!refundOperationId) {
+    throw new Error('Stripe refund is missing its refund operation metadata.');
   }
 
-  return NextResponse.json({ received: true });
+  await recordBookingRefundState({ refundOperationId, refund });
+}
+
+async function processFailureEvent(event: Stripe.Event) {
+  const paymentAttemptId = getAttemptIdFromEvent(event);
+
+  if (!paymentAttemptId) {
+    throw new Error('Stripe payment event is missing its payment attempt metadata.');
+  }
+
+  const object = event.data.object;
+  const isExpired = event.type === 'checkout.session.expired';
+  const stripeCheckoutSessionId = isExpired && 'id' in object ? object.id : null;
+
+  await checkedRpc(
+    'mark_booking_payment_attempt_failed',
+    {
+      target_payment_attempt_id: paymentAttemptId,
+      target_stripe_checkout_session_id: stripeCheckoutSessionId,
+      target_stripe_payment_intent_id: getPaymentIntentIdFromEvent(event),
+      target_reason: isExpired
+        ? 'Checkout session expired.'
+        : event.type === 'payment_intent.canceled'
+          ? 'Payment was cancelled.'
+          : 'Payment failed.',
+      target_expired: isExpired,
+    },
+    'Could not record Stripe payment failure.',
+  );
+}
+
+async function processEvent(event: Stripe.Event) {
+  if (event.type === 'checkout.session.completed') {
+    await processCompletedCheckout(event.data.object as Stripe.Checkout.Session);
+    return;
+  }
+
+  if (event.type === 'refund.updated' || event.type === 'refund.failed') {
+    await processRefundEvent(event.data.object as Stripe.Refund);
+    return;
+  }
+
+  await processFailureEvent(event);
 }
 
 export async function POST(request: NextRequest) {
@@ -252,62 +224,36 @@ export async function POST(request: NextRequest) {
   }
 
   if (!PAYMENT_EVENT_TYPES.has(event.type)) {
+    return NextResponse.json({ received: true, ignored: true });
+  }
+
+  try {
+    const claim = await claimEvent(event);
+
+    if (claim.action === 'complete') {
+      return NextResponse.json({ received: true });
+    }
+
+    if (claim.action === 'processing') {
+      return NextResponse.json(
+        { error: 'Event is already processing.' },
+        { status: 409 },
+      );
+    }
+
+    await processEvent(event);
+    await completeEvent(event.id);
     return NextResponse.json({ received: true });
+  } catch (error) {
+    try {
+      await failEvent(event.id, error);
+    } catch {
+      // The non-2xx response remains retryable even if failure persistence failed.
+    }
+
+    return NextResponse.json(
+      { error: 'Could not process Stripe payment event.' },
+      { status: 500 },
+    );
   }
-
-  if (event.type === 'checkout.session.completed') {
-    return processCompletedCheckout({
-      event,
-      session: event.data.object as Stripe.Checkout.Session,
-    });
-  }
-
-  if (event.type === 'charge.refund.updated') {
-    return processUpdatedRefund({
-      event,
-      refund: event.data.object as Stripe.Refund,
-    });
-  }
-
-  const paymentAttemptId = getAttemptIdFromEvent(event);
-  const object = event.data.object;
-  const stripePaymentIntentId =
-    event.type.startsWith('payment_intent.') && 'id' in object
-      ? object.id
-      : null;
-  const { duplicate } = await recordEvent({
-    event,
-    paymentAttemptId,
-    stripePaymentIntentId,
-  });
-
-  if (duplicate || !paymentAttemptId) {
-    return NextResponse.json({ received: true });
-  }
-
-  if (event.type === 'checkout.session.expired') {
-    await markPaymentFailed({
-      paymentAttemptId,
-      stripePaymentIntentId,
-      reason: 'Checkout session expired.',
-    });
-  }
-
-  if (event.type === 'payment_intent.payment_failed') {
-    await markPaymentFailed({
-      paymentAttemptId,
-      stripePaymentIntentId,
-      reason: 'Payment failed.',
-    });
-  }
-
-  if (event.type === 'payment_intent.canceled') {
-    await markPaymentFailed({
-      paymentAttemptId,
-      stripePaymentIntentId,
-      reason: 'Payment was cancelled.',
-    });
-  }
-
-  return NextResponse.json({ received: true });
 }

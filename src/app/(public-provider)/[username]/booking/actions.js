@@ -233,6 +233,8 @@ export async function getBookingHoldSummary(bookingId) {
     .from("booking_payment_attempt")
     .select("payment_status")
     .eq("booking_id", summary.id)
+    .order("attempt_number", { ascending: false })
+    .limit(1)
     .maybeSingle();
 
   if (paymentError) {
@@ -332,11 +334,7 @@ export async function startStripeCheckoutForBooking(formData) {
     redirect(`${returnPath}&payment=expired`);
   }
 
-  const [
-    providerPageResult,
-    paymentAccountResult,
-    existingAttemptResult,
-  ] = await Promise.all([
+  const [providerPageResult, paymentAccountResult] = await Promise.all([
     supabase
       .schema("ceaute")
       .from("provider_page")
@@ -351,15 +349,9 @@ export async function startStripeCheckoutForBooking(formData) {
       )
       .eq("provider_page_id", booking.provider_page_id)
       .maybeSingle(),
-    supabase
-      .schema("ceaute")
-      .from("booking_payment_attempt")
-      .select("id, payment_status")
-      .eq("booking_id", booking.id)
-      .maybeSingle(),
   ]);
 
-  if (providerPageResult.error || paymentAccountResult.error || existingAttemptResult.error) {
+  if (providerPageResult.error || paymentAccountResult.error) {
     throw new Error("Could not prepare checkout.");
   }
 
@@ -374,101 +366,172 @@ export async function startStripeCheckoutForBooking(formData) {
     redirect(`${returnPath}&payment=unavailable`);
   }
 
-  if (existingAttemptResult.data?.payment_status === "succeeded") {
-    redirect(`${returnPath}&booking=${booking.id}`);
-  }
-
-  if (
-    ["refund_required", "refunded", "refund_failed"].includes(
-      existingAttemptResult.data?.payment_status,
-    )
-  ) {
-    redirect(`${returnPath}&payment=unavailable`);
-  }
-
   const paymentAmounts = calculateBookingPaymentAmounts(booking.service_snapshot);
 
   if (paymentAmounts.amountChargedPence <= 0) {
     throw new Error("The amount due now must be greater than zero.");
   }
 
-  const paymentAttemptPayload = {
-    booking_id: booking.id,
-    amount_charged_pence: paymentAmounts.amountChargedPence,
-    total_booking_value_pence: paymentAmounts.totalBookingValuePence,
-    amount_due_later_pence: paymentAmounts.amountDueLaterPence,
-    ceaute_fee_pence: paymentAmounts.ceauteFeePence,
-    currency: paymentAmounts.currency,
-    provider_stripe_account_id: paymentAccount.stripe_account_id,
-    payment_status: "created",
-    failure_reason: null,
-  };
-
-  const { data: paymentAttempt, error: attemptError } = await supabase
+  const { data: claimResults, error: attemptError } = await supabase
     .schema("ceaute")
-    .from("booking_payment_attempt")
-    .upsert(paymentAttemptPayload, { onConflict: "booking_id" })
-    .select("id")
-    .single();
+    .rpc("claim_booking_checkout", {
+      target_booking_id: booking.id,
+      target_amount_charged_pence: paymentAmounts.amountChargedPence,
+      target_total_booking_value_pence: paymentAmounts.totalBookingValuePence,
+      target_amount_due_later_pence: paymentAmounts.amountDueLaterPence,
+      target_ceaute_fee_pence: paymentAmounts.ceauteFeePence,
+      target_currency: paymentAmounts.currency,
+      target_provider_stripe_account_id: paymentAccount.stripe_account_id,
+    });
 
   if (attemptError) {
     throw new Error("Could not record checkout attempt.");
+  }
+
+  let checkoutClaim = claimResults?.[0];
+
+  if (!checkoutClaim) {
+    throw new Error("Could not claim checkout attempt.");
+  }
+
+  if (checkoutClaim.action === "terminal") {
+    if (checkoutClaim.payment_status === "succeeded") {
+      redirect(`${returnPath}&booking=${booking.id}`);
+    }
+
+    redirect(`${returnPath}&payment=unavailable`);
+  }
+
+  if (checkoutClaim.action === "booking_unavailable") {
+    redirect(`${returnPath}&payment=expired`);
+  }
+
+  if (checkoutClaim.action === "processing") {
+    redirect(`${returnPath}&payment=processing`);
+  }
+
+  if (checkoutClaim.action === "reuse") {
+    const checkoutExpiresAt = new Date(checkoutClaim.stripe_checkout_expires_at);
+
+    if (
+      checkoutClaim.stripe_checkout_url &&
+      !Number.isNaN(checkoutExpiresAt.getTime()) &&
+      checkoutExpiresAt > new Date()
+    ) {
+      redirect(checkoutClaim.stripe_checkout_url);
+    }
+
+    const { data: replacementResults, error: replacementError } = await supabase
+      .schema("ceaute")
+      .rpc("replace_expired_checkout_attempt", {
+        target_payment_attempt_id: checkoutClaim.payment_attempt_id,
+      });
+
+    if (replacementError || !replacementResults?.[0]) {
+      throw new Error("Could not replace expired Stripe checkout.");
+    }
+
+    checkoutClaim = {
+      action: "create",
+      payment_attempt_id: replacementResults[0].payment_attempt_id,
+      claim_token: replacementResults[0].claim_token,
+      checkout_idempotency_key: replacementResults[0].checkout_idempotency_key,
+    };
   }
 
   const headerStore = await headers();
   const origin = getRequestOrigin(headerStore);
   const stripe = getStripe();
   const serviceSnapshot = booking.service_snapshot ?? {};
-  const checkoutSession = await stripe.checkout.sessions.create({
-    mode: "payment",
-    payment_method_types: ["card"],
-    line_items: [
+  let checkoutSession;
+
+  try {
+    checkoutSession = await stripe.checkout.sessions.create(
       {
-        quantity: 1,
-        price_data: {
-          currency: paymentAmounts.currency,
-          unit_amount: paymentAmounts.amountChargedPence,
-          product_data: {
-            name: `${serviceSnapshot.provider_display_name ?? "Ceaute"} - ${serviceSnapshot.treatment_name ?? "booking"}`,
+        mode: "payment",
+        line_items: [
+          {
+            quantity: 1,
+            price_data: {
+              currency: paymentAmounts.currency,
+              unit_amount: paymentAmounts.amountChargedPence,
+              product_data: {
+                name: `${serviceSnapshot.provider_display_name ?? "Ceaute"} - ${serviceSnapshot.treatment_name ?? "booking"}`,
+              },
+            },
+          },
+        ],
+        success_url: `${origin}${returnPath}&checkout=success&session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${origin}${returnPath}&checkout=cancelled`,
+        metadata: {
+          booking_id: booking.id,
+          payment_attempt_id: checkoutClaim.payment_attempt_id,
+        },
+        payment_intent_data: {
+          ...(paymentAmounts.ceauteFeePence > 0
+            ? { application_fee_amount: paymentAmounts.ceauteFeePence }
+            : {}),
+          transfer_data: {
+            destination: paymentAccount.stripe_account_id,
+          },
+          metadata: {
+            booking_id: booking.id,
+            payment_attempt_id: checkoutClaim.payment_attempt_id,
           },
         },
       },
-    ],
-    success_url: `${origin}${returnPath}&checkout=success&session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${origin}${returnPath}&checkout=cancelled`,
-    metadata: {
-      booking_id: booking.id,
-      payment_attempt_id: paymentAttempt.id,
-    },
-    payment_intent_data: {
-      ...(paymentAmounts.ceauteFeePence > 0
-        ? { application_fee_amount: paymentAmounts.ceauteFeePence }
-        : {}),
-      transfer_data: {
-        destination: paymentAccount.stripe_account_id,
+      {
+        idempotencyKey: checkoutClaim.checkout_idempotency_key,
       },
-      metadata: {
-        booking_id: booking.id,
-        payment_attempt_id: paymentAttempt.id,
+    );
+  } catch (checkoutError) {
+    const { error: releaseError } = await supabase.schema("ceaute").rpc(
+      "release_booking_checkout_claim",
+      {
+        target_payment_attempt_id: checkoutClaim.payment_attempt_id,
+        target_claim_token: checkoutClaim.claim_token,
+        target_reason:
+          checkoutError instanceof Error
+            ? checkoutError.message
+            : "Stripe Checkout creation failed.",
       },
+    );
+
+    if (releaseError) {
+      throw new Error("Stripe Checkout failed and its claim could not be released.", {
+        cause: checkoutError,
+      });
+    }
+
+    throw checkoutError;
+  }
+
+  const stripePaymentIntentId =
+    typeof checkoutSession.payment_intent === "string"
+      ? checkoutSession.payment_intent
+      : checkoutSession.payment_intent?.id;
+  const checkoutExpiresAt = checkoutSession.expires_at
+    ? new Date(checkoutSession.expires_at * 1000).toISOString()
+    : null;
+
+  if (!checkoutSession.url || !checkoutExpiresAt) {
+    throw new Error("Stripe Checkout did not return a reusable Session.");
+  }
+
+  const { error: updateError } = await supabase.schema("ceaute").rpc(
+    "record_booking_checkout_session",
+    {
+      target_payment_attempt_id: checkoutClaim.payment_attempt_id,
+      target_claim_token: checkoutClaim.claim_token,
+      target_stripe_checkout_session_id: checkoutSession.id,
+      target_stripe_payment_intent_id: stripePaymentIntentId ?? null,
+      target_stripe_checkout_url: checkoutSession.url,
+      target_stripe_checkout_expires_at: checkoutExpiresAt,
     },
-  });
+  );
 
-  const { error: updateError } = await supabase
-    .schema("ceaute")
-    .from("booking_payment_attempt")
-    .update({
-      stripe_checkout_session_id: checkoutSession.id,
-      stripe_payment_intent_id:
-        typeof checkoutSession.payment_intent === "string"
-          ? checkoutSession.payment_intent
-          : null,
-      payment_status: "checkout_created",
-    })
-    .eq("id", paymentAttempt.id);
-
-  if (updateError || !checkoutSession.url) {
-    throw new Error("Could not create Stripe checkout.");
+  if (updateError) {
+    throw new Error("Could not persist Stripe checkout.");
   }
 
   redirect(checkoutSession.url);
