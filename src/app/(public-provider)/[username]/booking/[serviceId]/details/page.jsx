@@ -1,9 +1,11 @@
 import { redirect, notFound } from "next/navigation";
+import { calculateBookingPaymentAmounts } from "@/lib/payments/booking-payments";
 import { createClient } from "@/lib/supabase/server";
 import {
   confirmTestBookingHold,
   createBookingHoldFromDetails,
   getBookingHoldSummary,
+  startStripeCheckoutForBooking,
 } from "../../actions";
 import { getPublicBookingDetailsPage } from "../../../_lib/public-provider-data";
 import {
@@ -71,6 +73,86 @@ function calculatePaymentSummary({ bookingSettings, totalPricePence }) {
   };
 }
 
+function getBookingDisplayState(booking, now = Date.now()) {
+  if (booking.status === "confirmed") {
+    return {
+      heading: "Booking confirmed",
+      message: "Your booking is confirmed.",
+      canPay: false,
+    };
+  }
+
+  const expiresAt = new Date(booking.expires_at ?? "").getTime();
+  const isExpired =
+    booking.status === "expired" ||
+    (["awaiting_payment", "cancelled"].includes(booking.status) &&
+      expiresAt <= now);
+
+  if (isExpired) {
+    return {
+      heading: "Slot expired",
+      message: "That held slot expired. Please choose a new time.",
+      canPay: false,
+    };
+  }
+
+  if (booking.status === "cancelled") {
+    return {
+      heading: "Booking cancelled",
+      message: "This booking was cancelled and is not confirmed.",
+      canPay: false,
+    };
+  }
+
+  if (booking.status !== "awaiting_payment" || !Number.isFinite(expiresAt)) {
+    return {
+      heading: "Booking unavailable",
+      message: "This booking cannot continue. Please choose a new time.",
+      canPay: false,
+    };
+  }
+
+  if (["failed", "cancelled"].includes(booking.payment_status)) {
+    return {
+      heading: "Payment failed",
+      message: "Payment was not completed. Your booking has not been confirmed.",
+      canPay: true,
+      showHoldExpiry: true,
+    };
+  }
+
+  if (
+    ["refund_required", "refunded", "refund_failed"].includes(booking.payment_status)
+  ) {
+    return {
+      heading: "Payment unsuccessful",
+      message:
+        "Your payment could not confirm this booking. Please choose a new time.",
+      canPay: false,
+      showHoldExpiry: true,
+    };
+  }
+
+  if (
+    ["created", "checkout_created", "succeeded"].includes(booking.payment_status)
+  ) {
+    return {
+      heading: "Booking held",
+      message:
+        "Payment is being verified. This page will show confirmation once Stripe's webhook confirms it.",
+      canPay: booking.payment_status !== "succeeded",
+      showHoldExpiry: true,
+    };
+  }
+
+  return {
+    heading: "Booking held",
+    message: "This time is held for 5 minutes while you continue.",
+    canPay: !booking.payment_status,
+    showHoldExpiry: true,
+  };
+}
+
 export default async function UsernameDetailsPage({ params, searchParams }) {
   const { username, serviceId } = await params;
   const resolvedSearchParams = await searchParams;
@@ -111,6 +193,10 @@ export default async function UsernameDetailsPage({ params, searchParams }) {
     const serviceSnapshot = holdSummary.service_snapshot ?? {};
     const selectedAddOns = serviceSnapshot.selected_add_ons ?? [];
     const isConfirmed = holdSummary.status === "confirmed";
+    const paymentAmounts = calculateBookingPaymentAmounts(serviceSnapshot);
+    const displayState = getBookingDisplayState(holdSummary);
+    const testBookingsEnabled =
+      process.env.CEAUTE_TEST_BOOKINGS_ENABLED === "true";
     const returnPath = buildReturnPath({
       username: decodedUsername,
       serviceId,
@@ -123,12 +209,10 @@ export default async function UsernameDetailsPage({ params, searchParams }) {
       <main className="container max-w-md p-5">
         <div className="mt-6 flex flex-col">
           <h1 className="text-3xl font-bold tracking-tighter">
-            {isConfirmed ? "Booking confirmed" : "Booking held"}
+            {displayState.heading}
           </h1>
           <p className="mt-1 text-sm">
-            {isConfirmed
-              ? "Your test booking is confirmed."
-              : "This time is held for 10 minutes while you continue."}
+            {displayState.message}
           </p>
 
           <section className="mt-8 rounded-xl border p-4">
@@ -182,16 +266,13 @@ export default async function UsernameDetailsPage({ params, searchParams }) {
                 <p className="flex justify-between">
                   <span>Due now</span>
                   <span className="font-semibold">
-                    {formatPricePence(
-                      serviceSnapshot.payment_mode === "fixed_deposit"
-                        ? Math.min(
-                            Number(
-                              serviceSnapshot.commitment_amount_pence ?? 0,
-                            ),
-                            Number(serviceSnapshot.total_price_pence ?? 0),
-                          )
-                        : serviceSnapshot.total_price_pence,
-                    )}
+                    {formatPricePence(paymentAmounts.amountChargedPence)}
+                  </span>
+                </p>
+                <p className="flex justify-between">
+                  <span>Due at appointment</span>
+                  <span className="font-semibold">
+                    {formatPricePence(paymentAmounts.amountDueLaterPence)}
                   </span>
                 </p>
               </div>
@@ -228,7 +309,7 @@ export default async function UsernameDetailsPage({ params, searchParams }) {
                   confirmation.
                 </p>
               )}
-              {!isConfirmed && holdSummary.expires_at ? (
+              {displayState.showHoldExpiry ? (
                 <p className="text-black/60">
                   Hold expires at{" "}
                   {formatTimeLabel(new Date(holdSummary.expires_at))}.
@@ -237,17 +318,31 @@ export default async function UsernameDetailsPage({ params, searchParams }) {
             </div>
           </section>
 
-          {!isConfirmed ? (
-            <form action={confirmTestBookingHold} className="mt-8 ml-auto">
-              <input type="hidden" name="booking_id" value={holdSummary.id} />
-              <input type="hidden" name="return_path" value={returnPath} />
-              <button
-                type="submit"
-                className="w-max rounded-lg bg-pink-700 p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-pink-800"
-              >
-                Confirm test booking
-              </button>
-            </form>
+          {displayState.canPay ? (
+            <div className="mt-8 ml-auto flex flex-col items-end gap-3">
+              <form action={startStripeCheckoutForBooking}>
+                <input type="hidden" name="booking_id" value={holdSummary.id} />
+                <input type="hidden" name="return_path" value={returnPath} />
+                <button
+                  type="submit"
+                  className="w-max rounded-lg bg-pink-700 p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-pink-800"
+                >
+                  Pay with Stripe
+                </button>
+              </form>
+              {testBookingsEnabled ? (
+                <form action={confirmTestBookingHold}>
+                  <input type="hidden" name="booking_id" value={holdSummary.id} />
+                  <input type="hidden" name="return_path" value={returnPath} />
+                  <button
+                    type="submit"
+                    className="w-max rounded-lg border p-3 px-4 text-sm font-semibold duration-200 hover:bg-black/5"
+                  >
+                    Confirm test booking
+                  </button>
+                </form>
+              ) : null}
+            </div>
           ) : null}
         </div>
       </main>
