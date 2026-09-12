@@ -4,7 +4,10 @@
     {
       "path": "/api/cron/complete-bookings",
       "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/send-booking-emails",
+      "schedule": "10 * * * *"
     }
   ]
 }
-

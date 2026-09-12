@@ -3,6 +3,7 @@
 import { cookies } from "next/headers";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { enqueueBookingTransactionalEmails } from "@/lib/emails/booking-emails";
 import { calculateBookingPaymentAmounts } from "@/lib/payments/booking-payments";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
@@ -487,6 +488,11 @@ export async function confirmTestBookingHold(formData) {
   if (error) {
     throw new Error("Could not confirm that booking.");
   }
+
+  await enqueueBookingTransactionalEmails({
+    bookingId: confirmedBookingId,
+    event: "booking_confirmed",
+  });
 
   redirect(`${returnPath}&booking=${confirmedBookingId}`);
 }

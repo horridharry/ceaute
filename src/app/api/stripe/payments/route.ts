@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import Stripe from 'stripe';
+import { enqueueBookingTransactionalEmails } from '@/lib/emails/booking-emails';
 import { createServiceRoleClient } from '@/lib/supabase/service-role';
 import { getStripe } from '@/lib/stripe/server';
 
@@ -185,6 +186,13 @@ async function processCompletedCheckout({
   }
 
   const result = results?.[0];
+
+  if (result?.booking_id && result?.outcome !== 'refund_required') {
+    await enqueueBookingTransactionalEmails({
+      bookingId: result.booking_id,
+      event: 'booking_confirmed',
+    });
+  }
 
   if (result?.outcome !== 'refund_required') {
     return NextResponse.json({ received: true });

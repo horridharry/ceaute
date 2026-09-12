@@ -1,4 +1,5 @@
 import { revalidatePath } from "next/cache";
+import { enqueueBookingTransactionalEmails } from "@/lib/emails/booking-emails";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { getStripe } from "@/lib/stripe/server";
 
@@ -150,6 +151,11 @@ export async function cancelBookingWithRefund({
       });
     }
   }
+
+  await enqueueBookingTransactionalEmails({
+    bookingId: result.bookingId,
+    event: actor === "provider" ? "provider_cancelled" : "customer_cancelled",
+  });
 
   for (const path of revalidatePaths) {
     revalidatePath(path);
