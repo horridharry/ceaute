@@ -64,7 +64,6 @@ export async function startProviderOnboarding(_currentState: string, formData: F
     display_name: displayName,
     username,
     biography: biography || null,
-    status: 'draft',
   };
 
   const { error } = existingProviderPage
@@ -75,10 +74,10 @@ export async function startProviderOnboarding(_currentState: string, formData: F
         .eq('id', existingProviderPage.id)
     : await supabase
         .schema('ceaute')
-        .from('provider_page')
-        .insert({
-          ...providerPageValues,
-          owner_profile_id: userId,
+        .rpc('create_provider_page_draft', {
+          target_display_name: displayName,
+          target_username: username,
+          target_biography: biography,
         });
 
   if (error) {

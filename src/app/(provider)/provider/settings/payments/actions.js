@@ -7,26 +7,8 @@ import {
   classifyStripePaymentAccount,
   getStripe,
   retrieveStripeAccount,
-  stripeAccountToPaymentAccount,
+  syncProviderPaymentAccount,
 } from "@/lib/stripe/server";
-
-async function upsertPaymentAccount({ supabase, providerPageId, account }) {
-  const values = {
-    provider_page_id: providerPageId,
-    ...stripeAccountToPaymentAccount(account),
-  };
-
-  const { error } = await supabase
-    .schema("ceaute")
-    .from("provider_payment_account")
-    .upsert(values, { onConflict: "provider_page_id" });
-
-  if (error) {
-    throw new Error("Could not save Stripe account status.");
-  }
-
-  return values;
-}
 
 export async function getPaymentSettings() {
   const { supabase, providerPage } = await getSignedInProvider({
@@ -73,8 +55,7 @@ export async function refreshPaymentStatus() {
     stripe,
     paymentAccount.stripe_account_id,
   );
-  await upsertPaymentAccount({
-    supabase,
+  await syncProviderPaymentAccount({
     providerPageId: providerPage.id,
     account,
   });
@@ -149,15 +130,13 @@ export async function startOrResumeOnboarding() {
     });
 
     accountId = account.id;
-    await upsertPaymentAccount({
-      supabase,
+    await syncProviderPaymentAccount({
       providerPageId: providerPage.id,
       account,
     });
   } else {
     const account = await retrieveStripeAccount(stripe, accountId);
-    const values = await upsertPaymentAccount({
-      supabase,
+    const values = await syncProviderPaymentAccount({
       providerPageId: providerPage.id,
       account,
     });

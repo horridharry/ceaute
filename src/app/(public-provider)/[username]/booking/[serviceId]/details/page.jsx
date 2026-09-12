@@ -2,7 +2,6 @@ import { redirect, notFound } from "next/navigation";
 import { calculateBookingPaymentAmounts } from "@/lib/payments/booking-payments";
 import { createClient } from "@/lib/supabase/server";
 import {
-  confirmTestBookingHold,
   createBookingHoldFromDetails,
   getBookingHoldSummary,
   startStripeCheckoutForBooking,
@@ -192,11 +191,10 @@ export default async function UsernameDetailsPage({ params, searchParams }) {
     const holdEndAt = new Date(holdSummary.end_at);
     const serviceSnapshot = holdSummary.service_snapshot ?? {};
     const selectedAddOns = serviceSnapshot.selected_add_ons ?? [];
-    const isConfirmed = holdSummary.status === "confirmed";
+    const isConfirmed =
+      holdSummary.status === "confirmed" && Boolean(holdSummary.confirmed_at);
     const paymentAmounts = calculateBookingPaymentAmounts(serviceSnapshot);
     const displayState = getBookingDisplayState(holdSummary);
-    const testBookingsEnabled =
-      process.env.CEAUTE_TEST_BOOKINGS_ENABLED === "true";
     const returnPath = buildReturnPath({
       username: decodedUsername,
       serviceId,
@@ -330,18 +328,6 @@ export default async function UsernameDetailsPage({ params, searchParams }) {
                   Pay with Stripe
                 </button>
               </form>
-              {testBookingsEnabled ? (
-                <form action={confirmTestBookingHold}>
-                  <input type="hidden" name="booking_id" value={holdSummary.id} />
-                  <input type="hidden" name="return_path" value={returnPath} />
-                  <button
-                    type="submit"
-                    className="w-max rounded-lg border p-3 px-4 text-sm font-semibold duration-200 hover:bg-black/5"
-                  >
-                    Confirm test booking
-                  </button>
-                </form>
-              ) : null}
             </div>
           ) : null}
         </div>

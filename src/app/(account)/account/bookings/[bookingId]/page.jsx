@@ -7,7 +7,8 @@ import {
 } from "../actions";
 
 const canShowExactAddress = (booking) =>
-  booking.status === "confirmed" || booking.status === "completed";
+  Boolean(booking.confirmed_at) &&
+  (booking.status === "confirmed" || booking.status === "completed");
 
 function ExactLocation({ booking }) {
   if (!canShowExactAddress(booking)) {
