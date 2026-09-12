@@ -5,6 +5,7 @@ import {
   normalizeUsername,
   providerPageToProviderProfile,
 } from "../_lib/provider-data";
+import { getProviderPagePublicationReadiness } from "./publication-readiness";
 
 const PROVIDER_CATEGORIES = new Set([
   "Nails",
@@ -16,11 +17,18 @@ const PROVIDER_CATEGORIES = new Set([
 ]);
 
 export const getProfile = async () => {
-  const { providerPage } = await getSignedInProvider({
+  const { supabase, providerPage } = await getSignedInProvider({
     next: "/provider/page",
   });
+  const publication = await getProviderPagePublicationReadiness({
+    supabase,
+    providerPage,
+  });
 
-  return providerPageToProviderProfile(providerPage);
+  return {
+    profile: providerPageToProviderProfile(providerPage),
+    publication,
+  };
 };
 
 export const updateProfile = async (_currentState, formData) => {
@@ -97,4 +105,59 @@ export const updateProfile = async (_currentState, formData) => {
   revalidatePath("/", "layout");
   revalidatePath("/provider/page");
   return "Saved.";
+};
+
+export const publishPage = async () => {
+  const { supabase, providerPage } = await getSignedInProvider({
+    next: "/provider/page",
+  });
+
+  if (providerPage.status === "suspended") {
+    return "Suspended pages cannot be published.";
+  }
+
+  const publication = await getProviderPagePublicationReadiness({
+    supabase,
+    providerPage,
+  });
+
+  if (!publication.ready) {
+    return "Complete the missing publication requirements first.";
+  }
+
+  const { error } = await supabase
+    .schema("ceaute")
+    .from("provider_page")
+    .update({ status: "published", published_at: new Date().toISOString() })
+    .eq("id", providerPage.id)
+    .neq("status", "suspended");
+
+  if (error) {
+    return "Could not publish your page.";
+  }
+
+  revalidatePath("/", "layout");
+  revalidatePath("/provider/page");
+  return "Published.";
+};
+
+export const unpublishPage = async () => {
+  const { supabase, providerPage } = await getSignedInProvider({
+    next: "/provider/page",
+  });
+
+  const { error } = await supabase
+    .schema("ceaute")
+    .from("provider_page")
+    .update({ status: "draft" })
+    .eq("id", providerPage.id)
+    .eq("status", "published");
+
+  if (error) {
+    return "Could not unpublish your page.";
+  }
+
+  revalidatePath("/", "layout");
+  revalidatePath("/provider/page");
+  return "Unpublished.";
 };

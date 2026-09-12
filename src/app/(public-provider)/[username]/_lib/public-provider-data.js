@@ -1,6 +1,6 @@
 import { cache } from "react";
 import { notFound } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { calculateAvailableAppointmentTimes } from "../booking/_lib/appointment-availability";
 import { normalizePublicUsername } from "./public-provider-format";
 
@@ -11,19 +11,22 @@ export const getPublishedProviderPageByUsername = cache(async (username) => {
     notFound();
   }
 
-  const supabase = await createClient();
+  const supabase = createServiceRoleClient();
   const { data: providerPage, error } = await supabase
     .schema("ceaute")
     .from("provider_page")
-    .select("id, owner_profile_id, username, display_name, biography, status")
+    .select(
+      "id, username, display_name, provider_category, biography, status",
+    )
     .eq("username", normalizedUsername)
+    .eq("status", "published")
     .maybeSingle();
 
   if (error) {
     throw new Error("Could not load provider page.");
   }
 
-  if (!providerPage || providerPage.status === "suspended") {
+  if (!providerPage) {
     notFound();
   }
 
@@ -31,7 +34,7 @@ export const getPublishedProviderPageByUsername = cache(async (username) => {
 });
 
 export const getPublicTreatmentsForProvider = cache(async (providerPageId) => {
-  const supabase = await createClient();
+  const supabase = createServiceRoleClient();
   const { data: treatments, error } = await supabase
     .schema("ceaute")
     .from("treatment")
@@ -52,7 +55,7 @@ export const getPublicTreatmentsForProvider = cache(async (providerPageId) => {
 
 export const getPublicTreatmentForProvider = cache(
   async (providerPageId, treatmentId) => {
-    const supabase = await createClient();
+    const supabase = createServiceRoleClient();
     const { data: treatment, error } = await supabase
       .schema("ceaute")
       .from("treatment")
@@ -77,7 +80,7 @@ export const getPublicTreatmentForProvider = cache(
 );
 
 export const getAvailabilityRulesForProvider = cache(async (providerPageId) => {
-  const supabase = await createClient();
+  const supabase = createServiceRoleClient();
   const { data: availabilityRules, error } = await supabase.schema("ceaute").rpc(
     "get_public_availability_rules",
     {
@@ -100,7 +103,7 @@ export const getActiveAddOnsForTreatment = cache(
       return [];
     }
 
-    const supabase = await createClient();
+    const supabase = createServiceRoleClient();
     const { data: addOns, error } = await supabase
       .schema("ceaute")
       .from("treatment_add_on")
@@ -127,7 +130,7 @@ export const getActiveAddOnsForTreatment = cache(
 
 export const getCompatibleAddOnsForTreatment = cache(
   async (providerPageId, treatmentId) => {
-    const supabase = await createClient();
+    const supabase = createServiceRoleClient();
     const { data: addOns, error } = await supabase
       .schema("ceaute")
       .from("treatment_add_on")
@@ -150,7 +153,7 @@ export const getCompatibleAddOnsForTreatment = cache(
 );
 
 export const getBlockedDatesForProvider = cache(async (providerPageId) => {
-  const supabase = await createClient();
+  const supabase = createServiceRoleClient();
   const { data: blockedDates, error } = await supabase.schema("ceaute").rpc(
     "get_public_blocked_dates",
     {
@@ -166,7 +169,7 @@ export const getBlockedDatesForProvider = cache(async (providerPageId) => {
 });
 
 export const getActiveBookingsForProvider = cache(async (providerPageId) => {
-  const supabase = await createClient();
+  const supabase = createServiceRoleClient();
   const { data: bookings, error } = await supabase.schema("ceaute").rpc(
     "get_public_occupied_periods",
     {
@@ -182,7 +185,7 @@ export const getActiveBookingsForProvider = cache(async (providerPageId) => {
 });
 
 export const getPublicLocationForProvider = cache(async (providerPageId) => {
-  const supabase = await createClient();
+  const supabase = createServiceRoleClient();
   const { data: location, error } = await supabase.schema("ceaute").rpc(
     "get_public_provider_location",
     {
@@ -199,7 +202,7 @@ export const getPublicLocationForProvider = cache(async (providerPageId) => {
 
 export const getPublicBookingSettingsForProvider = cache(
   async (providerPageId) => {
-    const supabase = await createClient();
+    const supabase = createServiceRoleClient();
     const { data: settings, error } = await supabase.schema("ceaute").rpc(
       "get_public_booking_settings",
       {
