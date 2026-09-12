@@ -6,6 +6,7 @@ import { getStripe } from '@/lib/stripe/server';
 const PAYMENT_EVENT_TYPES = new Set([
   'checkout.session.completed',
   'checkout.session.expired',
+  'charge.refund.updated',
   'payment_intent.payment_failed',
   'payment_intent.canceled',
 ]);
@@ -30,7 +31,8 @@ function getAttemptIdFromEvent(event: Stripe.Event) {
   }
 
   if (
-    event.type.startsWith('payment_intent.') &&
+    (event.type.startsWith('payment_intent.') ||
+      event.type.startsWith('charge.refund.')) &&
     'metadata' in object &&
     object.metadata?.payment_attempt_id
   ) {
@@ -38,6 +40,57 @@ function getAttemptIdFromEvent(event: Stripe.Event) {
   }
 
   return null;
+}
+
+async function processUpdatedRefund({
+  event,
+  refund,
+}: {
+  event: Stripe.Event;
+  refund: Stripe.Refund;
+}) {
+  const paymentAttemptId = refund.metadata?.payment_attempt_id ?? null;
+  const stripePaymentIntentId = getStringId(refund.payment_intent);
+  const { supabase, duplicate } = await recordEvent({
+    event,
+    paymentAttemptId,
+    stripePaymentIntentId,
+  });
+
+  if (duplicate) {
+    return NextResponse.json({ received: true });
+  }
+
+  let query = supabase
+    .schema('ceaute')
+    .from('booking_payment_attempt')
+    .update({
+      ...(refund.status === 'succeeded'
+        ? {
+            payment_status: 'refunded',
+            refunded_at: new Date().toISOString(),
+            refund_failed_at: null,
+            failure_reason: null,
+          }
+        : refund.status === 'failed' || refund.status === 'canceled'
+          ? {
+              payment_status: 'refund_failed',
+              refund_failed_at: new Date().toISOString(),
+              failure_reason: `Stripe refund ${refund.status}.`,
+            }
+          : {}),
+      stripe_refund_id: refund.id,
+    });
+
+  if (paymentAttemptId) {
+    query = query.eq('id', paymentAttemptId);
+  } else {
+    query = query.eq('stripe_refund_id', refund.id);
+  }
+
+  await query.in('payment_status', ['refund_required', 'refund_failed', 'refunded']);
+
+  return NextResponse.json({ received: true });
 }
 
 async function recordEvent({
@@ -198,6 +251,13 @@ export async function POST(request: NextRequest) {
     return processCompletedCheckout({
       event,
       session: event.data.object as Stripe.Checkout.Session,
+    });
+  }
+
+  if (event.type === 'charge.refund.updated') {
+    return processUpdatedRefund({
+      event,
+      refund: event.data.object as Stripe.Refund,
     });
   }
 

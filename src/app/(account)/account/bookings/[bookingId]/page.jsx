@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getCustomerBooking } from "../actions";
+import { cancelCustomerBooking, getCustomerBooking } from "../actions";
 
 const canShowExactAddress = (booking) =>
   booking.status === "confirmed" || booking.status === "completed";
@@ -31,6 +31,63 @@ function ExactLocation({ booking }) {
           Access: {booking.access_instructions}
         </p>
       ) : null}
+    </div>
+  );
+}
+
+function CancellationPanel({ booking }) {
+  if (booking.status === "cancelled") {
+    return (
+      <div className="mt-4 border-t pt-4">
+        <p className="font-semibold">Cancellation</p>
+        <p className="mt-2 text-black/60">
+          Cancelled by {booking.cancelled_by_label} on{" "}
+          {booking.cancelled_at_label}.
+        </p>
+        <p className="mt-2">Refunded: {booking.refund_amount_label}</p>
+        <p className="text-black/60">Retained: {booking.retained_amount_label}</p>
+        {booking.refund_status_label ? (
+          <p className="mt-2 text-black/60">{booking.refund_status_label}</p>
+        ) : null}
+        {booking.payment_status === "refund_failed" ? (
+          <p className="mt-2 text-red-600">
+            Automatic refund failed. Support will need to review this payment.
+          </p>
+        ) : null}
+      </div>
+    );
+  }
+
+  if (!booking.can_cancel) {
+    return null;
+  }
+
+  return (
+    <div className="mt-4 border-t pt-4">
+      <p className="font-semibold">Cancel booking</p>
+      <p className="mt-2 text-black/60">
+        Before {booking.cancellation_deadline_label}, cancelling refunds{" "}
+        {booking.customer_early_refund_label}. At or after that time, Ceaute
+        refunds {booking.customer_late_refund_label} and retains{" "}
+        {booking.customer_late_retained_label}.
+      </p>
+      <p className="mt-3 font-medium">
+        Cancelling now refunds {booking.customer_current_refund_label} and
+        retains {booking.customer_current_retained_label}.
+      </p>
+      <form action={cancelCustomerBooking} className="mt-4">
+        <input type="hidden" name="booking_id" value={booking.booking_id} />
+        <label className="mb-4 flex gap-2 text-sm text-black/70">
+          <input type="checkbox" required className="mt-1 h-4 w-4" />
+          <span>I understand this cancellation and refund outcome.</span>
+        </label>
+        <button
+          type="submit"
+          className="rounded-lg border border-rose-200 p-3 px-4 text-sm font-semibold text-rose-700 duration-200 hover:bg-rose-50"
+        >
+          Cancel booking
+        </button>
+      </form>
     </div>
   );
 }
@@ -102,9 +159,10 @@ export default async function CustomerBookingPage({ params }) {
               {booking.written_policy || "No written policy stored."}
             </p>
           </div>
+
+          <CancellationPanel booking={booking} />
         </section>
       </div>
     </main>
   );
 }
-

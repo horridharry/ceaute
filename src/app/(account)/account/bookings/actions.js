@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { cancelBookingWithRefund } from "@/lib/bookings/cancel-booking";
 import { createClient } from "@/lib/supabase/server";
 import {
   bookingToDisplayBooking,
@@ -30,7 +31,9 @@ export async function getCustomerBookings() {
   const { data: bookings, error } = await supabase
     .schema("ceaute")
     .from("booking")
-    .select("id, start_at, end_at, status, customer_snapshot, service_snapshot")
+    .select(
+      "id, start_at, end_at, status, cancelled_at, cancelled_by, cancellation_refund_pence, cancellation_retained_pence, customer_snapshot, service_snapshot",
+    )
     .eq("customer_profile_id", userId)
     .order("start_at", { ascending: true });
 
@@ -57,7 +60,9 @@ export async function getCustomerBooking(bookingId) {
   const { data: booking, error } = await supabase
     .schema("ceaute")
     .from("booking")
-    .select("id, start_at, end_at, status, customer_snapshot, service_snapshot")
+    .select(
+      "id, start_at, end_at, status, cancelled_at, cancelled_by, cancellation_refund_pence, cancellation_retained_pence, customer_snapshot, service_snapshot",
+    )
     .eq("customer_profile_id", userId)
     .eq("id", bookingId)
     .maybeSingle();
@@ -75,3 +80,21 @@ export async function getCustomerBooking(bookingId) {
   return bookingToDisplayBooking(booking, paymentAttempts.get(booking.id));
 }
 
+export async function cancelCustomerBooking(formData) {
+  const bookingId = String(formData.get("booking_id") ?? "").trim();
+
+  if (!bookingId) {
+    throw new Error("Could not cancel booking.");
+  }
+
+  const { supabase } = await getSignedInCustomer(
+    `/account/bookings/${bookingId}`,
+  );
+
+  await cancelBookingWithRefund({
+    supabase,
+    bookingId,
+    actor: "customer",
+    revalidatePaths: ["/account/bookings", `/account/bookings/${bookingId}`],
+  });
+}

@@ -72,6 +72,19 @@ export function formatBookingDateTime(startAtValue, endAtValue) {
   };
 }
 
+export function formatSingleDateTime(value) {
+  const dateTime = formatBookingDateTime(value, value);
+
+  if (
+    dateTime.date === BOOKING_FALLBACK_LABEL ||
+    dateTime.time === BOOKING_FALLBACK_LABEL
+  ) {
+    return BOOKING_FALLBACK_LABEL;
+  }
+
+  return `${dateTime.date}, ${dateTime.time.split(" - ")[0]}`;
+}
+
 export function formatBookingStatus(status) {
   const labels = {
     awaiting_payment: "Awaiting payment",
@@ -82,6 +95,15 @@ export function formatBookingStatus(status) {
   };
 
   return labels[status] ?? BOOKING_FALLBACK_LABEL;
+}
+
+export function formatBookingActor(actor) {
+  const labels = {
+    customer: "Customer",
+    provider: "Provider",
+  };
+
+  return labels[actor] ?? BOOKING_FALLBACK_LABEL;
 }
 
 export function categorizeBooking(booking, now = new Date()) {
@@ -118,7 +140,7 @@ export async function getPaymentAttemptsForBookings(bookingIds) {
     .schema("ceaute")
     .from("booking_payment_attempt")
     .select(
-      "booking_id, amount_charged_pence, total_booking_value_pence, amount_due_later_pence, payment_status",
+      "booking_id, amount_charged_pence, total_booking_value_pence, amount_due_later_pence, ceaute_fee_pence, payment_status, refund_amount_pence, retained_amount_pence, refund_requested_at, refunded_at, refund_failed_at, failure_reason",
     )
     .in("booking_id", bookingIds);
 
@@ -140,12 +162,45 @@ export function bookingToDisplayBooking(booking, paymentAttempt = null) {
   const addOns = Array.isArray(serviceSnapshot.selected_add_ons)
     ? serviceSnapshot.selected_add_ons
     : [];
+  const startAt = new Date(booking.start_at);
+  const cancellationWindowHours = Number(
+    serviceSnapshot.cancellation_window_hours ?? 24,
+  );
+  const cancellationDeadline =
+    Number.isNaN(startAt.getTime()) || !Number.isFinite(cancellationWindowHours)
+      ? null
+      : new Date(startAt.getTime() - cancellationWindowHours * 60 * 60_000);
+  const amountPaidPence = Number(paymentAttempt?.amount_charged_pence);
+  const commitmentAmountPence = Number(serviceSnapshot.commitment_amount_pence);
+  const customerLateRetainedPence =
+    Number.isInteger(amountPaidPence) && Number.isInteger(commitmentAmountPence)
+      ? Math.min(Math.max(commitmentAmountPence, 0), Math.max(amountPaidPence, 0))
+      : null;
+  const isLateCustomerCancellation =
+    cancellationDeadline instanceof Date && new Date() >= cancellationDeadline;
+  const customerCurrentRetainedPence = isLateCustomerCancellation
+    ? customerLateRetainedPence
+    : 0;
+  const customerCurrentRefundPence =
+    Number.isInteger(amountPaidPence) && customerCurrentRetainedPence !== null
+      ? Math.max(0, amountPaidPence - customerCurrentRetainedPence)
+      : null;
+  const isFutureConfirmed =
+    booking.status === "confirmed" &&
+    !Number.isNaN(startAt.getTime()) &&
+    startAt > new Date();
 
   return {
     id: booking.id,
     booking_id: booking.id,
     status: booking.status ?? null,
     status_label: formatBookingStatus(booking.status),
+    cancelled_at: booking.cancelled_at ?? null,
+    cancelled_by: booking.cancelled_by ?? null,
+    cancelled_by_label: formatBookingActor(booking.cancelled_by),
+    cancelled_at_label: booking.cancelled_at
+      ? formatSingleDateTime(booking.cancelled_at)
+      : BOOKING_FALLBACK_LABEL,
     start_at: booking.start_at,
     end_at: booking.end_at,
     customer_name:
@@ -165,9 +220,39 @@ export function bookingToDisplayBooking(booking, paymentAttempt = null) {
     amount_paid_online_label: formatMoneyFromPence(
       paymentAttempt?.amount_charged_pence,
     ),
+    amount_paid_online_pence: Number.isInteger(amountPaidPence)
+      ? amountPaidPence
+      : null,
     amount_due_at_appointment_label: formatMoneyFromPence(
       paymentAttempt?.amount_due_later_pence,
     ),
+    amount_due_at_appointment_pence: Number.isInteger(
+      Number(paymentAttempt?.amount_due_later_pence),
+    )
+      ? Number(paymentAttempt.amount_due_later_pence)
+      : null,
+    refund_amount_label: formatMoneyFromPence(
+      booking.cancellation_refund_pence ?? paymentAttempt?.refund_amount_pence,
+    ),
+    refund_amount_pence:
+      booking.cancellation_refund_pence ?? paymentAttempt?.refund_amount_pence,
+    retained_amount_label: formatMoneyFromPence(
+      booking.cancellation_retained_pence ??
+        paymentAttempt?.retained_amount_pence,
+    ),
+    retained_amount_pence:
+      booking.cancellation_retained_pence ??
+      paymentAttempt?.retained_amount_pence,
+    payment_status: paymentAttempt?.payment_status ?? null,
+    refund_failed_reason: paymentAttempt?.failure_reason ?? "",
+    refund_status_label:
+      paymentAttempt?.payment_status === "refund_required"
+        ? "Refund pending"
+        : paymentAttempt?.payment_status === "refund_failed"
+          ? "Refund failed"
+          : paymentAttempt?.payment_status === "refunded"
+            ? "Refund recorded"
+            : "",
     public_area: serviceSnapshot.public_area ?? BOOKING_FALLBACK_LABEL,
     address_line_1: serviceSnapshot.address_line_1 ?? "",
     address_line_2: serviceSnapshot.address_line_2 ?? "",
@@ -176,6 +261,26 @@ export function bookingToDisplayBooking(booking, paymentAttempt = null) {
     access_instructions: serviceSnapshot.access_instructions ?? "",
     cancellation_window_hours:
       serviceSnapshot.cancellation_window_hours ?? BOOKING_FALLBACK_LABEL,
+    cancellation_deadline_label: cancellationDeadline
+      ? formatSingleDateTime(cancellationDeadline.toISOString())
+      : BOOKING_FALLBACK_LABEL,
+    customer_early_refund_label: formatMoneyFromPence(
+      paymentAttempt?.amount_charged_pence,
+    ),
+    customer_late_refund_label: formatMoneyFromPence(
+      Number.isInteger(amountPaidPence) && customerLateRetainedPence !== null
+        ? Math.max(0, amountPaidPence - customerLateRetainedPence)
+        : null,
+    ),
+    customer_late_retained_label: formatMoneyFromPence(customerLateRetainedPence),
+    customer_current_refund_label: formatMoneyFromPence(
+      customerCurrentRefundPence,
+    ),
+    customer_current_retained_label: formatMoneyFromPence(
+      customerCurrentRetainedPence,
+    ),
+    provider_refund_label: formatMoneyFromPence(paymentAttempt?.amount_charged_pence),
+    can_cancel: isFutureConfirmed,
     written_policy: serviceSnapshot.written_policy ?? "",
     payment_mode: serviceSnapshot.payment_mode ?? BOOKING_FALLBACK_LABEL,
     selected_add_ons: addOns.map((addOn) => ({
@@ -186,4 +291,3 @@ export function bookingToDisplayBooking(booking, paymentAttempt = null) {
     })),
   };
 }
-
