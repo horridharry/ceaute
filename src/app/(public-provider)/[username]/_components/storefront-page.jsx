@@ -106,6 +106,39 @@ function TreatmentSections({ sections }) {
   );
 }
 
+function Reviews({ reviews }) {
+  if (!reviews.length) {
+    return <EmptyState>No visible reviews yet.</EmptyState>;
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      {reviews.map((review) => (
+        <article
+          key={`${review.created_at}-${review.reviewer_name}`}
+          className="rounded-xl border p-4 text-sm"
+        >
+          <div className="flex items-center justify-between gap-4">
+            <p className="font-semibold">{review.rating}/5</p>
+            <p className="text-xs text-black/50">Verified booking</p>
+          </div>
+          {review.comment ? (
+            <p className="mt-3 whitespace-pre-wrap">{review.comment}</p>
+          ) : null}
+          <p className="mt-3 text-xs text-black/50">
+            {review.reviewer_name} ·{" "}
+            {new Intl.DateTimeFormat("en-GB", {
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+            }).format(new Date(review.created_at))}
+          </p>
+        </article>
+      ))}
+    </div>
+  );
+}
+
 export function StorefrontPage({ viewModel, backHref }) {
   const { provider, portfolio, treatment_sections: treatmentSections } =
     viewModel;
@@ -172,6 +205,11 @@ export function StorefrontPage({ viewModel, backHref }) {
         </section>
 
         <PaymentTerms terms={viewModel.booking_terms} />
+
+        <section className="flex flex-col gap-3">
+          <h2 className="text-lg font-semibold">Reviews</h2>
+          <Reviews reviews={viewModel.reviews ?? []} />
+        </section>
       </div>
     </main>
   );

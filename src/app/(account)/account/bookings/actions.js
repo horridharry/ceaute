@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { cancelBookingWithRefund } from "@/lib/bookings/cancel-booking";
 import { createClient } from "@/lib/supabase/server";
@@ -75,9 +76,24 @@ export async function getCustomerBooking(bookingId) {
     return null;
   }
 
-  const paymentAttempts = await getPaymentAttemptsForBookings([booking.id]);
+  const [paymentAttempts, reviewResult] = await Promise.all([
+    getPaymentAttemptsForBookings([booking.id]),
+    supabase
+      .schema("ceaute")
+      .from("booking_review")
+      .select("id, rating, comment, is_visible, created_at")
+      .eq("booking_id", booking.id)
+      .maybeSingle(),
+  ]);
 
-  return bookingToDisplayBooking(booking, paymentAttempts.get(booking.id));
+  if (reviewResult.error) {
+    throw new Error("Could not load review details.");
+  }
+
+  return {
+    ...bookingToDisplayBooking(booking, paymentAttempts.get(booking.id)),
+    review: reviewResult.data ?? null,
+  };
 }
 
 export async function cancelCustomerBooking(formData) {
@@ -97,4 +113,27 @@ export async function cancelCustomerBooking(formData) {
     actor: "customer",
     revalidatePaths: ["/account/bookings", `/account/bookings/${bookingId}`],
   });
+}
+
+export async function submitBookingReview(formData) {
+  const bookingId = String(formData.get("booking_id") ?? "").trim();
+  const rating = Number(formData.get("rating"));
+  const comment = String(formData.get("comment") ?? "");
+
+  if (!bookingId || !Number.isInteger(rating)) {
+    throw new Error("Choose a review rating.");
+  }
+
+  const { supabase } = await getSignedInCustomer(`/account/bookings/${bookingId}`);
+  const { error } = await supabase.schema("ceaute").rpc("create_booking_review", {
+    target_booking_id: bookingId,
+    review_rating: rating,
+    review_comment: comment,
+  });
+
+  if (error) {
+    throw new Error(error.message || "Could not save review.");
+  }
+
+  revalidatePath(`/account/bookings/${bookingId}`);
 }

@@ -44,6 +44,16 @@ function mapTreatment(treatment, compatibleAddOns) {
   };
 }
 
+function reviewerDisplayName(profile) {
+  const fullName = String(profile?.full_name ?? "").trim();
+
+  if (!fullName) {
+    return "Verified customer";
+  }
+
+  return fullName.split(/\s+/)[0] || "Verified customer";
+}
+
 function buildTreatmentSections({ treatments, groups, addOns, compatibility }) {
   const activeGroupById = new Map(groups.map((group) => [group.id, group]));
   const activeAddOnById = new Map(addOns.map((addOn) => [addOn.id, addOn]));
@@ -98,6 +108,7 @@ export async function buildStorefrontViewModel({ supabase, providerPage }) {
     addOnsResult,
     compatibilityResult,
     bookingSettingsResult,
+    reviewsResult,
   ] = await Promise.all([
     supabase
       .schema("ceaute")
@@ -154,6 +165,13 @@ export async function buildStorefrontViewModel({ supabase, providerPage }) {
       )
       .eq("provider_page_id", providerPage.id)
       .maybeSingle(),
+    supabase
+      .schema("ceaute")
+      .from("booking_review")
+      .select("rating, comment, created_at, profile:customer_profile_id(full_name)")
+      .eq("provider_page_id", providerPage.id)
+      .eq("is_visible", true)
+      .order("created_at", { ascending: false }),
   ]);
 
   if (
@@ -163,7 +181,8 @@ export async function buildStorefrontViewModel({ supabase, providerPage }) {
     treatmentsResult.error ||
     addOnsResult.error ||
     compatibilityResult.error ||
-    bookingSettingsResult.error
+    bookingSettingsResult.error ||
+    reviewsResult.error
   ) {
     throw new Error("Could not load provider page preview.");
   }
@@ -190,5 +209,11 @@ export async function buildStorefrontViewModel({ supabase, providerPage }) {
       compatibility: compatibilityResult.data ?? [],
     }),
     booking_terms: mapBookingTerms(bookingSettingsResult.data),
+    reviews: (reviewsResult.data ?? []).map((review) => ({
+      rating: review.rating,
+      comment: review.comment ?? "",
+      created_at: review.created_at,
+      reviewer_name: reviewerDisplayName(review.profile),
+    })),
   };
 }

@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { enqueueBookingTransactionalEmails } from "@/lib/emails/booking-emails";
 import { calculateBookingPaymentAmounts } from "@/lib/payments/booking-payments";
+import { normalizeUkPhoneNumber } from "@/lib/phone/normalize";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import {
@@ -44,7 +45,7 @@ export async function updateBookingCustomerDetails(formData) {
   }
 
   const customerName = String(formData.get("full_name") ?? "").trim();
-  const customerPhone = String(formData.get("phone") ?? "").trim();
+  const customerPhone = normalizeUkPhoneNumber(formData.get("phone"));
 
   if (customerName.length < 2) {
     return "Enter your full name.";
@@ -54,7 +55,7 @@ export async function updateBookingCustomerDetails(formData) {
     return "Full name must be 120 characters or fewer.";
   }
 
-  if (customerPhone.length < 7 || customerPhone.length > 20) {
+  if (!customerPhone) {
     return "Enter a valid phone number.";
   }
 
@@ -99,7 +100,7 @@ function buildDetailsUrl({ username, treatmentId, startAt, addOnIds, holdId }) {
 
 async function saveCustomerDetails({ supabase, profileId, formData }) {
   const customerName = String(formData.get("full_name") ?? "").trim();
-  const customerPhone = String(formData.get("phone") ?? "").trim();
+  const customerPhone = normalizeUkPhoneNumber(formData.get("phone"));
 
   if (customerName.length < 2) {
     return { error: "Enter your full name." };
@@ -109,7 +110,7 @@ async function saveCustomerDetails({ supabase, profileId, formData }) {
     return { error: "Full name must be 120 characters or fewer." };
   }
 
-  if (customerPhone.length < 7 || customerPhone.length > 20) {
+  if (!customerPhone) {
     return { error: "Enter a valid phone number." };
   }
 

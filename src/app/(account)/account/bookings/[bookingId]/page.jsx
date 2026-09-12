@@ -1,6 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { cancelCustomerBooking, getCustomerBooking } from "../actions";
+import {
+  cancelCustomerBooking,
+  getCustomerBooking,
+  submitBookingReview,
+} from "../actions";
 
 const canShowExactAddress = (booking) =>
   booking.status === "confirmed" || booking.status === "completed";
@@ -92,6 +96,73 @@ function CancellationPanel({ booking }) {
   );
 }
 
+function ExistingReview({ review }) {
+  if (!review) {
+    return null;
+  }
+
+  return (
+    <div className="mt-4 border-t pt-4">
+      <p className="font-semibold">Your review</p>
+      <p className="mt-2 text-sm">Rating: {review.rating}/5</p>
+      {review.comment ? (
+        <p className="mt-2 whitespace-pre-line text-sm text-black/70">
+          {review.comment}
+        </p>
+      ) : null}
+      <p className="mt-2 text-xs text-black/50">
+        {review.is_visible ? "Visible publicly" : "Hidden by Ceaute support"}
+      </p>
+    </div>
+  );
+}
+
+function ReviewPanel({ booking }) {
+  if (booking.status !== "completed") {
+    return null;
+  }
+
+  if (booking.review) {
+    return <ExistingReview review={booking.review} />;
+  }
+
+  return (
+    <div className="mt-4 border-t pt-4">
+      <p className="font-semibold">Leave a review</p>
+      <form action={submitBookingReview} className="mt-4 flex flex-col gap-3">
+        <input type="hidden" name="booking_id" value={booking.booking_id} />
+        <label htmlFor="rating" className="label">
+          Rating
+        </label>
+        <select id="rating" name="rating" className="input" required>
+          <option value="">Choose a rating</option>
+          <option value="5">5 stars</option>
+          <option value="4">4 stars</option>
+          <option value="3">3 stars</option>
+          <option value="2">2 stars</option>
+          <option value="1">1 star</option>
+        </select>
+        <label htmlFor="comment" className="label">
+          Comment
+        </label>
+        <textarea
+          id="comment"
+          name="comment"
+          maxLength={1000}
+          rows={4}
+          className="input"
+        />
+        <button
+          type="submit"
+          className="w-max rounded-lg bg-pink-700 p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-pink-800"
+        >
+          Submit review
+        </button>
+      </form>
+    </div>
+  );
+}
+
 export default async function CustomerBookingPage({ params }) {
   const { bookingId } = await params;
   const booking = await getCustomerBooking(bookingId);
@@ -161,6 +232,7 @@ export default async function CustomerBookingPage({ params }) {
           </div>
 
           <CancellationPanel booking={booking} />
+          <ReviewPanel booking={booking} />
         </section>
       </div>
     </main>
