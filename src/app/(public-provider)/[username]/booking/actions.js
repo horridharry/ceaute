@@ -3,7 +3,6 @@
 import { cookies } from "next/headers";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { enqueueBookingTransactionalEmails } from "@/lib/emails/booking-emails";
 import { calculateBookingPaymentAmounts } from "@/lib/payments/booking-payments";
 import { normalizeUkPhoneNumber } from "@/lib/phone/normalize";
 import { createClient } from "@/lib/supabase/server";
@@ -242,7 +241,10 @@ export async function getBookingHoldSummary(bookingId) {
 
   const serviceSnapshot = { ...summary.service_snapshot };
 
-  if (summary.status !== "confirmed") {
+  if (
+    !summary.confirmed_at ||
+    !["confirmed", "completed"].includes(summary.status)
+  ) {
     for (const field of [
       "address_line_1",
       "address_line_2",
@@ -470,30 +472,4 @@ export async function startStripeCheckoutForBooking(formData) {
   }
 
   redirect(checkoutSession.url);
-}
-
-export async function confirmTestBookingHold(formData) {
-  if (process.env.CEAUTE_TEST_BOOKINGS_ENABLED !== "true") {
-    throw new Error("Test booking confirmation is disabled.");
-  }
-
-  const supabase = await createClient();
-  const bookingId = String(formData.get("booking_id") ?? "").trim();
-  const returnPath = String(formData.get("return_path") ?? "").trim();
-  const { data: confirmedBookingId, error } = await supabase
-    .schema("ceaute")
-    .rpc("confirm_test_booking_hold", {
-      target_booking_id: bookingId,
-    });
-
-  if (error) {
-    throw new Error("Could not confirm that booking.");
-  }
-
-  await enqueueBookingTransactionalEmails({
-    bookingId: confirmedBookingId,
-    event: "booking_confirmed",
-  });
-
-  redirect(`${returnPath}&booking=${confirmedBookingId}`);
 }

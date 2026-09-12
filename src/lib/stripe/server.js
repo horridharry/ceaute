@@ -1,4 +1,5 @@
 import Stripe from "stripe";
+import { createServiceRoleClient } from "@/lib/supabase/service-role";
 
 const STRIPE_API_VERSION = "2026-08-26.preview";
 const STRIPE_ACCOUNT_INCLUDE = [
@@ -47,6 +48,34 @@ export function stripeAccountToPaymentAccount(account) {
     requirements_eventually_due:
       account.requirements?.summary?.eventually_due ?? [],
     last_stripe_update_at: new Date().toISOString(),
+  };
+}
+
+export async function syncProviderPaymentAccount({ providerPageId, account }) {
+  const values = stripeAccountToPaymentAccount(account);
+  const supabase = createServiceRoleClient();
+  const { error } = await supabase
+    .schema("ceaute")
+    .rpc("sync_provider_payment_account", {
+      target_provider_page_id: providerPageId,
+      target_stripe_account_id: values.stripe_account_id,
+      target_dashboard: values.dashboard,
+      target_identity_country: values.identity_country,
+      target_recipient_applied: values.recipient_applied,
+      target_stripe_transfers_status: values.stripe_transfers_status,
+      target_payouts_status: values.payouts_status,
+      target_requirements_currently_due: values.requirements_currently_due,
+      target_requirements_past_due: values.requirements_past_due,
+      target_requirements_eventually_due: values.requirements_eventually_due,
+    });
+
+  if (error) {
+    throw new Error("Could not save Stripe account status.");
+  }
+
+  return {
+    provider_page_id: providerPageId,
+    ...values,
   };
 }
 

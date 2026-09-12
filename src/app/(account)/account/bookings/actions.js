@@ -27,50 +27,43 @@ async function getSignedInCustomer(next) {
 }
 
 export async function getCustomerBookings() {
-  const { supabase, userId } = await getSignedInCustomer("/account/bookings");
+  const { supabase } = await getSignedInCustomer("/account/bookings");
 
   const { data: bookings, error } = await supabase
     .schema("ceaute")
-    .from("booking")
-    .select(
-      "id, start_at, end_at, status, cancelled_at, cancelled_by, cancellation_refund_pence, cancellation_retained_pence, customer_snapshot, service_snapshot",
-    )
-    .eq("customer_profile_id", userId)
-    .order("start_at", { ascending: true });
+    .rpc("get_customer_booking_summaries");
 
   if (error) {
     throw new Error("Could not load customer bookings.");
   }
 
   const paymentAttempts = await getPaymentAttemptsForBookings(
-    bookings.map((booking) => booking.id),
+    (bookings ?? []).map((booking) => booking.id),
   );
 
   return groupBookingsByTiming(
-    bookings.map((booking) =>
+    (bookings ?? []).map((booking) =>
       bookingToDisplayBooking(booking, paymentAttempts.get(booking.id)),
     ),
   );
 }
 
 export async function getCustomerBooking(bookingId) {
-  const { supabase, userId } = await getSignedInCustomer(
+  const { supabase } = await getSignedInCustomer(
     `/account/bookings/${bookingId}`,
   );
 
-  const { data: booking, error } = await supabase
+  const { data: bookings, error } = await supabase
     .schema("ceaute")
-    .from("booking")
-    .select(
-      "id, start_at, end_at, status, cancelled_at, cancelled_by, cancellation_refund_pence, cancellation_retained_pence, customer_snapshot, service_snapshot",
-    )
-    .eq("customer_profile_id", userId)
-    .eq("id", bookingId)
-    .maybeSingle();
+    .rpc("get_customer_booking_summaries", {
+      target_booking_id: bookingId,
+    });
 
   if (error) {
     throw new Error("Could not load customer booking.");
   }
+
+  const booking = bookings?.[0];
 
   if (!booking) {
     return null;

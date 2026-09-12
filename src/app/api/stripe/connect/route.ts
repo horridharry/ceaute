@@ -3,7 +3,7 @@ import { createServiceRoleClient } from '@/lib/supabase/service-role';
 import {
   getStripe,
   retrieveStripeAccount,
-  stripeAccountToPaymentAccount,
+  syncProviderPaymentAccount,
 } from '@/lib/stripe/server';
 
 const STRIPE_ACCOUNT_EVENT_TYPES = new Set([
@@ -101,14 +101,12 @@ export async function POST(request: NextRequest) {
 
   const account = await retrieveStripeAccount(stripe, stripeAccountId);
 
-  const update = await supabase
-    .schema('ceaute')
-    .from('provider_payment_account')
-    .update(stripeAccountToPaymentAccount(account))
-    .eq('provider_page_id', paymentAccount.provider_page_id)
-    .eq('stripe_account_id', account.id);
-
-  if (update.error) {
+  try {
+    await syncProviderPaymentAccount({
+      providerPageId: paymentAccount.provider_page_id,
+      account,
+    });
+  } catch {
     return NextResponse.json({ error: 'Could not update account.' }, { status: 500 });
   }
 

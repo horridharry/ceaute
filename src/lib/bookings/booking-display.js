@@ -187,13 +187,18 @@ export function bookingToDisplayBooking(booking, paymentAttempt = null) {
       : null;
   const isFutureConfirmed =
     booking.status === "confirmed" &&
+    Boolean(booking.confirmed_at) &&
     !Number.isNaN(startAt.getTime()) &&
     startAt > new Date();
+  const canExposePrivateLocation =
+    Boolean(booking.confirmed_at) &&
+    (booking.status === "confirmed" || booking.status === "completed");
 
   return {
     id: booking.id,
     booking_id: booking.id,
     status: booking.status ?? null,
+    confirmed_at: booking.confirmed_at ?? null,
     status_label: formatBookingStatus(booking.status),
     cancelled_at: booking.cancelled_at ?? null,
     cancelled_by: booking.cancelled_by ?? null,
@@ -254,11 +259,17 @@ export function bookingToDisplayBooking(booking, paymentAttempt = null) {
             ? "Refund recorded"
             : "",
     public_area: serviceSnapshot.public_area ?? BOOKING_FALLBACK_LABEL,
-    address_line_1: serviceSnapshot.address_line_1 ?? "",
-    address_line_2: serviceSnapshot.address_line_2 ?? "",
-    city: serviceSnapshot.city ?? "",
-    postcode: serviceSnapshot.postcode ?? "",
-    access_instructions: serviceSnapshot.access_instructions ?? "",
+    address_line_1: canExposePrivateLocation
+      ? (serviceSnapshot.address_line_1 ?? "")
+      : "",
+    address_line_2: canExposePrivateLocation
+      ? (serviceSnapshot.address_line_2 ?? "")
+      : "",
+    city: canExposePrivateLocation ? (serviceSnapshot.city ?? "") : "",
+    postcode: canExposePrivateLocation ? (serviceSnapshot.postcode ?? "") : "",
+    access_instructions: canExposePrivateLocation
+      ? (serviceSnapshot.access_instructions ?? "")
+      : "",
     cancellation_window_hours:
       serviceSnapshot.cancellation_window_hours ?? BOOKING_FALLBACK_LABEL,
     cancellation_deadline_label: cancellationDeadline

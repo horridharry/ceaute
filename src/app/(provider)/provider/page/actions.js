@@ -125,12 +125,9 @@ export const publishPage = async () => {
     return "Complete the missing publication requirements first.";
   }
 
-  const { error } = await supabase
-    .schema("ceaute")
-    .from("provider_page")
-    .update({ status: "published", published_at: new Date().toISOString() })
-    .eq("id", providerPage.id)
-    .neq("status", "suspended");
+  const { error } = await supabase.schema("ceaute").rpc(
+    "publish_provider_page",
+  );
 
   if (error) {
     return "Could not publish your page.";
@@ -142,16 +139,13 @@ export const publishPage = async () => {
 };
 
 export const unpublishPage = async () => {
-  const { supabase, providerPage } = await getSignedInProvider({
+  const { supabase } = await getSignedInProvider({
     next: "/provider/page",
   });
 
-  const { error } = await supabase
-    .schema("ceaute")
-    .from("provider_page")
-    .update({ status: "draft" })
-    .eq("id", providerPage.id)
-    .eq("status", "published");
+  const { error } = await supabase.schema("ceaute").rpc(
+    "unpublish_provider_page",
+  );
 
   if (error) {
     return "Could not unpublish your page.";
