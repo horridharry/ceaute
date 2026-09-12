@@ -13,13 +13,13 @@ It is exact enough to generate migrations and implementation tickets. It is not 
 
 The schema follows the same journey as the product:
 
-```text
 Account
 → provider page
 → services and availability
 → booking
 → payment, refund and review
-```
+
+````
 
 Supporting tables for billing, webhooks, notifications and administrator actions come last.
 
@@ -414,7 +414,7 @@ The database checks that:
 total value = online amount + offline balance
 refunded amount <= online amount
 retained amount <= online amount
-```
+````
 
 Every amount is non-negative. The application separately calculates whether the deposit is high enough to cover the fee because that calculation depends on the provider's current commercial configuration.
 
@@ -422,12 +422,12 @@ Every amount is non-negative. The application separately calculates whether the 
 
 The JSON snapshots use versioned, validated application structures rather than arbitrary objects.
 
-| Snapshot | Contents |
-| --- | --- |
-| `customer_snapshot` | Full name, verified email and booking phone number. |
-| `provider_snapshot` | Display name, username, public area, exact address and access instructions. |
-| `service_snapshot` | Treatment details and a summary of selected add-ons. |
-| `policy_snapshot` | Payment mode, commitment amount, cancellation deadline, refund rules and written policy. |
+| Snapshot            | Contents                                                                                 |
+| ------------------- | ---------------------------------------------------------------------------------------- |
+| `customer_snapshot` | Full name, verified email and booking phone number.                                      |
+| `provider_snapshot` | Display name, username, public area, exact address and access instructions.              |
+| `service_snapshot`  | Treatment details and a summary of selected add-ons.                                     |
+| `policy_snapshot`   | Payment mode, commitment amount, cancellation deadline, refund rules and written policy. |
 
 The important times and money amounts remain ordinary columns because Ceaute filters and calculates with them.
 
@@ -460,14 +460,14 @@ Indexes support:
 
 This records an add-on selected for a booking and its booking-time values.
 
-| Column | Type | Rule |
-| --- | --- | --- |
-| `booking_id` | `uuid` | Required foreign key to `booking`. |
-| `provider_page_id` | `uuid` | Required foreign key to `provider_page`. |
-| `addon_id` | `uuid` | Required foreign key to `addon`. |
-| `name_snapshot` | `varchar(140)` | Required. |
-| `price_pence_snapshot` | `bigint` | Required and non-negative. |
-| `duration_minutes_snapshot` | `smallint` | Required, non-negative and divisible by 15. |
+| Column                      | Type           | Rule                                        |
+| --------------------------- | -------------- | ------------------------------------------- |
+| `booking_id`                | `uuid`         | Required foreign key to `booking`.          |
+| `provider_page_id`          | `uuid`         | Required foreign key to `provider_page`.    |
+| `addon_id`                  | `uuid`         | Required foreign key to `addon`.            |
+| `name_snapshot`             | `varchar(140)` | Required.                                   |
+| `price_pence_snapshot`      | `bigint`       | Required and non-negative.                  |
+| `duration_minutes_snapshot` | `smallint`     | Required, non-negative and divisible by 15. |
 
 `(booking_id, addon_id)` is the primary key. Composite foreign keys using `provider_page_id` ensure the booking and add-on belong to the same provider.
 
@@ -479,21 +479,21 @@ This records an add-on selected for a booking and its booking-time values.
 
 This records one Stripe PaymentIntent attempt for a booking.
 
-| Column | Type | Rule |
-| --- | --- | --- |
-| `id` | `uuid` | Primary key. |
-| `booking_id` | `uuid` | Required foreign key to `booking`. |
-| `stripe_account_id` | `text` | Required connected provider account. |
-| `stripe_payment_intent_id` | `text` | Required. |
-| `idempotency_key` | `text` | Required and unique. |
-| `status` | `text` | `pending`, `requires_action`, `processing`, `succeeded`, `failed` or `cancelled`. |
-| `amount_pence` | `bigint` | Required and positive. |
-| `application_fee_pence` | `bigint` | Required and non-negative. |
-| `processor_fee_pence` | `bigint` | Nullable until Stripe reports it. |
-| `currency` | `char(3)` | Required; `GBP` in the MVP. |
-| `failure_code` | `text` | Optional. |
-| `created_at` | `timestamptz` | Required. |
-| `succeeded_at` | `timestamptz` | Null until successful. |
+| Column                     | Type          | Rule                                                                              |
+| -------------------------- | ------------- | --------------------------------------------------------------------------------- |
+| `id`                       | `uuid`        | Primary key.                                                                      |
+| `booking_id`               | `uuid`        | Required foreign key to `booking`.                                                |
+| `stripe_account_id`        | `text`        | Required connected provider account.                                              |
+| `stripe_payment_intent_id` | `text`        | Required.                                                                         |
+| `idempotency_key`          | `text`        | Required and unique.                                                              |
+| `status`                   | `text`        | `pending`, `requires_action`, `processing`, `succeeded`, `failed` or `cancelled`. |
+| `amount_pence`             | `bigint`      | Required and positive.                                                            |
+| `application_fee_pence`    | `bigint`      | Required and non-negative.                                                        |
+| `processor_fee_pence`      | `bigint`      | Nullable until Stripe reports it.                                                 |
+| `currency`                 | `char(3)`     | Required; `GBP` in the MVP.                                                       |
+| `failure_code`             | `text`        | Optional.                                                                         |
+| `created_at`               | `timestamptz` | Required.                                                                         |
+| `succeeded_at`             | `timestamptz` | Null until successful.                                                            |
 
 Important guarantees:
 
@@ -508,20 +508,20 @@ The booking stores the final commercial breakdown. The payment stores what happe
 
 This records one full or partial refund attempt.
 
-| Column | Type | Rule |
-| --- | --- | --- |
-| `id` | `uuid` | Primary key. |
-| `payment_id` | `uuid` | Required foreign key to `payment`. |
-| `stripe_refund_id` | `text` | Unique once Stripe creates it. |
-| `idempotency_key` | `text` | Required and unique. |
-| `reason` | `text` | `customer_early`, `customer_late`, `provider`, `admin` or `correction`. |
-| `status` | `text` | `requested`, `pending`, `succeeded`, `failed` or `cancelled`. |
-| `amount_pence` | `bigint` | Required and positive. |
-| `application_fee_refund_pence` | `bigint` | Required and non-negative. |
-| `unrecovered_processing_cost_pence` | `bigint` | Required; defaults to zero. |
-| `failure_code` | `text` | Optional. |
-| `created_at` | `timestamptz` | Required. |
-| `completed_at` | `timestamptz` | Null until final. |
+| Column                              | Type          | Rule                                                                    |
+| ----------------------------------- | ------------- | ----------------------------------------------------------------------- |
+| `id`                                | `uuid`        | Primary key.                                                            |
+| `payment_id`                        | `uuid`        | Required foreign key to `payment`.                                      |
+| `stripe_refund_id`                  | `text`        | Unique once Stripe creates it.                                          |
+| `idempotency_key`                   | `text`        | Required and unique.                                                    |
+| `reason`                            | `text`        | `customer_early`, `customer_late`, `provider`, `admin` or `correction`. |
+| `status`                            | `text`        | `requested`, `pending`, `succeeded`, `failed` or `cancelled`.           |
+| `amount_pence`                      | `bigint`      | Required and positive.                                                  |
+| `application_fee_refund_pence`      | `bigint`      | Required and non-negative.                                              |
+| `unrecovered_processing_cost_pence` | `bigint`      | Required; defaults to zero.                                             |
+| `failure_code`                      | `text`        | Optional.                                                               |
+| `created_at`                        | `timestamptz` | Required.                                                               |
+| `completed_at`                      | `timestamptz` | Null until final.                                                       |
 
 `payment_id` and `status` are indexed.
 
@@ -537,15 +537,15 @@ A retry reuses the same refund operation and idempotency key. When a refund succ
 
 This is one customer's review of one completed booking.
 
-| Column | Type | Rule |
-| --- | --- | --- |
-| `id` | `uuid` | Primary key. |
-| `booking_id` | `uuid` | Required foreign key to `booking`; unique. |
-| `rating` | `smallint` | Required; 1–5. |
-| `comment` | `text` | Optional. |
-| `moderation_status` | `text` | `published`, `hidden` or `removed`. |
-| `created_at` | `timestamptz` | Required. |
-| `updated_at` | `timestamptz` | Required. |
+| Column              | Type          | Rule                                       |
+| ------------------- | ------------- | ------------------------------------------ |
+| `id`                | `uuid`        | Primary key.                               |
+| `booking_id`        | `uuid`        | Required foreign key to `booking`; unique. |
+| `rating`            | `smallint`    | Required; 1–5.                             |
+| `comment`           | `text`        | Optional.                                  |
+| `moderation_status` | `text`        | `published`, `hidden` or `removed`.        |
+| `created_at`        | `timestamptz` | Required.                                  |
+| `updated_at`        | `timestamptz` | Required.                                  |
 
 The unique booking link guarantees one review per booking.
 
@@ -561,18 +561,18 @@ Public reviews are found by joining through the booking's provider page.
 
 This stores both the provider's current commercial configuration and any Stripe subscription used to collect it.
 
-| Column | Type | Rule |
-| --- | --- | --- |
-| `provider_page_id` | `uuid` | Primary key; foreign key to `provider_page`. |
-| `monthly_subscription_pence` | `bigint` | Required and non-negative. |
-| `commission_basis_points` | `integer` | Required; 0–10,000. One percent is 100 basis points. |
-| `trial_ends_at` | `timestamptz` | Optional. |
-| `billing_enabled` | `boolean` | Defaults to false for free alpha providers. |
-| `stripe_customer_id` | `text` | Optional and unique when present. |
-| `stripe_subscription_id` | `text` | Optional and unique when present. |
-| `subscription_status` | `text` | `not_started`, `trialing`, `active`, `past_due`, `cancelled` or `paused`. |
-| `current_period_ends_at` | `timestamptz` | Optional. |
-| `updated_at` | `timestamptz` | Required. |
+| Column                       | Type          | Rule                                                                      |
+| ---------------------------- | ------------- | ------------------------------------------------------------------------- |
+| `provider_page_id`           | `uuid`        | Primary key; foreign key to `provider_page`.                              |
+| `monthly_subscription_pence` | `bigint`      | Required and non-negative.                                                |
+| `commission_basis_points`    | `integer`     | Required; 0–10,000. One percent is 100 basis points.                      |
+| `trial_ends_at`              | `timestamptz` | Optional.                                                                 |
+| `billing_enabled`            | `boolean`     | Defaults to false for free alpha providers.                               |
+| `stripe_customer_id`         | `text`        | Optional and unique when present.                                         |
+| `stripe_subscription_id`     | `text`        | Optional and unique when present.                                         |
+| `subscription_status`        | `text`        | `not_started`, `trialing`, `active`, `past_due`, `cancelled` or `paused`. |
+| `current_period_ends_at`     | `timestamptz` | Optional.                                                                 |
+| `updated_at`                 | `timestamptz` | Required.                                                                 |
 
 This table controls future fees. Every booking stores the Ceaute fee actually calculated for it, so later pricing changes never rewrite history.
 
@@ -584,16 +584,16 @@ This table controls future fees. Every booking stores the Ceaute fee actually ca
 
 This records every Stripe event Ceaute receives before applying it.
 
-| Column | Type | Rule |
-| --- | --- | --- |
-| `stripe_event_id` | `text` | Primary key. |
-| `stripe_account_id` | `text` | Connected account when relevant. |
-| `event_type` | `text` | Required. |
-| `processing_status` | `text` | `received`, `processed` or `failed`. |
-| `attempt_count` | `integer` | Required; defaults to zero. |
-| `last_error` | `text` | Optional. |
-| `received_at` | `timestamptz` | Required. |
-| `processed_at` | `timestamptz` | Optional. |
+| Column              | Type          | Rule                                 |
+| ------------------- | ------------- | ------------------------------------ |
+| `stripe_event_id`   | `text`        | Primary key.                         |
+| `stripe_account_id` | `text`        | Connected account when relevant.     |
+| `event_type`        | `text`        | Required.                            |
+| `processing_status` | `text`        | `received`, `processed` or `failed`. |
+| `attempt_count`     | `integer`     | Required; defaults to zero.          |
+| `last_error`        | `text`        | Optional.                            |
+| `received_at`       | `timestamptz` | Required.                            |
+| `processed_at`      | `timestamptz` | Optional.                            |
 
 The Stripe event ID is the primary key. Receiving the same webhook again finds the existing row instead of applying the event twice.
 
@@ -601,20 +601,20 @@ The Stripe event ID is the primary key. Receiving the same webhook again finds t
 
 This records one email or SMS that Ceaute intends to send.
 
-| Column | Type | Rule |
-| --- | --- | --- |
-| `id` | `uuid` | Primary key. |
-| `booking_id` | `uuid` | Optional foreign key to `booking`. |
-| `type` | `text` | Required notification purpose. |
-| `channel` | `text` | `email` or `sms`. |
-| `recipient` | `text` | Required email address or phone number. |
-| `status` | `text` | `pending`, `sent` or `failed`. |
-| `deduplication_key` | `text` | Required and unique. |
-| `provider_message_id` | `text` | Optional external reference. |
-| `attempt_count` | `integer` | Required; defaults to zero. |
-| `last_error` | `text` | Optional. |
-| `created_at` | `timestamptz` | Required. |
-| `sent_at` | `timestamptz` | Optional. |
+| Column                | Type          | Rule                                    |
+| --------------------- | ------------- | --------------------------------------- |
+| `id`                  | `uuid`        | Primary key.                            |
+| `booking_id`          | `uuid`        | Optional foreign key to `booking`.      |
+| `type`                | `text`        | Required notification purpose.          |
+| `channel`             | `text`        | `email` or `sms`.                       |
+| `recipient`           | `text`        | Required email address or phone number. |
+| `status`              | `text`        | `pending`, `sent` or `failed`.          |
+| `deduplication_key`   | `text`        | Required and unique.                    |
+| `provider_message_id` | `text`        | Optional external reference.            |
+| `attempt_count`       | `integer`     | Required; defaults to zero.             |
+| `last_error`          | `text`        | Optional.                               |
+| `created_at`          | `timestamptz` | Required.                               |
+| `sent_at`             | `timestamptz` | Optional.                               |
 
 The deduplication key prevents a retried booking event from sending the same logical notification twice. Failed deliveries can be retried without changing the booking.
 
@@ -626,15 +626,15 @@ The deduplication key prevents a retried booking event from sending the same log
 
 This records a sensitive action taken through Ceaute's internal tools.
 
-| Column | Type | Rule |
-| --- | --- | --- |
-| `id` | `uuid` | Primary key. |
-| `admin_profile_id` | `uuid` | Required foreign key to `admin_user.profile_id`. |
-| `action` | `text` | Required. |
-| `target_type` | `text` | Required. |
-| `target_id` | `uuid` | Optional. |
-| `details` | `jsonb` | Required; defaults to an empty object. |
-| `created_at` | `timestamptz` | Required. |
+| Column             | Type          | Rule                                             |
+| ------------------ | ------------- | ------------------------------------------------ |
+| `id`               | `uuid`        | Primary key.                                     |
+| `admin_profile_id` | `uuid`        | Required foreign key to `admin_user.profile_id`. |
+| `action`           | `text`        | Required.                                        |
+| `target_type`      | `text`        | Required.                                        |
+| `target_id`        | `uuid`        | Optional.                                        |
+| `details`          | `jsonb`       | Required; defaults to an empty object.           |
+| `created_at`       | `timestamptz` | Required.                                        |
 
 Refunds, page suspensions, category changes, review moderation and billing overrides create an audit event.
 
@@ -646,14 +646,14 @@ Audit rows are append-only. They are never edited to rewrite what an administrat
 
 Ceaute uses deletion carefully because booking and payment history must remain understandable.
 
-| Relationship | Behaviour |
-| --- | --- |
-| Auth user → profile | Do not cascade once bookings exist. Use an explicit anonymisation and retention workflow. |
-| Provider page → provider data | A never-published page with no bookings may be deleted. Otherwise close or suspend it. |
-| Treatment group, treatment or add-on | Archive after use. Foreign keys restrict deletion while history references the record. |
-| Location or policy version | Retain while referenced by a booking, even though the booking also has snapshots. |
-| Booking → payment, refund or review | Restrict deletion. Financial and trust history remains consistent. |
-| Operational event and audit rows | Retain according to the future legal and operational retention policy. |
+| Relationship                         | Behaviour                                                                                 |
+| ------------------------------------ | ----------------------------------------------------------------------------------------- |
+| Auth user → profile                  | Do not cascade once bookings exist. Use an explicit anonymisation and retention workflow. |
+| Provider page → provider data        | A never-published page with no bookings may be deleted. Otherwise close or suspend it.    |
+| Treatment group, treatment or add-on | Archive after use. Foreign keys restrict deletion while history references the record.    |
+| Location or policy version           | Retain while referenced by a booking, even though the booking also has snapshots.         |
+| Booking → payment, refund or review  | Restrict deletion. Financial and trust history remains consistent.                        |
+| Operational event and audit rows     | Retain according to the future legal and operational retention policy.                    |
 
 Foreign keys default to `restrict` for historical and financial records. Application workflows perform closure, archive and anonymisation deliberately.
 
@@ -686,19 +686,19 @@ Rules that depend on several current records or external state remain server-sid
 
 The schema adds indexes because a known user journey needs them, not as decoration.
 
-| User journey | Index shape |
-| --- | --- |
-| Find a provider by username | Unique `provider_page.username`. |
-| Search published providers by broad category | `provider_page(status, primary_category_id)`. |
-| Search the active public area | Normalised `provider_location.public_area` where active. |
-| Find providers offering a treatment | `treatment(discovery_category_id, is_active)`. |
-| Render a provider's catalogue | Provider, active state and display order on groups, treatments and add-ons. |
-| Show a provider's diary | `booking(provider_page_id, start_at)`. |
-| Show a customer's bookings | `booking(customer_profile_id, start_at desc)`. |
-| Expire abandoned checkouts | `booking(status, hold_expires_at)`. |
-| Complete past appointments | `booking(status, end_at)`. |
-| Reconcile payments and refunds | Stripe references, booking/payment foreign keys and status. |
-| Retry failed operational work | Status on webhook and notification records. |
+| User journey                                 | Index shape                                                                 |
+| -------------------------------------------- | --------------------------------------------------------------------------- |
+| Find a provider by username                  | Unique `provider_page.username`.                                            |
+| Search published providers by broad category | `provider_page(status, primary_category_id)`.                               |
+| Search the active public area                | Normalised `provider_location.public_area` where active.                    |
+| Find providers offering a treatment          | `treatment(discovery_category_id, is_active)`.                              |
+| Render a provider's catalogue                | Provider, active state and display order on groups, treatments and add-ons. |
+| Show a provider's diary                      | `booking(provider_page_id, start_at)`.                                      |
+| Show a customer's bookings                   | `booking(customer_profile_id, start_at desc)`.                              |
+| Expire abandoned checkouts                   | `booking(status, hold_expires_at)`.                                         |
+| Complete past appointments                   | `booking(status, end_at)`.                                                  |
+| Reconcile payments and refunds               | Stripe references, booking/payment foreign keys and status.                 |
+| Retry failed operational work                | Status on webhook and notification records.                                 |
 
 We should measure real query plans before adding further indexes.
 
