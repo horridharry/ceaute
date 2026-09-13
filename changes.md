@@ -7,3 +7,6 @@ return [
 ];
 },
 };
+
+last worke don this 15:03
+u need to run the prompt ingpt when usage comes back up

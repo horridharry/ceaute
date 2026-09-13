@@ -132,7 +132,7 @@ async function processCompletedCheckout(session: Stripe.Checkout.Session) {
   }
 }
 
-async function processRefundEvent(refund: Stripe.Refund) {
+async function processRefundEvent(refund: Stripe.Refund, eventCreatedAt: number) {
   const stripePaymentIntentId = getStripeObjectId(refund.payment_intent);
   let refundOperationId = refund.metadata?.refund_operation_id ?? null;
 
@@ -152,7 +152,11 @@ async function processRefundEvent(refund: Stripe.Refund) {
     throw new Error('Stripe refund is missing its refund operation metadata.');
   }
 
-  await recordBookingRefundState({ refundOperationId, refund });
+  await recordBookingRefundState({
+    refundOperationId,
+    refund,
+    eventCreatedAt,
+  });
 }
 
 async function processFailureEvent(event: Stripe.Event) {
@@ -190,7 +194,7 @@ async function processEvent(event: Stripe.Event) {
   }
 
   if (event.type === 'refund.updated' || event.type === 'refund.failed') {
-    await processRefundEvent(event.data.object as Stripe.Refund);
+    await processRefundEvent(event.data.object as Stripe.Refund, event.created);
     return;
   }
 

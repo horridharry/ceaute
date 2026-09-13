@@ -214,10 +214,11 @@ select * from ceaute.claim_booking_checkout(
   (select id from partial_hold), 5000, 5000, 0, 500, 'gbp', 'acct_consistency'
 );
 
-insert into tap_results (result) select ok(
-  (select expires_at < now() + interval '6 minutes'
-   from ceaute.booking where id = (select id from partial_hold)),
-  'Claiming Checkout creation does not unnecessarily extend the original hold'
+insert into tap_results (result) select is(
+  (select expires_at from ceaute.booking where id = (select id from partial_hold)),
+  (select checkout_request_expires_at from ceaute.booking_payment_attempt
+   where id = (select payment_attempt_id from partial_checkout_claim)),
+  'Claiming Checkout creation reserves the slot through the persisted request window'
 );
 insert into tap_results (result) select throws_matching(
   $$select ceaute.record_booking_checkout_session(
@@ -225,7 +226,7 @@ insert into tap_results (result) select throws_matching(
     (select claim_token from partial_checkout_claim),
     'cs_partial', null, 'https://checkout.stripe.test/partial', now() + interval '2 hours'
   )$$,
-  'Complete active Stripe Checkout identifiers are required',
+  'Stripe Checkout expiry does not match',
   'Invalid Checkout persistence cannot extend the hold'
 );
 insert into tap_results (result) select lives_ok(
