@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildStripeRefundRequest } from "../src/lib/payments/refund-request.js";
+import {
+  buildStripeRefundRequest,
+  classifyRefundReconciliation,
+} from "../src/lib/payments/refund-request.js";
 
 function operation(overrides = {}) {
   return {
@@ -39,4 +42,54 @@ test("uses Stripe's duplicate reason for duplicate-payment recovery", () => {
 
   assert.equal(request.parameters.reason, "duplicate");
   assert.equal(request.parameters.metadata.purpose, "duplicate_payment");
+});
+
+test("reconciles a lost refund response by durable operation identity", () => {
+  const expected = operation({ captured_amount_pence: 5000 });
+  const refund = {
+    id: "re_lost_response",
+    amount: 2500,
+    status: "succeeded",
+    payment_intent: "pi_integrity",
+    metadata: { refund_operation_id: "refund-integrity" },
+  };
+
+  assert.deepEqual(
+    classifyRefundReconciliation(expected, { data: [refund], has_more: false }),
+    { action: "matched", refund },
+  );
+});
+
+test("ambiguous or over-entitled refund reconciliation requires review", () => {
+  const expected = operation({ captured_amount_pence: 5000 });
+  const conflicting = {
+    id: "re_wrong_amount",
+    amount: 2400,
+    status: "pending",
+    payment_intent: "pi_integrity",
+    metadata: { refund_operation_id: "refund-integrity" },
+  };
+
+  assert.equal(
+    classifyRefundReconciliation(expected, {
+      data: [conflicting],
+      has_more: false,
+    }).action,
+    "requires_review",
+  );
+  assert.equal(
+    classifyRefundReconciliation(expected, {
+      data: [
+        {
+          id: "re_other",
+          amount: 3000,
+          status: "succeeded",
+          payment_intent: "pi_integrity",
+          metadata: {},
+        },
+      ],
+      has_more: false,
+    }).action,
+    "requires_review",
+  );
 });

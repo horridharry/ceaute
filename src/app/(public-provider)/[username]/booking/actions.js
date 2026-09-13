@@ -284,6 +284,16 @@ function getRequestOrigin(headerStore) {
   return `${protocol}://${host}`;
 }
 
+function isDefinitiveStripeCheckoutCreationError(error) {
+  const stripeErrorType = error?.type ?? error?.rawType;
+
+  return new Set([
+    "StripeInvalidRequestError",
+    "StripeAuthenticationError",
+    "StripePermissionError",
+  ]).has(stripeErrorType);
+}
+
 async function retireExpiredUnpersistedCheckout({
   supabase,
   paymentAttemptId,
@@ -439,6 +449,11 @@ export async function startStripeCheckoutForBooking(formData) {
     throw new Error("The amount due now must be greater than zero.");
   }
 
+  const headerStore = await headers();
+  const origin = getRequestOrigin(headerStore);
+  const successUrl = `${origin}${returnPath}&checkout=success&session_id={CHECKOUT_SESSION_ID}`;
+  const cancelUrl = `${origin}${returnPath}&checkout=cancelled`;
+
   const { data: claimResults, error: attemptError } = await supabase
     .schema("ceaute")
     .rpc("claim_booking_checkout", {
@@ -449,6 +464,8 @@ export async function startStripeCheckoutForBooking(formData) {
       target_ceaute_fee_pence: paymentAmounts.ceauteFeePence,
       target_currency: paymentAmounts.currency,
       target_provider_stripe_account_id: paymentAccount.stripe_account_id,
+      target_success_url: successUrl,
+      target_cancel_url: cancelUrl,
     });
 
   if (attemptError) {
@@ -491,55 +508,22 @@ export async function startStripeCheckoutForBooking(formData) {
     redirect(`${returnPath}&payment=expired`);
   }
 
-  const headerStore = await headers();
-  const origin = getRequestOrigin(headerStore);
   const stripe = getStripe();
-  const serviceSnapshot = booking.service_snapshot ?? {};
   let checkoutSession;
 
   try {
     checkoutSession = await stripe.checkout.sessions.create(
-      {
-        mode: "payment",
-        expires_at: Math.floor(Date.now() / 1000) + 30 * 60,
-        line_items: [
-          {
-            quantity: 1,
-            price_data: {
-              currency: paymentAmounts.currency,
-              unit_amount: paymentAmounts.amountChargedPence,
-              product_data: {
-                name: `${serviceSnapshot.provider_display_name ?? "Ceaute"} - ${serviceSnapshot.treatment_name ?? "booking"}`,
-              },
-            },
-          },
-        ],
-        success_url: `${origin}${returnPath}&checkout=success&session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${origin}${returnPath}&checkout=cancelled`,
-        metadata: {
-          booking_id: booking.id,
-          payment_attempt_id: checkoutClaim.payment_attempt_id,
-        },
-        payment_intent_data: {
-          ...(paymentAmounts.ceauteFeePence > 0
-            ? { application_fee_amount: paymentAmounts.ceauteFeePence }
-            : {}),
-          transfer_data: {
-            destination: paymentAccount.stripe_account_id,
-          },
-          metadata: {
-            booking_id: booking.id,
-            payment_attempt_id: checkoutClaim.payment_attempt_id,
-          },
-        },
-      },
+      checkoutClaim.checkout_request_payload,
       {
         idempotencyKey: checkoutClaim.checkout_idempotency_key,
       },
     );
   } catch (checkoutError) {
-    const { error: releaseError } = await supabase.schema("ceaute").rpc(
-      "release_booking_checkout_claim",
+    const rpcName = isDefinitiveStripeCheckoutCreationError(checkoutError)
+      ? "reject_booking_checkout_creation"
+      : "record_booking_checkout_creation_uncertain";
+    const { error: persistenceError } = await supabase.schema("ceaute").rpc(
+      rpcName,
       {
         target_payment_attempt_id: checkoutClaim.payment_attempt_id,
         target_claim_token: checkoutClaim.claim_token,
@@ -550,8 +534,8 @@ export async function startStripeCheckoutForBooking(formData) {
       },
     );
 
-    if (releaseError) {
-      throw new Error("Stripe Checkout failed and its claim could not be released.", {
+    if (persistenceError) {
+      throw new Error("Stripe Checkout failed and its outcome could not be recorded.", {
         cause: checkoutError,
       });
     }

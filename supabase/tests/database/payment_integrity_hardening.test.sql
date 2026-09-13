@@ -344,7 +344,7 @@ insert into tap_results (result) select is(
 insert into tap_results (result) select lives_ok(
   $$select ceaute.record_booking_refund_state(
     (select refund_operation_id from cancellation_result),
-    're_integrity', 'pi_integrity_one', 5000, 'pending', null
+    're_integrity', 'pi_integrity_one', null, 5000, 'pending', null
   )$$,
   'A pending Stripe refund remains pending'
 );
@@ -357,7 +357,7 @@ insert into tap_results (result) select is(
 insert into tap_results (result) select lives_ok(
   $$select ceaute.record_booking_refund_state(
     (select refund_operation_id from cancellation_result),
-    're_integrity', 'pi_integrity_one', 5000, 'succeeded', null
+    're_integrity', 'pi_integrity_one', null, 5000, 'succeeded', null
   )$$,
   'A succeeded refund is persisted as terminal success'
 );

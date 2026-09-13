@@ -3,6 +3,7 @@ import {
   formatMoneyFromPence,
   formatSingleDateTime,
 } from "@/lib/bookings/booking-display";
+import { getBookingEmailConfiguration } from "./booking-email-config";
 
 const EVENT_TITLES = {
   booking_confirmed_customer: "Your booking is confirmed",
@@ -159,8 +160,28 @@ async function markEmailFailed({ supabase, emailId, claimToken, message }) {
   }
 }
 
-export async function deliverPendingBookingEmails({ limit = 25 } = {}) {
-  const supabase = createServiceRoleClient();
+export async function deliverPendingBookingEmails({
+  limit = 25,
+  supabase: suppliedSupabase,
+  fetchImpl = fetch,
+  environment = process.env,
+} = {}) {
+  const configuration = getBookingEmailConfiguration(environment);
+
+  if (!configuration.configured) {
+    return {
+      claimed: 0,
+      sent: 0,
+      failed: 0,
+      skipped: 0,
+      configured: false,
+      diagnostic: configuration.diagnostic,
+    };
+  }
+
+  const { apiKey, from } = configuration;
+
+  const supabase = suppliedSupabase ?? createServiceRoleClient();
   const { data: emails, error } = await supabase.schema("ceaute").rpc(
     "claim_pending_booking_emails",
     {
@@ -172,9 +193,6 @@ export async function deliverPendingBookingEmails({ limit = 25 } = {}) {
     throw new Error("Could not claim booking emails.");
   }
 
-  const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.CEAUTE_EMAIL_FROM;
-  const appUrl = process.env.CEAUTE_APP_URL;
   const diagnostics = {
     claimed: emails?.length ?? 0,
     sent: 0,
@@ -182,29 +200,9 @@ export async function deliverPendingBookingEmails({ limit = 25 } = {}) {
     skipped: 0,
   };
 
-  if (!apiKey || !from || !appUrl) {
-    for (const email of emails ?? []) {
-      await markEmailFailed({
-        supabase,
-        emailId: email.id,
-        claimToken: email.claim_token,
-        message:
-          "Email delivery is not configured. Set RESEND_API_KEY, CEAUTE_EMAIL_FROM and CEAUTE_APP_URL.",
-      });
-      diagnostics.skipped += 1;
-    }
-
-    return {
-      ...diagnostics,
-      configured: false,
-      diagnostic:
-        "Email delivery is not configured. Pending emails remain retryable.",
-    };
-  }
-
   for (const email of emails ?? []) {
     try {
-      const response = await fetch("https://api.resend.com/emails", {
+      const response = await fetchImpl("https://api.resend.com/emails", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${apiKey}`,
