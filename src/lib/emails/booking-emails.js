@@ -129,55 +129,34 @@ function renderHtmlEmail(email) {
     .join("")}</div>`;
 }
 
-async function markEmailSent({ supabase, emailId, messageId }) {
-  const { error } = await supabase
-    .schema("ceaute")
-    .from("booking_email_outbox")
-    .update({
-      delivery_status: "sent",
-      provider_message_id: messageId,
-      sent_at: new Date().toISOString(),
-      last_error: null,
-    })
-    .eq("id", emailId)
-    .eq("delivery_status", "sending");
+async function markEmailSent({ supabase, emailId, claimToken, messageId }) {
+  const { error } = await supabase.schema("ceaute").rpc(
+    "record_booking_email_sent",
+    {
+      target_email_id: emailId,
+      target_claim_token: claimToken,
+      target_provider_message_id: messageId,
+    },
+  );
 
   if (error) {
     throw new Error("Could not mark booking email as sent.");
   }
 }
 
-async function markEmailFailed({ supabase, emailId, message }) {
-  const { error } = await supabase
-    .schema("ceaute")
-    .from("booking_email_outbox")
-    .update({
-      delivery_status: "failed",
-      last_error: String(message || "Email delivery failed.").slice(0, 1000),
-    })
-    .eq("id", emailId)
-    .eq("delivery_status", "sending");
-
-  if (error) {
-    throw new Error("Could not mark booking email as failed.");
-  }
-}
-
-export async function enqueueBookingTransactionalEmails({ bookingId, event }) {
-  const supabase = createServiceRoleClient();
+async function markEmailFailed({ supabase, emailId, claimToken, message }) {
   const { error } = await supabase.schema("ceaute").rpc(
-    "enqueue_booking_transactional_emails",
+    "record_booking_email_retryable_failure",
     {
-      target_booking_id: bookingId,
-      email_event: event,
+      target_email_id: emailId,
+      target_claim_token: claimToken,
+      target_error: String(message || "Email delivery failed.").slice(0, 1000),
     },
   );
 
   if (error) {
-    return { ok: false, error: "Could not enqueue booking emails." };
+    throw new Error("Could not mark booking email as failed.");
   }
-
-  return { ok: true };
 }
 
 export async function deliverPendingBookingEmails({ limit = 25 } = {}) {
@@ -208,6 +187,7 @@ export async function deliverPendingBookingEmails({ limit = 25 } = {}) {
       await markEmailFailed({
         supabase,
         emailId: email.id,
+        claimToken: email.claim_token,
         message:
           "Email delivery is not configured. Set RESEND_API_KEY, CEAUTE_EMAIL_FROM and CEAUTE_APP_URL.",
       });
@@ -229,6 +209,7 @@ export async function deliverPendingBookingEmails({ limit = 25 } = {}) {
         headers: {
           Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
+          "Idempotency-Key": email.id,
         },
         body: JSON.stringify({
           from,
@@ -244,6 +225,7 @@ export async function deliverPendingBookingEmails({ limit = 25 } = {}) {
         await markEmailFailed({
           supabase,
           emailId: email.id,
+          claimToken: email.claim_token,
           message: body?.message ?? `Resend returned ${response.status}.`,
         });
         diagnostics.failed += 1;
@@ -253,6 +235,7 @@ export async function deliverPendingBookingEmails({ limit = 25 } = {}) {
       await markEmailSent({
         supabase,
         emailId: email.id,
+        claimToken: email.claim_token,
         messageId: body?.id ?? null,
       });
       diagnostics.sent += 1;
@@ -260,6 +243,7 @@ export async function deliverPendingBookingEmails({ limit = 25 } = {}) {
       await markEmailFailed({
         supabase,
         emailId: email.id,
+        claimToken: email.claim_token,
         message: error instanceof Error ? error.message : "Email delivery failed.",
       });
       diagnostics.failed += 1;
@@ -271,4 +255,3 @@ export async function deliverPendingBookingEmails({ limit = 25 } = {}) {
     configured: true,
   };
 }
-

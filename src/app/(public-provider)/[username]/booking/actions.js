@@ -178,9 +178,11 @@ export async function createBookingHoldFromDetails(formData) {
     redirect(`/@${providerPage.username}/booking/${treatment.id}`);
   }
 
-  const { data: holdId, error } = await supabase.schema("ceaute").rpc(
-    "create_booking_hold",
+  const bookingSupabase = createServiceRoleClient();
+  const { data: holdId, error } = await bookingSupabase.schema("ceaute").rpc(
+    "create_validated_booking_hold",
     {
+      target_customer_profile_id: profileId,
       target_provider_page_id: providerPage.id,
       target_treatment_id: treatment.id,
       selected_add_on_ids: selectedAddOns.map((addOn) => addOn.id),
@@ -280,6 +282,71 @@ function getRequestOrigin(headerStore) {
   }
 
   return `${protocol}://${host}`;
+}
+
+async function retireExpiredUnpersistedCheckout({
+  supabase,
+  paymentAttemptId,
+  claimToken,
+  checkoutSession,
+  reason,
+}) {
+  const { error } = await supabase.schema("ceaute").rpc(
+    "retire_unpersisted_booking_checkout",
+    {
+      target_payment_attempt_id: paymentAttemptId,
+      target_claim_token: claimToken,
+      target_stripe_checkout_session_id: checkoutSession.id,
+      target_stripe_checkout_expires_at: checkoutSession.expires_at
+        ? new Date(checkoutSession.expires_at * 1000).toISOString()
+        : null,
+      target_reason: reason,
+    },
+  );
+
+  if (error) {
+    throw new Error("Could not retire the unusable Stripe Checkout Session.");
+  }
+}
+
+async function expireUnpersistedCheckout({
+  stripe,
+  supabase,
+  paymentAttemptId,
+  claimToken,
+  checkoutSession,
+  reason,
+}) {
+  let expiredSession;
+
+  try {
+    expiredSession = await stripe.checkout.sessions.expire(checkoutSession.id);
+  } catch (expireError) {
+    try {
+      expiredSession = await stripe.checkout.sessions.retrieve(
+        checkoutSession.id,
+      );
+    } catch {
+      throw new Error(
+        "Checkout persistence failed and Stripe Session expiry could not be verified.",
+        { cause: expireError },
+      );
+    }
+  }
+
+  if (expiredSession.status !== "expired") {
+    throw new Error(
+      "Checkout persistence failed while the Stripe Session may still be payable.",
+    );
+  }
+
+  await retireExpiredUnpersistedCheckout({
+    supabase,
+    paymentAttemptId,
+    claimToken,
+    checkoutSession: expiredSession,
+    reason,
+  });
 }
 
 async function getOwnedHeldBooking({ bookingId, profileId }) {
@@ -421,22 +488,7 @@ export async function startStripeCheckoutForBooking(formData) {
       redirect(checkoutClaim.stripe_checkout_url);
     }
 
-    const { data: replacementResults, error: replacementError } = await supabase
-      .schema("ceaute")
-      .rpc("replace_expired_checkout_attempt", {
-        target_payment_attempt_id: checkoutClaim.payment_attempt_id,
-      });
-
-    if (replacementError || !replacementResults?.[0]) {
-      throw new Error("Could not replace expired Stripe checkout.");
-    }
-
-    checkoutClaim = {
-      action: "create",
-      payment_attempt_id: replacementResults[0].payment_attempt_id,
-      claim_token: replacementResults[0].claim_token,
-      checkout_idempotency_key: replacementResults[0].checkout_idempotency_key,
-    };
+    redirect(`${returnPath}&payment=expired`);
   }
 
   const headerStore = await headers();
@@ -449,6 +501,7 @@ export async function startStripeCheckoutForBooking(formData) {
     checkoutSession = await stripe.checkout.sessions.create(
       {
         mode: "payment",
+        expires_at: Math.floor(Date.now() / 1000) + 30 * 60,
         line_items: [
           {
             quantity: 1,
@@ -514,7 +567,21 @@ export async function startStripeCheckoutForBooking(formData) {
     ? new Date(checkoutSession.expires_at * 1000).toISOString()
     : null;
 
-  if (!checkoutSession.url || !checkoutExpiresAt) {
+  if (
+    checkoutSession.status !== "open" ||
+    !checkoutSession.url ||
+    !checkoutExpiresAt
+  ) {
+    if (checkoutSession.status === "expired") {
+      await retireExpiredUnpersistedCheckout({
+        supabase,
+        paymentAttemptId: checkoutClaim.payment_attempt_id,
+        claimToken: checkoutClaim.claim_token,
+        checkoutSession,
+        reason: "Stripe Checkout was not returned as an active Session.",
+      });
+    }
+
     throw new Error("Stripe Checkout did not return a reusable Session.");
   }
 
@@ -531,6 +598,14 @@ export async function startStripeCheckoutForBooking(formData) {
   );
 
   if (updateError) {
+    await expireUnpersistedCheckout({
+      stripe,
+      supabase,
+      paymentAttemptId: checkoutClaim.payment_attempt_id,
+      claimToken: checkoutClaim.claim_token,
+      checkoutSession,
+      reason: updateError.message || "Could not persist Stripe checkout.",
+    });
     throw new Error("Could not persist Stripe checkout.");
   }
 

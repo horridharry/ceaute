@@ -1,5 +1,4 @@
 import { revalidatePath } from "next/cache";
-import { enqueueBookingTransactionalEmails } from "@/lib/emails/booking-emails";
 import { processBookingRefund } from "@/lib/payments/refunds";
 
 function normalizeCancellationResult(results) {
@@ -45,13 +44,6 @@ export async function cancelBookingWithRefund({
 
   if (result.refundAmountPence > 0 && result.refundOperationId) {
     await processBookingRefund(result.refundOperationId);
-  }
-
-  if (result.outcome === "cancelled") {
-    await enqueueBookingTransactionalEmails({
-      bookingId: result.bookingId,
-      event: actor === "provider" ? "provider_cancelled" : "customer_cancelled",
-    });
   }
 
   for (const path of revalidatePaths) {
