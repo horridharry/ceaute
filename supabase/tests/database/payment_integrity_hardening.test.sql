@@ -166,72 +166,87 @@ insert into tap_results (result) select is(
   'A succeeded booking cannot receive another Checkout'
 );
 
-create temp table replacement_first_claim as
+create temp table fixed_deposit_claim as
 select * from ceaute.claim_booking_checkout(
   '31000000-0000-0000-0000-000000000002', 1000, 5000, 4000, 100,
   'gbp', 'acct_integrity'
 );
 
-insert into tap_results (result) select is((select action from replacement_first_claim), 'create',
+insert into tap_results (result) select is((select action from fixed_deposit_claim), 'create',
   'A fixed-deposit Checkout is claimed');
 insert into tap_results (result) select is(
   (select amount_due_later_pence from ceaute.booking_payment_attempt
-    where id = (select payment_attempt_id from replacement_first_claim)),
+    where id = (select payment_attempt_id from fixed_deposit_claim)),
   4000::bigint,
   'Fixed-deposit authoritative amount due later is preserved'
 );
 insert into tap_results (result) select lives_ok(
   $$select ceaute.record_booking_checkout_session(
-    (select payment_attempt_id from replacement_first_claim),
-    (select claim_token from replacement_first_claim),
-    'cs_integrity_old', null, 'https://checkout.stripe.test/old',
-    now() - interval '1 minute'
+    (select payment_attempt_id from fixed_deposit_claim),
+    (select claim_token from fixed_deposit_claim),
+    'cs_integrity_fixed', null, 'https://checkout.stripe.test/fixed',
+    now() + interval '30 minutes'
   )$$,
-  'An expired Checkout fixture is persisted'
+  'A fixed-deposit Checkout Session is persisted'
 );
-
-create temp table replacement_claim as
-select * from ceaute.replace_expired_checkout_attempt(
-  (select payment_attempt_id from replacement_first_claim)
-);
-
-insert into tap_results (result) select isnt(
-  (select payment_attempt_id from replacement_claim),
-  (select payment_attempt_id from replacement_first_claim),
-  'An expired Checkout receives a distinct replacement attempt'
+insert into tap_results (result) select is(
+  (select expires_at from ceaute.booking
+    where id = '31000000-0000-0000-0000-000000000002'),
+  (select stripe_checkout_expires_at from ceaute.booking_payment_attempt
+    where id = (select payment_attempt_id from fixed_deposit_claim)),
+  'The booking reservation uses the authoritative Stripe Session expiry'
 );
 insert into tap_results (result) select is(
   (select payment_status from ceaute.booking_payment_attempt
-    where id = (select payment_attempt_id from replacement_first_claim)),
-  'expired',
-  'The replaced attempt remains as terminal history'
+    where id = (select payment_attempt_id from fixed_deposit_claim)),
+  'checkout_created',
+  'Persisting Checkout makes the attempt payable'
 );
-insert into tap_results (result) select isnt(
-  (select checkout_idempotency_key from replacement_claim),
-  (select checkout_idempotency_key from replacement_first_claim),
-  'A replacement attempt has its own stable idempotency key'
+insert into tap_results (result) select is(
+  (select action from ceaute.claim_booking_checkout(
+    '31000000-0000-0000-0000-000000000002', 1000, 5000, 4000, 100,
+    'gbp', 'acct_integrity')),
+  'reuse',
+  'Re-entering payment reuses the same active Checkout Session'
 );
-insert into tap_results (result) select lives_ok(
-  $$select ceaute.record_booking_checkout_session(
-    (select payment_attempt_id from replacement_claim),
-    (select claim_token from replacement_claim),
-    'cs_integrity_new', null, 'https://checkout.stripe.test/new',
-    now() + interval '30 minutes'
-  )$$,
-  'The replacement Checkout is persisted'
+insert into tap_results (result) select is(
+  (select stripe_checkout_session_id from ceaute.claim_booking_checkout(
+    '31000000-0000-0000-0000-000000000002', 1000, 5000, 4000, 100,
+    'gbp', 'acct_integrity')),
+  'cs_integrity_fixed',
+  'Checkout reuse returns the originally persisted Session'
 );
 insert into tap_results (result) select is(
   (select outcome from ceaute.complete_booking_payment_attempt(
-    (select payment_attempt_id from replacement_claim),
-    'pi_integrity_new', 'cs_integrity_new', 'paid', 'gbp', 1000
+    (select payment_attempt_id from fixed_deposit_claim),
+    'pi_integrity_fixed', 'cs_integrity_fixed', 'paid', 'gbp', 1000
   )),
   'confirmed',
-  'The replacement fixed-deposit payment confirms the booking'
+  'The fixed-deposit payment confirms the booking near its Session window'
 );
+
+reset role;
+insert into ceaute.booking_payment_attempt (
+  id, booking_id, attempt_number, checkout_idempotency_key,
+  stripe_checkout_session_id, stripe_payment_intent_id,
+  amount_charged_pence, total_booking_value_pence, amount_due_later_pence,
+  ceaute_fee_pence, payment_status, provider_stripe_account_id
+)
+values (
+  '41000000-0000-0000-0000-000000000002',
+  '31000000-0000-0000-0000-000000000002', 2,
+  'ceaute-checkout-41000000-0000-0000-0000-000000000002',
+  'cs_integrity_duplicate', 'pi_integrity_duplicate',
+  1000, 5000, 4000, 100, 'checkout_created', 'acct_integrity'
+);
+
+set local role service_role;
+select set_config('request.jwt.claim.role', 'service_role', true);
+
 insert into tap_results (result) select is(
   (select outcome from ceaute.complete_booking_payment_attempt(
-    (select payment_attempt_id from replacement_first_claim),
-    'pi_integrity_old', 'cs_integrity_old', 'paid', 'gbp', 1000
+    '41000000-0000-0000-0000-000000000002',
+    'pi_integrity_duplicate', 'cs_integrity_duplicate', 'paid', 'gbp', 1000
   )),
   'duplicate_payment',
   'A genuine late duplicate payment is flagged for refund'
@@ -240,7 +255,7 @@ insert into tap_results (result) select is(
 reset role;
 insert into tap_results (result) select is(
   (select count(*)::integer from ceaute.booking_refund_operation
-    where booking_payment_attempt_id = (select payment_attempt_id from replacement_first_claim)
+    where booking_payment_attempt_id = '41000000-0000-0000-0000-000000000002'
       and purpose = 'duplicate_payment'),
   1,
   'A genuine duplicate payment has exactly one refund operation'

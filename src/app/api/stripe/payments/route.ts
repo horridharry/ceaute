@@ -1,6 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import Stripe from 'stripe';
-import { enqueueBookingTransactionalEmails } from '@/lib/emails/booking-emails';
 import {
   getStripeObjectId,
   processBookingRefund,
@@ -122,13 +121,6 @@ async function processCompletedCheckout(session: Stripe.Checkout.Session) {
 
   if (!result) {
     throw new Error('Payment completion returned no result.');
-  }
-
-  if (result.outcome === 'confirmed') {
-    await enqueueBookingTransactionalEmails({
-      bookingId: result.booking_id,
-      event: 'booking_confirmed',
-    });
   }
 
   if (result.refund_operation_id) {

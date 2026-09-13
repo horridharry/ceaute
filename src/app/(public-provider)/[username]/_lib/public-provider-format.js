@@ -34,6 +34,7 @@ export function formatDurationMinutes(durationMinutes) {
 
 export function formatDateLabel(date) {
   return new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/London",
     weekday: "long",
     day: "2-digit",
     month: "short",
@@ -42,6 +43,7 @@ export function formatDateLabel(date) {
 
 export function formatTimeLabel(date) {
   return new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/London",
     hour: "numeric",
     minute: "2-digit",
     hour12: true,
