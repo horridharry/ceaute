@@ -1,5 +1,6 @@
 "use server";
 import { revalidatePath } from "next/cache";
+import { isOnAppointmentGrid } from "@/lib/bookings/appointment-grid";
 import {
   getSignedInProvider,
   weekdayNameToNumber,
@@ -115,6 +116,13 @@ function parseSchedule(formData) {
       return { error: "Choose valid opening and closing times." };
     }
 
+    if (!isOnAppointmentGrid(openTime) || !isOnAppointmentGrid(closeTime)) {
+      return {
+        error:
+          "Opening and closing times must be on 15-minute boundaries, such as 09:00 or 09:15.",
+      };
+    }
+
     if (closeTime <= openTime) {
       return { error: "Closing time must be after opening time." };
     }
@@ -149,7 +157,7 @@ export const updateSchedule = async (_currentState, formData) => {
 
   if (error) {
     if (error.code === "23514") {
-      return "Closing time must be after opening time.";
+      return "Choose 15-minute opening and closing times, with closing after opening.";
     }
 
     if (error.code === "23505") {

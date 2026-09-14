@@ -1,3 +1,13 @@
+// Ceaute has no pay-later option: in deposit mode the deposit is the whole
+// online payment, so it must be greater than £0. PostgreSQL enforces this with
+// provider_booking_setting_deposit_is_positive.
+export function meetsPositiveDepositRule({ paymentMode, commitmentAmountPence }) {
+  return (
+    paymentMode !== "fixed_deposit" ||
+    (Number.isInteger(commitmentAmountPence) && commitmentAmountPence > 0)
+  );
+}
+
 export function calculateBookingPaymentAmounts(serviceSnapshot) {
   const totalBookingValuePence = Math.max(
     0,

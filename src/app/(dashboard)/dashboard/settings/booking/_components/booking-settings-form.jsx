@@ -70,7 +70,9 @@ export function BookingSettingsForm({ settings, updateBookingSettings }) {
 
           <span className="field-set">
             <label className="label" htmlFor="commitment_amount">
-              Commitment amount
+              {paymentMode === "fixed_deposit"
+                ? "Deposit amount"
+                : "Commitment amount"}
             </label>
             <p className="text-sm text-red-600">{moneyError}</p>
             <div className="relative flex items-center rounded-lg">

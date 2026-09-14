@@ -57,6 +57,8 @@ PostgreSQL is authoritative for the important invariants:
 
 - account and provider ownership, including cross-provider relationships;
 - provider publication requirements and protected platform-managed state;
+- valid provider settings, including positive deposits and 15-minute working
+  hours;
 - valid booking inputs, active treatment/add-on compatibility, notice, window,
   working hours, blocked dates, and overlap prevention;
 - which participant may see private booking information or cancel a booking;
@@ -107,9 +109,11 @@ of defence against concurrent overlap.
 
 There are two sources which must currently change together: JavaScript controls
 which slots customers see, while PostgreSQL controls which holds are accepted.
-The stored `booking_window_days` value is not connected to either calculation.
-This duplication and mismatch should be addressed only in a later implementation
-simplification stage, with database tests preserving the booking invariant.
+Slot generation steps through each working period in 15-minute increments from
+its opening time. That only matches the hold check because PostgreSQL requires
+stored working-period boundaries to sit on the same grid. The 60-day window is
+fixed; the legacy `booking_window_days` column is unused and not writable by
+providers.
 
 ## Stripe and asynchronous work
 
