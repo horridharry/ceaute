@@ -44,6 +44,6 @@ export async function GET(request: NextRequest) {
   }
 
   return NextResponse.redirect(
-    new URL(providerPage ? '/provider' : '/account', request.url),
+    new URL(providerPage ? '/dashboard' : '/account', request.url),
   );
 }

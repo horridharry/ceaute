@@ -1,7 +1,7 @@
 import { cache } from "react";
 import { notFound } from "next/navigation";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
-import { calculateAvailableAppointmentTimes } from "../booking/_lib/appointment-availability";
+import { calculateAvailableAppointmentTimes } from "../book/_lib/appointment-availability";
 import { normalizePublicUsername } from "./public-provider-format";
 
 export const getPublishedProviderPageByUsername = cache(async (username) => {

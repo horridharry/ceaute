@@ -40,7 +40,7 @@ export function TreatmentDetail({ treatment, providerPage }) {
               Back
             </Link>
             <Link
-              href={`/@${providerPage.username}/booking/${treatment.id}`}
+              href={`/@${providerPage.username}/book/${treatment.id}`}
               className="w-max rounded-lg bg-pink-700 p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-pink-800 disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
             >
               {`Book "${treatment.name}" now`}

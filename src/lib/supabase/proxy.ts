@@ -2,7 +2,7 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 const protectedCustomerPaths = ['/account'];
-const providerOnboardingPaths = ['/provider/onboarding', '/provider/setup'];
+const dashboardOnboardingPath = '/dashboard/onboarding';
 
 function isProtectedCustomerPath(pathname: string) {
   return protectedCustomerPaths.some(
@@ -10,17 +10,15 @@ function isProtectedCustomerPath(pathname: string) {
   );
 }
 
-function isProviderWorkspacePath(pathname: string) {
+function isDashboardWorkspacePath(pathname: string) {
   return (
-    (pathname === '/provider' || pathname.startsWith('/provider/')) &&
-    !providerOnboardingPaths.some(
-      (path) => pathname === path || pathname.startsWith(`${path}/`),
-    )
+    (pathname === '/dashboard' || pathname.startsWith('/dashboard/')) &&
+    pathname !== dashboardOnboardingPath
   );
 }
 
-function isProviderPath(pathname: string) {
-  return pathname === '/provider' || pathname.startsWith('/provider/');
+function isDashboardPath(pathname: string) {
+  return pathname === '/dashboard' || pathname.startsWith('/dashboard/');
 }
 
 function redirectToSignIn(request: NextRequest) {
@@ -57,11 +55,11 @@ export async function refreshSession(request: NextRequest) {
   const userId = data?.claims?.sub;
   const pathname = request.nextUrl.pathname;
 
-  if ((isProtectedCustomerPath(pathname) || isProviderPath(pathname)) && !userId) {
+  if ((isProtectedCustomerPath(pathname) || isDashboardPath(pathname)) && !userId) {
     return redirectToSignIn(request);
   }
 
-  if (isProviderWorkspacePath(pathname) && userId) {
+  if (isDashboardWorkspacePath(pathname) && userId) {
     const { data: providerPage, error } = await supabase
       .schema('ceaute')
       .from('provider_page')
@@ -70,7 +68,7 @@ export async function refreshSession(request: NextRequest) {
       .maybeSingle();
 
     if (error || !providerPage) {
-      return NextResponse.redirect(new URL('/provider/onboarding', request.url));
+      return NextResponse.redirect(new URL('/dashboard/onboarding', request.url));
     }
   }
 

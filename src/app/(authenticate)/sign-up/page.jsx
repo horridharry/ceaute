@@ -26,7 +26,7 @@ export default async function SignupPage({ searchParams }) {
       throw new Error("Could not choose your sign-in destination.");
     }
 
-    redirect(providerPage ? "/provider" : "/account");
+    redirect(providerPage ? "/dashboard" : "/account");
   }
 
   const message =
