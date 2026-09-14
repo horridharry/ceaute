@@ -1,8 +1,8 @@
 import { TreatmentAddOnsPage } from "./_components/treatment-add-ons-page";
-import { getAllTreatmentAddOns } from "../treatments/actions";
+import { getAllAddOns } from "./actions";
 
 export default async function AddOnsPage() {
-  const addOns = await getAllTreatmentAddOns();
+  const addOns = await getAllAddOns();
 
   return <TreatmentAddOnsPage addOns={addOns} />;
 }

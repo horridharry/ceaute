@@ -42,7 +42,9 @@ export function durationToMinutes(value) {
   return parts[1] * 60 + parts[2];
 }
 
-export function priceToPence(value) {
+// Pounds entered as "12" or "12.50" become whole pence. Returns null when the
+// text is not a price at all, which callers report as a validation error.
+export function nonNegativePriceToPence(value) {
   const normalizedValue = String(value ?? "").trim();
 
   if (!/^\d+(\.\d{1,2})?$/.test(normalizedValue)) {
@@ -53,11 +55,14 @@ export function priceToPence(value) {
   const pricePence =
     Number(pounds) * 100 + Number(pence.padEnd(2, "0").slice(0, 2));
 
-  if (!Number.isInteger(pricePence) || pricePence <= 0) {
-    return null;
-  }
+  return Number.isInteger(pricePence) && pricePence >= 0 ? pricePence : null;
+}
 
-  return pricePence;
+// Treatments must cost something, so zero is rejected as well.
+export function priceToPence(value) {
+  const pricePence = nonNegativePriceToPence(value);
+
+  return pricePence ? pricePence : null;
 }
 
 export function penceToPrice(value) {
