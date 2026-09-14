@@ -116,6 +116,6 @@ export const updateLocation = async (_currentState, formData) => {
   }
 
   revalidatePath("/dashboard/locations");
-  revalidatePath("/dashboard/page");
+  revalidatePath("/dashboard/profile");
   return "Saved.";
 };

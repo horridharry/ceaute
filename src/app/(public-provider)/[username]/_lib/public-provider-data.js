@@ -33,26 +33,6 @@ export const getPublishedProviderPageByUsername = cache(async (username) => {
   return providerPage;
 });
 
-export const getPublicTreatmentsForProvider = cache(async (providerPageId) => {
-  const supabase = createServiceRoleClient();
-  const { data: treatments, error } = await supabase
-    .schema("ceaute")
-    .from("treatment")
-    .select(
-      "id, provider_page_id, name, description, duration_minutes, price_pence, image_url, is_active, display_order, updated_at",
-    )
-    .eq("provider_page_id", providerPageId)
-    .eq("is_active", true)
-    .order("display_order", { ascending: true })
-    .order("updated_at", { ascending: false });
-
-  if (error) {
-    throw new Error("Could not load treatments.");
-  }
-
-  return treatments ?? [];
-});
-
 export const getPublicTreatmentForProvider = cache(
   async (providerPageId, treatmentId) => {
     const supabase = createServiceRoleClient();
@@ -224,29 +204,6 @@ export const getPublicBookingSettingsForProvider = cache(
     );
   },
 );
-
-export async function getPublicProviderCatalogue(username) {
-  const providerPage = await getPublishedProviderPageByUsername(username);
-  const treatments = await getPublicTreatmentsForProvider(providerPage.id);
-
-  return {
-    providerPage,
-    treatments,
-  };
-}
-
-export async function getPublicTreatmentPage(username, treatmentId) {
-  const providerPage = await getPublishedProviderPageByUsername(username);
-  const treatment = await getPublicTreatmentForProvider(
-    providerPage.id,
-    treatmentId,
-  );
-
-  return {
-    providerPage,
-    treatment,
-  };
-}
 
 export async function getPublicBookingPage(username, treatmentId, addOnIds = []) {
   const providerPage = await getPublishedProviderPageByUsername(username);

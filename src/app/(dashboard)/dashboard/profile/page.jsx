@@ -7,7 +7,7 @@ import {
 } from "./actions";
 import { ProviderPageForm } from "./_components/provider-page-form";
 
-export default async function DashboardPageManagementPage() {
+export default async function DashboardProfilePage() {
   const { providerPage, publication } = await getProviderPage();
 
   return (

@@ -31,7 +31,7 @@ export function TreatmentGroupForm({ action, group = null }) {
           <p className="text-sm text-black/60">{message}</p>
           <div className="mt-4 flex items-center justify-end gap-2">
             <Link
-              href="/dashboard/groups"
+              href="/dashboard/treatment-groups"
               className="w-max rounded-lg border border-black/10 p-3 px-6 text-sm font-semibold text-pink-600 duration-200 hover:border-black/20"
             >
               Back

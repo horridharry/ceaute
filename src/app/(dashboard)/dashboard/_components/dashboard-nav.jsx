@@ -32,7 +32,7 @@ export function DashboardNav() {
     },
     {
       name: "Treatment groups",
-      path: "/dashboard/groups",
+      path: "/dashboard/treatment-groups",
     },
     {
       name: "Add-ons",
@@ -48,7 +48,7 @@ export function DashboardNav() {
     },
     {
       name: "Page",
-      path: "/dashboard/page",
+      path: "/dashboard/profile",
     },
   ];
 

@@ -49,7 +49,7 @@ export default function DashboardOverview({ user, providerPage }) {
                 {" "}
                 You don&apos;t have a Provider Page yet
               </p>
-              <Link href={`/dashboard/page`} className="">
+              <Link href="/dashboard/profile" className="">
                 <p className="text-center active:opacity-50 mt-4 rounded-lg font-semibold bg-pink-700  p-1.5 px-3 text-sm  text-white shadow-sm duration-200 hover:bg-pink-800 disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-50">
                   Create your public page
                 </p>
@@ -67,7 +67,7 @@ export default function DashboardOverview({ user, providerPage }) {
               </article>
             </div>
           </Link>
-          <Link href="/dashboard/page">
+          <Link href="/dashboard/profile">
             <div className="h-full items-end flex p-3 duration-200 hover:border-black/20 border rounded-xl">
               <article className="mt-8">
                 <h3 className="text-pink-600 font-semibold">My page</h3>

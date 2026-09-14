@@ -59,7 +59,7 @@ function GroupList({
                   </p>
                 </div>
                 <Link
-                  href={`/dashboard/groups/${group.id}/edit`}
+                  href={`/dashboard/treatment-groups/${group.id}/edit`}
                   className="w-max rounded-lg border border-black/10 p-3 px-4 text-sm font-semibold text-pink-600 duration-200 hover:border-black/20"
                 >
                   Edit
@@ -103,7 +103,7 @@ export function TreatmentGroupsPage({
               Back
             </Link>
             <Link
-              href="/dashboard/groups/new"
+              href="/dashboard/treatment-groups/new"
               className="flex w-max items-center rounded-3xl bg-white p-1.5 px-3 text-sm font-semibold text-pink-600 duration-300 hover:bg-pink-500/10"
             >
               Create

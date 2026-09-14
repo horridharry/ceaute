@@ -18,7 +18,7 @@ const PROVIDER_CATEGORIES = new Set([
 
 export const getProviderPage = async () => {
   const { supabase, providerPage } = await getSignedInProvider({
-    next: "/dashboard/page",
+    next: "/dashboard/profile",
   });
   const publication = await getProviderPagePublicationReadiness({
     supabase,
@@ -33,7 +33,7 @@ export const getProviderPage = async () => {
 
 export const updateProviderPage = async (_currentState, formData) => {
   const { supabase, providerPage } = await getSignedInProvider({
-    next: "/dashboard/page",
+    next: "/dashboard/profile",
   });
 
   const displayName = String(formData.get("business_name") ?? "").trim();
@@ -103,13 +103,13 @@ export const updateProviderPage = async (_currentState, formData) => {
   }
 
   revalidatePath("/", "layout");
-  revalidatePath("/dashboard/page");
+  revalidatePath("/dashboard/profile");
   return "Saved.";
 };
 
 export const publishPage = async () => {
   const { supabase, providerPage } = await getSignedInProvider({
-    next: "/dashboard/page",
+    next: "/dashboard/profile",
   });
 
   if (providerPage.status === "suspended") {
@@ -134,13 +134,13 @@ export const publishPage = async () => {
   }
 
   revalidatePath("/", "layout");
-  revalidatePath("/dashboard/page");
+  revalidatePath("/dashboard/profile");
   return "Published.";
 };
 
 export const unpublishPage = async () => {
   const { supabase } = await getSignedInProvider({
-    next: "/dashboard/page",
+    next: "/dashboard/profile",
   });
 
   const { error } = await supabase.schema("ceaute").rpc(
@@ -152,6 +152,6 @@ export const unpublishPage = async () => {
   }
 
   revalidatePath("/", "layout");
-  revalidatePath("/dashboard/page");
+  revalidatePath("/dashboard/profile");
   return "Unpublished.";
 };

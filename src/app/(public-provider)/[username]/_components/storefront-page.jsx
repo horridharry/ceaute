@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {
   formatDurationMinutes,
   formatPricePence,
@@ -67,7 +68,31 @@ function TreatmentAddOns({ addOns }) {
   );
 }
 
-function TreatmentSections({ sections }) {
+function TreatmentCard({ treatment }) {
+  return (
+    <article className="rounded-xl border p-4">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h3 className="font-medium">{treatment.name}</h3>
+          {treatment.description ? (
+            <p className="mt-1 text-sm text-black/60">
+              {treatment.description}
+            </p>
+          ) : null}
+        </div>
+        <div className="shrink-0 text-right text-sm font-medium">
+          <p>{formatPricePence(treatment.price_pence)}</p>
+          <p className="text-black/60">
+            {formatDurationMinutes(treatment.duration_minutes)}
+          </p>
+        </div>
+      </div>
+      <TreatmentAddOns addOns={treatment.add_ons} />
+    </article>
+  );
+}
+
+function TreatmentSections({ sections, username, bookingEnabled }) {
   if (sections.length === 0) {
     return <EmptyState>No active treatments are visible yet.</EmptyState>;
   }
@@ -79,27 +104,19 @@ function TreatmentSections({ sections }) {
           {section.name ? (
             <h2 className="text-lg font-semibold">{section.name}</h2>
           ) : null}
-          {section.treatments.map((treatment) => (
-            <article key={treatment.name} className="rounded-xl border p-4">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <h3 className="font-medium">{treatment.name}</h3>
-                  {treatment.description ? (
-                    <p className="mt-1 text-sm text-black/60">
-                      {treatment.description}
-                    </p>
-                  ) : null}
-                </div>
-                <div className="shrink-0 text-right text-sm font-medium">
-                  <p>{formatPricePence(treatment.price_pence)}</p>
-                  <p className="text-black/60">
-                    {formatDurationMinutes(treatment.duration_minutes)}
-                  </p>
-                </div>
-              </div>
-              <TreatmentAddOns addOns={treatment.add_ons} />
-            </article>
-          ))}
+          {section.treatments.map((treatment) =>
+            bookingEnabled ? (
+              <Link
+                key={treatment.id}
+                href={`/@${username}/book/${treatment.id}/time`}
+                className="block duration-200 hover:opacity-80"
+              >
+                <TreatmentCard treatment={treatment} />
+              </Link>
+            ) : (
+              <TreatmentCard key={treatment.id} treatment={treatment} />
+            ),
+          )}
         </section>
       ))}
     </div>
@@ -201,7 +218,11 @@ export function StorefrontPage({ viewModel, backHref }) {
 
         <section className="flex flex-col gap-3">
           <h2 className="text-lg font-semibold">Treatments</h2>
-          <TreatmentSections sections={treatmentSections} />
+          <TreatmentSections
+            sections={treatmentSections}
+            username={provider.username}
+            bookingEnabled={!backHref}
+          />
         </section>
 
         <PaymentTerms terms={viewModel.booking_terms} />

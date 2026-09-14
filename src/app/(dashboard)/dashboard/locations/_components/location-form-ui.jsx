@@ -160,7 +160,7 @@ export function LocationFormUI({ location, updateLocation }) {
 
           <div className="mt-8 flex items-center justify-end gap-2">
             <Link
-              href="/dashboard/page"
+              href="/dashboard/profile"
               className="w-max rounded-lg border border-black/10 p-3 px-6 text-sm font-semibold text-pink-600 duration-200 hover:border-black/20 active:border-transparent active:bg-pink-500/10 active:text-pink-500"
             >
               Back

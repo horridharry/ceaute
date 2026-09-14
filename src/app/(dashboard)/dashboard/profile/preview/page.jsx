@@ -2,11 +2,11 @@ import { StorefrontPage } from "@/app/(public-provider)/[username]/_components/s
 import { buildStorefrontViewModel } from "@/app/(public-provider)/[username]/_lib/storefront-view-model";
 import { getSignedInProvider } from "../../_lib/provider-data";
 
-export default async function DashboardPagePreviewPage() {
+export default async function DashboardProfilePreviewPage() {
   const { supabase, providerPage } = await getSignedInProvider({
-    next: "/dashboard/page/preview",
+    next: "/dashboard/profile/preview",
   });
   const viewModel = await buildStorefrontViewModel({ supabase, providerPage });
 
-  return <StorefrontPage viewModel={viewModel} backHref="/dashboard/page" />;
+  return <StorefrontPage viewModel={viewModel} backHref="/dashboard/profile" />;
 }

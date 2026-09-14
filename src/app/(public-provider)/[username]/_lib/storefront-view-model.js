@@ -32,6 +32,7 @@ function mapBookingTerms(settings) {
 
 function mapTreatment(treatment, compatibleAddOns) {
   return {
+    id: treatment.id,
     name: treatment.name,
     description: treatment.description ?? "",
     price_pence: treatment.price_pence,

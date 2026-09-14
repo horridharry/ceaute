@@ -54,7 +54,7 @@ async function getNextDisplayOrder(supabase, providerPageId) {
 
 export const getPortfolioImages = async () => {
   const { supabase, providerPage } = await getSignedInProvider({
-    next: "/dashboard/page/portfolio",
+    next: "/dashboard/profile/portfolio",
   });
 
   const { data: images, error } = await supabase
@@ -85,7 +85,7 @@ export const getPortfolioImages = async () => {
 
 export const uploadPortfolioImage = async (_currentState, formData) => {
   const { supabase, providerPage } = await getSignedInProvider({
-    next: "/dashboard/page/portfolio",
+    next: "/dashboard/profile/portfolio",
   });
 
   const file = formData.get("image");
@@ -145,13 +145,13 @@ export const uploadPortfolioImage = async (_currentState, formData) => {
     return "Could not save that portfolio image.";
   }
 
-  revalidatePath("/dashboard/page/portfolio");
+  revalidatePath("/dashboard/profile/portfolio");
   return "Uploaded.";
 };
 
 export const updatePortfolioImageCaption = async (_currentState, formData) => {
   const { supabase, providerPage } = await getSignedInProvider({
-    next: "/dashboard/page/portfolio",
+    next: "/dashboard/profile/portfolio",
   });
   const imageId = String(formData.get("image_id") ?? "");
   const caption = cleanCaption(formData.get("caption"));
@@ -175,13 +175,13 @@ export const updatePortfolioImageCaption = async (_currentState, formData) => {
     return "Could not update that caption.";
   }
 
-  revalidatePath("/dashboard/page/portfolio");
+  revalidatePath("/dashboard/profile/portfolio");
   return "Saved.";
 };
 
 export const setPortfolioImageVisibility = async (_currentState, formData) => {
   const { supabase, providerPage } = await getSignedInProvider({
-    next: "/dashboard/page/portfolio",
+    next: "/dashboard/profile/portfolio",
   });
   const imageId = String(formData.get("image_id") ?? "");
   const isVisible = String(formData.get("is_visible") ?? "") === "true";
@@ -201,13 +201,13 @@ export const setPortfolioImageVisibility = async (_currentState, formData) => {
     return "Could not update that image.";
   }
 
-  revalidatePath("/dashboard/page/portfolio");
+  revalidatePath("/dashboard/profile/portfolio");
   return isVisible ? "Image shown." : "Image hidden.";
 };
 
 export const movePortfolioImage = async (_currentState, formData) => {
   const { supabase, providerPage } = await getSignedInProvider({
-    next: "/dashboard/page/portfolio",
+    next: "/dashboard/profile/portfolio",
   });
   const imageId = String(formData.get("image_id") ?? "");
   const direction = String(formData.get("direction") ?? "");
@@ -265,13 +265,13 @@ export const movePortfolioImage = async (_currentState, formData) => {
     return "Could not reorder portfolio images.";
   }
 
-  revalidatePath("/dashboard/page/portfolio");
+  revalidatePath("/dashboard/profile/portfolio");
   return "Moved.";
 };
 
 export const deletePortfolioImage = async (_currentState, formData) => {
   const { supabase, providerPage } = await getSignedInProvider({
-    next: "/dashboard/page/portfolio",
+    next: "/dashboard/profile/portfolio",
   });
   const imageId = String(formData.get("image_id") ?? "");
 
@@ -304,6 +304,6 @@ export const deletePortfolioImage = async (_currentState, formData) => {
     return "The file was removed, but the image record could not be deleted.";
   }
 
-  revalidatePath("/dashboard/page/portfolio");
+  revalidatePath("/dashboard/profile/portfolio");
   return "Deleted.";
 };

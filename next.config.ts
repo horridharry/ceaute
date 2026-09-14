@@ -10,12 +10,42 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/provider/profile",
-        destination: "/dashboard/page",
+        destination: "/dashboard/profile",
         permanent: false,
       },
       {
         source: "/provider/setup",
         destination: "/dashboard/onboarding",
+        permanent: false,
+      },
+      {
+        source: "/dashboard/page/portfolio",
+        destination: "/dashboard/profile/portfolio",
+        permanent: false,
+      },
+      {
+        source: "/dashboard/page/preview",
+        destination: "/dashboard/profile/preview",
+        permanent: false,
+      },
+      {
+        source: "/dashboard/page",
+        destination: "/dashboard/profile",
+        permanent: false,
+      },
+      {
+        source: "/dashboard/groups/new",
+        destination: "/dashboard/treatment-groups/new",
+        permanent: false,
+      },
+      {
+        source: "/dashboard/groups/:groupId/edit",
+        destination: "/dashboard/treatment-groups/:groupId/edit",
+        permanent: false,
+      },
+      {
+        source: "/dashboard/groups",
+        destination: "/dashboard/treatment-groups",
         permanent: false,
       },
       {
@@ -45,7 +75,7 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/provider/treatments/groups",
-        destination: "/dashboard/groups",
+        destination: "/dashboard/treatment-groups",
         permanent: false,
       },
       {
@@ -75,17 +105,17 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/provider/page/portfolio",
-        destination: "/dashboard/page/portfolio",
+        destination: "/dashboard/profile/portfolio",
         permanent: false,
       },
       {
         source: "/provider/page/preview",
-        destination: "/dashboard/page/preview",
+        destination: "/dashboard/profile/preview",
         permanent: false,
       },
       {
         source: "/provider/page",
-        destination: "/dashboard/page",
+        destination: "/dashboard/profile",
         permanent: false,
       },
       {

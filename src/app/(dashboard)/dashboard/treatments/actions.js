@@ -85,7 +85,7 @@ async function findDuplicateTreatmentGroup({
 
 function refreshTreatmentGroupPages() {
   revalidatePath("/dashboard/treatments");
-  revalidatePath("/dashboard/groups");
+  revalidatePath("/dashboard/treatment-groups");
 }
 
 function refreshTreatmentAddOnPages() {
@@ -226,7 +226,9 @@ function refreshTreatmentPages() {
   revalidatePath("/[username]", "layout");
 }
 
-export async function getTreatmentGroups({ next = "/dashboard/groups" } = {}) {
+export async function getTreatmentGroups({
+  next = "/dashboard/treatment-groups",
+} = {}) {
   const { supabase, providerPage } = await getSignedInProvider({
     next,
   });
@@ -273,7 +275,7 @@ export async function getTreatmentGroups({ next = "/dashboard/groups" } = {}) {
 
 export async function createTreatmentGroup(_currentState, formData) {
   const { supabase, providerPage } = await getSignedInProvider({
-    next: "/dashboard/groups/new",
+    next: "/dashboard/treatment-groups/new",
   });
   const name = getString(formData, "name");
 
@@ -316,7 +318,7 @@ export async function renameTreatmentGroup(_currentState, formData) {
   const groupId = getString(formData, "groupId");
   const name = getString(formData, "name");
   const { supabase, providerPage } = await getSignedInProvider({
-    next: `/dashboard/groups/${groupId}/edit`,
+    next: `/dashboard/treatment-groups/${groupId}/edit`,
   });
 
   if (!name) {
@@ -360,7 +362,7 @@ export async function renameTreatmentGroup(_currentState, formData) {
 export async function archiveTreatmentGroup(_currentState, formData) {
   const groupId = getString(formData, "groupId");
   const { supabase, providerPage } = await getSignedInProvider({
-    next: "/dashboard/groups",
+    next: "/dashboard/treatment-groups",
   });
 
   const { count, error: treatmentError } = await supabase
@@ -396,7 +398,7 @@ export async function archiveTreatmentGroup(_currentState, formData) {
 export async function restoreTreatmentGroup(_currentState, formData) {
   const groupId = getString(formData, "groupId");
   const { supabase, providerPage } = await getSignedInProvider({
-    next: "/dashboard/groups",
+    next: "/dashboard/treatment-groups",
   });
 
   const { error } = await supabase
