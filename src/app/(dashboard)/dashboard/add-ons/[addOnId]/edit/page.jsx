@@ -1,26 +1,26 @@
 import { TreatmentAddOnForm } from "../../_components/treatment-add-on-form";
 import {
-  archiveTreatmentAddOn,
-  getTreatmentAddOn,
-  getTreatmentAddOnOptions,
-  restoreTreatmentAddOn,
-  updateTreatmentAddOn,
-} from "../../../treatments/actions";
+  archiveAddOn,
+  getAddOn,
+  getAddOnFormOptions,
+  restoreAddOn,
+  updateAddOnWithCompatibility,
+} from "../../actions";
 
 export default async function EditAddOnPage({ params }) {
   const { addOnId } = await params;
   const [addOn, options] = await Promise.all([
-    getTreatmentAddOn(addOnId),
-    getTreatmentAddOnOptions({
+    getAddOn(addOnId),
+    getAddOnFormOptions({
       next: `/dashboard/add-ons/${addOnId}/edit`,
     }),
   ]);
 
   return (
     <TreatmentAddOnForm
-      action={updateTreatmentAddOn}
-      archiveAction={archiveTreatmentAddOn}
-      restoreAction={restoreTreatmentAddOn}
+      action={updateAddOnWithCompatibility}
+      archiveAction={archiveAddOn}
+      restoreAction={restoreAddOn}
       addOn={addOn}
       mode="edit"
       treatments={options.treatments}

@@ -3,7 +3,7 @@ import {
   archiveTreatmentGroup,
   getTreatmentGroups,
   restoreTreatmentGroup,
-} from "../treatments/actions";
+} from "./actions";
 
 export default async function TreatmentGroupsPageRoute() {
   const groups = await getTreatmentGroups();

@@ -80,11 +80,19 @@ payment, and replay guarantees.
 
 ## Server actions and shared orchestration
 
-Most provider form orchestration is currently route-local in `actions.js` files
-beside the dashboard area it serves. These actions authenticate, validate input,
-use the signed-in Supabase client, revalidate routes, and redirect. This keeps a
-vertical slice easy to find, although the large treatment and public booking
-action modules are deliberate candidates for later simplification.
+Most provider form orchestration is route-local in `actions.js` files beside the
+dashboard area it serves. These actions authenticate, validate input, use the
+signed-in Supabase client, revalidate routes, and redirect. This keeps a
+vertical slice easy to find. Treatments, treatment groups, and add-ons each own
+the actions under their own route, so treatment logic, group archival, and
+add-on compatibility can be read separately; the public booking action module
+remains a deliberate candidate for later simplification.
+
+Add-ons are the one provider form whose save is not a plain table write. An
+add-on and the treatments it may be booked with change together in
+`ceaute.create_add_on_with_compatibility` and
+`ceaute.update_add_on_with_compatibility`, so a rejected treatment leaves no
+half-saved add-on behind.
 
 Cross-route workflows live under `src/lib`: booking cancellation coordinates a
 database cancellation with refund processing; payment modules calculate and

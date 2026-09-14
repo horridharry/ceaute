@@ -1,9 +1,6 @@
 import { redirect } from "next/navigation";
 import { TreatmentGroupForm } from "../../_components/treatment-group-form";
-import {
-  getTreatmentGroups,
-  renameTreatmentGroup,
-} from "../../../treatments/actions";
+import { getTreatmentGroups, renameTreatmentGroup } from "../../actions";
 
 export default async function EditTreatmentGroupPage({ params }) {
   const { groupId } = await params;

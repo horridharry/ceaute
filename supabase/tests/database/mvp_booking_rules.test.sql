@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions, ceaute;
 
-select plan(18);
+select plan(17);
 
 create temp table tap_results (result text);
 grant insert, select on table tap_results to authenticated, service_role;

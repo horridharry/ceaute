@@ -1,17 +1,17 @@
 import { TreatmentAddOnForm } from "../_components/treatment-add-on-form";
 import {
-  createTreatmentAddOn,
-  getTreatmentAddOnOptions,
-} from "../../treatments/actions";
+  createAddOnWithCompatibility,
+  getAddOnFormOptions,
+} from "../actions";
 
 export default async function NewAddOnPage() {
-  const { treatments } = await getTreatmentAddOnOptions({
+  const { treatments } = await getAddOnFormOptions({
     next: "/dashboard/add-ons/new",
   });
 
   return (
     <TreatmentAddOnForm
-      action={createTreatmentAddOn}
+      action={createAddOnWithCompatibility}
       mode="create"
       treatments={treatments}
     />
