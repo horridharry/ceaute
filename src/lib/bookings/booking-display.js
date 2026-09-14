@@ -1,5 +1,3 @@
-import { createServiceRoleClient } from "@/lib/supabase/service-role";
-
 export const BOOKING_FALLBACK_LABEL = "Unavailable";
 
 function isPlainObject(value) {
@@ -130,49 +128,50 @@ export function groupBookingsByTiming(bookings) {
   );
 }
 
-export async function getPaymentAttemptsForBookings(bookingIds) {
-  if (!bookingIds.length) {
-    return new Map();
-  }
+// Booking snapshots are stored JSON and older rows use older shapes. This is the
+// only place that knows about those shapes; display code reads the result.
+export function normalizeBookingSnapshots(booking) {
+  const storedCustomer = isPlainObject(booking.customer_snapshot)
+    ? booking.customer_snapshot
+    : {};
+  const storedService = isPlainObject(booking.service_snapshot)
+    ? booking.service_snapshot
+    : {};
+  const storedAddOns = Array.isArray(storedService.selected_add_ons)
+    ? storedService.selected_add_ons
+    : [];
 
-  const supabase = createServiceRoleClient();
-  const { data, error } = await supabase
-    .schema("ceaute")
-    .from("booking_payment_attempt")
-    .select(
-      "booking_id, attempt_number, amount_charged_pence, total_booking_value_pence, amount_due_later_pence, ceaute_fee_pence, payment_status, refund_amount_pence, retained_amount_pence, refund_requested_at, refunded_at, refund_failed_at, failure_reason",
-    )
-    .in("booking_id", bookingIds)
-    .order("attempt_number", { ascending: true });
-
-  if (error) {
-    throw new Error("Could not load booking payment summaries.");
-  }
-
-  return new Map((data ?? []).map((attempt) => [attempt.booking_id, attempt]));
+  return {
+    customer: {
+      ...storedCustomer,
+      // Older customer snapshots stored `name` instead of `full_name`.
+      full_name: storedCustomer.full_name ?? storedCustomer.name,
+    },
+    service: {
+      ...storedService,
+      // Older add-on snapshots had no `id`; the name was the only identifier.
+      selected_add_ons: storedAddOns.map((addOn) => ({
+        ...addOn,
+        id: addOn.id ?? addOn.name,
+      })),
+    },
+    // Snapshots without a cancellation window are timed with the 24-hour
+    // default PostgreSQL also applies. The stored window itself is left as-is.
+    cancellationWindowHours: Number(storedService.cancellation_window_hours ?? 24),
+  };
 }
 
 export function bookingToDisplayBooking(booking, paymentAttempt = null) {
-  const customerSnapshot = isPlainObject(booking.customer_snapshot)
-    ? booking.customer_snapshot
-    : {};
-  const serviceSnapshot = isPlainObject(booking.service_snapshot)
-    ? booking.service_snapshot
-    : {};
+  const { customer, service, cancellationWindowHours } =
+    normalizeBookingSnapshots(booking);
   const dateTime = formatBookingDateTime(booking.start_at, booking.end_at);
-  const addOns = Array.isArray(serviceSnapshot.selected_add_ons)
-    ? serviceSnapshot.selected_add_ons
-    : [];
   const startAt = new Date(booking.start_at);
-  const cancellationWindowHours = Number(
-    serviceSnapshot.cancellation_window_hours ?? 24,
-  );
   const cancellationDeadline =
     Number.isNaN(startAt.getTime()) || !Number.isFinite(cancellationWindowHours)
       ? null
       : new Date(startAt.getTime() - cancellationWindowHours * 60 * 60_000);
   const amountPaidPence = Number(paymentAttempt?.amount_charged_pence);
-  const commitmentAmountPence = Number(serviceSnapshot.commitment_amount_pence);
+  const commitmentAmountPence = Number(service.commitment_amount_pence);
   const customerLateRetainedPence =
     Number.isInteger(amountPaidPence) && Number.isInteger(commitmentAmountPence)
       ? Math.min(Math.max(commitmentAmountPence, 0), Math.max(amountPaidPence, 0))
@@ -209,20 +208,17 @@ export function bookingToDisplayBooking(booking, paymentAttempt = null) {
       : BOOKING_FALLBACK_LABEL,
     start_at: booking.start_at,
     end_at: booking.end_at,
-    customer_name:
-      customerSnapshot.full_name ??
-      customerSnapshot.name ??
-      BOOKING_FALLBACK_LABEL,
-    customer_email: customerSnapshot.email ?? BOOKING_FALLBACK_LABEL,
-    customer_phone: customerSnapshot.phone ?? BOOKING_FALLBACK_LABEL,
-    provider_name: serviceSnapshot.provider_display_name ?? BOOKING_FALLBACK_LABEL,
-    treatment_name: serviceSnapshot.treatment_name ?? BOOKING_FALLBACK_LABEL,
+    customer_name: customer.full_name ?? BOOKING_FALLBACK_LABEL,
+    customer_email: customer.email ?? BOOKING_FALLBACK_LABEL,
+    customer_phone: customer.phone ?? BOOKING_FALLBACK_LABEL,
+    provider_name: service.provider_display_name ?? BOOKING_FALLBACK_LABEL,
+    treatment_name: service.treatment_name ?? BOOKING_FALLBACK_LABEL,
     treatment_description:
-      serviceSnapshot.treatment_description ?? BOOKING_FALLBACK_LABEL,
+      service.treatment_description ?? BOOKING_FALLBACK_LABEL,
     date_label: dateTime.date,
     time_label: dateTime.time,
-    duration_label: formatDurationMinutes(serviceSnapshot.duration_minutes),
-    total_price_label: formatMoneyFromPence(serviceSnapshot.total_price_pence),
+    duration_label: formatDurationMinutes(service.duration_minutes),
+    total_price_label: formatMoneyFromPence(service.total_price_pence),
     amount_paid_online_label: formatMoneyFromPence(
       paymentAttempt?.amount_charged_pence,
     ),
@@ -259,20 +255,20 @@ export function bookingToDisplayBooking(booking, paymentAttempt = null) {
           : paymentAttempt?.payment_status === "refunded"
             ? "Refund recorded"
             : "",
-    public_area: serviceSnapshot.public_area ?? BOOKING_FALLBACK_LABEL,
+    public_area: service.public_area ?? BOOKING_FALLBACK_LABEL,
     address_line_1: canExposePrivateLocation
-      ? (serviceSnapshot.address_line_1 ?? "")
+      ? (service.address_line_1 ?? "")
       : "",
     address_line_2: canExposePrivateLocation
-      ? (serviceSnapshot.address_line_2 ?? "")
+      ? (service.address_line_2 ?? "")
       : "",
-    city: canExposePrivateLocation ? (serviceSnapshot.city ?? "") : "",
-    postcode: canExposePrivateLocation ? (serviceSnapshot.postcode ?? "") : "",
+    city: canExposePrivateLocation ? (service.city ?? "") : "",
+    postcode: canExposePrivateLocation ? (service.postcode ?? "") : "",
     access_instructions: canExposePrivateLocation
-      ? (serviceSnapshot.access_instructions ?? "")
+      ? (service.access_instructions ?? "")
       : "",
     cancellation_window_hours:
-      serviceSnapshot.cancellation_window_hours ?? BOOKING_FALLBACK_LABEL,
+      service.cancellation_window_hours ?? BOOKING_FALLBACK_LABEL,
     cancellation_deadline_label: cancellationDeadline
       ? formatSingleDateTime(cancellationDeadline.toISOString())
       : BOOKING_FALLBACK_LABEL,
@@ -293,10 +289,10 @@ export function bookingToDisplayBooking(booking, paymentAttempt = null) {
     ),
     provider_refund_label: formatMoneyFromPence(paymentAttempt?.amount_charged_pence),
     can_cancel: isFutureConfirmed,
-    written_policy: serviceSnapshot.written_policy ?? "",
-    payment_mode: serviceSnapshot.payment_mode ?? BOOKING_FALLBACK_LABEL,
-    selected_add_ons: addOns.map((addOn) => ({
-      id: addOn.id ?? addOn.name,
+    written_policy: service.written_policy ?? "",
+    payment_mode: service.payment_mode ?? BOOKING_FALLBACK_LABEL,
+    selected_add_ons: service.selected_add_ons.map((addOn) => ({
+      id: addOn.id,
       name: addOn.name ?? BOOKING_FALLBACK_LABEL,
       price_label: formatMoneyFromPence(addOn.additional_price_pence),
       duration_label: formatDurationMinutes(addOn.additional_duration_minutes),

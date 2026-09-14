@@ -19,6 +19,14 @@ const NoBookings = () => (
   </div>
 );
 
+const BookingsLoadFailed = () => (
+  <div className="duration-200 rounded-xl border p-2 h-52 flex">
+    <p className="text-sm  text-center m-auto">
+      Could not load bookings. Refresh to try again.
+    </p>
+  </div>
+);
+
 const BookingItem = ({ booking }) => (
   <Link href={`/dashboard/bookings/${booking.booking_id}`}>
     <div className="appearance-none list-none rounded-xl border p-2.5 duration-200 hover:border-black/20 hover:bg-black/5 ">
@@ -71,6 +79,7 @@ export default function DashboardBookingsPage() {
     cancelled: [],
   });
   const [bookingsLoading, setBookingsLoading] = useState(true);
+  const [bookingsLoadFailed, setBookingsLoadFailed] = useState(false);
 
   useEffect(() => {
     const fetchAllBookings = async () => {
@@ -79,8 +88,17 @@ export default function DashboardBookingsPage() {
       setBookingsLoading(false);
     };
 
-    fetchAllBookings().catch(console.error);
+    fetchAllBookings().catch((error) => {
+      console.error(error);
+      setBookingsLoadFailed(true);
+      setBookingsLoading(false);
+    });
   }, []);
+
+  const hasBookings =
+    bookingGroups.upcoming.length > 0 ||
+    bookingGroups.previous.length > 0 ||
+    bookingGroups.cancelled.length > 0;
 
   return (
     <main className="container max-w-md p-5">
@@ -89,14 +107,11 @@ export default function DashboardBookingsPage() {
         <p className="text-sm mt-1">Manage your bookings with clients</p>
         <div className="mt-12">
           {bookingsLoading && <BookingsLoading />}
-          {!bookingsLoading &&
-            bookingGroups.upcoming.length === 0 &&
-            bookingGroups.previous.length === 0 &&
-            bookingGroups.cancelled.length === 0 && <NoBookings />}
-          {!bookingsLoading &&
-          (bookingGroups.upcoming.length > 0 ||
-            bookingGroups.previous.length > 0 ||
-            bookingGroups.cancelled.length > 0) ? (
+          {!bookingsLoading && bookingsLoadFailed && <BookingsLoadFailed />}
+          {!bookingsLoading && !bookingsLoadFailed && !hasBookings && (
+            <NoBookings />
+          )}
+          {!bookingsLoading && !bookingsLoadFailed && hasBookings ? (
             <>
               <BookingSection title="Upcoming" bookings={bookingGroups.upcoming} />
               <BookingSection title="Previous" bookings={bookingGroups.previous} />
