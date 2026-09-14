@@ -46,6 +46,13 @@ default to denying access. Public provider and availability data is deliberately
 projected through server code and narrow database functions rather than opening
 the underlying provider and booking tables to anonymous reads.
 
+Those public projections require a published provider page themselves; they do
+not trust a caller to have checked first, so a draft or suspended page returns
+nothing even when its ID is known. A provider reads their own unpublished page
+through the authenticated provider-owned tables instead, which is why the
+dashboard, its storefront preview, and onboarding keep working before
+publication.
+
 ## Where rules are enforced
 
 Application code validates forms, prepares view models, presents useful error
