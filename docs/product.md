@@ -71,14 +71,15 @@ most one continuous working period per weekday plus whole blocked dates. A slot
 must fit the treatment and selected add-on duration inside that period and must
 not overlap an active booking or checkout hold.
 
-The current implementation has fixed assumptions which are easy to misread:
-starts are generated on 15-minute boundaries, bookings require 24 hours' notice,
-the public window is 60 days, and all local calendar calculations use
-`Europe/London`. PostgreSQL repeats these rules when a hold is created, so
-changing the JavaScript calculator alone does not change the accepted booking
-rules. `provider_page.booking_window_days` still exists and accepts 30, 60, or
-90, but the current booking flow does not read it. Treat that mismatch as a
-known implementation seam, not configurable product behaviour.
+The current implementation has fixed rules which are easy to misread. Working
+period boundaries and appointment starts use a 15-minute grid, while treatment
+and add-on durations can be any whole number of minutes. Bookings require 24
+hours' notice, customers can book up to 60 days ahead, and all local calendar
+calculations use `Europe/London`. PostgreSQL enforces these rules when working
+hours are saved and when a hold is created, so changing the JavaScript
+calculator alone does not change the accepted booking rules. The booking window
+is not provider-configurable; the legacy `provider_page.booking_window_days`
+column is unused and providers cannot change it.
 
 Creating a booking first inserts an `awaiting_payment` booking with a five-minute
 hold. Starting Stripe Checkout durably records the request and extends the hold
@@ -93,8 +94,10 @@ to transfer the booking payment to that account. A provider chooses either full
 payment or a fixed deposit and a 12-, 24-, or 48-hour cancellation window. The
 deposit or the configured commitment amount is the maximum retained after a
 late customer cancellation. Any balance after a fixed deposit is recorded as
-due later; collection of that offline balance is outside Ceaute. Checkout
-requires the amount due online to be greater than zero.
+due later; collection of that offline balance is outside Ceaute. There is no
+pay-later option, so a deposit must be greater than £0; PostgreSQL rejects a
+deposit-mode setting without one. Checkout still requires the amount due online
+to be greater than zero.
 
 The current Ceaute platform fee is zero. The payment records and Checkout
 payload still carry an explicit fee amount so a later pricing change does not

@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { meetsPositiveDepositRule } from "@/lib/payments/booking-payments";
 import { getSignedInProvider } from "../../_lib/provider-data";
 
 const PAYMENT_MODES = new Set(["full", "fixed_deposit"]);
@@ -88,6 +89,15 @@ export const updateBookingSettings = async (_currentState, formData) => {
 
   if (commitmentAmount.error) {
     return commitmentAmount.error;
+  }
+
+  if (
+    !meetsPositiveDepositRule({
+      paymentMode,
+      commitmentAmountPence: commitmentAmount.value,
+    })
+  ) {
+    return "Deposit amount must be greater than £0.";
   }
 
   const { error } = await supabase

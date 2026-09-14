@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useActionState, useMemo, useState } from "react";
+import { APPOINTMENT_GRID_MINUTES } from "@/lib/bookings/appointment-grid";
 
 const DAYS_OF_WEEK = [
   { value: "monday", label: "Monday" },
@@ -13,7 +14,7 @@ const DAYS_OF_WEEK = [
   { value: "sunday", label: "Sunday" },
 ];
 
-const generateTimeOptions = (intervalMinutes = 15) => {
+const generateTimeOptions = (intervalMinutes = APPOINTMENT_GRID_MINUTES) => {
   const timeOptions = [];
 
   for (let totalMinutes = 0; totalMinutes < 24 * 60; totalMinutes += intervalMinutes) {

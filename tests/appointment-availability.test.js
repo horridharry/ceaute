@@ -72,6 +72,41 @@ test("enforces the 60-day booking window", () => {
   assert.equal(result.some((day) => day.local_date === "2026-03-03"), false);
 });
 
+test("offers starts through the 60th London calendar day and none after it", () => {
+  const result = calculateAvailableAppointmentTimes({
+    ...baseInput,
+    // 23:30 UTC is already 1 July in London, matching PostgreSQL's local date.
+    now: new Date("2026-06-30T23:30:00.000Z"),
+    availabilityRules: [0, 1, 2, 3, 4, 5, 6].map((weekday) => ({
+      weekday,
+      starts_at: "09:00",
+      ends_at: "10:00",
+    })),
+  });
+
+  assert.equal(result[0].local_date, "2026-07-01");
+  assert.equal(result.at(-1).local_date, "2026-08-30");
+  assert.deepEqual(
+    result.at(-1).slots.map((slot) => slot.local_time),
+    ["09:00", "09:15", "09:30"],
+  );
+});
+
+test("keeps starts on the 15-minute grid for durations off the grid", () => {
+  assert.deepEqual(
+    slotsFor("2026-01-01", { durationMinutes: 20 }).map(
+      (slot) => slot.local_time,
+    ),
+    ["09:00", "09:15", "09:30"],
+  );
+  assert.deepEqual(
+    slotsFor("2026-01-01", { durationMinutes: 35 }).map(
+      (slot) => slot.local_time,
+    ),
+    ["09:00", "09:15"],
+  );
+});
+
 test("excludes starts that overlap active appointments", () => {
   assert.deepEqual(
     slotsFor("2026-01-01", {

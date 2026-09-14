@@ -1,4 +1,8 @@
-const SLOT_INTERVAL_MINUTES = 15;
+import { APPOINTMENT_GRID_MINUTES } from "../../../../../lib/bookings/appointment-grid.js";
+
+// Fixed MVP rules, mirrored from ceaute.create_validated_booking_hold, which is
+// authoritative. The window is inclusive: starts are offered through the 60th
+// Europe/London calendar day after today. It is not provider-configurable.
 const BOOKING_WINDOW_DAYS = 60;
 const MINIMUM_NOTICE_HOURS = 24;
 const PROVIDER_TIME_ZONE = "Europe/London";
@@ -138,10 +142,12 @@ export function calculateAvailableAppointmentTimes({
       const openMinutes = timeToMinutes(rule.starts_at);
       const closeMinutes = timeToMinutes(rule.ends_at);
 
+      // Stored opening times are on the grid, so stepping from them keeps every
+      // start on it. The duration only decides whether the appointment fits.
       for (
         let slotMinutes = openMinutes;
         slotMinutes + durationMinutes <= closeMinutes;
-        slotMinutes += SLOT_INTERVAL_MINUTES
+        slotMinutes += APPOINTMENT_GRID_MINUTES
       ) {
         const startAt = localDateTimeToInstant({
           localDate,
@@ -174,5 +180,5 @@ export const BOOKING_AVAILABILITY_CONSTANTS = {
   BOOKING_WINDOW_DAYS,
   MINIMUM_NOTICE_HOURS,
   PROVIDER_TIME_ZONE,
-  SLOT_INTERVAL_MINUTES,
+  APPOINTMENT_GRID_MINUTES,
 };
