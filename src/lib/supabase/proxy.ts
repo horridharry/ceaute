@@ -67,8 +67,14 @@ export async function refreshSession(request: NextRequest) {
       .eq('owner_profile_id', userId)
       .maybeSingle();
 
-    if (error || !providerPage) {
-      return NextResponse.redirect(new URL('/dashboard/onboarding', request.url));
+    // A failed lookup does not show that the provider page is missing, so only
+    // a successful lookup with no row may send the user to onboarding.
+    if (error) {
+      throw new Error('Could not load provider workspace.');
+    }
+
+    if (!providerPage) {
+      return NextResponse.redirect(new URL(dashboardOnboardingPath, request.url));
     }
   }
 

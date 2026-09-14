@@ -3,9 +3,9 @@ import { getSignedInProvider } from "../_lib/provider-data";
 import { cancelBookingWithRefund } from "@/lib/bookings/cancel-booking";
 import {
   bookingToDisplayBooking,
-  getPaymentAttemptsForBookings,
   groupBookingsByTiming,
 } from "@/lib/bookings/booking-display";
+import { getLatestPaymentAttemptsForBookings } from "@/lib/bookings/booking-payment-attempts";
 
 export const getAllBookings = async () => {
   const { supabase } = await getSignedInProvider({
@@ -17,16 +17,16 @@ export const getAllBookings = async () => {
     .rpc("get_provider_booking_summaries");
 
   if (error) {
-    return [];
+    throw new Error("Could not load bookings.");
   }
 
-  const paymentAttempts = await getPaymentAttemptsForBookings(
+  const latestPaymentAttempts = await getLatestPaymentAttemptsForBookings(
     (bookings ?? []).map((booking) => booking.id),
   );
 
   return groupBookingsByTiming(
     (bookings ?? []).map((booking) =>
-      bookingToDisplayBooking(booking, paymentAttempts.get(booking.id)),
+      bookingToDisplayBooking(booking, latestPaymentAttempts.get(booking.id)),
     ),
   );
 };
@@ -52,9 +52,11 @@ export const getProviderBooking = async (bookingId) => {
     return null;
   }
 
-  const paymentAttempts = await getPaymentAttemptsForBookings([booking.id]);
+  const latestPaymentAttempts = await getLatestPaymentAttemptsForBookings([
+    booking.id,
+  ]);
 
-  return bookingToDisplayBooking(booking, paymentAttempts.get(booking.id));
+  return bookingToDisplayBooking(booking, latestPaymentAttempts.get(booking.id));
 };
 
 export const cancelProviderBooking = async (formData) => {

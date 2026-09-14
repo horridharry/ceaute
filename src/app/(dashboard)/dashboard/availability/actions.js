@@ -59,7 +59,7 @@ export const getSchedule = async () => {
     .order("weekday", { ascending: true });
 
   if (error) {
-    return [];
+    throw new Error("Could not load availability.");
   }
 
   return schedule

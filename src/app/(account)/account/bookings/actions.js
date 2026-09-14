@@ -6,9 +6,9 @@ import { cancelBookingWithRefund } from "@/lib/bookings/cancel-booking";
 import { createClient } from "@/lib/supabase/server";
 import {
   bookingToDisplayBooking,
-  getPaymentAttemptsForBookings,
   groupBookingsByTiming,
 } from "@/lib/bookings/booking-display";
+import { getLatestPaymentAttemptsForBookings } from "@/lib/bookings/booking-payment-attempts";
 
 function buildReturnPath(path) {
   return `/sign-in?next=${encodeURIComponent(path)}`;
@@ -37,13 +37,13 @@ export async function getCustomerBookings() {
     throw new Error("Could not load customer bookings.");
   }
 
-  const paymentAttempts = await getPaymentAttemptsForBookings(
+  const latestPaymentAttempts = await getLatestPaymentAttemptsForBookings(
     (bookings ?? []).map((booking) => booking.id),
   );
 
   return groupBookingsByTiming(
     (bookings ?? []).map((booking) =>
-      bookingToDisplayBooking(booking, paymentAttempts.get(booking.id)),
+      bookingToDisplayBooking(booking, latestPaymentAttempts.get(booking.id)),
     ),
   );
 }
@@ -69,8 +69,8 @@ export async function getCustomerBooking(bookingId) {
     return null;
   }
 
-  const [paymentAttempts, reviewResult] = await Promise.all([
-    getPaymentAttemptsForBookings([booking.id]),
+  const [latestPaymentAttempts, reviewResult] = await Promise.all([
+    getLatestPaymentAttemptsForBookings([booking.id]),
     supabase
       .schema("ceaute")
       .from("booking_review")
@@ -84,7 +84,7 @@ export async function getCustomerBooking(bookingId) {
   }
 
   return {
-    ...bookingToDisplayBooking(booking, paymentAttempts.get(booking.id)),
+    ...bookingToDisplayBooking(booking, latestPaymentAttempts.get(booking.id)),
     review: reviewResult.data ?? null,
   };
 }
