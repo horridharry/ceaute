@@ -50,7 +50,7 @@ function LinkPendingDot() {
 
 function AccountMenu({ user, hasProviderPage }) {
   const [open, setOpen] = useState(false);
-  const providerHref = hasProviderPage ? "/provider" : "/provider/onboarding";
+  const dashboardHref = hasProviderPage ? "/dashboard" : "/dashboard/onboarding";
 
   return (
     <div className="">
@@ -99,7 +99,7 @@ function AccountMenu({ user, hasProviderPage }) {
 
           <div className="mt-auto" />
           <Link
-            href={providerHref}
+            href={dashboardHref}
             role="menuitem"
             onClick={() => setOpen(false)}
             className="block px-4 py-2 text-2xl font-semibold text-black/60 hover:text-black/80"

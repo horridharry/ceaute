@@ -3,7 +3,7 @@ import test from "node:test";
 import {
   calculateAvailableAppointmentTimes,
   localDateTimeToInstant,
-} from "../src/app/(public-provider)/[username]/booking/_lib/appointment-availability.js";
+} from "../src/app/(public-provider)/[username]/book/_lib/appointment-availability.js";
 
 const baseInput = {
   now: new Date("2025-12-30T00:00:00.000Z"),

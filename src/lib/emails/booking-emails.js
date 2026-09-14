@@ -79,7 +79,7 @@ function renderTextEmail(email) {
   const isCancellation = email.event_type.includes("cancelled");
   const isProvider = email.recipient_role === "provider";
   const bookingPath = isProvider
-    ? payload.provider_booking_path
+    ? `/dashboard/bookings/${payload.booking_id}`
     : payload.customer_booking_path;
   const bookingUrl = absoluteUrl(bookingPath);
   const lines = [
