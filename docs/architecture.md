@@ -154,6 +154,16 @@ database outbox. Secret-protected cron routes claim and process email batches an
 complete elapsed bookings. Claims expire and retries preserve stable work
 identity, because network delivery cannot be assumed to happen exactly once.
 
+Supabase Cron is the scheduler for those routes, not Vercel. `pg_cron` jobs
+call `ceaute.invoke_cron_endpoint`, which queues an authenticated GET to
+`https://ceaute.com` through `pg_net` using the bearer token stored in Supabase
+Vault as `ceaute_cron_secret`. The secret is created per project in the Supabase
+Dashboard and never appears in a migration; without it the job logs a notice and
+sends nothing, so local resets and database tests need no production secret.
+Booking completion runs hourly and email delivery every 10 minutes. `pg_net`
+sends each request at most once and does not retry, and an overlapping or late
+request is harmless because both routes rely on the database claims above.
+
 ## Areas that are deliberately complex
 
 Payment, refund, webhook, and outbox code contains more states than the visible
