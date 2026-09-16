@@ -2,8 +2,9 @@
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { useLinkStatus } from "next/link";
 import { logoutUser } from "@/app/(authenticate)/actions";
+import { LinkPendingHint } from "@/components/link-pending-hint";
+import { PendingButton } from "@/components/pending-button";
 
 const HomeLogo = () => (
   <Link href="/" className="text-xl font-semibold tracking-tighter">
@@ -28,29 +29,15 @@ function HeaderLink({ href, children, exact = false }) {
       }`}
     >
       {children}
-      <LinkPendingDot />
+      <LinkPendingHint />
     </Link>
-  );
-}
-
-function LinkPendingDot() {
-  const { pending } = useLinkStatus();
-
-  if (!pending) {
-    return null;
-  }
-
-  return (
-    <span
-      aria-hidden="true"
-      className="absolute right-1 top-1 h-1.5 w-2 rounded-full bg-pink-500"
-    />
   );
 }
 
 function AccountMenu({ user, hasProviderPage }) {
   const [open, setOpen] = useState(false);
   const dashboardHref = hasProviderPage ? "/dashboard" : "/dashboard/onboarding";
+  const closeMenu = () => setOpen(false);
 
   return (
     <div className="">
@@ -75,7 +62,7 @@ function AccountMenu({ user, hasProviderPage }) {
           <Link
             href="/discover"
             role="menuitem"
-            onClick={() => setOpen(false)}
+            onClick={closeMenu}
             className="block px-4 py-2 text-xl font-medium text-black/60 hover:text-black"
           >
             Go to Ceaute
@@ -83,7 +70,7 @@ function AccountMenu({ user, hasProviderPage }) {
           <Link
             href="/account/bookings"
             role="menuitem"
-            onClick={() => setOpen(false)}
+            onClick={closeMenu}
             className="block px-4 py-2 text-xl font-medium text-black/60 hover:text-black/80"
           >
             My bookings
@@ -91,7 +78,7 @@ function AccountMenu({ user, hasProviderPage }) {
           <Link
             href="/account"
             role="menuitem"
-            onClick={() => setOpen(false)}
+            onClick={closeMenu}
             className="block px-4 py-2 text-xl font-medium text-black/60 hover:text-black/80"
           >
             My account
@@ -101,19 +88,19 @@ function AccountMenu({ user, hasProviderPage }) {
           <Link
             href={dashboardHref}
             role="menuitem"
-            onClick={() => setOpen(false)}
+            onClick={closeMenu}
             className="block px-4 py-2 text-2xl font-semibold text-black/60 hover:text-black/80"
           >
             {hasProviderPage ? "Provider workspace" : "Become a provider"}
           </Link>
           <form action={logoutUser} className="mt-12">
-            <button
-              type="submit"
+            <PendingButton
               role="menuitem"
-              className="cursor-pointer rounded-full border border-black/40 w-full p-2.5 text-sm font-medium text-black  hover:opacity-80 duration-200"
+              pendingLabel="Signing out..."
+              className="cursor-pointer rounded-full border border-black/40 w-full p-2.5 text-sm font-medium text-black  hover:opacity-80 duration-200 disabled:cursor-not-allowed disabled:opacity-60"
             >
               Sign out
-            </button>
+            </PendingButton>
           </form>
         </div>
       ) : null}
@@ -153,7 +140,7 @@ export default function AppHeaderClient({ user, hasProviderPage = false }) {
                 className="rounded-full bg-pink-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-pink-700"
               >
                 Sign up
-                <LinkPendingDot />
+                <LinkPendingHint />
               </Link>
             </>
           )}

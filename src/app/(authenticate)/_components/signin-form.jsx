@@ -1,6 +1,5 @@
 "use client";
 import Link from "next/link";
-import Image from "next/image";
 import { useActionState } from "react";
 
 function signUpHref(next) {
@@ -27,15 +26,6 @@ export function SigninForm({
     <main className="container mx-auto flex min-h-screen max-w-md items-center justify-center p-2">
       <div className="flex w-full flex-col border rounded-2xl border-black/10 bg-white p-8">
         <Link href={"/"} className="flex w-max items-center gap-x-1">
-          <span hidden className="relative h-6 w-6 overflow-hidden">
-            <Image
-              className="absolute select-none"
-              fill="responsive"
-              style={{ objectFit: "cover" }}
-              src="/fleekd_logo.png"
-              alt="fleekd-company-logo"
-            />
-          </span>
           <h2 className="select-none text-xs font-bold uppercase tracking-widest opacity-70">
             ceaute
           </h2>
@@ -105,7 +95,7 @@ const SubmitButton = ({ pending }) => {
       aria-disabled={pending}
       disabled={pending}
     >
-      {!pending ? "Continue with email" : "Submitting..."}
+      {!pending ? "Continue with email" : "Sending link..."}
     </button>
   );
 };

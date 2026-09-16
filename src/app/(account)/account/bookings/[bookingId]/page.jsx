@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { PendingButton } from "@/components/pending-button";
 import {
   cancelCustomerBooking,
   getCustomerBooking,
@@ -86,12 +87,12 @@ function CancellationPanel({ booking }) {
           <input type="checkbox" required className="mt-1 h-4 w-4" />
           <span>I understand this cancellation and refund outcome.</span>
         </label>
-        <button
-          type="submit"
-          className="rounded-lg border border-rose-200 p-3 px-4 text-sm font-semibold text-rose-700 duration-200 hover:bg-rose-50"
+        <PendingButton
+          pendingLabel="Cancelling..."
+          className="rounded-lg border border-rose-200 p-3 px-4 text-sm font-semibold text-rose-700 duration-200 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
         >
           Cancel booking
-        </button>
+        </PendingButton>
       </form>
     </div>
   );
@@ -135,7 +136,7 @@ function ReviewPanel({ booking }) {
         <label htmlFor="rating" className="label">
           Rating
         </label>
-        <select id="rating" name="rating" className="input" required>
+        <select id="rating" name="rating" className="field cursor-pointer" required>
           <option value="">Choose a rating</option>
           <option value="5">5 stars</option>
           <option value="4">4 stars</option>
@@ -151,14 +152,14 @@ function ReviewPanel({ booking }) {
           name="comment"
           maxLength={1000}
           rows={4}
-          className="input"
+          className="field resize-none"
         />
-        <button
-          type="submit"
-          className="w-max rounded-lg bg-pink-700 p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-pink-800"
+        <PendingButton
+          pendingLabel="Submitting..."
+          className="w-max rounded-lg bg-pink-700 p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-pink-800 disabled:cursor-not-allowed disabled:opacity-60"
         >
           Submit review
-        </button>
+        </PendingButton>
       </form>
     </div>
   );

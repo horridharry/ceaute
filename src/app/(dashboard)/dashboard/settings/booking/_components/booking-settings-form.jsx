@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useActionState, useState } from "react";
+import { keepFormValuesOnSubmit } from "@/lib/forms/keep-form-values";
 
 const MONEY_PATTERN = /^\d+(\.\d{1,2})?$/;
 
@@ -51,6 +52,7 @@ export function BookingSettingsForm({ settings, updateBookingSettings }) {
           id="booking_settings"
           className="mt-12 flex flex-col gap-4"
           action={formAction}
+          onSubmit={keepFormValuesOnSubmit(formAction)}
         >
           <span className="field-set">
             <label className="label" htmlFor="payment_mode">

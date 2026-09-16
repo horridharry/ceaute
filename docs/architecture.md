@@ -101,6 +101,19 @@ add-on and the treatments it may be booked with change together in
 `ceaute.update_add_on_with_compatibility`, so a rejected treatment leaves no
 half-saved add-on behind.
 
+Pending feedback follows one small pattern rather than per-screen state. A
+client form that owns its state uses `useActionState` for its own pending flag.
+A plain `<form action={serverAction}>` rendered by a Server Component uses
+`PendingButton` from `src/components`, which reads React's form status to show
+a pending label and block duplicate submission. Forms whose state drives
+controlled `<select>` or checkbox inputs submit through
+`keepFormValuesOnSubmit` in `src/lib/forms`, because React resets a form after
+its action completes and those elements do not survive the reset. Navigation
+feedback comes from route-level `loading.js` files plus `LinkPendingHint`
+inside navigation links for the slow-network case. Expected external failures,
+such as Stripe being unavailable during Connect onboarding, are returned to the
+screen as messages; unexpected errors still throw.
+
 Cross-route workflows live under `src/lib`: booking cancellation coordinates a
 database cancellation with refund processing; payment modules calculate and
 reconcile money; email modules deliver claimed outbox rows; Supabase and Stripe

@@ -1,1 +1,52 @@
 @import "tailwindcss";
+
+@layer components {
+  .field {
+    @apply block rounded-lg p-2.5 bg-white border ring-1 outline-none ring-transparent duration-200 text-black hover:border-black/30 focus:border-pink-600 focus:ring-pink-600;
+  }
+
+  .label {
+    @apply cursor-pointer block text-sm text-black;
+  }
+
+  .field-set {
+    @apply flex flex-col gap-2 flex-1;
+  }
+}
+
+/* Inline navigation hint rendered by <LinkPendingHint>. It reserves its space
+   so it never shifts layout, and only becomes visible when a navigation has
+   already taken longer than 100ms, so fast transitions show nothing. */
+.link-hint {
+  display: inline-block;
+  width: 0.4em;
+  height: 0.4em;
+  margin-left: 0.35em;
+  border-radius: 9999px;
+  background: currentColor;
+  opacity: 0;
+  visibility: hidden;
+  vertical-align: middle;
+}
+
+.link-hint[data-pending="true"] {
+  visibility: visible;
+  animation-name: link-hint-fade-in, link-hint-pulse;
+  animation-duration: 200ms, 1s;
+  animation-delay: 100ms, 100ms;
+  animation-timing-function: ease, ease-in-out;
+  animation-iteration-count: 1, infinite;
+  animation-fill-mode: forwards, none;
+}
+
+@keyframes link-hint-fade-in {
+  to {
+    opacity: 0.5;
+  }
+}
+
+@keyframes link-hint-pulse {
+  50% {
+    opacity: 0.2;
+  }
+}

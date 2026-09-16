@@ -2,40 +2,37 @@
 
 import { useActionState, useState } from "react";
 import Link from "next/link";
-
-function cleanUsername(value) {
-  return value
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9._]+/g, "")
-    .slice(0, 30);
-}
+import { normalizeUsername, validateUsername } from "../../_lib/username";
 
 export function ProviderOnboardingForm({ action, providerPage }) {
   const [stateMessage, formAction, pending] = useActionState(action, "");
   const [businessName, setBusinessName] = useState(providerPage.businessName);
   const [username, setUsername] = useState(providerPage.username);
+  // A saved or hand-typed username belongs to the user; only an untouched one
+  // keeps following the business name.
+  const [usernameWasEdited, setUsernameWasEdited] = useState(
+    Boolean(providerPage.username),
+  );
   const [usernameError, setUsernameError] = useState("");
+  // Controlled like the other fields so a failed submission does not reset it.
+  const [biography, setBiography] = useState(providerPage.biography);
 
   const updateBusinessName = (event) => {
     const value = event.target.value;
     setBusinessName(value);
 
-    if (!username) {
-      setUsername(cleanUsername(value));
+    if (!usernameWasEdited) {
+      const suggestedUsername = normalizeUsername(value);
+      setUsername(suggestedUsername);
+      setUsernameError(validateUsername(suggestedUsername) ?? "");
     }
   };
 
   const updateUsername = (event) => {
-    const value = cleanUsername(event.target.value);
+    const value = normalizeUsername(event.target.value);
+    setUsernameWasEdited(true);
     setUsername(value);
-
-    if (value && value.length < 3) {
-      setUsernameError("Username must be at least 3 characters long.");
-      return;
-    }
-
-    setUsernameError("");
+    setUsernameError(validateUsername(value) ?? "");
   };
 
   return (
@@ -90,7 +87,8 @@ export function ProviderOnboardingForm({ action, providerPage }) {
         <textarea
           id="biography"
           name="biography"
-          defaultValue={providerPage.biography}
+          value={biography}
+          onChange={(event) => setBiography(event.target.value)}
           rows={4}
           maxLength={500}
           className="field resize-none"

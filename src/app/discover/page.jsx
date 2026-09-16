@@ -1,4 +1,6 @@
 import Link from "next/link";
+import Form from "next/form";
+import { PendingButton } from "@/components/pending-button";
 import {
   getDiscoveryCategories,
   searchPublicProviders,
@@ -19,7 +21,7 @@ const treatmentSummary = (treatments) =>
 
 function SearchForm({ categories, search }) {
   return (
-    <form action="/discover" className="mt-8 flex flex-col gap-4">
+    <Form action="/discover" className="mt-8 flex flex-col gap-4">
       <div>
         <label htmlFor="area" className="label">
           Public area
@@ -31,7 +33,7 @@ function SearchForm({ categories, search }) {
           maxLength={120}
           defaultValue={search.area}
           placeholder="Shoreditch, London"
-          className="input mt-1"
+          className="field mt-1 w-full"
         />
       </div>
 
@@ -43,7 +45,7 @@ function SearchForm({ categories, search }) {
           id="category"
           name="category"
           defaultValue={search.category}
-          className="input mt-1"
+          className="field mt-1 w-full cursor-pointer"
         >
           <option value="">All categories</option>
           {categories.map((category) => (
@@ -54,13 +56,13 @@ function SearchForm({ categories, search }) {
         </select>
       </div>
 
-      <button
-        type="submit"
-        className="w-max rounded-lg bg-pink-700 p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-pink-800"
+      <PendingButton
+        pendingLabel="Searching..."
+        className="w-max rounded-lg bg-pink-700 p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-pink-800 disabled:cursor-not-allowed disabled:opacity-60"
       >
         Search
-      </button>
-    </form>
+      </PendingButton>
+    </Form>
   );
 }
 

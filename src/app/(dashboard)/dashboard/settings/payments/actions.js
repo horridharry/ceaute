@@ -1,18 +1,31 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getSignedInProvider } from "../../_lib/provider-data";
 import {
   classifyStripePaymentAccount,
+  describeStripeError,
   getStripe,
+  isStripeError,
   retrieveStripeAccount,
   syncProviderPaymentAccount,
 } from "@/lib/stripe/server";
 
+const PAYMENTS_PATH = "/dashboard/settings/payments";
+
+function failure(message) {
+  return { error: true, message };
+}
+
+function success(message) {
+  return { error: false, message };
+}
+
 export async function getPaymentSettings() {
   const { supabase, providerPage } = await getSignedInProvider({
-    next: "/dashboard/settings/payments",
+    next: PAYMENTS_PATH,
   });
 
   const { data: paymentAccount, error } = await supabase
@@ -35,9 +48,13 @@ export async function getPaymentSettings() {
   };
 }
 
+// Stripe is an external dependency that can legitimately be unavailable or
+// reject a request. Those outcomes are returned to the payments screen as
+// messages; anything that is not a Stripe error keeps propagating so
+// programming mistakes still surface as errors.
 export async function refreshPaymentStatus() {
   const { supabase, providerPage } = await getSignedInProvider({
-    next: "/dashboard/settings/payments",
+    next: PAYMENTS_PATH,
   });
   const { data: paymentAccount, error } = await supabase
     .schema("ceaute")
@@ -46,26 +63,47 @@ export async function refreshPaymentStatus() {
     .eq("provider_page_id", providerPage.id)
     .maybeSingle();
 
-  if (error || !paymentAccount?.stripe_account_id) {
-    redirect("/dashboard/settings/payments");
+  if (error) {
+    throw new Error("Could not load Stripe account.");
+  }
+
+  if (!paymentAccount?.stripe_account_id) {
+    return failure("Connect Stripe before refreshing its status.");
   }
 
   const stripe = getStripe();
-  const account = await retrieveStripeAccount(
-    stripe,
-    paymentAccount.stripe_account_id,
-  );
+  let account;
+
+  try {
+    account = await retrieveStripeAccount(stripe, paymentAccount.stripe_account_id);
+  } catch (stripeError) {
+    if (!isStripeError(stripeError)) {
+      throw stripeError;
+    }
+
+    console.error("Stripe account refresh failed", {
+      providerPageId: providerPage.id,
+      stripeAccountId: paymentAccount.stripe_account_id,
+      ...describeStripeError(stripeError),
+    });
+
+    return failure(
+      "Stripe could not refresh your account status right now. Try again in a few minutes.",
+    );
+  }
+
   await syncProviderPaymentAccount({
     providerPageId: providerPage.id,
     account,
   });
 
-  redirect("/dashboard/settings/payments");
+  revalidatePath(PAYMENTS_PATH);
+  return success("Stripe status refreshed.");
 }
 
 export async function startOrResumeOnboarding() {
   const { supabase, providerPage, user } = await getSignedInProvider({
-    next: "/dashboard/settings/payments",
+    next: PAYMENTS_PATH,
   });
   const stripe = getStripe();
   const requestHeaders = await headers();
@@ -87,77 +125,97 @@ export async function startOrResumeOnboarding() {
   }
 
   let accountId = existingAccount?.stripe_account_id;
+  let accountLink;
 
-  if (!accountId) {
-    const account = await stripe.v2.core.accounts.create({
-      contact_email: user.email || undefined,
-      display_name: providerPage.business_name || undefined,
-      dashboard: "express",
-      identity: {
-        country: "GB",
-      },
-      configuration: {
-        recipient: {
-          capabilities: {
-            stripe_balance: {
-              stripe_transfers: {
-                requested: true,
+  try {
+    if (!accountId) {
+      const account = await stripe.v2.core.accounts.create({
+        contact_email: user.email || undefined,
+        display_name: providerPage.business_name || undefined,
+        dashboard: "express",
+        identity: {
+          country: "GB",
+        },
+        configuration: {
+          recipient: {
+            capabilities: {
+              stripe_balance: {
+                stripe_transfers: {
+                  requested: true,
+                },
               },
             },
           },
         },
-      },
-      defaults: {
-        currency: "gbp",
-        locales: ["en-GB"],
-        profile: {
-          product_description:
-            "Beauty appointment services booked through Ceaute.",
+        defaults: {
+          currency: "gbp",
+          locales: ["en-GB"],
+          profile: {
+            product_description:
+              "Beauty appointment services booked through Ceaute.",
+          },
+          responsibilities: {
+            fees_collector: "application",
+            losses_collector: "application",
+          },
         },
-        responsibilities: {
-          fees_collector: "application",
-          losses_collector: "application",
+        include: [
+          "configuration.recipient",
+          "identity",
+          "requirements",
+        ],
+        metadata: {
+          provider_page_id: providerPage.id,
         },
-      },
-      include: [
-        "configuration.recipient",
-        "identity",
-        "requirements",
-      ],
-      metadata: {
-        provider_page_id: providerPage.id,
-      },
-    });
+      });
 
-    accountId = account.id;
-    await syncProviderPaymentAccount({
-      providerPageId: providerPage.id,
-      account,
-    });
-  } else {
-    const account = await retrieveStripeAccount(stripe, accountId);
-    const values = await syncProviderPaymentAccount({
-      providerPageId: providerPage.id,
-      account,
-    });
-    const state = classifyStripePaymentAccount(values);
+      accountId = account.id;
+      await syncProviderPaymentAccount({
+        providerPageId: providerPage.id,
+        account,
+      });
+    } else {
+      const account = await retrieveStripeAccount(stripe, accountId);
+      const values = await syncProviderPaymentAccount({
+        providerPageId: providerPage.id,
+        account,
+      });
+      const state = classifyStripePaymentAccount(values);
 
-    if (!state.canCreateOnboardingLink) {
-      throw new Error("Stripe onboarding is not currently available.");
+      if (!state.canCreateOnboardingLink) {
+        revalidatePath(PAYMENTS_PATH);
+        return failure(
+          "Stripe onboarding is not currently available for this account.",
+        );
+      }
     }
-  }
 
-  const accountLink = await stripe.v2.core.accountLinks.create({
-    account: accountId,
-    use_case: {
-      type: "account_onboarding",
-      account_onboarding: {
-        configurations: ["recipient"],
-        refresh_url: `${origin}/dashboard/settings/payments`,
-        return_url: `${origin}/dashboard/settings/payments?returned=1`,
+    accountLink = await stripe.v2.core.accountLinks.create({
+      account: accountId,
+      use_case: {
+        type: "account_onboarding",
+        account_onboarding: {
+          configurations: ["recipient"],
+          refresh_url: `${origin}${PAYMENTS_PATH}`,
+          return_url: `${origin}${PAYMENTS_PATH}?returned=1`,
+        },
       },
-    },
-  });
+    });
+  } catch (stripeError) {
+    if (!isStripeError(stripeError)) {
+      throw stripeError;
+    }
+
+    console.error("Stripe onboarding could not start", {
+      providerPageId: providerPage.id,
+      stripeAccountId: accountId ?? null,
+      ...describeStripeError(stripeError),
+    });
+
+    return failure(
+      "Stripe could not start onboarding right now. Try again in a few minutes.",
+    );
+  }
 
   redirect(accountLink.url);
 }

@@ -1,4 +1,6 @@
 import { notFound } from "next/navigation";
+import Form from "next/form";
+import { PendingButton } from "@/components/pending-button";
 import { BookingTreatmentSummary } from "../_components/booking-treatment-summary";
 import { getPublicBookingPage } from "../../_lib/public-provider-data";
 import {
@@ -45,9 +47,8 @@ export default async function TreatmentBookingPage({ params, searchParams }) {
           <BookingTreatmentSummary treatment={treatment} />
         </div>
 
-        <form
+        <Form
           action={`/@${providerPage.username}/book/${treatment.id}/time`}
-          method="get"
           className="mt-8 rounded-lg border p-4"
         >
           <h2 className="text-sm font-semibold">Add-ons</h2>
@@ -81,14 +82,14 @@ export default async function TreatmentBookingPage({ params, searchParams }) {
             </p>
           )}
           <div className="mt-6 flex justify-end">
-            <button
-              type="submit"
-              className="w-max rounded-lg bg-pink-700 p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-pink-800"
+            <PendingButton
+              pendingLabel="Continuing..."
+              className="w-max rounded-lg bg-pink-700 p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-pink-800 disabled:cursor-not-allowed disabled:opacity-60"
             >
               Continue
-            </button>
+            </PendingButton>
           </div>
-        </form>
+        </Form>
       </div>
     </main>
   );

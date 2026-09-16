@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useActionState, useMemo, useState } from "react";
 import { APPOINTMENT_GRID_MINUTES } from "@/lib/bookings/appointment-grid";
+import { keepFormValuesOnSubmit } from "@/lib/forms/keep-form-values";
+import { PendingButton } from "@/components/pending-button";
 
 const DAYS_OF_WEEK = [
   { value: "monday", label: "Monday" },
@@ -127,6 +129,7 @@ export function AvailabilityForm({
           id="availability"
           className="mt-12 flex flex-col gap-4"
           action={updateScheduleAction}
+          onSubmit={keepFormValuesOnSubmit(updateScheduleAction)}
         >
           {days.map((day, index) => (
             <div
@@ -306,12 +309,12 @@ export function AvailabilityForm({
                       name="blocked_date_id"
                       value={blockedDate.id}
                     />
-                    <button
-                      type="submit"
-                      className="rounded-lg border border-black/10 p-2 px-3 text-sm font-semibold text-pink-600 duration-200 hover:border-black/20 active:border-transparent active:bg-pink-500/10 active:text-pink-500"
+                    <PendingButton
+                      pendingLabel="Removing..."
+                      className="rounded-lg border border-black/10 p-2 px-3 text-sm font-semibold text-pink-600 duration-200 hover:border-black/20 active:border-transparent active:bg-pink-500/10 active:text-pink-500 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       Remove
-                    </button>
+                    </PendingButton>
                   </form>
                 </li>
               ))}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { storeSelectedBookingTime } from "../actions";
 
@@ -30,6 +30,11 @@ export default function BookingScheduler({
   username,
 }) {
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  // Stays set until the checkout page replaces this one, so the slots remain
+  // disabled even once the transition itself has handed over to navigation.
+  const [pendingSlot, setPendingSlot] = useState(null);
+  const busy = isPending || pendingSlot !== null;
   const [calendarStartIndex, setCalendarStartIndex] = useState(0);
   const calendarDates = availableDates.slice(
     calendarStartIndex,
@@ -40,19 +45,30 @@ export default function BookingScheduler({
     : "";
   const hasAnySlots = availableDates.some((date) => date.slots.length > 0);
 
-  const handleSlotSelection = async (slot) => {
-    await storeSelectedBookingTime(slot.start_at);
-    const searchParams = new URLSearchParams({
-      start_at: slot.start_at,
-    });
-
-    for (const addOnId of selectedAddOnIds) {
-      searchParams.append("add_on", addOnId);
+  // Choosing a time stores it on the server and then navigates. Both steps
+  // run in one transition so the chosen slot reads as pending and the other
+  // slots are disabled until the checkout page takes over.
+  const handleSlotSelection = (slot) => {
+    if (busy) {
+      return;
     }
 
-    router.push(
-      `/@${username}/book/${treatment.id}/checkout?${searchParams.toString()}`,
-    );
+    setPendingSlot(slot.start_at);
+
+    startTransition(async () => {
+      await storeSelectedBookingTime(slot.start_at);
+      const searchParams = new URLSearchParams({
+        start_at: slot.start_at,
+      });
+
+      for (const addOnId of selectedAddOnIds) {
+        searchParams.append("add_on", addOnId);
+      }
+
+      router.push(
+        `/@${username}/book/${treatment.id}/checkout?${searchParams.toString()}`,
+      );
+    });
   };
 
   return (
@@ -107,9 +123,11 @@ export default function BookingScheduler({
                   key={slot.start_at}
                   type="button"
                   onClick={() => handleSlotSelection(slot)}
-                  className="w-full rounded-lg border border-gray-200 p-4 text-sm font-medium duration-200 hover:border-black/30 hover:bg-gray-100"
+                  disabled={busy}
+                  aria-busy={pendingSlot === slot.start_at ? true : undefined}
+                  className="w-full rounded-lg border border-gray-200 p-4 text-sm font-medium duration-200 hover:border-black/30 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 aria-busy:border-pink-600 aria-busy:opacity-100"
                 >
-                  {slot.local_time}
+                  {pendingSlot === slot.start_at ? "Choosing..." : slot.local_time}
                 </button>
               ))}
               {slots.length === 0 ? (

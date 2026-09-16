@@ -3,14 +3,11 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-
-function normalizeUsername(value: FormDataEntryValue | null) {
-  return String(value ?? '')
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9._]+/g, '')
-    .slice(0, 30);
-}
+import {
+  USERNAME_MAX_LENGTH,
+  USERNAME_MIN_LENGTH,
+  normalizeUsername,
+} from '../_lib/username';
 
 export async function startProviderOnboarding(_currentState: string, formData: FormData) {
   const supabase = await createClient();
@@ -29,8 +26,12 @@ export async function startProviderOnboarding(_currentState: string, formData: F
     return 'Please enter a business name.';
   }
 
-  if (username.length < 3 || username.length > 30) {
-    return 'Username must be between 3 and 30 characters long.';
+  if (username.length < USERNAME_MIN_LENGTH || username.length > USERNAME_MAX_LENGTH) {
+    return `Username must be between ${USERNAME_MIN_LENGTH} and ${USERNAME_MAX_LENGTH} characters long.`;
+  }
+
+  if (biography.length > 500) {
+    return 'Short bio must be 500 characters or fewer.';
   }
 
   const { data: existingProviderPage, error: existingProviderPageError } = await supabase
@@ -44,28 +45,15 @@ export async function startProviderOnboarding(_currentState: string, formData: F
     return 'Could not load your provider draft.';
   }
 
-  const { data: existingUsername, error: usernameError } = await supabase
-    .schema('ceaute')
-    .from('provider_page')
-    .select('id')
-    .eq('username', username)
-    .neq('owner_profile_id', userId)
-    .maybeSingle();
-
-  if (usernameError) {
-    return 'Could not check that username.';
-  }
-
-  if (existingUsername) {
-    return 'Username already exists.';
-  }
-
   const providerPageValues = {
     display_name: displayName,
     username,
     biography: biography || null,
   };
 
+  // Username uniqueness is decided by PostgreSQL's partial unique index. RLS
+  // only lets this user see their own provider page, so a pre-check could
+  // never see another provider's username; the write is the authority.
   const { error } = existingProviderPage
     ? await supabase
         .schema('ceaute')
@@ -81,6 +69,23 @@ export async function startProviderOnboarding(_currentState: string, formData: F
         });
 
   if (error) {
+    if (error.code === '23505') {
+      return 'That username is already taken.';
+    }
+
+    if (error.code === '23514') {
+      return 'Check the details and try again.';
+    }
+
+    console.error('Provider onboarding save failed', {
+      userId,
+      existingProviderPageId: existingProviderPage?.id ?? null,
+      code: error.code,
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+    });
+
     return 'Could not save provider onboarding.';
   }
 

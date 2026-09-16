@@ -1,4 +1,5 @@
 import { redirect, notFound } from "next/navigation";
+import { PendingButton } from "@/components/pending-button";
 import { calculateBookingPaymentAmounts } from "@/lib/payments/booking-payments";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -372,12 +373,12 @@ export default async function BookingCheckoutPage({ params, searchParams }) {
               <form action={startStripeCheckoutForBooking}>
                 <input type="hidden" name="booking_id" value={holdSummary.id} />
                 <input type="hidden" name="return_path" value={returnPath} />
-                <button
-                  type="submit"
-                  className="w-max rounded-lg bg-pink-700 p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-pink-800"
+                <PendingButton
+                  pendingLabel="Opening Stripe..."
+                  className="w-max rounded-lg bg-pink-700 p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-pink-800 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   Pay with Stripe
-                </button>
+                </PendingButton>
               </form>
             </div>
           ) : null}
@@ -574,12 +575,12 @@ export default async function BookingCheckoutPage({ params, searchParams }) {
 
 const SubmitButton = () => {
   return (
-    <button
+    <PendingButton
       form="booking_details"
-      type="submit"
+      pendingLabel="Continuing..."
       className="w-max rounded-lg bg-pink-700 p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-pink-800 disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
     >
       Continue
-    </button>
+    </PendingButton>
   );
 };

@@ -1,6 +1,5 @@
 "use client";
 import Link from "next/link";
-import Image from "next/image";
 import { useActionState } from "react";
 
 function signInHref(next) {
@@ -27,17 +26,8 @@ export function SignupForm({
     <main className="container mx-auto flex min-h-screen max-w-md items-center justify-center p-2">
       <div className="flex w-full flex-col border rounded-2xl border-black/10 bg-white p-8">
         <Link href={"/"} className="flex w-max items-center gap-x-1">
-          <span hidden className="relative h-6 w-6 overflow-hidden">
-            <Image
-              className="absolute select-none"
-              fill="responsive"
-              style={{ objectFit: "cover" }}
-              src="/fleekd_logo.png"
-              alt="fleekd-company-logo"
-            />
-          </span>
           <h2 className="select-none text-xs font-bold uppercase tracking-widest opacity-70">
-            fleekd
+            ceaute
           </h2>
         </Link>
         <h1 className="mt-8 text-2xl font-bold tracking-tight text-black/90">
@@ -70,9 +60,7 @@ export function SignupForm({
           />
 
           <p className="mt-1 text-xs text-black/50">
-            {" "}
-            Your password must be at least 8 characters, and can’t begin or end
-            with a space.{" "}
+            We will email you a secure link to finish creating your account.
           </p>
           <p className="text-sm text-red-600">{state?.message}</p>
           <SubmitButton pending={pending} />
@@ -120,7 +108,7 @@ const SubmitButton = ({ pending }) => {
       aria-disabled={pending}
       disabled={pending}
     >
-      {!pending ? "Create Ceaute account" : "Submitting..."}
+      {!pending ? "Create Ceaute account" : "Sending link..."}
     </button>
   );
 };

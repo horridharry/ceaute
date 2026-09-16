@@ -87,13 +87,7 @@ export function formatDurationMinutes(minutes) {
     .join(" ");
 }
 
-export function normalizeUsername(value) {
-  return String(value ?? "")
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9._]+/g, "")
-    .slice(0, 30);
-}
+export { normalizeUsername } from "./username";
 
 export function weekdayNameToNumber(name) {
   return DAYS_BY_NAME[name] ?? null;

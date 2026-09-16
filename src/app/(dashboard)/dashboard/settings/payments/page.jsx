@@ -4,6 +4,7 @@ import {
   refreshPaymentStatus,
   startOrResumeOnboarding,
 } from "./actions";
+import { PaymentActions } from "./_components/payment-actions";
 
 export default async function DashboardPaymentSettingsPage() {
   const { configured, paymentAccount, state } = await getPaymentSettings();
@@ -67,30 +68,13 @@ export default async function DashboardPaymentSettingsPage() {
           ) : null}
         </section>
 
-        <div className="mt-8 flex items-center justify-end gap-3">
-          {hasAccount ? (
-            <form action={refreshPaymentStatus}>
-              <button
-                type="submit"
-                disabled={!configured}
-                className="rounded-lg border border-black/10 p-3 px-4 text-sm font-semibold text-pink-600 duration-200 hover:border-black/20 disabled:opacity-50"
-              >
-                Refresh status
-              </button>
-            </form>
-          ) : null}
-          {state.canCreateOnboardingLink ? (
-            <form action={startOrResumeOnboarding}>
-              <button
-                type="submit"
-                disabled={!configured}
-                className="rounded-lg bg-pink-700 p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-pink-800 disabled:opacity-50"
-              >
-                {hasAccount ? "Resume onboarding" : "Connect Stripe"}
-              </button>
-            </form>
-          ) : null}
-        </div>
+        <PaymentActions
+          configured={configured}
+          hasAccount={hasAccount}
+          canCreateOnboardingLink={state.canCreateOnboardingLink}
+          refreshPaymentStatus={refreshPaymentStatus}
+          startOrResumeOnboarding={startOrResumeOnboarding}
+        />
       </div>
     </main>
   );

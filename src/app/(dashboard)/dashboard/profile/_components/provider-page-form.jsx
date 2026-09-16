@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import Link from "next/link";
+import { normalizeUsername, validateUsername } from "../../_lib/username";
 
 const PROVIDER_CATEGORIES = [
   "Nails",
@@ -11,30 +12,6 @@ const PROVIDER_CATEGORIES = [
   "Skincare",
   "Makeup",
 ];
-
-const cleanUsername = (value) => {
-  return value
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9._]+/g, "")
-    .slice(0, 30);
-};
-
-const validateUsername = (username) => {
-  if (!username) {
-    return null;
-  }
-
-  if (!/^[a-z0-9._]+$/.test(username)) {
-    return "Username can only contain lowercase letters, numbers, full stops, and underscores.";
-  }
-
-  if (username.length < 3 || username.length > 30) {
-    return "Username must be between 3 and 30 characters long.";
-  }
-
-  return null;
-};
 
 export function ProviderPageForm({ providerPage, updateProviderPage }) {
   const [stateMessage, updateProviderPageAction, pending] = useActionState(
@@ -46,6 +23,9 @@ export function ProviderPageForm({ providerPage, updateProviderPage }) {
   const [usernameWasEdited, setUsernameWasEdited] = useState(
     Boolean(providerPage.username),
   );
+  // Controlled so a failed save keeps the edited biography instead of
+  // resetting the textarea to the last saved value.
+  const [biography, setBiography] = useState(providerPage.biography || "");
   const [businessNameError, setBusinessNameError] = useState(null);
   const [usernameError, setUsernameError] = useState(null);
   const [biographyError, setBiographyError] = useState(null);
@@ -61,26 +41,27 @@ export function ProviderPageForm({ providerPage, updateProviderPage }) {
     }
 
     if (!usernameWasEdited) {
-      const suggestedUsername = cleanUsername(nextBusinessName);
+      const suggestedUsername = normalizeUsername(nextBusinessName);
       setUsername(suggestedUsername);
       setUsernameError(validateUsername(suggestedUsername));
     }
   };
 
   const updateUsername = (event) => {
-    const nextUsername = cleanUsername(event.target.value);
+    const nextUsername = normalizeUsername(event.target.value);
     setUsernameWasEdited(true);
     setUsername(nextUsername);
     setUsernameError(validateUsername(nextUsername));
   };
 
   const updateBiography = (event) => {
-    if (event.target.value.length > 500) {
-      setBiographyError("Biography must be 500 characters or fewer.");
-      return;
-    }
-
-    setBiographyError(null);
+    const nextBiography = event.target.value;
+    setBiography(nextBiography);
+    setBiographyError(
+      nextBiography.length > 500
+        ? "Biography must be 500 characters or fewer."
+        : null,
+    );
   };
 
   const hasClientError = businessNameError || usernameError || biographyError;
@@ -180,7 +161,7 @@ export function ProviderPageForm({ providerPage, updateProviderPage }) {
               name="biography"
               rows={5}
               maxLength={500}
-              defaultValue={providerPage.biography || ""}
+              value={biography}
               onChange={updateBiography}
               className="field resize-none"
             />

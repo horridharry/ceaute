@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { PendingButton } from "@/components/pending-button";
 import { cancelProviderBooking, getProviderBooking } from "../actions";
 
 const canShowExactAddress = (booking) =>
@@ -77,12 +78,12 @@ function CancellationPanel({ booking }) {
           <input type="checkbox" required className="mt-1 h-4 w-4" />
           <span>I understand this will cancel the booking and refund the customer.</span>
         </label>
-        <button
-          type="submit"
-          className="rounded-lg border border-rose-200 p-3 px-4 text-sm font-semibold text-rose-700 duration-200 hover:bg-rose-50"
+        <PendingButton
+          pendingLabel="Cancelling..."
+          className="rounded-lg border border-rose-200 p-3 px-4 text-sm font-semibold text-rose-700 duration-200 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
         >
           Cancel booking
-        </button>
+        </PendingButton>
       </form>
     </div>
   );

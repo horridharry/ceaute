@@ -24,6 +24,24 @@ export function getStripeAccountInclude() {
   return STRIPE_ACCOUNT_INCLUDE;
 }
 
+// Every failure raised by the Stripe SDK, including network and rate-limit
+// errors, extends StripeError. Anything else is a programming error and should
+// keep propagating.
+export function isStripeError(error) {
+  return error instanceof Stripe.errors.StripeError;
+}
+
+// Safe diagnostic fields for server logs: no request payloads or personal data.
+export function describeStripeError(error) {
+  return {
+    type: error?.type ?? null,
+    code: error?.code ?? null,
+    statusCode: error?.statusCode ?? null,
+    requestId: error?.requestId ?? null,
+    message: error?.message ?? null,
+  };
+}
+
 export function retrieveStripeAccount(stripe, accountId) {
   return stripe.v2.core.accounts.retrieve(accountId, {
     include: STRIPE_ACCOUNT_INCLUDE,

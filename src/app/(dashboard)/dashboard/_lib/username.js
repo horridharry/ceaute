@@ -1,0 +1,38 @@
+// Provider usernames are shared between onboarding, page identity, and the
+// server actions behind them. PostgreSQL enforces the same pattern with
+// provider_page_username_format and the partial unique index; these helpers
+// only give the user early feedback and keep both forms deriving the same
+// suggestion from a business name.
+
+export const USERNAME_MIN_LENGTH = 3;
+export const USERNAME_MAX_LENGTH = 30;
+
+export function normalizeUsername(value) {
+  return String(value ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9._]+/g, "")
+    .slice(0, USERNAME_MAX_LENGTH);
+}
+
+// Returns a message for an unusable username, or null when it is acceptable.
+// An empty username is left to the caller, because onboarding requires one
+// while page identity allows clearing it.
+export function validateUsername(username) {
+  if (!username) {
+    return null;
+  }
+
+  if (!/^[a-z0-9._]+$/.test(username)) {
+    return "Username can only contain lowercase letters, numbers, full stops, and underscores.";
+  }
+
+  if (
+    username.length < USERNAME_MIN_LENGTH ||
+    username.length > USERNAME_MAX_LENGTH
+  ) {
+    return `Username must be between ${USERNAME_MIN_LENGTH} and ${USERNAME_MAX_LENGTH} characters long.`;
+  }
+
+  return null;
+}
