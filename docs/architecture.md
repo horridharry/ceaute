@@ -20,6 +20,40 @@ temporary redirects from legacy `/provider/...`, previous dashboard names, and
 the former `/booking/...` public paths. New links and documentation should use
 the canonical routes instead of extending the compatibility surface.
 
+## Where a change belongs
+
+Start from the URL of the screen that changes, then read one vertical slice.
+The database function in the last column is authoritative for the rule; the
+JavaScript before it validates for the user and prepares the screen. The
+trade-offs behind this shape are in
+[engineering-principles.md](engineering-principles.md).
+
+| Journey | Route and page | Orchestration | Authoritative PostgreSQL |
+| --- | --- | --- | --- |
+| Sign in, sign up, magic link | `src/app/(authenticate)/*`, `src/app/auth/confirm` | `(authenticate)/actions.js`, `src/lib/auth/redirect.ts` | Supabase Auth; `profile` row created by trigger |
+| Session and ownership guard | `src/proxy.ts` | `src/lib/supabase/proxy.ts`, `src/lib/auth/request-session.js` | RLS on provider-owned tables |
+| Create provider page | `/dashboard/onboarding` | `onboarding/actions.ts` | `create_provider_page_draft` |
+| Identity, publish, unpublish | `/dashboard/profile` | `profile/actions.js`, `profile/publication-readiness.js` (screen hints only) | `publish_provider_page`, `unpublish_provider_page` |
+| Portfolio images | `/dashboard/profile/portfolio` | `portfolio/actions.js`, `src/lib/supabase/signed-urls.js` | `portfolio_image` RLS, private storage bucket |
+| Location and private address | `/dashboard/locations` | `locations/actions.js` | `provider_location` RLS and constraints |
+| Working hours and blocked dates | `/dashboard/availability` | `availability/actions.js`, `src/lib/bookings/appointment-grid.js` | `replace_provider_availability_rules`, 15-minute grid checks |
+| Treatments, groups, add-ons | `/dashboard/treatments`, `/dashboard/treatment-groups`, `/dashboard/add-ons` | each route's `actions.js`, `_lib/form-values.js` | table RLS; `create_add_on_with_compatibility`, `update_add_on_with_compatibility` |
+| Booking terms | `/dashboard/settings/booking` | `settings/booking/actions.js`, `src/lib/payments/booking-payments.js` | `provider_booking_setting` constraints (positive deposit) |
+| Stripe Connect onboarding | `/dashboard/settings/payments`, `POST /api/stripe/connect` | `settings/payments/actions.js`, `src/lib/stripe/server.js` | `sync_provider_payment_account`, Connect event claims |
+| Public page and discovery | `/@[username]`, `/discover` | `[username]/_lib/*`, `discover/actions.js` | `get_public_*` projections, `search_public_providers` (published only) |
+| Choose add-ons and time | `/@[username]/book/[treatmentId]`, `/time` | `[username]/_lib/public-provider-data.js`, `book/_lib/appointment-availability.js` | `get_public_availability_rules`, `get_public_blocked_dates`, `get_public_occupied_periods` |
+| Hold and Checkout | `/@[username]/book/[treatmentId]/checkout` | `book/actions.js` | `create_validated_booking_hold`, `claim_booking_checkout`, `record_booking_checkout_session`, exclusion constraint |
+| Payment confirmation | `POST /api/stripe/payments` | `api/stripe/payments/route.ts`, `src/lib/payments/refunds.js` | `claim_stripe_payment_event`, `complete_booking_payment_attempt` |
+| Booking views | `/account/bookings`, `/dashboard/bookings` | each route's `actions.js`, `src/lib/bookings/booking-display.js`, `booking-payment-attempts.js` | `get_customer_booking_summaries`, `get_provider_booking_summaries` (redaction) |
+| Cancellation and refund | same booking routes | `src/lib/bookings/cancel-booking.js`, `src/lib/payments/refunds.js`, `refund-request.js` | `prepare_booking_cancellation`, `claim_booking_refund_operation`, `record_booking_refund_state` |
+| Completion and reviews | `GET /api/cron/complete-bookings`, `/account/bookings/[bookingId]` | `api/cron/*`, `account/bookings/actions.js` | `complete_elapsed_bookings`, `create_booking_review` |
+| Transactional email | `GET /api/cron/send-booking-emails` | `src/lib/emails/booking-emails.js` | outbox rows enqueued by booking transitions; `claim_pending_booking_emails` |
+| Scheduling | Supabase Cron | migration `202609150001` | `invoke_cron_endpoint` via `pg_cron` and `pg_net` |
+
+Tests follow the same split: `tests/*.test.js` cover pure JavaScript modules,
+`supabase/tests/database/*.test.sql` cover the PostgreSQL rules, and nothing
+yet covers the HTTP handlers or Server Actions end to end.
+
 `src/proxy.ts` refreshes the Supabase session and protects account and dashboard
 URLs. Every dashboard URL requires authentication. Every dashboard URL except
 `/dashboard/onboarding` also requires the user to already own a provider page.
@@ -48,10 +82,17 @@ the underlying provider and booking tables to anonymous reads.
 
 Those public projections require a published provider page themselves; they do
 not trust a caller to have checked first, so a draft or suspended page returns
-nothing even when its ID is known. A provider reads their own unpublished page
-through the authenticated provider-owned tables instead, which is why the
-dashboard, its storefront preview, and onboarding keep working before
-publication.
+nothing even when its ID is known. The booking journey under
+`/@[username]/book` and discovery use them. The storefront page itself is the
+exception: `[username]/page.jsx` resolves the page with one narrow
+`status = 'published'` query and then `storefront-view-model.js` reads the
+provider-owned tables directly with the client it is given. That builder is
+shared with the dashboard preview, which passes the signed-in user's client so
+a draft page renders through RLS. The storefront's publication guarantee
+therefore rests on that one upstream check; do not call the builder with a
+page that has not been through it. A provider reads their own unpublished page
+through the authenticated provider-owned tables, which is why the dashboard,
+its preview, and onboarding keep working before publication.
 
 ## Where rules are enforced
 
@@ -90,7 +131,12 @@ payment, and replay guarantees.
 Most provider form orchestration is route-local in `actions.js` files beside the
 dashboard area it serves. These actions authenticate, validate input, use the
 signed-in Supabase client, revalidate routes, and redirect. This keeps a
-vertical slice easy to find. Treatments, treatment groups, and add-ons each own
+vertical slice easy to find. The same `"use server"` files also export the
+read loaders their pages call, so every exported function is a callable
+endpoint and must authenticate first; all of them currently do, through
+`getSignedInProvider` or `getSignedInCustomer`. There is no route-level
+`error.tsx` or `not-found.tsx` yet, so a loader that throws shows the
+framework's default error screen. Treatments, treatment groups, and add-ons each own
 the actions under their own route, so treatment logic, group archival, and
 add-on compatibility can be read separately; the public booking action module
 remains a deliberate candidate for later simplification.
@@ -162,8 +208,9 @@ refund entitlement in PostgreSQL. Stripe refund creation is then idempotent and
 reconcilable. The booking may already be cancelled while its refund is pending;
 screens must not infer external completion from booking status alone.
 
-Confirmed/completed/cancelled transitions enqueue transactional email in a
-database outbox. Secret-protected cron routes claim and process email batches and
+The transition to confirmed and the transition from confirmed to cancelled
+enqueue transactional email in a database outbox through a constraint trigger;
+completion sends nothing. Secret-protected cron routes claim and process email batches and
 complete elapsed bookings. Claims expire and retries preserve stable work
 identity, because network delivery cannot be assumed to happen exactly once.
 

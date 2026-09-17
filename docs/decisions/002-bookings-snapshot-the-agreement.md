@@ -34,3 +34,13 @@ Some data is intentionally duplicated. Snapshot shape is a long-lived contract,
 so additions and consumers need compatibility tests. Do not normalise snapshots
 away, recalculate old refunds from current settings, or rely only on component
 filtering for private-address disclosure.
+
+## Reversibility
+
+Adding a field to a snapshot is cheap and backwards compatible; consumers
+already tolerate older shapes (see `tests/booking-display.test.js`). Renaming
+or removing a field, or replacing snapshots with joins to current records, is
+a one-way door because every stored booking carries the current shape and the
+refund and redaction functions read it. Reversal would need a data migration
+over historical bookings and new database tests. This decision would be wrong
+only if providers could no longer edit terms after a booking exists.

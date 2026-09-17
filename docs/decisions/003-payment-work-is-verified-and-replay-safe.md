@@ -36,3 +36,13 @@ Booking status, payment status, and refund status answer different questions and
 must not be collapsed. Return pages may report current state, but must never
 confirm payment. Retries must reuse persisted identities rather than create new
 external work blindly.
+
+## Reversibility
+
+The claim-then-call pattern and the persisted idempotency keys are the one-way
+door: Stripe and Resend already hold the keys and metadata this design sends,
+and the webhook handlers depend on the persisted attempt. Changing the fee
+amount, the payment mode options, or which Stripe events are handled is a
+two-way door because each attempt records its own values. Replacing Stripe
+Checkout with another payment integration would need a new record and a
+parallel state machine rather than an edit to this one.

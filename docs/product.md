@@ -141,8 +141,9 @@ A protected scheduled route marks confirmed bookings completed after their end
 time. The customer attached to a completed booking may leave one 1–5 rating and
 an optional comment, unless they own the provider page themselves. Phone
 verification was deliberately removed from review eligibility. Visible reviews
-appear on the public provider page; visibility can be changed through the
-trusted backend, but providers cannot delete reviews.
+appear on the public provider page. A database function lets the trusted
+backend hide or show a review, but no application or administration screen
+calls it yet, and nobody can delete a review.
 
 Transactional confirmation and cancellation email is written to a database
 outbox and delivered by a protected scheduled route through Resend. Delivery is
