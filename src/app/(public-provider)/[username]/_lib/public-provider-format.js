@@ -55,3 +55,9 @@ export function formatTimeLabel(date) {
 export function addMinutes(date, minutes) {
   return new Date(date.getTime() + Number(minutes ?? 0) * 60_000);
 }
+
+// A provider page with no visible reviews yet should not advertise that fact;
+// the whole section, heading included, is omitted rather than shown empty.
+export function shouldShowReviewsSection(reviews) {
+  return Array.isArray(reviews) && reviews.length > 0;
+}
