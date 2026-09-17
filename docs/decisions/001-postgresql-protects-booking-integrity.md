@@ -33,3 +33,13 @@ Availability logic exists at two layers and must agree. Do not remove the
 database validation or exclusion constraint as “duplicate validation.” A later
 simplification may centralise more calculation, but it must preserve the
 transactional overlap guarantee and the database tests.
+
+## Reversibility
+
+Moving more of the candidate calculation into PostgreSQL, or exposing the
+fixed notice, window, and grid rules as provider settings, is a two-way door:
+both layers already read the same rules, and the database tests define the
+accepted behaviour. Removing the exclusion constraint or the database
+re-validation is the one-way door this record exists to protect. This decision
+would be wrong only if bookings stopped being exclusive time intervals, for
+example group classes with capacity, which would need a new record.

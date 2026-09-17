@@ -10,13 +10,21 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 # Ceaute repository guidance
 
-Start with `README.md`. Use `docs/product.md` for current product behaviour,
-`docs/domain.md` for terminology, and `docs/architecture.md` for implementation
-boundaries. The ordered files in `supabase/migrations/` are the final authority
-for implemented database behaviour; later migrations may replace earlier
-functions.
+Start with `README.md`, which maps every document to its one responsibility.
+Use `docs/engineering-principles.md` for how to make trade-offs and the change
+checklist, `docs/product.md` for current product behaviour, `docs/domain.md`
+for terminology, and `docs/architecture.md` for implementation boundaries and
+the "Where a change belongs" table. The ordered files in `supabase/migrations/`
+are the final authority for implemented database behaviour; later migrations
+may replace earlier functions.
+
+Ceaute is pre-launch and optimises for a working MVP and rapid product
+learning, not architectural perfection. Prefer the simplest change that keeps
+the journey correct, keep it reversible, and do not refactor working code
+unless a product change is blocked by it.
 
 Keep changes within the requested scope. Do not weaken RLS, expose the Supabase
 service-role key to the browser, confirm payments from Stripe return URLs, or
 move booking, refund, publication, ownership, and private-address invariants out
-of PostgreSQL without an explicit architectural decision.
+of PostgreSQL without an explicit architectural decision recorded in
+`docs/decisions/`.

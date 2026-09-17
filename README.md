@@ -29,16 +29,25 @@ page and is deliberately accessible before the normal dashboard provider-page
 guard applies. Old `/provider/...` URLs are compatibility redirects, not the
 canonical route structure.
 
-## Read next
+## Documentation map
 
-- [Product behaviour](docs/product.md) explains what Ceaute currently does and
-  the rules a product change must preserve.
-- [Domain model](docs/domain.md) defines the small set of terms used throughout
-  the codebase.
-- [Architecture](docs/architecture.md) explains the route, Supabase, PostgreSQL,
-  Stripe, availability, and orchestration boundaries.
-- [Decisions](docs/decisions/) records the few non-obvious choices that should
-  not be casually simplified.
+Each document has one responsibility. If a fact belongs in two places, link to
+it rather than repeating it.
+
+| Document | Answers | Update when |
+| --- | --- | --- |
+| This README | What Ceaute is, the stack, the URL areas, how to run it | Setup or top-level areas change |
+| [Engineering principles](docs/engineering-principles.md) | How we make trade-offs, what counts as necessary complexity, the change checklist | The team agrees a new way of working |
+| [Product behaviour](docs/product.md) | What Ceaute does today and the rules a product change must preserve | Observable behaviour changes |
+| [Domain model](docs/domain.md) | The vocabulary used in code, routes, and database names | A concept is added or renamed |
+| [Architecture](docs/architecture.md) | Where behaviour lives, which boundary is authoritative, where a change belongs | A boundary, integration, or slice changes |
+| [Decisions](docs/decisions/) | Why the few non-obvious choices were made and what reversing them costs | A one-way-door decision is made or revisited |
+| [Reports](docs/reports/) | Dated evidence: audits, experiments, readiness reviews | Never edited after the date; write a new one |
+| [AGENTS.md](AGENTS.md) | Entry point and guardrails for AI coding agents | Guardrails change |
+
+The ordered files in `supabase/migrations/` are the final authority for
+implemented database behaviour; the documents above describe them but do not
+replace them.
 
 ## Local development
 
@@ -66,4 +75,5 @@ npm run lint
 npm run build
 ```
 
-Tue 15 Sep - 18:42
+`npm run test:db` needs Docker. When it cannot be run, say so in the pull
+request rather than skipping it silently.
