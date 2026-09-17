@@ -234,10 +234,11 @@ enable_confirmations = true
 secure_password_change = false
 # Controls the minimum amount of time that must pass before sending another signup confirmation or password reset email.
 max_frequency = "1m"
-# Number of characters used in the email OTP.
-otp_length = 8
-# Number of seconds before the email OTP expires (defaults to 1 hour).
-otp_expiry = 3600
+# Number of characters used in the email OTP. The code screen and
+# src/lib/auth/email-otp.js expect six digits; the hosted project must match.
+otp_length = 6
+# Number of seconds before the email OTP expires. The templates say 15 minutes.
+otp_expiry = 900
 
 # Use a production-ready SMTP server
 # [auth.email.smtp]
@@ -248,6 +249,17 @@ otp_expiry = 3600
 # pass = "env(SENDGRID_API_KEY)"
 # admin_email = "admin@email.com"
 # sender_name = "Admin"
+
+# Sign-up and sign-in emails carry a six-digit code instead of a link. These
+# files configure the local stack only; the hosted project's templates are
+# pasted into the Supabase Dashboard by hand.
+[auth.email.template.confirmation]
+subject = "Your Ceaute verification code"
+content_path = "./supabase/templates/confirmation.html"
+
+[auth.email.template.magic_link]
+subject = "Your Ceaute sign-in code"
+content_path = "./supabase/templates/magic_link.html"
 
 # Uncomment to customize email template
 # [auth.email.template.invite]

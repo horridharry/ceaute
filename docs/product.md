@@ -37,8 +37,13 @@ guard which redirects dashboard users without a provider page into onboarding.
 Customer settings and booking history stay under `/account`, including
 `/account/bookings`. The settings screen edits the profile name and UK phone
 number that bookings snapshot; email is the sign-in identity and is not
-editable there, and there is no account deletion flow. Authentication is intentionally asymmetric: sign-in and
-sign-up accept a validated return path, while a user without one is sent to the
+editable there, and there is no account deletion flow. Signing in and signing
+up both email a six-digit code which the person types into Ceaute; there is no
+link to click. Sign-in never creates an account, sign-up may, a new code can be
+requested once a minute, and requesting one cancels the previous code.
+Authentication is intentionally asymmetric: sign-in and
+sign-up accept a validated return path, which survives the code screen so an
+interrupted booking resumes at its checkout, while a user without one is sent to the
 dashboard if they have a provider page and to the account area otherwise.
 
 ## The public page and catalogue

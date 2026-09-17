@@ -95,7 +95,7 @@ const SubmitButton = ({ pending }) => {
       aria-disabled={pending}
       disabled={pending}
     >
-      {!pending ? "Continue with email" : "Sending link..."}
+      {!pending ? "Continue with email" : "Sending code..."}
     </button>
   );
 };
