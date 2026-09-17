@@ -196,3 +196,26 @@ Same application, same database, only the execution region differs.
   expired (`invalidToken`); `vercel login` is needed before any CLI deploy.
 - `/@unknown` returns HTTP 200 (streamed not-found), as already recorded on
   16 September. Not a regression from the earlier performance work.
+
+## After measurement (`dub1`), same day
+
+Run at 00:55 UTC against production `https://ceaute.com`, same script, same
+routes, N=10, `X-Vercel-Cache: MISS` and HTTP 200 on every sample. Execution
+region `dub1` on **20/20** samples (`x-vercel-id` = `lhr1::dub1::…`), plus 3
+pre-run probes also `dub1`.
+
+| Route | min | median | max | first | region |
+| --- | --- | --- | --- | --- | --- |
+| `/discover?category=gel-nails` | 163 ms | **204 ms** | 672 ms | 200 ms | dub1 x10 |
+| `/@unknown` | 131 ms | **156 ms** | 180 ms | 180 ms | dub1 x10 |
+
+Median change: `/discover` 537 -> 204 ms (-333 ms, -62%); `/@unknown`
+328 -> 156 ms (-172 ms, -52%). Min: 349 -> 163 ms (-53%), 316 -> 131 ms
+(-59%). Cold-ish first probe after deploy: 1.07 s (was 1.5-1.9 s).
+
+Two `/discover` samples (672 ms, 482 ms) were outliers with TTFB ~450-640 ms;
+8/10 sat between 163 and 287 ms. `/@unknown` had no outliers.
+
+**Result: hypothesis supported.** Same build, same database, only the region
+changed, and warm medians fell by more than half. Remaining warm cost is now
+roughly the London<->Dublin hop plus edge proxy plus render.
