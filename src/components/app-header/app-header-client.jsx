@@ -12,7 +12,7 @@ const HomeLogo = () => (
   </Link>
 );
 
-const hiddenHeaderPrefixes = ["/sign-in", "/sign-up", "/auth"];
+const hiddenHeaderPrefixes = ["/sign-in", "/sign-up", "/verify", "/auth"];
 
 function HeaderLink({ href, children, exact = false }) {
   const pathname = usePathname();

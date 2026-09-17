@@ -12,7 +12,7 @@ Ceaute is one full-stack Next.js App Router deployment. Route groups under
 - `(public-provider)` contains `/@[username]` and the treatment booking journey.
 - `(dashboard)` contains the protected provider workspace at `/dashboard`.
 - `(account)` contains customer details and bookings at `/account`.
-- `(authenticate)` contains `/sign-in` and `/sign-up`.
+- `(authenticate)` contains `/sign-in`, `/sign-up`, and the `/verify` code screen.
 - `api` contains signed Stripe webhooks and secret-protected scheduled jobs.
 
 The ungrouped `/discover` route is public search. `next.config.ts` contains
@@ -30,7 +30,7 @@ trade-offs behind this shape are in
 
 | Journey | Route and page | Orchestration | Authoritative PostgreSQL |
 | --- | --- | --- | --- |
-| Sign in, sign up, magic link | `src/app/(authenticate)/*`, `src/app/auth/confirm` | `(authenticate)/actions.js`, `src/lib/auth/redirect.ts` | Supabase Auth; `profile` row created by trigger |
+| Sign in, sign up, email code | `src/app/(authenticate)/*` (`/verify` is the code screen) | `(authenticate)/actions.js`, `src/lib/auth/email-otp.js`, `src/lib/auth/redirect.js` | Supabase Auth generates and verifies the code; `profile` row created by trigger |
 | Session and ownership guard | `src/proxy.ts` | `src/lib/supabase/proxy.ts`, `src/lib/auth/request-session.js` | RLS on provider-owned tables |
 | Create provider page | `/dashboard/onboarding` | `onboarding/actions.ts` | `create_provider_page_draft` |
 | Identity, publish, unpublish | `/dashboard/profile` | `profile/actions.js`, `profile/publication-readiness.js` (screen hints only) | `publish_provider_page`, `unpublish_provider_page` |
@@ -59,6 +59,17 @@ URLs. Every dashboard URL requires authentication. Every dashboard URL except
 `/dashboard/onboarding` also requires the user to already own a provider page.
 Server pages and actions still perform their own ownership checks; the proxy is
 not the security boundary.
+
+Authentication is a six-digit email code, not a link. `signInWithOtp` asks
+Supabase to email the code and `verifyOtp` with type `email` exchanges it for
+a session in the same browser, so nothing depends on which browser or mail
+scanner opens an email. The email being verified and the return path wait in
+the httpOnly `ceaute_pending_auth` cookie between the two screens. The Supabase
+email templates in `supabase/templates/` must show `{{ .Token }}` and no link;
+the hosted project's copies are pasted into the Dashboard by hand. The
+`/auth/confirm` route remains only for links in emails sent before the change.
+The evidence behind this is in the
+[email code report](reports/2026-09-17-email-otp-and-refund-recovery.md).
 
 ## Supabase clients and data access
 

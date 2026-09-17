@@ -60,7 +60,7 @@ export function SignupForm({
           />
 
           <p className="mt-1 text-xs text-black/50">
-            We will email you a secure link to finish creating your account.
+            We will email you a six-digit code to finish creating your account.
           </p>
           <p className="text-sm text-red-600">{state?.message}</p>
           <SubmitButton pending={pending} />
@@ -108,7 +108,7 @@ const SubmitButton = ({ pending }) => {
       aria-disabled={pending}
       disabled={pending}
     >
-      {!pending ? "Create Ceaute account" : "Sending link..."}
+      {!pending ? "Create Ceaute account" : "Sending code..."}
     </button>
   );
 };

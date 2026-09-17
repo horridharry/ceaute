@@ -1,6 +1,7 @@
 import { SigninForm } from "../_components/signin-form";
 import { authenticateUser } from "../actions";
 import { redirect } from "next/navigation";
+import { otpRequestMessage } from "@/lib/auth/email-otp";
 import { validatedNextPath } from "@/lib/auth/redirect";
 import { createClient } from "@/lib/supabase/server";
 
@@ -29,14 +30,7 @@ export default async function SigninPage({ searchParams }) {
     redirect(providerPage ? "/dashboard" : "/account");
   }
 
-  const message =
-    params?.sent === "1"
-      ? "Check your email. Use the secure link we sent to continue."
-      : params?.error === "invalid-email"
-        ? "Enter a valid email address."
-        : params?.error
-          ? "We could not sign you in. Check the email or create an account."
-          : "";
+  const message = otpRequestMessage("sign-in", params?.error);
 
   return (
     <SigninForm
