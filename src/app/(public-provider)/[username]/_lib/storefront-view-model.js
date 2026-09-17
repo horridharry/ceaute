@@ -43,6 +43,7 @@ function mapTreatment(treatment, compatibleAddOns) {
     price_pence: treatment.price_pence,
     duration_minutes: treatment.duration_minutes,
     add_ons: compatibleAddOns.map((addOn) => ({
+      id: addOn.id,
       name: addOn.name,
       additional_price_pence: addOn.additional_price_pence,
       additional_duration_minutes: addOn.additional_duration_minutes,

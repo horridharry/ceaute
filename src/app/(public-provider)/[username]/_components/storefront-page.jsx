@@ -1,8 +1,9 @@
-import Link from "next/link";
 import {
   formatDurationMinutes,
   formatPricePence,
+  shouldShowReviewsSection,
 } from "../_lib/public-provider-format";
+import { TreatmentSelectionList } from "./treatment-selection";
 
 function EmptyState({ children }) {
   return (
@@ -97,6 +98,10 @@ function TreatmentSections({ sections, username, bookingEnabled }) {
     return <EmptyState>No active treatments are visible yet.</EmptyState>;
   }
 
+  if (bookingEnabled) {
+    return <TreatmentSelectionList sections={sections} username={username} />;
+  }
+
   return (
     <div className="flex flex-col gap-6">
       {sections.map((section) => (
@@ -104,19 +109,9 @@ function TreatmentSections({ sections, username, bookingEnabled }) {
           {section.name ? (
             <h2 className="text-lg font-semibold">{section.name}</h2>
           ) : null}
-          {section.treatments.map((treatment) =>
-            bookingEnabled ? (
-              <Link
-                key={treatment.id}
-                href={`/@${username}/book/${treatment.id}/time`}
-                className="block duration-200 hover:opacity-80"
-              >
-                <TreatmentCard treatment={treatment} />
-              </Link>
-            ) : (
-              <TreatmentCard key={treatment.id} treatment={treatment} />
-            ),
-          )}
+          {section.treatments.map((treatment) => (
+            <TreatmentCard key={treatment.id} treatment={treatment} />
+          ))}
         </section>
       ))}
     </div>
@@ -124,10 +119,6 @@ function TreatmentSections({ sections, username, bookingEnabled }) {
 }
 
 function Reviews({ reviews }) {
-  if (!reviews.length) {
-    return <EmptyState>No visible reviews yet.</EmptyState>;
-  }
-
   return (
     <div className="flex flex-col gap-3">
       {reviews.map((review) => (
@@ -227,10 +218,12 @@ export function StorefrontPage({ viewModel, backHref }) {
 
         <PaymentTerms terms={viewModel.booking_terms} />
 
-        <section className="flex flex-col gap-3">
-          <h2 className="text-lg font-semibold">Reviews</h2>
-          <Reviews reviews={viewModel.reviews ?? []} />
-        </section>
+        {shouldShowReviewsSection(viewModel.reviews) ? (
+          <section className="flex flex-col gap-3">
+            <h2 className="text-lg font-semibold">Reviews</h2>
+            <Reviews reviews={viewModel.reviews} />
+          </section>
+        ) : null}
       </div>
     </main>
   );
