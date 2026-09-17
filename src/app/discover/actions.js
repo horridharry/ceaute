@@ -1,4 +1,5 @@
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
+import { signStoragePaths } from "@/lib/supabase/signed-urls";
 
 const MAX_AREA_LENGTH = 120;
 const MAX_CATEGORY_LENGTH = 100;
@@ -43,22 +44,6 @@ export async function getDiscoveryCategories() {
   return categories ?? [];
 }
 
-async function signPortfolioImage(supabase, storagePath) {
-  if (!storagePath) {
-    return "";
-  }
-
-  const { data, error } = await supabase.storage
-    .from("portfolio-images")
-    .createSignedUrl(storagePath, 60 * 10);
-
-  if (error) {
-    return "";
-  }
-
-  return data?.signedUrl ?? "";
-}
-
 export async function searchPublicProviders(searchParams = {}) {
   const search = normalizeDiscoverySearch(searchParams);
 
@@ -79,21 +64,25 @@ export async function searchPublicProviders(searchParams = {}) {
     throw new Error("Could not search providers.");
   }
 
-  const results = await Promise.all(
-    (providers ?? []).map(async (provider) => ({
-      username: provider.username,
-      display_name: provider.display_name ?? "Unnamed provider",
-      provider_category: provider.provider_category ?? "Provider",
-      public_area: provider.public_area ?? "",
-      portfolio_image_url: await signPortfolioImage(
-        supabase,
-        provider.portfolio_storage_path,
-      ),
-      matching_treatments: Array.isArray(provider.matching_treatments)
-        ? provider.matching_treatments
-        : [],
-    })),
+  // One Storage request signs every result's image instead of one per result.
+  const signedUrlByPath = await signStoragePaths(
+    supabase,
+    "portfolio-images",
+    (providers ?? []).map((provider) => provider.portfolio_storage_path),
+    60 * 10,
   );
+
+  const results = (providers ?? []).map((provider) => ({
+    username: provider.username,
+    display_name: provider.display_name ?? "Unnamed provider",
+    provider_category: provider.provider_category ?? "Provider",
+    public_area: provider.public_area ?? "",
+    portfolio_image_url:
+      signedUrlByPath.get(provider.portfolio_storage_path) ?? "",
+    matching_treatments: Array.isArray(provider.matching_treatments)
+      ? provider.matching_treatments
+      : [],
+  }));
 
   return { search, results };
 }

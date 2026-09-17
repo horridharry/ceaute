@@ -297,23 +297,24 @@ export async function getAllTreatments() {
     next: "/dashboard/treatments",
   });
 
-  const { data: treatments, error } = await supabase
-    .schema("ceaute")
-    .from("treatment")
-    .select(treatmentSelect)
-    .eq("provider_page_id", providerPage.id)
-    .order("is_active", { ascending: false })
-    .order("display_order", { ascending: true })
-    .order("updated_at", { ascending: false });
+  // The category and group names used to label each treatment do not depend
+  // on the treatment rows, so both lookups run alongside the treatment query
+  // instead of after it.
+  const [{ data: treatments, error }, options] = await Promise.all([
+    supabase
+      .schema("ceaute")
+      .from("treatment")
+      .select(treatmentSelect)
+      .eq("provider_page_id", providerPage.id)
+      .order("is_active", { ascending: false })
+      .order("display_order", { ascending: true })
+      .order("updated_at", { ascending: false }),
+    getTreatmentFormOptionsForProvider({ supabase, providerPage }),
+  ]);
 
   if (error) {
     throw new Error("Could not load treatments.");
   }
-
-  const options = await getTreatmentFormOptionsForProvider({
-    supabase,
-    providerPage,
-  });
 
   return treatments.map((treatment) => decorateTreatment(treatment, options));
 }

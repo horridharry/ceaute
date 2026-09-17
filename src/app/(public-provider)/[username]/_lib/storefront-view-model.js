@@ -1,15 +1,20 @@
+import { signStoragePaths } from "@/lib/supabase/signed-urls";
+
 const PORTFOLIO_BUCKET = "portfolio-images";
 const SIGNED_IMAGE_SECONDS = 60 * 60;
 
-async function signedPortfolioImage(supabase, image) {
-  const { data } = await supabase.storage
-    .from(PORTFOLIO_BUCKET)
-    .createSignedUrl(image.storage_path, SIGNED_IMAGE_SECONDS);
+async function signedPortfolioImages(supabase, images) {
+  const signedUrlByPath = await signStoragePaths(
+    supabase,
+    PORTFOLIO_BUCKET,
+    images.map((image) => image.storage_path),
+    SIGNED_IMAGE_SECONDS,
+  );
 
-  return {
-    image_url: data?.signedUrl ?? "",
+  return images.map((image) => ({
+    image_url: signedUrlByPath.get(image.storage_path) ?? "",
     caption: image.caption ?? "",
-  };
+  }));
 }
 
 function mapBookingTerms(settings) {
@@ -188,10 +193,9 @@ export async function buildStorefrontViewModel({ supabase, providerPage }) {
     throw new Error("Could not load provider page preview.");
   }
 
-  const portfolio = await Promise.all(
-    (portfolioResult.data ?? []).map((image) =>
-      signedPortfolioImage(supabase, image),
-    ),
+  const portfolio = await signedPortfolioImages(
+    supabase,
+    portfolioResult.data ?? [],
   );
 
   return {

@@ -126,3 +126,108 @@ test("an empty booking list groups into empty sections", () => {
     cancelled: [],
   });
 });
+
+// Money shown to the customer before they cancel must match what PostgreSQL
+// will actually refund: everything paid online before the deadline, and at
+// most the snapshotted commitment retained once the deadline has passed.
+function deposit(overrides = {}) {
+  return {
+    amount_charged_pence: 1000,
+    amount_due_later_pence: 4000,
+    payment_status: "succeeded",
+    ...overrides,
+  };
+}
+
+function isoHoursFromNow(hours) {
+  return new Date(Date.now() + hours * 60 * 60_000).toISOString();
+}
+
+test("an early customer cancellation of a deposit booking refunds the whole online payment", () => {
+  const display = bookingToDisplayBooking(
+    booking({
+      start_at: isoHoursFromNow(72),
+      end_at: isoHoursFromNow(73),
+      service_snapshot: {
+        treatment_name: "Full set",
+        payment_mode: "fixed_deposit",
+        commitment_amount_pence: 1000,
+        cancellation_window_hours: 24,
+      },
+    }),
+    deposit(),
+  );
+
+  assert.equal(display.can_cancel, true);
+  assert.equal(display.customer_early_refund_label, "£10.00");
+  assert.equal(display.customer_late_refund_label, "£0.00");
+  assert.equal(display.customer_late_retained_label, "£10.00");
+  assert.equal(display.customer_current_refund_label, "£10.00");
+  assert.equal(display.customer_current_retained_label, "£0.00");
+  assert.equal(display.provider_refund_label, "£10.00");
+});
+
+test("a late customer cancellation retains at most the snapshotted commitment", () => {
+  const display = bookingToDisplayBooking(
+    booking({
+      start_at: isoHoursFromNow(6),
+      end_at: isoHoursFromNow(7),
+      service_snapshot: {
+        treatment_name: "Full set",
+        payment_mode: "full",
+        commitment_amount_pence: 1500,
+        cancellation_window_hours: 24,
+      },
+    }),
+    deposit({ amount_charged_pence: 5000, amount_due_later_pence: 0 }),
+  );
+
+  assert.equal(display.can_cancel, true);
+  assert.equal(display.customer_current_refund_label, "£35.00");
+  assert.equal(display.customer_current_retained_label, "£15.00");
+  assert.equal(display.provider_refund_label, "£50.00");
+});
+
+test("the retained amount never exceeds what was actually paid online", () => {
+  const display = bookingToDisplayBooking(
+    booking({
+      start_at: isoHoursFromNow(6),
+      end_at: isoHoursFromNow(7),
+      service_snapshot: {
+        treatment_name: "Full set",
+        payment_mode: "fixed_deposit",
+        commitment_amount_pence: 5000,
+        cancellation_window_hours: 24,
+      },
+    }),
+    deposit({ amount_charged_pence: 1000 }),
+  );
+
+  assert.equal(display.customer_current_refund_label, "£0.00");
+  assert.equal(display.customer_current_retained_label, "£10.00");
+});
+
+test("past, unpaid, completed and cancelled bookings cannot be cancelled", () => {
+  const cases = [
+    booking({ start_at: isoHoursFromNow(-2), end_at: isoHoursFromNow(-1), status: "confirmed" }),
+    booking({ start_at: isoHoursFromNow(48), end_at: isoHoursFromNow(49), status: "awaiting_payment", confirmed_at: null }),
+    booking({ start_at: isoHoursFromNow(48), end_at: isoHoursFromNow(49), status: "completed" }),
+    booking({ start_at: isoHoursFromNow(48), end_at: isoHoursFromNow(49), status: "cancelled" }),
+  ];
+
+  for (const candidate of cases) {
+    assert.equal(bookingToDisplayBooking(candidate, deposit()).can_cancel, false, candidate.status);
+  }
+});
+
+test("noon and midnight appointment times are shown as 12:00, never 0:00", () => {
+  const display = bookingToDisplayBooking(
+    booking({
+      start_at: "2026-10-20T11:00:00.000Z",
+      end_at: "2026-10-20T12:30:00.000Z",
+    }),
+  );
+
+  assert.equal(display.time_label, "12:00 pm - 1:30 pm");
+  assert.equal(formatSingleDateTime("2026-10-20T23:15:00.000Z"), "Wednesday 21 Oct 2026, 12:15 am");
+});

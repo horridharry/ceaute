@@ -20,3 +20,10 @@ test("formats September appointments in Europe/London BST", () => {
   assert.match(formatDateLabel(startAt), /15 Sept/);
   assert.equal(formatTimeLabel(endAt), "11:00 am");
 });
+
+// en-GB with `hour12: true` renders noon as "0:00 pm" under ICU, so the
+// formatters pin the twelve-hour cycle explicitly.
+test("formats noon and half past midnight as 12-hour times", () => {
+  assert.equal(formatTimeLabel(new Date("2026-10-20T11:00:00.000Z")), "12:00 pm");
+  assert.equal(formatTimeLabel(new Date("2026-10-20T23:30:00.000Z")), "12:30 am");
+});

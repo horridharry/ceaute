@@ -46,7 +46,7 @@ export function formatTimeLabel(date) {
     timeZone: "Europe/London",
     hour: "numeric",
     minute: "2-digit",
-    hour12: true,
+    hourCycle: "h12",
   })
     .format(date)
     .toLowerCase();

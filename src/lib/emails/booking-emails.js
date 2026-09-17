@@ -23,10 +23,8 @@ function escapeHtml(value) {
     .replaceAll("'", "&#039;");
 }
 
-function absoluteUrl(path) {
-  const baseUrl = process.env.CEAUTE_APP_URL;
-
-  if (!baseUrl) {
+function absoluteUrl(path, baseUrl) {
+  if (!baseUrl || !path) {
     return "";
   }
 
@@ -74,21 +72,27 @@ function line(label, value) {
   return `${label}: ${value || "Unavailable"}`;
 }
 
-function renderTextEmail(email) {
+// A line that belongs only in some emails; null lines are dropped below.
+function optionalLine(label, value) {
+  return value ? `${label}: ${value}` : null;
+}
+
+function renderTextEmail(email, appUrl) {
   const payload = email.payload ?? {};
   const isCancellation = email.event_type.includes("cancelled");
   const isProvider = email.recipient_role === "provider";
   const bookingPath = isProvider
     ? `/dashboard/bookings/${payload.booking_id}`
     : payload.customer_booking_path;
-  const bookingUrl = absoluteUrl(bookingPath);
+  const bookingUrl = absoluteUrl(bookingPath, appUrl);
   const lines = [
     EVENT_TITLES[email.event_type],
     "",
     line("Provider", payload.provider_name),
     line("Customer", payload.customer_name),
-    line("Customer email", isProvider ? payload.customer_email : ""),
-    line("Customer phone", isProvider ? payload.customer_phone : ""),
+    // Only the provider needs the customer's contact details.
+    optionalLine("Customer email", isProvider ? payload.customer_email : ""),
+    optionalLine("Customer phone", isProvider ? payload.customer_phone : ""),
     line("Treatment", payload.treatment_name),
     line("Add-ons", addOnsLabel(payload)),
     line("Appointment", `${formatSingleDateTime(payload.start_at)} - ${formatSingleDateTime(payload.end_at).split(", ").at(-1)}`),
@@ -114,11 +118,11 @@ function renderTextEmail(email) {
 
   lines.push(line("View booking", bookingUrl));
 
-  return lines.filter((entry) => !entry.endsWith(": ")).join("\n");
+  return lines.filter((entry) => entry !== null).join("\n");
 }
 
-function renderHtmlEmail(email) {
-  const text = renderTextEmail(email);
+function renderHtmlEmail(email, appUrl) {
+  const text = renderTextEmail(email, appUrl);
 
   return `<div style="font-family:Arial,sans-serif;line-height:1.5;color:#111">${text
     .split("\n")
@@ -179,7 +183,7 @@ export async function deliverPendingBookingEmails({
     };
   }
 
-  const { apiKey, from } = configuration;
+  const { apiKey, from, appUrl } = configuration;
 
   const supabase = suppliedSupabase ?? createServiceRoleClient();
   const { data: emails, error } = await supabase.schema("ceaute").rpc(
@@ -213,8 +217,8 @@ export async function deliverPendingBookingEmails({
           from,
           to: [email.recipient_email],
           subject: EVENT_TITLES[email.event_type] ?? "Ceaute booking update",
-          html: renderHtmlEmail(email),
-          text: renderTextEmail(email),
+          html: renderHtmlEmail(email, appUrl),
+          text: renderTextEmail(email, appUrl),
         }),
       });
       const body = await response.json().catch(() => ({}));

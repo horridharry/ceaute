@@ -1,5 +1,8 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import {
+  getOwnedProviderPage,
+  getRequestSession,
+} from "@/lib/auth/request-session";
 
 const DAYS_BY_NAME = {
   monday: 1,
@@ -97,25 +100,18 @@ export function weekdayNumberToName(day) {
   return NAMES_BY_DAY[day] ?? null;
 }
 
+// Session verification and the provider-page lookup are memoised per render
+// (see request-session.js), so a page whose helpers each call this still pays
+// for one claims check and one provider_page query.
 export async function getSignedInProvider({ next = "/dashboard" } = {}) {
-  const supabase = await createClient();
-  const { data } = await supabase.auth.getClaims();
-  const userId = data?.claims?.sub;
+  const { supabase, claims } = await getRequestSession();
+  const userId = claims?.sub;
 
   if (!userId) {
     redirect(`/sign-in?next=${encodeURIComponent(next)}`);
   }
 
-  const { data: providerPage, error } = await supabase
-    .schema("ceaute")
-    .from("provider_page")
-    .select("id, owner_profile_id, username, display_name, provider_category, biography, status")
-    .eq("owner_profile_id", userId)
-    .maybeSingle();
-
-  if (error) {
-    throw new Error("Could not load provider workspace.");
-  }
+  const providerPage = await getOwnedProviderPage(userId);
 
   if (!providerPage) {
     redirect("/dashboard/onboarding");
@@ -125,8 +121,8 @@ export async function getSignedInProvider({ next = "/dashboard" } = {}) {
     supabase,
     user: {
       id: userId,
-      name: data.claims.user_metadata?.full_name ?? "",
-      email: data.claims.email ?? "",
+      name: claims.user_metadata?.full_name ?? "",
+      email: claims.email ?? "",
     },
     providerPage,
   };

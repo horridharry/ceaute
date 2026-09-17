@@ -1,6 +1,5 @@
 "use server";
 
-import { cookies } from "next/headers";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { calculateBookingPaymentAmounts } from "@/lib/payments/booking-payments";
@@ -13,26 +12,6 @@ import {
 } from "@/lib/stripe/server";
 import { getPublicBookingDetailsPage } from "../_lib/public-provider-data";
 import { normalizePublicUsername } from "../_lib/public-provider-format";
-
-const BOOKING_TIME_COOKIE = "ceaute_booking_time";
-
-export async function storeSelectedBookingTime(startAt) {
-  const cookieStore = await cookies();
-
-  cookieStore.set({
-    name: BOOKING_TIME_COOKIE,
-    value: String(startAt),
-    httpOnly: true,
-    sameSite: "lax",
-    path: "/",
-    maxAge: 60 * 15,
-  });
-}
-
-export async function getSelectedBookingTime() {
-  const cookieStore = await cookies();
-  return cookieStore.get(BOOKING_TIME_COOKIE)?.value ?? null;
-}
 
 export async function updateBookingCustomerDetails(formData) {
   const supabase = await createClient();

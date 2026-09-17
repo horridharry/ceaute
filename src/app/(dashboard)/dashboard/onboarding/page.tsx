@@ -1,28 +1,23 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { createClient } from '@/lib/supabase/server';
+import {
+  getOwnedProviderPage,
+  getRequestSession,
+} from '@/lib/auth/request-session';
 import { startProviderOnboarding } from './actions';
 import { ProviderOnboardingForm } from './_components/provider-onboarding-form';
 
 export default async function DashboardOnboardingPage() {
-  const supabase = await createClient();
-  const { data } = await supabase.auth.getClaims();
-  const userId = data?.claims?.sub;
+  const { claims } = await getRequestSession();
+  const userId = claims?.sub;
 
   if (!userId) {
     redirect('/sign-in?next=/dashboard/onboarding');
   }
 
-  const { data: providerPage, error } = await supabase
-    .schema('ceaute')
-    .from('provider_page')
-    .select('id, username, display_name, biography, status')
-    .eq('owner_profile_id', userId)
-    .maybeSingle();
-
-  if (error) {
-    throw new Error('Could not load provider onboarding.');
-  }
+  // Memoised per render, so the header in the root layout and this page share
+  // one provider_page lookup on a full page load.
+  const providerPage = await getOwnedProviderPage(userId);
 
   return (
     <main className="container max-w-md p-5 bg-white">

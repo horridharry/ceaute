@@ -1,23 +1,24 @@
 import AppHeaderClient from "@/components/app-header/app-header-client";
-import { createClient } from "@/lib/supabase/server";
+import {
+  getOwnedProviderPage,
+  getRequestSession,
+} from "@/lib/auth/request-session";
 
 export default async function AppHeader() {
-  const supabase = await createClient();
-  const { data } = await supabase.auth.getClaims();
-  const claims = data?.claims;
+  const { claims } = await getRequestSession();
   const userId = claims?.sub;
 
   let hasProviderPage = false;
 
   if (userId) {
-    const { data: providerPage } = await supabase
-      .schema("ceaute")
-      .from("provider_page")
-      .select("id")
-      .eq("owner_profile_id", userId)
-      .maybeSingle();
-
-    hasProviderPage = Boolean(providerPage);
+    try {
+      // Shares the page's own lookup on a full page load. The header only
+      // decides which menu label to show, so a failed lookup must not take the
+      // whole layout down.
+      hasProviderPage = Boolean(await getOwnedProviderPage(userId));
+    } catch {
+      hasProviderPage = false;
+    }
   }
 
   return (

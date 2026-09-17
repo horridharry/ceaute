@@ -25,7 +25,7 @@ const generateTimeOptions = (intervalMinutes = APPOINTMENT_GRID_MINUTES) => {
     const value = `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
     const label = new Date(2000, 0, 1, hours, minutes).toLocaleTimeString(
       "en-GB",
-      { hour: "numeric", minute: "2-digit", hour12: true },
+      { hour: "numeric", minute: "2-digit", hourCycle: "h12" },
     );
 
     timeOptions.push({ value, label });

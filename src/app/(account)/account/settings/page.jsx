@@ -1,32 +1,20 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { getRequestSession } from "@/lib/auth/request-session";
 import PersonalDetailsForm from "./personal-details-form";
 
 export default async function AccountSettingsPage() {
-  const supabase = await createClient();
-  const { data } = await supabase.auth.getClaims();
-  const userId = data?.claims?.sub;
-  const email = data?.claims?.email;
+  const { claims } = await getRequestSession();
+  const userId = claims?.sub;
+  const email = claims?.email;
   const name =
-    typeof data?.claims?.user_metadata === "object" &&
-    data.claims.user_metadata !== null &&
-    "full_name" in data.claims.user_metadata
-      ? String(data.claims.user_metadata.full_name)
+    typeof claims?.user_metadata === "object" &&
+    claims.user_metadata !== null &&
+    "full_name" in claims.user_metadata
+      ? String(claims.user_metadata.full_name)
       : null;
 
   if (!userId) {
     redirect("/sign-in?next=/account");
-  }
-
-  const { data: providerPage, error } = await supabase
-    .schema("ceaute")
-    .from("provider_page")
-    .select("id")
-    .eq("owner_profile_id", userId)
-    .maybeSingle();
-
-  if (error) {
-    throw new Error("Could not load your account.");
   }
 
   const phone = "07342207772";

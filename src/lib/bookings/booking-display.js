@@ -59,12 +59,12 @@ export function formatBookingDateTime(startAtValue, endAtValue) {
     time: `${new Intl.DateTimeFormat("en-GB", {
       hour: "numeric",
       minute: "2-digit",
-      hour12: true,
+      hourCycle: "h12",
       timeZone: "Europe/London",
     }).format(startAt)} - ${new Intl.DateTimeFormat("en-GB", {
       hour: "numeric",
       minute: "2-digit",
-      hour12: true,
+      hourCycle: "h12",
       timeZone: "Europe/London",
     }).format(endAt)}`,
   };

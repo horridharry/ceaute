@@ -2,6 +2,7 @@
 
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
+import { signStoragePaths } from "@/lib/supabase/signed-urls";
 import { getSignedInProvider } from "../../_lib/provider-data";
 
 const BUCKET_NAME = "portfolio-images";
@@ -69,18 +70,18 @@ export const getPortfolioImages = async () => {
     throw new Error("Could not load portfolio.");
   }
 
-  return Promise.all(
-    (images ?? []).map(async (image) => {
-      const { data } = await supabase.storage
-        .from(BUCKET_NAME)
-        .createSignedUrl(image.storage_path, 60 * 60);
-
-      return {
-        ...image,
-        signed_url: data?.signedUrl ?? "",
-      };
-    }),
+  // One Storage request signs every image instead of one request per image.
+  const signedUrlByPath = await signStoragePaths(
+    supabase,
+    BUCKET_NAME,
+    (images ?? []).map((image) => image.storage_path),
+    60 * 60,
   );
+
+  return (images ?? []).map((image) => ({
+    ...image,
+    signed_url: signedUrlByPath.get(image.storage_path) ?? "",
+  }));
 };
 
 export const uploadPortfolioImage = async (_currentState, formData) => {

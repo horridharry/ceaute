@@ -2,7 +2,6 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { storeSelectedBookingTime } from "../actions";
 
 const CALENDAR_DAY_COUNT = 3;
 
@@ -45,9 +44,10 @@ export default function BookingScheduler({
     : "";
   const hasAnySlots = availableDates.some((date) => date.slots.length > 0);
 
-  // Choosing a time stores it on the server and then navigates. Both steps
-  // run in one transition so the chosen slot reads as pending and the other
-  // slots are disabled until the checkout page takes over.
+  // Choosing a time navigates straight to checkout. The chosen start travels
+  // in the URL, which is the only place the checkout page reads it from, so no
+  // server round trip happens before the navigation. The transition keeps the
+  // chosen slot pending and the other slots disabled until checkout takes over.
   const handleSlotSelection = (slot) => {
     if (busy) {
       return;
@@ -55,8 +55,7 @@ export default function BookingScheduler({
 
     setPendingSlot(slot.start_at);
 
-    startTransition(async () => {
-      await storeSelectedBookingTime(slot.start_at);
+    startTransition(() => {
       const searchParams = new URLSearchParams({
         start_at: slot.start_at,
       });

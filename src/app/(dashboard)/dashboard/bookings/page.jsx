@@ -1,15 +1,6 @@
-"use client";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { unstable_rethrow } from "next/navigation";
 import { getAllBookings } from "./actions";
-
-const BookingsLoading = () => (
-  <div className="duration-200 rounded-xl border p-2 h-52 flex animate-pulse">
-    <p className="text-sm font-medium opacity-50 text-center m-auto">
-      Loading bookings...
-    </p>
-  </div>
-);
 
 const NoBookings = () => (
   <div className="duration-200 rounded-xl border p-2 h-52 flex">
@@ -72,33 +63,29 @@ const BookingSection = ({ title, bookings }) => (
   </section>
 );
 
-export default function DashboardBookingsPage() {
-  const [bookingGroups, setBookingGroups] = useState({
-    upcoming: [],
-    previous: [],
-    cancelled: [],
-  });
-  const [bookingsLoading, setBookingsLoading] = useState(true);
-  const [bookingsLoadFailed, setBookingsLoadFailed] = useState(false);
+// Loads bookings during the server render, like the customer bookings page.
+// The previous client component rendered an empty shell and then called the
+// same loader through a second server round trip, so every visit paid for two
+// requests through the proxy and function before any booking appeared. The
+// route-level loading.jsx already gives navigation its pending state.
+async function loadBookingGroups() {
+  try {
+    return { bookingGroups: await getAllBookings(), failed: false };
+  } catch (error) {
+    // Sign-in redirects are thrown; they must reach Next.js untouched.
+    unstable_rethrow(error);
+    console.error(error);
+    return { bookingGroups: null, failed: true };
+  }
+}
 
-  useEffect(() => {
-    const fetchAllBookings = async () => {
-      const allBookings = await getAllBookings();
-      setBookingGroups(allBookings);
-      setBookingsLoading(false);
-    };
-
-    fetchAllBookings().catch((error) => {
-      console.error(error);
-      setBookingsLoadFailed(true);
-      setBookingsLoading(false);
-    });
-  }, []);
-
+export default async function DashboardBookingsPage() {
+  const { bookingGroups, failed } = await loadBookingGroups();
   const hasBookings =
-    bookingGroups.upcoming.length > 0 ||
-    bookingGroups.previous.length > 0 ||
-    bookingGroups.cancelled.length > 0;
+    !failed &&
+    (bookingGroups.upcoming.length > 0 ||
+      bookingGroups.previous.length > 0 ||
+      bookingGroups.cancelled.length > 0);
 
   return (
     <main className="container max-w-md p-5">
@@ -106,12 +93,9 @@ export default function DashboardBookingsPage() {
         <h1 className="text-3xl font-bold tracking-tighter">Bookings</h1>
         <p className="text-sm mt-1">Manage your bookings with clients</p>
         <div className="mt-12">
-          {bookingsLoading && <BookingsLoading />}
-          {!bookingsLoading && bookingsLoadFailed && <BookingsLoadFailed />}
-          {!bookingsLoading && !bookingsLoadFailed && !hasBookings && (
-            <NoBookings />
-          )}
-          {!bookingsLoading && !bookingsLoadFailed && hasBookings ? (
+          {failed ? <BookingsLoadFailed /> : null}
+          {!failed && !hasBookings ? <NoBookings /> : null}
+          {hasBookings ? (
             <>
               <BookingSection title="Upcoming" bookings={bookingGroups.upcoming} />
               <BookingSection title="Previous" bookings={bookingGroups.previous} />
