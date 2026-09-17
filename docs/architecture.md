@@ -47,7 +47,7 @@ trade-offs behind this shape are in
 | Booking views | `/account/bookings`, `/dashboard/bookings` | each route's `actions.js`, `src/lib/bookings/booking-display.js`, `booking-payment-attempts.js` | `get_customer_booking_summaries`, `get_provider_booking_summaries` (redaction) |
 | Cancellation and refund | same booking routes, `GET /api/cron/recover-booking-refunds` | `src/lib/bookings/cancel-booking.js`, `src/lib/payments/refunds.js`, `refund-request.js`, `refund-recovery.js` | `prepare_booking_cancellation`, `claim_booking_refund_operation`, `record_booking_refund_state`, `list_retryable_booking_refund_operations` |
 | Completion and reviews | `GET /api/cron/complete-bookings`, `/account/bookings/[bookingId]` | `api/cron/*`, `account/bookings/actions.js` | `complete_elapsed_bookings`, `create_booking_review` |
-| Transactional email | `GET /api/cron/send-booking-emails` | `src/lib/emails/booking-emails.js` | outbox rows enqueued by booking transitions; `claim_pending_booking_emails` |
+| Transactional email | `GET /api/cron/send-booking-emails` | `src/lib/emails/booking-emails.js` (delivery), `booking-email-content.js` (text and HTML content), `email-layout.js` (shared HTML layout) | outbox rows enqueued by booking transitions; `claim_pending_booking_emails` |
 | Scheduling | Supabase Cron | migration `202609150001` | `invoke_cron_endpoint` via `pg_cron` and `pg_net` |
 
 Tests follow the same split: `tests/*.test.js` cover pure JavaScript modules,
