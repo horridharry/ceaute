@@ -229,5 +229,11 @@ test("noon and midnight appointment times are shown as 12:00, never 0:00", () =>
   );
 
   assert.equal(display.time_label, "12:00 pm - 1:30 pm");
-  assert.equal(formatSingleDateTime("2026-10-20T23:15:00.000Z"), "Wednesday 21 Oct 2026, 12:15 am");
+  // 23:15 UTC on 20 October is 00:15 BST on the 21st, so the weekday, date and
+  // the 12:15 am (never 0:15) time are the contract. Whether ICU places a comma
+  // after the weekday varies by Node release and is not.
+  assert.match(
+    formatSingleDateTime("2026-10-20T23:15:00.000Z"),
+    /^Wednesday,? 21 Oct 2026, 12:15 am$/,
+  );
 });
