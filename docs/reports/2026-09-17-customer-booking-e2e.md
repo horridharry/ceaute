@@ -245,6 +245,66 @@ made. This account's live Resend key is now known to have been used from
 this environment; you may want to check the Resend dashboard for these two
 rejected requests and decide whether to rotate the key.
 
+## 9. Real Resend delivery, completed after key rotation
+
+Following the incident in §8, the user rotated the Resend API key and
+authorised one further test: sending the two outbox rows from the same
+confirmed booking (`278c376c-f4e2-4c23-bb2b-bdc8aa2e33ff`) through the real,
+rotated Resend key, to the user's own Resend account email — the only
+recipient a sandbox `onboarding@resend.dev` sender is permitted to reach
+without a verified sending domain.
+
+**Key check (no email sent).** Confirmed present, correctly formatted
+(`re_` prefix), and authenticated by Resend itself: a read-only
+`GET https://api.resend.com/domains` returned
+`401 {"name":"restricted_api_key","message":"This API key is restricted to
+only send emails"}` — a scope refusal, not an authentication failure, which
+confirms the key is valid and deliberately least-privilege. The key value
+was never printed or logged.
+
+**Local test data only.** The two existing `booking_email_outbox` rows for
+this booking (still local, not production) were updated: `recipient_email`
+set to the authorised address, and `delivery_status`/`attempt_count`/
+`provider_message_id`/`sent_at`/`last_error` reset so they were claimable
+again. The payload's own `customer_email`/`customer_name`/`customer_phone`
+fields — the real content the provider's email displays — were left
+untouched, so the content check below is against the booking's genuine
+data, not fabricated data.
+
+**Real send.** `/api/cron/send-booking-emails` was called against a dev
+server configured with the real, rotated key (loaded from `.env.local` only
+for this one authorised run):
+
+```
+{"claimed":2,"sent":2,"failed":0,"skipped":0,"configured":true}
+```
+
+Both rows ended `delivery_status = sent` with a real Resend message id
+(`01a0b193-cd6a-7764-...` and `01a0b193-cc3d-7115-...`, UUIDv7-shaped, not
+the earlier `fake_msg_*` placeholders) and no `last_error`. Resend's GET
+endpoint for those ids also returned the same `restricted_api_key` refusal
+— consistent with a send-only key, not evidence against the send. Beyond
+the API's own `200`/message-id, confirming the messages landed in the inbox
+and reading their rendered content is something only the account holder can
+do by checking that inbox; I have no way to view a personal Gmail inbox
+myself.
+
+**Retry produces no duplicate.** Ran the same route again immediately
+afterwards:
+
+```
+{"claimed":0,"sent":0,"failed":0,"skipped":0,"configured":true}
+```
+
+`claimed: 0` — `claim_pending_booking_emails` only selects `pending` or
+`failed` rows, so a `sent` row is never reclaimed. Reconfirmed directly:
+both rows still show `attempt_count = 1`, the same `sent_at` and the same
+`provider_message_id` as the first run, and there is exactly one outbox row
+per event type for this booking — no duplicate row, no duplicate send.
+
+Afterwards the dev server and local Supabase stack were stopped; nothing
+about this check touched the hosted project.
+
 ## Summary
 
 | Question | Answer |
@@ -253,7 +313,8 @@ rejected requests and decide whether to rotate the key.
 | Publication succeeded normally? | Yes — through `publish_provider_page`, no manual database write |
 | Customer completed payment? | Yes — real Stripe test-mode card `4242 4242 4242 4242`, PaymentIntent `succeeded`, £50.00 |
 | Booking confirmed correctly? | Yes — only after the signed webhook, with correct treatment, add-ons, price, duration and address-reveal timing |
-| Both emails delivered? | Enqueued correctly with correct content for both recipients; the actual Resend HTTPS delivery step was not exercised for real (see §8) — Mailpit cannot observe it regardless, by architecture |
+| Both emails delivered? | Yes, after the key rotation — both accepted by the real Resend API with real message ids (§9); rendered content in the inbox is for the account holder to confirm |
 | Duplicate webhook safe? | Yes — replay produced no duplicate booking, payment attempt, or email, and the confirmation timestamp was unchanged |
+| Duplicate email retry safe? | Yes — re-running the delivery job claimed nothing and left both rows unchanged (§9) |
 | All regression tests pass? | Yes — 155 unit, 282 database, clean typecheck/lint/build |
-| Ready for merge? | The booking flow itself is fully verified end to end. Before merge: confirm real Resend delivery through a safe channel of your choosing (see §8), and please rotate the Resend key referenced above given the incident in this report |
+| Ready for merge? | Yes, from this verification's standpoint — every stage in the booking flow, including real Stripe payment and real Resend delivery, is now verified end to end. Not merged; the user's approval is still required |
