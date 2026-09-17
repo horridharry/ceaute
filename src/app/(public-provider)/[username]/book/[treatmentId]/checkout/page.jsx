@@ -7,6 +7,7 @@ import {
   getBookingHoldSummary,
   startStripeCheckoutForBooking,
 } from "../../actions";
+import { describeCheckoutPaymentNotice } from "../../_lib/checkout-payment-notice";
 import { getPublicBookingDetailsPage } from "../../../_lib/public-provider-data";
 import {
   addMinutes,
@@ -247,6 +248,9 @@ export default async function BookingCheckoutPage({ params, searchParams }) {
 
     const paymentAmounts = calculateBookingPaymentAmounts(serviceSnapshot);
     const displayState = getBookingDisplayState(holdSummary);
+    const paymentNotice = describeCheckoutPaymentNotice(
+      firstSearchValue(resolvedSearchParams?.payment),
+    );
     const returnPath = buildReturnPath({
       username: decodedUsername,
       treatmentId,
@@ -264,6 +268,16 @@ export default async function BookingCheckoutPage({ params, searchParams }) {
           <p className="mt-1 text-sm">
             {displayState.message}
           </p>
+
+          {paymentNotice ? (
+            <div
+              role="status"
+              className="mt-8 rounded-xl border border-red-200 p-4 text-sm text-red-700"
+            >
+              <p className="font-semibold">{paymentNotice.heading}</p>
+              <p className="mt-1">{paymentNotice.message}</p>
+            </div>
+          ) : null}
 
           <section className="mt-8 rounded-xl border p-4">
             <h2 className="text-lg font-semibold tracking-tighter">
