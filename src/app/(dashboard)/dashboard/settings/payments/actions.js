@@ -12,6 +12,7 @@ import {
   retrieveStripeAccount,
   syncProviderPaymentAccount,
 } from "@/lib/stripe/server";
+import { buildRecipientAccountParams } from "@/lib/stripe/recipient-account";
 
 const PAYMENTS_PATH = "/dashboard/settings/payments";
 
@@ -129,45 +130,12 @@ export async function startOrResumeOnboarding() {
 
   try {
     if (!accountId) {
-      const account = await stripe.v2.core.accounts.create({
-        contact_email: user.email || undefined,
-        display_name: providerPage.business_name || undefined,
-        dashboard: "express",
-        identity: {
-          country: "GB",
-        },
-        configuration: {
-          recipient: {
-            capabilities: {
-              stripe_balance: {
-                stripe_transfers: {
-                  requested: true,
-                },
-              },
-            },
-          },
-        },
-        defaults: {
-          currency: "gbp",
-          locales: ["en-GB"],
-          profile: {
-            product_description:
-              "Beauty appointment services booked through Ceaute.",
-          },
-          responsibilities: {
-            fees_collector: "application",
-            losses_collector: "application",
-          },
-        },
-        include: [
-          "configuration.recipient",
-          "identity",
-          "requirements",
-        ],
-        metadata: {
-          provider_page_id: providerPage.id,
-        },
-      });
+      const account = await stripe.v2.core.accounts.create(
+        buildRecipientAccountParams({
+          providerPage,
+          contactEmail: user.email,
+        }),
+      );
 
       accountId = account.id;
       await syncProviderPaymentAccount({

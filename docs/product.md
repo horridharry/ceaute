@@ -21,7 +21,11 @@ not merely a UI state change. It requires a display name, username, category and
 biography; a complete active location; working hours; at least one active,
 categorised treatment; booking and cancellation settings; a visible portfolio
 image; and a Stripe recipient account able to receive transfers and payouts.
-Suspended pages cannot be published or changed back to draft by their owner.
+A published page keeps its username: the owner must unpublish before clearing
+it, and PostgreSQL rejects the change otherwise. The outcome of publishing or
+unpublishing, including the database's rejection reason, is shown on the
+profile screen. Suspended pages cannot be published or changed back to draft
+by their owner.
 
 The provider workspace is `/dashboard`. Profile identity is managed at
 `/dashboard/profile`; portfolio and preview are subordinate routes. Locations,
@@ -31,7 +35,9 @@ group route. `/dashboard/onboarding` is the intentional exception to the normal
 guard which redirects dashboard users without a provider page into onboarding.
 
 Customer settings and booking history stay under `/account`, including
-`/account/bookings`. Authentication is intentionally asymmetric: sign-in and
+`/account/bookings`. The settings screen edits the profile name and UK phone
+number that bookings snapshot; email is the sign-in identity and is not
+editable there, and there is no account deletion flow. Authentication is intentionally asymmetric: sign-in and
 sign-up accept a validated return path, while a user without one is sent to the
 dashboard if they have a provider page and to the account area otherwise.
 
@@ -135,7 +141,9 @@ cancellation refunds the full online amount. An early customer cancellation
 also refunds the full online amount; a late cancellation retains at most the
 snapshotted commitment amount and refunds the rest. Cancellation immediately
 releases the appointment interval while the separately recorded refund may still
-be pending, retrying, failed, or awaiting manual review.
+be pending, retrying, failed, or awaiting manual review. A scheduled recovery
+pass retries refund operations that were recorded but never completed, so a
+Stripe outage during cancellation delays a refund rather than losing it.
 
 A protected scheduled route marks confirmed bookings completed after their end
 time. The customer attached to a completed booking may leave one 1–5 rating and

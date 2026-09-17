@@ -36,3 +36,14 @@ export function validateUsername(username) {
 
   return null;
 }
+
+// A published page is reached at /@username, so the username cannot be
+// cleared while the page stays published. PostgreSQL enforces the same rule
+// with provider_page_published_requires_username; this gives the message.
+export function usernameRequiredError({ username, status }) {
+  if (status === "published" && !username) {
+    return "A published page needs a username. Unpublish the page before removing it.";
+  }
+
+  return null;
+}

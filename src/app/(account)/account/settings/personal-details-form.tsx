@@ -1,84 +1,83 @@
-"use client"
-import { useState } from "react";
+'use client';
 
-type SettingFieldName = "name" | "email" | "phone";
+import { useActionState, useState } from 'react';
 
-type SettingFieldProps = {
-  label: string;
-  value: string;
-  field: SettingFieldName;
-  editing: boolean;
-  onToggle: (field: SettingFieldName) => void;
-  onSave: (field: SettingFieldName, value: string) => void;
-};
+type ActionState = { error: boolean; message: string };
 
-type AccountSettingsFormProps = {
-  name: string;
-  email: string;
+type PersonalDetailsFormProps = {
+  fullName: string;
   phone: string;
+  email: string;
+  updatePersonalDetails: (state: ActionState, formData: FormData) => Promise<ActionState>;
 };
 
-function SettingField({
-  label,
-  value,
-  field,
-  editing,
-  onToggle,
-  onSave,
-}: SettingFieldProps) {
-  const [draft, setDraft] = useState(value);
+const idleState: ActionState = { error: false, message: '' };
 
-  return (
-    <div className="grid">
-      <div className="flex items-center justify-between">
-        <label className="font-medium tracking-tight">{label}</label>
-        <button className="font-medium tracking-tight hover:underline" onClick={() => onToggle(field)}>
-          {editing ? 'Cancel' : 'Edit'}
-        </button>
-      </div>
-
-      {editing ? (
-        <>
-          <input
-            className="bg-black/6 rounded-xl p-2 font-medium w-80"
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-          />
-          <button
-            className="mt-6 bg-black/90 rounded-full p-2 px-4 font-medium text-white justify-self-start"
-            onClick={() => onSave(field, draft)}
-          >
-            Save
-          </button>
-        </>
-      ) : (
-        <p className="text-sm opacity-70">{value}</p>
-      )}
-    </div>
-  );
-}
-
-export default function AccountSettingsForm({
-  name,
-  email,
+// Controlled inputs so a rejected save keeps what the customer typed instead
+// of resetting to the last saved value when the form action completes.
+export default function PersonalDetailsForm({
+  fullName,
   phone,
-}: AccountSettingsFormProps) {
-const [editing, setEditing] = useState({ name: false, email: false, phone: false });
-
-const toggleEdit = (field: SettingFieldName) => {
-  setEditing(prev => ({ ...prev, [field]: !prev[field] }));
-};
-
-const handleSave = () => {
-  console.log('save')
-}
+  email,
+  updatePersonalDetails,
+}: PersonalDetailsFormProps) {
+  const [state, formAction, pending] = useActionState(updatePersonalDetails, idleState);
+  const [fullNameValue, setFullNameValue] = useState(fullName);
+  const [phoneValue, setPhoneValue] = useState(phone);
 
   return (
-    
-          <div className="grid gap-6 mt-6">
-            <SettingField label="Full name" value={name} field="name" editing={editing.name} onToggle={toggleEdit} onSave={handleSave} />
-<SettingField label="Email address" value={email} field="email" editing={editing.email} onToggle={toggleEdit} onSave={handleSave} />
-<SettingField label="Phone number (Optional)" value={phone} field="phone" editing={editing.phone} onToggle={toggleEdit} onSave={handleSave} />
-          </div>
+    <form action={formAction} className="mt-6 flex flex-col gap-4">
+      <span className="field-set">
+        <label className="label" htmlFor="full_name">
+          Full name
+        </label>
+        <input
+          id="full_name"
+          name="full_name"
+          type="text"
+          required
+          autoComplete="name"
+          value={fullNameValue}
+          onChange={(event) => setFullNameValue(event.target.value)}
+          className="field"
+        />
+      </span>
+      <span className="field-set">
+        <label className="label" htmlFor="phone">
+          Phone number
+        </label>
+        <input
+          id="phone"
+          name="phone"
+          type="tel"
+          required
+          autoComplete="tel"
+          value={phoneValue}
+          onChange={(event) => setPhoneValue(event.target.value)}
+          className="field"
+        />
+        <p className="text-xs text-black/60">A UK mobile or landline number.</p>
+      </span>
+      <span className="field-set">
+        <span className="label">Email address</span>
+        <p className="text-sm">{email || 'Unavailable'}</p>
+        <p className="text-xs text-black/60">
+          Your email is your sign-in identity and cannot be changed here.
+        </p>
+      </span>
+      {state.message ? (
+        <p role="status" className={`text-sm ${state.error ? 'text-red-600' : 'text-black/60'}`}>
+          {state.message}
+        </p>
+      ) : null}
+      <button
+        type="submit"
+        disabled={pending}
+        aria-disabled={pending}
+        className="mt-2 w-max rounded-lg bg-pink-700 p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-pink-800 disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        {pending ? 'Saving...' : 'Save details'}
+      </button>
+    </form>
   );
 }

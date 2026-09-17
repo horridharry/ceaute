@@ -31,6 +31,9 @@ where id::text like '07000000-%';
 
 -- Provider one: published, fully discoverable. Provider two: the other tenant.
 -- Draft provider and no-username provider carry data identical to provider one.
+-- A published page without a username can no longer exist
+-- (provider_page_published_requires_username), so the no-username page is a
+-- draft and the constraint itself is asserted in section 1.
 insert into ceaute.provider_page (
   id, owner_profile_id, username, display_name, biography, provider_category, status
 )
@@ -42,7 +45,7 @@ values
   ('17000000-0000-0000-0000-000000000003', '07000000-0000-0000-0000-000000000004',
    'search.draft', 'Draft Search Provider', 'Fixture', 'Nails', 'draft'),
   ('17000000-0000-0000-0000-000000000004', '07000000-0000-0000-0000-000000000005',
-   null, 'No Username Provider', 'Fixture', 'Nails', 'published');
+   null, 'No Username Provider', 'Fixture', 'Nails', 'draft');
 
 insert into ceaute.provider_location (
   provider_page_id, public_area, address_line_1, city, postcode, access_instructions, is_active
@@ -172,6 +175,12 @@ select throws_matching(
     values ('07000000-0000-0000-0000-000000000007', 'Search.Published', 'Different case')$$,
   'provider_page_username_format',
   'A different-case username is rejected by the lowercase format rule'
+);
+select throws_matching(
+  $$update ceaute.provider_page set username = null
+    where id = '17000000-0000-0000-0000-000000000001'$$,
+  'provider_page_published_requires_username',
+  'A published page cannot have its username cleared'
 );
 
 -- 2. Reviews.
@@ -407,13 +416,6 @@ insert into tap_results (result) select ok(
 insert into tap_results (result) select ok(
   not exists (select 1 from ceaute.search_public_providers(null, 'manicure') where username = 'search.draft'),
   'Category search excludes the draft provider'
-);
-insert into tap_results (result) select ok(
-  not exists (
-    select 1 from ceaute.search_public_providers('Testville Quarter', null)
-    where display_name = 'No Username Provider'
-  ),
-  'A page without a username is never listed'
 );
 insert into tap_results (result) select is(
   (select matching_treatments -> 0 ->> 'name'

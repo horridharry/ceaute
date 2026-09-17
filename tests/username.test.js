@@ -2,8 +2,19 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   normalizeUsername,
+  usernameRequiredError,
   validateUsername,
 } from "../src/app/(dashboard)/dashboard/_lib/username.js";
+
+test("a published page cannot clear its username, matching the database constraint", () => {
+  assert.match(
+    usernameRequiredError({ username: "", status: "published" }),
+    /published page needs a username/,
+  );
+  assert.equal(usernameRequiredError({ username: "glow.co", status: "published" }), null);
+  assert.equal(usernameRequiredError({ username: "", status: "draft" }), null);
+  assert.equal(usernameRequiredError({ username: "", status: "suspended" }), null);
+});
 
 test("derives a username from a business name the way PostgreSQL accepts it", () => {
   assert.equal(normalizeUsername("  Glow & Co. Lashes "), "glowco.lashes");

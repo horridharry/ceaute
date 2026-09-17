@@ -5,7 +5,9 @@ import {
   normalizeUsername,
   providerPageToFormValues,
 } from "../_lib/provider-data";
+import { usernameRequiredError } from "../_lib/username";
 import { getProviderPagePublicationReadiness } from "./publication-readiness";
+import { publicationFailure, publicationSuccess } from "./publication-outcome";
 
 const PROVIDER_CATEGORIES = new Set([
   "Nails",
@@ -58,6 +60,15 @@ export const updateProviderPage = async (_currentState, formData) => {
     return "Username must be between 3 and 30 characters long.";
   }
 
+  const usernameError = usernameRequiredError({
+    username,
+    status: providerPage.status,
+  });
+
+  if (usernameError) {
+    return usernameError;
+  }
+
   if (providerCategory && !PROVIDER_CATEGORIES.has(providerCategory)) {
     return "Choose one of the available provider categories.";
   }
@@ -95,6 +106,15 @@ export const updateProviderPage = async (_currentState, formData) => {
       return "That username is already taken.";
     }
 
+    if (
+      error.code === "23514" &&
+      String(error.message ?? "").includes(
+        "provider_page_published_requires_username",
+      )
+    ) {
+      return usernameRequiredError({ username: "", status: "published" });
+    }
+
     if (error.code === "23514") {
       return "Check the details and try again.";
     }
@@ -107,13 +127,19 @@ export const updateProviderPage = async (_currentState, formData) => {
   return "Saved.";
 };
 
+// Both publication actions return { error, message } so the screen can show
+// the outcome; PostgreSQL's publish_provider_page re-checks every requirement
+// and its rejection reason is what the provider needs to see.
 export const publishPage = async () => {
   const { supabase, providerPage } = await getSignedInProvider({
     next: "/dashboard/profile",
   });
 
   if (providerPage.status === "suspended") {
-    return "Suspended pages cannot be published.";
+    return publicationFailure(
+      { message: "Suspended pages cannot be published." },
+      "publish",
+    );
   }
 
   const publication = await getProviderPagePublicationReadiness({
@@ -122,7 +148,10 @@ export const publishPage = async () => {
   });
 
   if (!publication.ready) {
-    return "Complete the missing publication requirements first.";
+    return publicationFailure(
+      { message: "Publication requirements are incomplete." },
+      "publish",
+    );
   }
 
   const { error } = await supabase.schema("ceaute").rpc(
@@ -130,12 +159,12 @@ export const publishPage = async () => {
   );
 
   if (error) {
-    return "Could not publish your page.";
+    return publicationFailure(error, "publish");
   }
 
   revalidatePath("/", "layout");
   revalidatePath("/dashboard/profile");
-  return "Published.";
+  return publicationSuccess("publish");
 };
 
 export const unpublishPage = async () => {
@@ -148,10 +177,10 @@ export const unpublishPage = async () => {
   );
 
   if (error) {
-    return "Could not unpublish your page.";
+    return publicationFailure(error, "unpublish");
   }
 
   revalidatePath("/", "layout");
   revalidatePath("/dashboard/profile");
-  return "Unpublished.";
+  return publicationSuccess("unpublish");
 };
