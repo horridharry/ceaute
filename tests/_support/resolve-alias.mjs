@@ -67,3 +67,17 @@ export async function resolve(specifier, context, nextResolve) {
 
   return nextResolve(specifier, context);
 }
+
+// The repository's own .js files are ES modules but package.json declares no
+// "type", so plain Node would treat them as CommonJS on versions without
+// module syntax detection and needs no flag on versions that have it. Fixing
+// the format here keeps `npm test` independent of that flag, which newer Node
+// releases reject.
+export async function load(url, context, nextLoad) {
+  if (url.endsWith(".js") && !url.includes("/node_modules/")) {
+    const result = await nextLoad(url, { ...context, format: "module" });
+    return { ...result, format: "module" };
+  }
+
+  return nextLoad(url, context);
+}
