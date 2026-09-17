@@ -242,3 +242,22 @@ test("email content is HTML-escaped so a customer-supplied name cannot inject ma
   assert.doesNotMatch(requests[0].body.html, /<img/);
   assert.match(requests[0].body.html, /&lt;img src=x onerror=alert\(1\)&gt;/);
 });
+
+// The link is built from the payload path and the validated app URL. A
+// payload without a path must produce no link at all rather than a URL that
+// ends in "/undefined", which the previous implementation could emit.
+test("an email whose payload has no booking path shows the link as unavailable rather than a broken URL", async () => {
+  const supabase = fakeSupabase([
+    outboxEmail({
+      payload: { ...outboxEmail().payload, customer_booking_path: undefined },
+    }),
+  ]);
+  const { requests, fetchImpl } = fakeFetch(() => okResponse({ id: "m" }));
+
+  await deliverPendingBookingEmails({ supabase, fetchImpl, environment });
+
+  const { text, html } = requests[0].body;
+  assert.match(text, /View booking: Unavailable/);
+  assert.doesNotMatch(text, /undefined/);
+  assert.doesNotMatch(html, /undefined/);
+});
