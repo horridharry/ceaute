@@ -4,7 +4,7 @@ create extension if not exists pgtap with schema extensions;
 
 set local search_path = public, extensions, ceaute;
 
-select plan(12);
+select plan(14);
 
 select has_extension('pg_cron', 'pg_cron is installed for Supabase Cron');
 select has_extension('pg_net', 'pg_net is installed for outbound HTTP requests');
@@ -43,6 +43,24 @@ select is(
   (select command from cron.job where jobname = 'ceaute-send-booking-emails'),
   $job$select ceaute.invoke_cron_endpoint('/api/cron/send-booking-emails')$job$,
   'The 10-minute job calls the booking email endpoint'
+);
+
+select is(
+  (
+    select count(*)
+    from cron.job
+    where jobname = 'ceaute-recover-booking-refunds'
+      and schedule = '*/10 * * * *'
+      and active
+  ),
+  1::bigint,
+  'Refund recovery is scheduled exactly every 10 minutes'
+);
+
+select is(
+  (select command from cron.job where jobname = 'ceaute-recover-booking-refunds'),
+  $job$select ceaute.invoke_cron_endpoint('/api/cron/recover-booking-refunds')$job$,
+  'The refund recovery job calls the refund recovery endpoint'
 );
 
 -- The rest of this test controls Vault contents inside the transaction so it

@@ -6,7 +6,7 @@ import {
   updateProviderPage,
 } from "./actions";
 import { ProviderPageForm } from "./_components/provider-page-form";
-import { PendingButton } from "@/components/pending-button";
+import { PublicationActions } from "./_components/publication-actions";
 
 export default async function DashboardProfilePage() {
   const { providerPage, publication } = await getProviderPage();
@@ -51,27 +51,12 @@ export default async function DashboardProfilePage() {
             </div>
           )}
 
-          <div className="mt-5 flex justify-end">
-            {providerPage.status === "published" ? (
-              <form action={unpublishPage}>
-                <PendingButton
-                  pendingLabel="Unpublishing..."
-                  className="rounded-lg border border-black/10 p-3 px-4 text-sm font-semibold text-pink-600 duration-200 hover:border-black/20 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  Unpublish page
-                </PendingButton>
-              </form>
-            ) : publication.ready && providerPage.status !== "suspended" ? (
-              <form action={publishPage}>
-                <PendingButton
-                  pendingLabel="Publishing..."
-                  className="rounded-lg bg-pink-700 p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-pink-800 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  Publish page
-                </PendingButton>
-              </form>
-            ) : null}
-          </div>
+          <PublicationActions
+            status={providerPage.status}
+            ready={publication.ready}
+            publishPage={publishPage}
+            unpublishPage={unpublishPage}
+          />
         </section>
       </main>
       <ProviderPageForm

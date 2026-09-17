@@ -45,7 +45,7 @@ trade-offs behind this shape are in
 | Hold and Checkout | `/@[username]/book/[treatmentId]/checkout` | `book/actions.js` | `create_validated_booking_hold`, `claim_booking_checkout`, `record_booking_checkout_session`, exclusion constraint |
 | Payment confirmation | `POST /api/stripe/payments` | `api/stripe/payments/route.ts`, `src/lib/payments/refunds.js` | `claim_stripe_payment_event`, `complete_booking_payment_attempt` |
 | Booking views | `/account/bookings`, `/dashboard/bookings` | each route's `actions.js`, `src/lib/bookings/booking-display.js`, `booking-payment-attempts.js` | `get_customer_booking_summaries`, `get_provider_booking_summaries` (redaction) |
-| Cancellation and refund | same booking routes | `src/lib/bookings/cancel-booking.js`, `src/lib/payments/refunds.js`, `refund-request.js` | `prepare_booking_cancellation`, `claim_booking_refund_operation`, `record_booking_refund_state` |
+| Cancellation and refund | same booking routes, `GET /api/cron/recover-booking-refunds` | `src/lib/bookings/cancel-booking.js`, `src/lib/payments/refunds.js`, `refund-request.js`, `refund-recovery.js` | `prepare_booking_cancellation`, `claim_booking_refund_operation`, `record_booking_refund_state`, `list_retryable_booking_refund_operations` |
 | Completion and reviews | `GET /api/cron/complete-bookings`, `/account/bookings/[bookingId]` | `api/cron/*`, `account/bookings/actions.js` | `complete_elapsed_bookings`, `create_booking_review` |
 | Transactional email | `GET /api/cron/send-booking-emails` | `src/lib/emails/booking-emails.js` | outbox rows enqueued by booking transitions; `claim_pending_booking_emails` |
 | Scheduling | Supabase Cron | migration `202609150001` | `invoke_cron_endpoint` via `pg_cron` and `pg_net` |
@@ -134,9 +134,10 @@ signed-in Supabase client, revalidate routes, and redirect. This keeps a
 vertical slice easy to find. The same `"use server"` files also export the
 read loaders their pages call, so every exported function is a callable
 endpoint and must authenticate first; all of them currently do, through
-`getSignedInProvider` or `getSignedInCustomer`. There is no route-level
-`error.tsx` or `not-found.tsx` yet, so a loader that throws shows the
-framework's default error screen. Treatments, treatment groups, and add-ons each own
+`getSignedInProvider` or `getSignedInCustomer`. `src/app/error.tsx` and
+`src/app/not-found.tsx` are the route-level boundaries: a loader that throws
+shows fixed copy and the error digest, never the thrown message, because that
+text can be raw PostgreSQL or Stripe output. Treatments, treatment groups, and add-ons each own
 the actions under their own route, so treatment logic, group archival, and
 add-on compatibility can be read separately; the public booking action module
 remains a deliberate candidate for later simplification.
@@ -220,9 +221,15 @@ call `ceaute.invoke_cron_endpoint`, which queues an authenticated GET to
 Vault as `ceaute_cron_secret`. The secret is created per project in the Supabase
 Dashboard and never appears in a migration; without it the job logs a notice and
 sends nothing, so local resets and database tests need no production secret.
-Booking completion runs hourly and email delivery every 10 minutes. `pg_net`
-sends each request at most once and does not retry, and an overlapping or late
-request is harmless because both routes rely on the database claims above.
+Booking completion runs hourly; email delivery and refund recovery run every
+10 minutes. Refund recovery asks
+`list_retryable_booking_refund_operations` for operations whose synchronous
+driver never finished (recorded but never driven, unproven Stripe creation,
+abandoned lease, or no webhook for an hour) and hands each one to the same
+`processBookingRefund` path, so the pass cannot create a second Stripe refund.
+`pg_net` sends each request at most once and does not retry, and an
+overlapping or late request is harmless because all three routes rely on the
+database claims above.
 
 ## Areas that are deliberately complex
 

@@ -3,7 +3,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { calculateBookingPaymentAmounts } from "@/lib/payments/booking-payments";
-import { normalizeUkPhoneNumber } from "@/lib/phone/normalize";
+import { parsePersonalDetails } from "@/lib/profile/personal-details";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import {
@@ -12,46 +12,6 @@ import {
 } from "@/lib/stripe/server";
 import { getPublicBookingDetailsPage } from "../_lib/public-provider-data";
 import { normalizePublicUsername } from "../_lib/public-provider-format";
-
-export async function updateBookingCustomerDetails(formData) {
-  const supabase = await createClient();
-  const { data } = await supabase.auth.getClaims();
-  const profileId = data?.claims?.sub;
-
-  if (!profileId) {
-    return "Sign in to continue.";
-  }
-
-  const customerName = String(formData.get("full_name") ?? "").trim();
-  const customerPhone = normalizeUkPhoneNumber(formData.get("phone"));
-
-  if (customerName.length < 2) {
-    return "Enter your full name.";
-  }
-
-  if (customerName.length > 120) {
-    return "Full name must be 120 characters or fewer.";
-  }
-
-  if (!customerPhone) {
-    return "Enter a valid phone number.";
-  }
-
-  const { error } = await supabase
-    .schema("ceaute")
-    .from("profile")
-    .update({
-      full_name: customerName,
-      phone_e164: customerPhone,
-    })
-    .eq("id", profileId);
-
-  if (error) {
-    return "Could not save your details.";
-  }
-
-  return "Saved.";
-}
 
 function normalizeAddOnIds(formData) {
   return formData
@@ -87,29 +47,21 @@ function buildTimeUrl({ username, treatmentId, addOnIds }) {
   return `/@${username}/book/${treatmentId}/time${query ? `?${query}` : ""}`;
 }
 
+// The same rule and columns as the account settings screen.
 async function saveCustomerDetails({ supabase, profileId, formData }) {
-  const customerName = String(formData.get("full_name") ?? "").trim();
-  const customerPhone = normalizeUkPhoneNumber(formData.get("phone"));
+  const parsed = parsePersonalDetails({
+    fullName: formData.get("full_name"),
+    phone: formData.get("phone"),
+  });
 
-  if (customerName.length < 2) {
-    return { error: "Enter your full name." };
-  }
-
-  if (customerName.length > 120) {
-    return { error: "Full name must be 120 characters or fewer." };
-  }
-
-  if (!customerPhone) {
-    return { error: "Enter a valid phone number." };
+  if (parsed.error) {
+    return { error: parsed.error };
   }
 
   const { error } = await supabase
     .schema("ceaute")
     .from("profile")
-    .update({
-      full_name: customerName,
-      phone_e164: customerPhone,
-    })
+    .update(parsed.values)
     .eq("id", profileId);
 
   if (error) {
