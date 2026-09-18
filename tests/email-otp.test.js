@@ -293,6 +293,67 @@ test("return paths accept only same-site absolute paths", () => {
   assert.equal(validatedNextPath(null), null);
 });
 
+test("return paths reject tab/newline smuggled protocol-relative redirects", () => {
+  // `new URL(next, base)` strips ASCII tab and newline characters wherever
+  // they occur before parsing, so "/\t/evil.example" would otherwise resolve
+  // to the external origin "https://evil.example".
+  const exploitPayloads = [
+    "/\t/evil.example",
+    "/\t\t/evil.example",
+    "/\n/evil.example",
+    "/\r/evil.example",
+    "/\r\n/evil.example",
+    "/foo/\t/evil.example",
+  ];
+
+  for (const payload of exploitPayloads) {
+    assert.equal(
+      validatedNextPath(payload),
+      null,
+      `expected ${JSON.stringify(payload)} to be rejected`,
+    );
+
+    const resolved = new URL(
+      validatedNextPath(payload) ?? "/account",
+      "https://ceaute.com",
+    );
+    assert.equal(resolved.origin, "https://ceaute.com");
+  }
+});
+
+test("return paths reject other ASCII control characters", () => {
+  const controlCharPayloads = [
+    "/\x00/evil.example",
+    "/\x08account",
+    "/account\x7f",
+    "/\x1b[31mevil",
+  ];
+
+  for (const payload of controlCharPayloads) {
+    assert.equal(
+      validatedNextPath(payload),
+      null,
+      `expected ${JSON.stringify(payload)} to be rejected`,
+    );
+  }
+});
+
+test("return paths still accept legitimate internal redirects", () => {
+  const legitimatePaths = [
+    "/",
+    "/account",
+    "/dashboard",
+    "/dashboard/onboarding",
+    "/@someprovider",
+    "/@someprovider/book/123",
+    "/account?tab=bookings&sort=date",
+  ];
+
+  for (const path of legitimatePaths) {
+    assert.equal(validatedNextPath(path), path);
+  }
+});
+
 test("emails are trimmed and validated before Supabase is asked", () => {
   assert.equal(normalizeEmail("  someone@icloud.com "), "someone@icloud.com");
   assert.equal(normalizeEmail("someone"), null);
