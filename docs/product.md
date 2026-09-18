@@ -110,9 +110,20 @@ pay-later option, so a deposit must be greater than £0; PostgreSQL rejects a
 deposit-mode setting without one. Checkout still requires the amount due online
 to be greater than zero.
 
-The current Ceaute platform fee is zero. The payment records and Checkout
-payload still carry an explicit fee amount so a later pricing change does not
-rewrite historical bookings.
+The customer pays the advertised price; the provider bears both deductions.
+Stripe's `application_fee_amount` is the only lever, so it carries Ceaute's 2%
+platform fee *and* the estimated Stripe processing cost together — the
+connected account is configured with `fees_collector: "application"`, so Stripe
+debits its own fee from Ceaute's balance whatever the split says. The provider
+receives the remainder. Only money processed through Ceaute is charged for; a
+deposit booking's offline balance never is.
+
+Stripe's actual fee depends on the card and is not knowable when the split is
+fixed at Checkout creation, so the processing component is an estimate at
+Stripe's published UK rate and Ceaute absorbs the difference either way. The
+payment records carry the fee per attempt so a later pricing change does not
+rewrite historical bookings. See
+[decision 004](decisions/004-providers-bear-stripe-processing-fees.md).
 
 A Stripe return URL is only navigation. It never confirms a booking. The signed
 payment webhook checks the Checkout Session, PaymentIntent, currency, amount,

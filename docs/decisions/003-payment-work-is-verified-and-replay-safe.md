@@ -26,8 +26,10 @@ recorded refund operation. Cancellation records its refund entitlement before
 external refund processing begins.
 
 Stripe Checkout uses destination charges to transfer funds to the provider's
-connected recipient account. The fee is an explicit per-attempt value even
-though the current fee is zero.
+connected recipient account. The fee is an explicit per-attempt value, so a
+pricing change never rewrites a historical booking. What that value now
+contains is recorded in
+[004](004-providers-bear-stripe-processing-fees.md).
 
 ## Consequences
 
