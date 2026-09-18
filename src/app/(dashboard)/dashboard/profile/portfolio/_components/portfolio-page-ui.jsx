@@ -1,7 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useActionState, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { StackedTopBar } from "@/components/ui/top-bar";
 
 const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
@@ -46,48 +47,53 @@ function UploadForm({ uploadPortfolioImage }) {
   const hasError = Boolean(fileError || captionError);
 
   return (
-    <form className="mt-8 flex flex-col gap-4" action={uploadAction}>
+    <form className="flex flex-col gap-[13px]" action={uploadAction}>
       <span className="field-set">
         <label className="label" htmlFor="image">
           Image
         </label>
-        <p className="text-sm text-bad">{fileError}</p>
         <input
           id="image"
           name="image"
           type="file"
           accept="image/jpeg,image/png,image/webp"
           onChange={validateFile}
+          aria-invalid={fileError ? true : undefined}
           className="field cursor-pointer"
         />
+        {fileError ? (
+          <p role="alert" className="text-[11.5px] text-bad">
+            {fileError}
+          </p>
+        ) : null}
       </span>
 
       <span className="field-set">
         <label className="label" htmlFor="caption">
-          Caption
+          Caption <span className="font-normal text-black/45">— optional</span>
         </label>
-        <p className="text-sm text-bad">{captionError}</p>
         <input
           id="caption"
           name="caption"
           maxLength={250}
           onChange={validateCaption}
+          aria-invalid={captionError ? true : undefined}
           className="field"
         />
+        {captionError || stateMessage ? (
+          <p role="alert" className="text-[11.5px] text-bad">
+            {captionError || stateMessage}
+          </p>
+        ) : null}
       </span>
 
-      <p className="text-sm text-bad">{stateMessage}</p>
-
-      <div className="flex justify-end">
-        <button
-          type="submit"
-          disabled={pending || hasError}
-          aria-disabled={pending || hasError}
-          className="w-max rounded-lg bg-plum p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-plum-hover disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
-        >
-          {pending ? "Uploading..." : "Upload image"}
-        </button>
-      </div>
+      <Button
+        type="submit"
+        disabled={pending || hasError}
+        aria-disabled={pending || hasError}
+      >
+        {pending ? "Uploading…" : "Add a photo"}
+      </Button>
     </form>
   );
 }
@@ -100,12 +106,11 @@ function CaptionForm({ image, updatePortfolioImageCaption }) {
   const [captionError, setCaptionError] = useState("");
 
   return (
-    <form className="mt-3 flex flex-col gap-2" action={updateAction}>
+    <form className="mt-3 flex flex-col gap-1.5" action={updateAction}>
       <input type="hidden" name="image_id" value={image.id} />
       <label className="label" htmlFor={`caption-${image.id}`}>
         Caption
       </label>
-      <p className="text-sm text-bad">{captionError || stateMessage}</p>
       <input
         id={`caption-${image.id}`}
         name="caption"
@@ -118,15 +123,21 @@ function CaptionForm({ image, updatePortfolioImageCaption }) {
               : "",
           )
         }
+        aria-invalid={captionError ? true : undefined}
         className="field"
       />
+      {captionError || stateMessage ? (
+        <p role="alert" className="text-[11.5px] text-bad">
+          {captionError || stateMessage}
+        </p>
+      ) : null}
       <button
         type="submit"
         disabled={pending || Boolean(captionError)}
         aria-disabled={pending || Boolean(captionError)}
-        className="w-max rounded-lg border border-black/10 p-2 px-4 text-sm font-semibold text-plum duration-200 hover:border-black/20 disabled:cursor-not-allowed disabled:opacity-60"
+        className="w-max text-[13px] font-medium text-plum transition duration-150 ease-out hover:text-plum-hover disabled:opacity-40"
       >
-        {pending ? "Saving..." : "Save caption"}
+        {pending ? "Saving…" : "Save caption"}
       </button>
     </form>
   );
@@ -146,7 +157,7 @@ function ActionButton({ imageId, action, children, fields = {} }) {
         disabled={pending}
         aria-disabled={pending}
         title={stateMessage || undefined}
-        className="rounded-lg border border-black/10 p-2 px-3 text-sm font-semibold text-plum duration-200 hover:border-black/20 disabled:cursor-not-allowed disabled:opacity-60"
+        className="rounded-full border border-black/14 px-3 py-1.5 text-[12.5px] font-medium text-ink transition duration-150 ease-out hover:border-black/30 disabled:opacity-40"
       >
         {pending ? "..." : children}
       </button>
@@ -163,25 +174,41 @@ export function PortfolioPageUI({
   deletePortfolioImage,
 }) {
   return (
-    <main className="container max-w-md p-5">
-      <div className="mt-6 flex flex-col">
-        <h1 className="text-3xl font-bold tracking-tighter">Portfolio</h1>
+    <>
+      <div className="mx-auto w-full max-w-[720px] px-5">
+        <StackedTopBar backHref="/dashboard/profile" backLabel="Your page" />
+      </div>
+      <main className="mx-auto w-full max-w-[720px] px-5 pb-8">
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1">
+            <h1 className="text-display text-pretty text-ink">Portfolio</h1>
+            <p className="text-meta text-black/50">
+              The first photo is the hero on your page. Caption or hide any of
+              them.
+            </p>
+          </div>
 
         <UploadForm uploadPortfolioImage={uploadPortfolioImage} />
 
-        <div className="mt-10 flex flex-col gap-5">
+        <div className="mt-4 flex flex-col gap-4">
           {images.length === 0 ? (
-            <div className="flex h-40 rounded-xl border p-4">
-              <p className="m-auto text-center text-sm text-black/60">
-                No portfolio images yet.
-              </p>
-            </div>
+            <p className="text-[13px] text-black/60">
+              No photos yet. Your page needs at least one before it can publish.
+            </p>
           ) : null}
 
           {images.map((image, index) => (
-            <section key={image.id} className="rounded-xl border p-3">
+            <section
+              key={image.id}
+              className="relative rounded-card border border-black/12 p-3"
+            >
+              {index === 0 ? (
+                <span className="absolute left-5 top-5 z-10 rounded-full bg-black/55 px-2 py-1 text-[11px] font-medium uppercase tracking-[0.06em] text-white">
+                  Hero
+                </span>
+              ) : null}
               <div
-                className="h-56 rounded-lg bg-black/5 bg-cover bg-center"
+                className="h-56 rounded-row bg-surface bg-cover bg-center"
                 style={
                   image.signed_url
                     ? { backgroundImage: `url("${image.signed_url}")` }
@@ -189,9 +216,15 @@ export function PortfolioPageUI({
                 }
               />
               <div className="mt-3 flex items-center justify-between gap-2">
-                <p className="text-sm font-medium">
-                  {image.is_visible ? "Visible" : "Hidden"}
-                </p>
+                <span className="inline-flex items-center gap-1.5 text-[12px] font-medium">
+                  <span
+                    aria-hidden="true"
+                    className={`block size-[7px] shrink-0 rounded-full ${image.is_visible ? "bg-ok" : "bg-black/30"}`}
+                  />
+                  <span className={image.is_visible ? "text-ok" : "text-black/60"}>
+                    {image.is_visible ? "On your page" : "Hidden"}
+                  </span>
+                </span>
                 <div className="flex flex-wrap justify-end gap-2">
                   <ActionButton
                     imageId={image.id}
@@ -230,15 +263,8 @@ export function PortfolioPageUI({
           ))}
         </div>
 
-        <div className="mt-8 flex justify-end">
-          <Link
-            href="/dashboard/profile"
-            className="w-max rounded-lg border border-black/10 p-3 px-6 text-sm font-semibold text-plum duration-200 hover:border-black/20 active:border-transparent active:bg-surface active:text-plum-hover"
-          >
-            Back
-          </Link>
         </div>
-      </div>
-    </main>
+      </main>
+    </>
   );
 }

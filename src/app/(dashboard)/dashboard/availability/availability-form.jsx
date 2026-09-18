@@ -1,10 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { useActionState, useMemo, useState } from "react";
 import { APPOINTMENT_GRID_MINUTES } from "@/lib/bookings/appointment-grid";
 import { keepFormValuesOnSubmit } from "@/lib/forms/keep-form-values";
 import { PendingButton } from "@/components/pending-button";
+import { Button } from "@/components/ui/button";
 
 const DAYS_OF_WEEK = [
   { value: "monday", label: "Monday" },
@@ -117,32 +117,34 @@ export function AvailabilityForm({
   };
 
   return (
-    <main className="container max-w-md p-5">
-      <div className="mt-6 flex flex-col">
-        <h1 className="text-3xl font-bold tracking-tighter">Availability</h1>
-        <p className="mt-1 text-sm text-black/60">
-          Set one continuous working period for each open day. Times are saved as
-          Europe/London local times.
+    <main className="mx-auto w-full max-w-[720px] px-5 py-6">
+      <div className="flex flex-col gap-4">
+        <h1 className="text-display text-pretty text-ink">Working hours</h1>
+        {/* The fixed product constants, stated once at the top rather than
+            repeated beside every control. */}
+        <p className="text-meta text-black/50">
+          One block per day, on the quarter hour, in Europe/London. Customers
+          book with 24 hours&rsquo; notice, up to 60 days ahead.
         </p>
 
         <form
           id="availability"
-          className="mt-12 flex flex-col gap-4"
+          className="mt-2 flex flex-col gap-4"
           action={updateScheduleAction}
           onSubmit={keepFormValuesOnSubmit(updateScheduleAction)}
         >
           {days.map((day, index) => (
             <div
               key={day.dayOfWeek}
-              className={index === days.length - 1 ? "" : "border-b pb-4"}
+              className={index === days.length - 1 ? "" : "border-b border-black/8 pb-4"}
             >
               <div className="flex items-center">
                 <label
                   htmlFor={`${day.dayOfWeek}_enabled`}
                   className={
                     day.enabled
-                      ? "flex-1 text-sm font-medium"
-                      : "flex-1 text-sm text-black/60"
+                      ? "flex-1 cursor-pointer text-[14px] font-medium text-ink"
+                      : "flex-1 cursor-pointer text-[14px] text-black/50"
                   }
                 >
                   {DAYS_OF_WEEK[index].label}
@@ -154,8 +156,11 @@ export function AvailabilityForm({
                   value={day.dayOfWeek}
                   checked={day.enabled}
                   onChange={() => toggleDay(day.dayOfWeek)}
-                  className="h-5 w-5 cursor-pointer appearance-none rounded border border-black/30 bg-white outline-none ring-1 ring-transparent duration-200 checked:border-transparent checked:bg-plum hover:border-plum hover:ring-plum"
+                  className="peer sr-only"
                 />
+                <span className="relative block h-[22px] w-[38px] shrink-0 rounded-full bg-black/14 transition duration-150 ease-out peer-checked:bg-plum peer-checked:[&>span]:translate-x-4">
+                  <span className="absolute left-0.5 top-0.5 block size-[18px] rounded-full bg-white transition duration-150 ease-out" />
+                </span>
               </div>
 
               {day.enabled ? (
@@ -228,7 +233,7 @@ export function AvailabilityForm({
                   </p>
                 </div>
               ) : (
-                <p className="pt-2 text-sm text-black/50">Closed</p>
+                <p className="pt-2 text-[13px] text-black/50">Closed</p>
               )}
             </div>
           ))}
@@ -237,31 +242,22 @@ export function AvailabilityForm({
             <p className="mt-4 text-sm text-bad">{stateMessage}</p>
           ) : null}
 
-          <div className="mt-8 flex items-center justify-end gap-4">
-            <Link
-              href="/dashboard"
-              className="w-max rounded-lg border border-black/10 p-3 px-6 text-sm font-semibold text-plum duration-200 hover:border-black/20 active:border-transparent active:bg-surface active:text-plum-hover"
-            >
-              Back
-            </Link>
-            <button
+          <div className="mt-4">
+            <Button
               form="availability"
               type="submit"
               disabled={pending || hasErrors}
               aria-disabled={pending || hasErrors}
-              className="w-max rounded-lg bg-plum p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-plum-hover disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
             >
-              {pending ? "Saving..." : "Save hours"}
-            </button>
+              {pending ? "Saving…" : "Save hours"}
+            </Button>
           </div>
         </form>
 
-        <section className="mt-12 flex flex-col gap-4">
-          <div>
-            <h2 className="text-xl font-semibold tracking-tight">
-              Blocked dates
-            </h2>
-            <p className="mt-1 text-sm text-black/60">
+        <section className="mt-6 flex flex-col gap-3 border-t border-black/8 pt-6">
+          <div className="flex flex-col gap-1">
+            <h2 className="text-heading text-pretty text-ink">Blocked dates</h2>
+            <p className="text-[12.5px] text-black/60">
               Block a whole day for time off. This affects future availability
               and does not cancel existing bookings.
             </p>
@@ -279,14 +275,15 @@ export function AvailabilityForm({
                 className="field"
               />
             </span>
-            <button
+            <Button
               type="submit"
+              block={false}
               disabled={blockDatePending}
               aria-disabled={blockDatePending}
-              className="w-max rounded-lg bg-plum p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-plum-hover disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+              className="shrink-0 px-5"
             >
-              {blockDatePending ? "Blocking..." : "Block date"}
-            </button>
+              {blockDatePending ? "Blocking…" : "Block a date"}
+            </Button>
           </form>
 
           {blockDateMessage ? (
@@ -298,9 +295,9 @@ export function AvailabilityForm({
               {blockedDates.map((blockedDate) => (
                 <li
                   key={blockedDate.id}
-                  className="flex items-center gap-3 rounded-lg border p-3"
+                  className="flex items-center gap-3 rounded-row border border-black/12 px-3.5 py-3"
                 >
-                  <p className="flex-1 text-sm font-medium">
+                  <p className="flex-1 text-[14px] font-medium text-ink">
                     {formatBlockedDate(blockedDate.local_date)}
                   </p>
                   <form action={removeBlockedDate}>
@@ -311,7 +308,7 @@ export function AvailabilityForm({
                     />
                     <PendingButton
                       pendingLabel="Removing..."
-                      className="rounded-lg border border-black/10 p-2 px-3 text-sm font-semibold text-plum duration-200 hover:border-black/20 active:border-transparent active:bg-surface active:text-plum-hover disabled:cursor-not-allowed disabled:opacity-60"
+                      className="text-[13px] font-medium text-plum transition duration-150 ease-out hover:text-plum-hover disabled:opacity-40"
                     >
                       Remove
                     </PendingButton>
@@ -320,7 +317,7 @@ export function AvailabilityForm({
               ))}
             </ul>
           ) : (
-            <p className="rounded-lg border border-dashed p-4 text-sm text-black/60">
+            <p className="text-[13px] text-black/60">
               No upcoming blocked dates.
             </p>
           )}
