@@ -2,17 +2,16 @@ import { LETTER_COLUMN } from "@/components/templates/page-column";
 
 // T5 · Letter — 03-screens.md "The five templates".
 //
-// Wordmark-only nav → eyebrow label → second-person headline at 30/1.12 → one
-// paragraph → one framed panel → a button pair → a quiet text button that
-// leaves the page.
+// Eyebrow label → second-person headline at 30/1.12 → one paragraph → one
+// framed panel → a button pair → a quiet text button that leaves the page.
 //
-// The nav is rendered by the template and takes no slot. That is the whole
-// point of the component: nothing may sit in the top right, and every exit
-// belongs in the bottom third within one-handed reach. A `nav` prop would make
-// that constraint an instruction again rather than a guarantee.
+// The template takes no `nav` slot, so no caller can put an exit at the top:
+// every exit belongs in the bottom third within one-handed reach.
 //
-// The wordmark is plain text rather than a link for the same reason — a link
-// there is a top-left exit competing with the ones below.
+// It draws no wordmark of its own either. Every route that uses this template
+// sits under a layout that already renders AppHeader, so drawing one here put
+// the wordmark on screen twice. The header's avatar is the one thing allowed
+// in the top right (05-build-order.md, review checklist).
 //
 // Routes: Confirmed, Published, Link sent, Cancelled. Nowhere else: the voice
 // only works because it is rare.
@@ -27,12 +26,6 @@ export function LetterTemplate({
 }) {
   return (
     <div className={`flex min-h-screen flex-col ${className}`.trim()}>
-      <header className={`${LETTER_COLUMN} flex h-[52px] items-center`}>
-        <span className="text-[16px] font-semibold tracking-[-0.03em] text-ink">
-          Ceaute
-        </span>
-      </header>
-
       <main className={`${LETTER_COLUMN} flex flex-1 flex-col gap-5 pb-8 pt-6`}>
         <div className="flex flex-col gap-2.5">
           {eyebrow ? (

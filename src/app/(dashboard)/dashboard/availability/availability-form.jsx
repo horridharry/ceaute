@@ -277,6 +277,7 @@ export function AvailabilityForm({
             </span>
             <Button
               type="submit"
+              variant="secondary"
               block={false}
               disabled={blockDatePending}
               aria-disabled={blockDatePending}

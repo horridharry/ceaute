@@ -89,6 +89,23 @@
   --shadow-segment: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
+@layer base {
+  /* Ceaute is a light product: the palette is five colours on white, and every
+     grey is ink at an alpha. Nothing here has a dark variant. Without these two
+     declarations the document has no background of its own, so a browser set to
+     dark mode paints its own dark canvas underneath ink-coloured text and the
+     whole app renders black on black. Pinning the scheme also keeps form
+     controls, scrollbars and autofill light. */
+  html {
+    color-scheme: light;
+    background-color: #fff;
+  }
+
+  body {
+    background-color: #fff;
+  }
+}
+
 @layer components {
   /* The Input component expressed as a class, because ~75 existing form
      controls already carry it. White fill, 1px border-strong, radius 10,
