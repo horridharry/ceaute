@@ -24,7 +24,7 @@ function AddOnState({ isActive }) {
   return (
     <span
       className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-        isActive ? "bg-pink-50 text-pink-700" : "bg-black/5 text-black/50"
+        isActive ? "bg-ok/10 text-ok" : "bg-black/5 text-black/50"
       }`}
     >
       {isActive ? "Active" : "Archived"}
@@ -92,13 +92,13 @@ export function TreatmentAddOnsPage({ addOns }) {
           <div className="flex items-center gap-2">
             <Link
               href="/dashboard/treatments"
-              className="w-max rounded-lg border border-black/10 p-3 px-4 text-sm font-semibold text-pink-600 duration-200 hover:border-black/20 active:border-transparent active:bg-pink-500/10 active:text-pink-500"
+              className="w-max rounded-lg border border-black/10 p-3 px-4 text-sm font-semibold text-plum duration-200 hover:border-black/20 active:border-transparent active:bg-surface active:text-plum-hover"
             >
               Back
             </Link>
             <Link
               href="/dashboard/add-ons/new"
-              className="flex w-max items-center overflow-hidden rounded-3xl bg-white p-1.5 px-3 text-center text-sm font-semibold text-pink-600 duration-300 hover:bg-pink-500/10"
+              className="flex w-max items-center overflow-hidden rounded-3xl bg-white p-1.5 px-3 text-center text-sm font-semibold text-plum duration-300 hover:bg-surface"
             >
               Create
             </Link>

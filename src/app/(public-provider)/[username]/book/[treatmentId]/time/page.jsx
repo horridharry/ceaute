@@ -77,7 +77,7 @@ export default async function TreatmentBookingTimePage({ params, searchParams })
               treatmentId: treatment.id,
               addOnIds: selectedAddOns.map((addOn) => addOn.id),
             })}
-            className="text-sm font-semibold text-pink-600"
+            className="text-sm font-semibold text-plum"
           >
             Change add-ons
           </Link>

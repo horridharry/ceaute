@@ -38,7 +38,7 @@ export function PublicationActions({
               type="submit"
               disabled={pending}
               aria-disabled={pending}
-              className="rounded-lg border border-black/10 p-3 px-4 text-sm font-semibold text-pink-600 duration-200 hover:border-black/20 disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-lg border border-black/10 p-3 px-4 text-sm font-semibold text-plum duration-200 hover:border-black/20 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {pending ? "Unpublishing..." : "Unpublish page"}
             </button>
@@ -47,7 +47,7 @@ export function PublicationActions({
               type="submit"
               disabled={pending}
               aria-disabled={pending}
-              className="rounded-lg bg-pink-700 p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-pink-800 disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-lg bg-plum p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-plum-hover disabled:cursor-not-allowed disabled:opacity-60"
             >
               {pending ? "Publishing..." : "Publish page"}
             </button>

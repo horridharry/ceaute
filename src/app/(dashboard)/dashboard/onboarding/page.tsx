@@ -34,15 +34,15 @@ export default async function DashboardOnboardingPage() {
         </p>
 
         <div className="mt-6 rounded-xl border p-3">
-          <h2 className="text-sm font-medium text-pink-600">Setup progress</h2>
+          <h2 className="text-sm font-medium text-plum">Setup progress</h2>
           <ul className="mt-3 grid gap-2 text-sm">
             <li className="flex items-center justify-between border-b pb-2">
               <span>Account created</span>
-              <span className="font-medium text-pink-600">Done</span>
+              <span className="font-medium text-plum">Done</span>
             </li>
             <li className="flex items-center justify-between border-b pb-2">
               <span>Provider draft</span>
-              <span className="font-medium text-pink-600">
+              <span className="font-medium text-plum">
                 {providerPage ? 'Started' : 'Next'}
               </span>
             </li>

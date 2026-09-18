@@ -60,7 +60,7 @@ function GroupList({
                 </div>
                 <Link
                   href={`/dashboard/treatment-groups/${group.id}/edit`}
-                  className="w-max rounded-lg border border-black/10 p-3 px-4 text-sm font-semibold text-pink-600 duration-200 hover:border-black/20"
+                  className="w-max rounded-lg border border-black/10 p-3 px-4 text-sm font-semibold text-plum duration-200 hover:border-black/20"
                 >
                   Edit
                 </Link>
@@ -98,13 +98,13 @@ export function TreatmentGroupsPage({
           <div className="flex items-center gap-2">
             <Link
               href="/dashboard/treatments"
-              className="w-max rounded-lg border border-black/10 p-3 px-4 text-sm font-semibold text-pink-600 duration-200 hover:border-black/20"
+              className="w-max rounded-lg border border-black/10 p-3 px-4 text-sm font-semibold text-plum duration-200 hover:border-black/20"
             >
               Back
             </Link>
             <Link
               href="/dashboard/treatment-groups/new"
-              className="flex w-max items-center rounded-3xl bg-white p-1.5 px-3 text-sm font-semibold text-pink-600 duration-300 hover:bg-pink-500/10"
+              className="flex w-max items-center rounded-3xl bg-white p-1.5 px-3 text-sm font-semibold text-plum duration-300 hover:bg-surface"
             >
               Create
             </Link>

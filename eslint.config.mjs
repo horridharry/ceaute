@@ -12,6 +12,11 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+
+    // Design reference bundle, not application source. The .dc.html prototypes
+    // ship a vendored viewer script (designs/support.js) that is not ours to
+    // fix and never runs in the product.
+    "design_handoff_ceaute_mvp/**",
   ]),
 ]);
 

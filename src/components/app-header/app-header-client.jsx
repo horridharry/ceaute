@@ -48,7 +48,7 @@ function AccountMenu({ user, hasProviderPage }) {
         onClick={() => setOpen((currentOpen) => !currentOpen)}
         className="flex max-w-44 items-center gap-2 rounded-full border border-transparent bg-white text-sm font-medium text-black/75  transition hover:border-black/20 hover:bg-black/[0.03]"
       >
-        <span className="grid h-10 w-10 place-items-center rounded-full bg-pink-100 text-xs font-semibold text-pink-700">
+        <span className="grid h-10 w-10 place-items-center rounded-full bg-surface text-xs font-semibold text-ink">
           {user.name.slice(0, 1).toUpperCase()}
         </span>
       </button>
@@ -137,7 +137,7 @@ export default function AppHeaderClient({ user, hasProviderPage = false }) {
               <HeaderLink href="/sign-in">Sign in</HeaderLink>
               <Link
                 href="/sign-up"
-                className="rounded-full bg-pink-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-pink-700"
+                className="rounded-full bg-plum px-4 py-2 text-sm font-semibold text-white transition hover:bg-plum-hover"
               >
                 Sign up
                 <LinkPendingHint />

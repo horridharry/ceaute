@@ -45,7 +45,7 @@ export function SigninForm({
             type="email"
             required
             autoFocus
-            className="appearance-none rounded-xl border border-black/20 p-3 outline-none ring-2 ring-transparent duration-200 hover:border-black/30 focus:border-pink-600 focus:ring-pink-200"
+            className="appearance-none rounded-xl border border-black/20 p-3 outline-none ring-2 ring-transparent duration-200 hover:border-black/30 focus:border-plum focus:ring-plum/20"
           />
 
           <p className="text-sm text-red-600">{state?.message}</p>
@@ -56,7 +56,7 @@ export function SigninForm({
           New to Ceaute?{" "}
           <Link
             href={signUpHref(next)}
-            className="mt-4 text-pink-600 duration-200 hover:text-pink-700"
+            className="mt-4 text-plum duration-200 hover:text-plum-hover"
           >
             Get started.
           </Link>
@@ -84,7 +84,7 @@ const SubmitButton = ({ pending }) => {
   return (
     <button
       type="submit"
-      className="cursor-pointer mt-4 rounded-lg bg-pink-800 p-2.5 text-sm font-medium text-white shadow-sm duration-200 hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-30 aria-disabled:cursor-not-allowed aria-disabled:opacity-30
+      className="cursor-pointer mt-4 rounded-lg bg-plum p-2.5 text-sm font-medium text-white shadow-sm duration-200 hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-30 aria-disabled:cursor-not-allowed aria-disabled:opacity-30
       active:opacity-60"
       aria-disabled={pending}
       disabled={pending}

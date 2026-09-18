@@ -21,7 +21,7 @@ export default async function DashboardPaymentSettingsPage() {
   return (
     <main className="container max-w-md p-5">
       <div className="mt-6 flex flex-col">
-        <Link href="/dashboard/settings" className="text-sm font-semibold text-pink-600">
+        <Link href="/dashboard/settings" className="text-sm font-semibold text-plum">
           Back to settings
         </Link>
         <h1 className="mt-8 text-3xl font-bold tracking-tighter">Payments</h1>

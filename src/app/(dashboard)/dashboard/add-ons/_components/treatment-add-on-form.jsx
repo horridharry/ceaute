@@ -17,7 +17,7 @@ function SubmitButton({ pending, mode, hasClientError, formId }) {
       form={formId}
       disabled={pending || hasClientError}
       aria-disabled={pending || hasClientError}
-      className="w-max rounded-lg bg-pink-700 p-3 px-4 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
+      className="w-max rounded-lg bg-plum p-3 px-4 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
     >
       {pending ? pendingLabel : idleLabel}
     </button>
@@ -206,7 +206,7 @@ export function TreatmentAddOnForm({
           ) : null}
           <Link
             href="/dashboard/add-ons"
-            className="w-max rounded-lg border border-black/10 p-3 px-6 text-sm font-semibold text-pink-600 duration-200 hover:border-black/20 active:border-transparent active:bg-pink-500/10 active:text-pink-500 disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+            className="w-max rounded-lg border border-black/10 p-3 px-6 text-sm font-semibold text-plum duration-200 hover:border-black/20 active:border-transparent active:bg-surface active:text-plum-hover disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
           >
             Back
           </Link>

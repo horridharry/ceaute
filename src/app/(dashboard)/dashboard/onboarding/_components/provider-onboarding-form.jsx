@@ -75,7 +75,7 @@ export function ProviderOnboardingForm({ action, providerPage }) {
             required
             value={username}
             onChange={updateUsername}
-            className="relative w-full appearance-none ring-1 ring-transparent rounded-lg border p-2.5 pl-28 outline-none duration-200 hover:border-black/25 focus:border-pink-600 focus:ring-pink-600"
+            className="relative w-full appearance-none ring-1 ring-transparent rounded-lg border p-2.5 pl-28 outline-none duration-200 hover:border-black/25 focus:border-plum focus:ring-plum"
           />
         </div>
       </span>
@@ -100,7 +100,7 @@ export function ProviderOnboardingForm({ action, providerPage }) {
       <div className="mt-4 flex items-center justify-end gap-2">
         <Link
           href="/account"
-          className="w-max rounded-lg font-semibold hover:border-black/20 border-black/10 text-pink-600 p-3 px-6 text-sm border duration-200 active:bg-pink-500/10 active:border-transparent active:text-pink-500"
+          className="w-max rounded-lg font-semibold hover:border-black/20 border-black/10 text-plum p-3 px-6 text-sm border duration-200 active:bg-surface active:border-transparent active:text-plum-hover"
         >
           Back
         </Link>
@@ -108,7 +108,7 @@ export function ProviderOnboardingForm({ action, providerPage }) {
           type="submit"
           disabled={pending || Boolean(usernameError)}
           aria-disabled={pending || Boolean(usernameError)}
-          className="w-max rounded-lg font-semibold bg-pink-700 p-3 px-4 text-sm text-white shadow-sm duration-200 hover:bg-pink-800 disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+          className="w-max rounded-lg font-semibold bg-plum p-3 px-4 text-sm text-white shadow-sm duration-200 hover:bg-plum-hover disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
         >
           {pending ? "Saving..." : "Save and continue"}
         </button>

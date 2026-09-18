@@ -47,7 +47,7 @@ function TreatmentRow({ treatment, onOpenDetails, onSelect }) {
         <button
           type="button"
           onClick={() => onSelect(treatment)}
-          className="rounded-lg bg-pink-700 px-4 py-2 text-sm font-semibold text-white duration-200 hover:bg-pink-800"
+          className="rounded-lg bg-plum px-4 py-2 text-sm font-semibold text-white duration-200 hover:bg-plum-hover"
         >
           Select
         </button>
@@ -167,7 +167,7 @@ function TreatmentDetailsSheet({
           type="button"
           onClick={onContinue}
           disabled={isNavigating}
-          className="mt-6 w-full rounded-lg bg-pink-700 p-3 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-pink-800 disabled:cursor-not-allowed disabled:opacity-60"
+          className="mt-6 w-full rounded-lg bg-plum p-3 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-plum-hover disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isNavigating ? "Continuing..." : hasAddOns ? "Choose a time" : "Select"}
         </button>

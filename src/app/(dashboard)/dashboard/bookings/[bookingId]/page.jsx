@@ -106,7 +106,7 @@ export default async function BookingDetailPage({ params }) {
           </h1>
           <Link
             href="/dashboard/bookings"
-            className="text-sm font-semibold text-pink-600"
+            className="text-sm font-semibold text-plum"
           >
             Back
           </Link>

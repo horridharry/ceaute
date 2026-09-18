@@ -32,7 +32,7 @@ export function TreatmentGroupForm({ action, group = null }) {
           <div className="mt-4 flex items-center justify-end gap-2">
             <Link
               href="/dashboard/treatment-groups"
-              className="w-max rounded-lg border border-black/10 p-3 px-6 text-sm font-semibold text-pink-600 duration-200 hover:border-black/20"
+              className="w-max rounded-lg border border-black/10 p-3 px-6 text-sm font-semibold text-plum duration-200 hover:border-black/20"
             >
               Back
             </Link>
@@ -40,7 +40,7 @@ export function TreatmentGroupForm({ action, group = null }) {
               type="submit"
               disabled={pending}
               aria-disabled={pending}
-              className="w-max rounded-lg bg-pink-700 p-3 px-4 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+              className="w-max rounded-lg bg-plum p-3 px-4 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
             >
               {pending
                 ? editing

@@ -9,7 +9,7 @@ const NoTreatments = () => (
       </p>
       <Link
         href="/dashboard/treatments/new"
-        className="mx-auto mt-4 flex w-max items-center overflow-hidden rounded-3xl bg-white p-1.5 px-3 text-center text-sm font-semibold text-pink-600 duration-300 hover:bg-pink-500/10"
+        className="mx-auto mt-4 flex w-max items-center overflow-hidden rounded-3xl bg-white p-1.5 px-3 text-center text-sm font-semibold text-plum duration-300 hover:bg-surface"
       >
         Create a new treatment
       </Link>
@@ -20,7 +20,7 @@ const NoTreatments = () => (
 const TreatmentStatus = ({ isActive }) => (
   <span
     className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-      isActive ? "bg-pink-50 text-pink-700" : "bg-black/5 text-black/50"
+      isActive ? "bg-ok/10 text-ok" : "bg-black/5 text-black/50"
     }`}
   >
     {isActive ? "Active" : "Archived"}
@@ -71,20 +71,20 @@ export function TreatmentsUI({ treatments }) {
           <div className="flex items-center gap-2">
             <Link
               href="/dashboard/treatment-groups"
-              className="flex w-max items-center overflow-hidden rounded-3xl bg-white p-1.5 px-3 text-center text-sm font-semibold text-pink-600 duration-300 hover:bg-pink-500/10"
+              className="flex w-max items-center overflow-hidden rounded-3xl bg-white p-1.5 px-3 text-center text-sm font-semibold text-plum duration-300 hover:bg-surface"
             >
               Manage groups
             </Link>
             <Link
               href="/dashboard/add-ons"
-              className="flex w-max items-center overflow-hidden rounded-3xl bg-white p-1.5 px-3 text-center text-sm font-semibold text-pink-600 duration-300 hover:bg-pink-500/10"
+              className="flex w-max items-center overflow-hidden rounded-3xl bg-white p-1.5 px-3 text-center text-sm font-semibold text-plum duration-300 hover:bg-surface"
             >
               Manage add-ons
             </Link>
             {treatments.length !== 0 ? (
               <Link
                 href="/dashboard/treatments/new"
-                className="flex w-max items-center overflow-hidden rounded-3xl bg-white p-1.5 px-3 text-center text-sm font-semibold text-pink-600 duration-300 hover:bg-pink-500/10"
+                className="flex w-max items-center overflow-hidden rounded-3xl bg-white p-1.5 px-3 text-center text-sm font-semibold text-plum duration-300 hover:bg-surface"
               >
                 Create
               </Link>

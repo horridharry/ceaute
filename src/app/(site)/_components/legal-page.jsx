@@ -17,8 +17,8 @@ export function LegalPage({ title, summary, updated, draft = false, children }) 
         <p className="mt-1 text-xs text-black/40">Last updated {updated}</p>
 
         {draft && (
-          <div className="mt-6 rounded-xl border border-dashed border-pink-300 bg-pink-50 p-4 text-sm">
-            <p className="font-semibold text-pink-600">
+          <div className="mt-6 rounded-xl border border-dashed border-pending/55 p-4 text-sm">
+            <p className="font-semibold text-[#7a5410]">
               Not yet final — business address outstanding
             </p>
             <p className="mt-1 text-black/70">
@@ -43,7 +43,7 @@ export function LegalPage({ title, summary, updated, draft = false, children }) 
 
         <Link
           href="/"
-          className="mt-10 w-max text-sm font-semibold text-pink-600 duration-200 hover:text-pink-700"
+          className="mt-10 w-max text-sm font-semibold text-plum duration-200 hover:text-plum-hover"
         >
           Back to Ceaute
         </Link>

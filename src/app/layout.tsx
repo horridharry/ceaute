@@ -1,11 +1,16 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { Inter } from "next/font/google";
+import { Geist } from "next/font/google";
 import AppHeader from "@/components/app-header/app-header";
 
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"] });
+// Geist is the only family in the product — 400/500/600, no monospace.
+const geist = Geist({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-geist",
+});
 
 export const metadata: Metadata = {
   title: "Ceaute",
@@ -18,7 +23,7 @@ export const viewport = {
   maximumScale: 1,
   userScalable: false,
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f472b6" }, // Pink color for light mode
+    { media: "(prefers-color-scheme: light)", color: "#8c2b52" }, // plum
     { media: "(prefers-color-scheme: dark)", color: "#1e293b" }, // Dark gray for dark mode
   ],
 };
@@ -27,7 +32,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
   return (
     <html
       lang="en"
-      className={`${inter.className} h-full antialiased`}
+      className={`${geist.variable} ${geist.className} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <AppHeader />

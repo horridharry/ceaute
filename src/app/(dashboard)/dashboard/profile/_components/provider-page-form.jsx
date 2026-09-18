@@ -119,7 +119,7 @@ export function ProviderPageForm({ providerPage, updateProviderPage }) {
                 autoComplete="username"
                 value={username}
                 onChange={updateUsername}
-                className="relative w-full appearance-none rounded-lg border p-2.5 pl-10 outline-none ring-1 ring-transparent duration-200 hover:border-black/25 focus:border-pink-600 focus:ring-pink-600"
+                className="relative w-full appearance-none rounded-lg border p-2.5 pl-10 outline-none ring-1 ring-transparent duration-200 hover:border-black/25 focus:border-plum focus:ring-plum"
               />
             </div>
           </span>
@@ -177,19 +177,19 @@ export function ProviderPageForm({ providerPage, updateProviderPage }) {
           <div className="mt-8 flex items-center justify-end">
             <Link
               href="/dashboard/locations"
-              className="mr-auto w-max rounded-lg border border-black/10 p-3 px-6 text-sm font-semibold text-pink-600 duration-200 hover:border-black/20 active:border-transparent active:bg-pink-500/10 active:text-pink-500"
+              className="mr-auto w-max rounded-lg border border-black/10 p-3 px-6 text-sm font-semibold text-plum duration-200 hover:border-black/20 active:border-transparent active:bg-surface active:text-plum-hover"
             >
               Location
             </Link>
             <Link
               href="/dashboard/profile/portfolio"
-              className="mr-2 w-max rounded-lg border border-black/10 p-3 px-6 text-sm font-semibold text-pink-600 duration-200 hover:border-black/20 active:border-transparent active:bg-pink-500/10 active:text-pink-500"
+              className="mr-2 w-max rounded-lg border border-black/10 p-3 px-6 text-sm font-semibold text-plum duration-200 hover:border-black/20 active:border-transparent active:bg-surface active:text-plum-hover"
             >
               Portfolio
             </Link>
             <Link
               href="/dashboard/profile/preview"
-              className="mr-2 w-max rounded-lg border border-black/10 p-3 px-6 text-sm font-semibold text-pink-600 duration-200 hover:border-black/20 active:border-transparent active:bg-pink-500/10 active:text-pink-500"
+              className="mr-2 w-max rounded-lg border border-black/10 p-3 px-6 text-sm font-semibold text-plum duration-200 hover:border-black/20 active:border-transparent active:bg-surface active:text-plum-hover"
             >
               Preview page
             </Link>
@@ -198,7 +198,7 @@ export function ProviderPageForm({ providerPage, updateProviderPage }) {
               type="submit"
               disabled={pending || Boolean(hasClientError)}
               aria-disabled={pending || Boolean(hasClientError)}
-              className="w-max rounded-lg bg-pink-700 p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-pink-800 disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+              className="w-max rounded-lg bg-plum p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-plum-hover disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
             >
               {pending ? "Saving..." : "Save"}
             </button>
