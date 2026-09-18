@@ -24,9 +24,9 @@ export const legalIdentity = {
   siteDomain: "ceaute.com",
   // Unresolved as of 18 September 2026 — see
   // docs/reports/2026-09-18-legal-pages-review-note.md.
-  operatorName: "[FULL LEGAL NAME]",
-  businessAddress: "[BUSINESS ADDRESS]",
-  addressForService: "[ADDRESS FOR SERVICE]",
+  operatorName: "Harrison Ndugba",
+  businessAddress: "Honour Lea Avenue, Stratford, London, E20 1DX, United Kingdom",
+  addressForService: "Honour Lea Avenue, Stratford, London, E20 1DX, United Kingdom",
   contactEmail: "ndu.harry02@gmail.com",
 };
 
