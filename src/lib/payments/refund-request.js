@@ -1,17 +1,10 @@
-// These two flags decide who absorbs Stripe's processing fee on a refund, and
-// the answer is currently "Ceaute": `refund_application_fee` returns the whole
-// application fee to the provider, so the provider ends at zero and Stripe's
-// non-refundable charge lands on the platform. That contradicts the agreed
-// model in which providers bear refunds, and changing it is a business
-// decision, not a cleanup — see
-// docs/reports/2026-09-18-refund-economics-and-provider-liability.md.
+// `reverse_transfer` returns the customer's money from the provider. What
+// happens to Ceaute's application fee is decided by the canonical rules in
+// settlement-rules.js and executed by `settleApplicationFee`, because the
+// amount handed back varies by who cancelled and when.
 //
-// `refund-settlement.js` models the outcome of both settings and the tests
-// assert it, so flipping either flag here fails a test rather than quietly
-// moving money.
-//
-// `refund_application_fee` is omitted when there is no application fee, which
-// is every attempt created before fees were introduced.
+// refund-settlement.js models the resulting ledger and the tests assert it, so
+// changing either behaviour fails a test rather than quietly moving money.
 export function buildStripeRefundRequest(operation) {
   return {
     parameters: {
@@ -22,9 +15,13 @@ export function buildStripeRefundRequest(operation) {
           ? "duplicate"
           : "requested_by_customer",
       reverse_transfer: true,
-      ...(Number(operation.ceaute_fee_pence) > 0
-        ? { refund_application_fee: true }
-        : {}),
+      // Always false. The boolean can only return all of the application fee
+      // or none of it, and the canonical rules need a share of it — Ceaute's
+      // commission on a late cancellation, and never the processing cost the
+      // provider bears. `settleApplicationFee` refunds the exact amount
+      // through Stripe's application-fee endpoint instead, which Stripe
+      // documents as the way to do this.
+      refund_application_fee: false,
       metadata: {
         booking_id: operation.booking_id,
         payment_attempt_id: operation.payment_attempt_id,

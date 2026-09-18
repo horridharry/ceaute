@@ -93,7 +93,13 @@ test("a newly claimed refund is created once with its persisted idempotency key 
 
   const result = await processBookingRefund("refund-op-1", { stripe, supabase });
 
-  assert.deepEqual(result, { action: "create", status: "pending", stripeRefundId: "re_created" });
+  assert.deepEqual(result, {
+    action: "create",
+    status: "pending",
+    stripeRefundId: "re_created",
+    applicationFeeSettled: false,
+    applicationFeeRefundPence: 0,
+  });
   assert.equal(stripe.calls.length, 1);
   assert.equal(stripe.calls[0].method, "create");
   assert.equal(stripe.calls[0].parameters.amount, 2500);
@@ -102,7 +108,12 @@ test("a newly claimed refund is created once with its persisted idempotency key 
   assert.equal(stripe.calls[0].options.idempotencyKey, "ceaute-refund-op-1");
   assert.deepEqual(
     supabase.calls.map((call) => call.functionName),
-    ["claim_booking_refund_operation", "record_booking_refund_state"],
+    [
+    "claim_booking_refund_operation",
+    "record_booking_refund_state",
+    // Refunding the customer is followed by settling Ceaute's own fee.
+    "get_booking_refund_settlement_inputs",
+  ],
   );
   assert.equal(supabase.calls[1].parameters.target_refund_operation_id, "refund-op-1");
   assert.equal(supabase.calls[1].parameters.target_stripe_refund_id, "re_created");
@@ -118,7 +129,13 @@ test("an operation that already has a Stripe refund is retrieved, never created 
 
   const result = await processBookingRefund("refund-op-1", { stripe, supabase });
 
-  assert.deepEqual(result, { action: "retry", status: "succeeded", stripeRefundId: "re_existing" });
+  assert.deepEqual(result, {
+    action: "retry",
+    status: "succeeded",
+    stripeRefundId: "re_existing",
+    applicationFeeSettled: false,
+    applicationFeeRefundPence: 0,
+  });
   assert.deepEqual(stripe.calls.map((call) => call.method), ["retrieve"]);
 });
 
@@ -131,6 +148,8 @@ for (const action of ["complete", "processing", "requires_review"]) {
 
     const result = await processBookingRefund("refund-op-1", { stripe, supabase });
 
+    // A terminal claim returns before any Stripe call, so no settlement is
+    // attempted and the result keeps its original shape.
     assert.deepEqual(result, { action, status: "succeeded", stripeRefundId: "re_done" });
     assert.equal(stripe.calls.length, 0);
     assert.deepEqual(supabase.calls.map((call) => call.functionName), ["claim_booking_refund_operation"]);

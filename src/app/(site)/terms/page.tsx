@@ -281,6 +281,29 @@ export default function TermsPage() {
           afterwards, so on an unusually expensive card Ceaute absorbs the
           difference rather than passing it on to you.
         </p>
+        <p>
+          <strong>If a booking is refunded.</strong> Stripe does not return its
+          card processing charge when a payment is refunded, so somebody bears
+          it:
+        </p>
+        <ul>
+          <li>
+            If a customer cancels <strong>inside your cancellation window</strong>
+            , they are refunded in full and it costs you nothing. Ceaute returns
+            its platform fee and covers Stripe&rsquo;s charge itself.
+          </li>
+          <li>
+            If a customer cancels <strong>after your window</strong>, your
+            policy decides what you keep, and Ceaute&rsquo;s 2% is charged on
+            the amount you actually keep rather than on the original payment.
+            Stripe&rsquo;s charge on that payment remains your cost.
+          </li>
+          <li>
+            If <strong>you</strong> cancel, the customer is refunded in full and
+            Ceaute returns its platform fee. Because the cancellation was yours,
+            Stripe&rsquo;s charge on the original payment is your cost.
+          </li>
+        </ul>
       </section>
 
       <section>

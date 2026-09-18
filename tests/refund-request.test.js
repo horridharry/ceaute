@@ -23,16 +23,20 @@ test("builds a transfer-reversing refund with a stable operation key", () => {
   const request = buildStripeRefundRequest(operation());
 
   assert.equal(request.parameters.reverse_transfer, true);
-  assert.equal(request.parameters.refund_application_fee, undefined);
   assert.equal(request.options.idempotencyKey, "ceaute-refund-integrity");
   assert.equal(request.parameters.amount, 2500);
 });
 
-test("refunds the application fee only when the captured fee is positive", () => {
-  const request = buildStripeRefundRequest(operation({ ceaute_fee_pence: 250 }));
+test("never lets Stripe decide how much of the application fee comes back", () => {
+  // The boolean can only return all of the fee or none of it. Three of the
+  // four settlement causes need a share, so the refund always says false and
+  // settleApplicationFee refunds the exact amount the canonical rules decide.
+  for (const ceaute_fee_pence of [0, 250]) {
+    const request = buildStripeRefundRequest(operation({ ceaute_fee_pence }));
 
-  assert.equal(request.parameters.reverse_transfer, true);
-  assert.equal(request.parameters.refund_application_fee, true);
+    assert.equal(request.parameters.reverse_transfer, true);
+    assert.equal(request.parameters.refund_application_fee, false);
+  }
 });
 
 test("uses Stripe's duplicate reason for duplicate-payment recovery", () => {

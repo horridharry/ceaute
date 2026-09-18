@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions, ceaute;
 
-select plan(19);
+select plan(26);
 
 -- One confirmed, paid booking to dispute, and a second one so the operator
 -- listing has something to order and filter.
@@ -204,6 +204,54 @@ select is(
    where stripe_dispute_id = 'dp_open_1' and closed_at is not null),
   0,
   'a dispute is not treated as closed until a closed event arrives'
+);
+
+-- --- responsibility for a lost dispute ---------------------------------------
+
+select is(
+  (select responsibility from ceaute.booking_dispute where stripe_dispute_id = 'dp_open_1'),
+  'undetermined',
+  'nobody carries a dispute until a person decides'
+);
+
+select is(
+  (select out_responsibility from ceaute.set_booking_dispute_responsibility(
+    'dp_open_1', 'provider', 'Provider confirmed the appointment did not happen.'
+  )),
+  'provider',
+  'an operator can assign responsibility to the provider'
+);
+
+select isnt(
+  (select responsibility_decided_at from ceaute.booking_dispute where stripe_dispute_id = 'dp_open_1'),
+  null,
+  'the decision is timestamped'
+);
+
+-- Two statements on purpose: within one statement both subqueries would read
+-- the same snapshot and the table read would not see the update.
+select is(
+  (select out_responsibility from ceaute.set_booking_dispute_responsibility('dp_open_1', 'undetermined')),
+  'undetermined',
+  'responsibility can be moved back to undetermined'
+);
+
+select is(
+  (select responsibility_decided_at from ceaute.booking_dispute where stripe_dispute_id = 'dp_open_1'),
+  null,
+  'moving back to undetermined clears the decision timestamp'
+);
+
+select throws_ok(
+  $$select * from ceaute.set_booking_dispute_responsibility('dp_open_1', 'the customer')$$,
+  'Unknown dispute responsibility: the customer',
+  'an unknown responsibility is refused'
+);
+
+select throws_ok(
+  $$select * from ceaute.set_booking_dispute_responsibility('dp_missing', 'provider')$$,
+  'Dispute not found.',
+  'responsibility cannot be set on a dispute that does not exist'
 );
 
 select * from finish();

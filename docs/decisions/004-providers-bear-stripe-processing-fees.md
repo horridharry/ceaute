@@ -121,12 +121,15 @@ exists.
 
 ### Refunds
 
-**Superseded in part.** This section was written before provider liability for
-refunds and chargebacks was agreed as a business model. The flags below leave
-Ceaute absorbing the processing fee, which is now the opposite of the intent.
-The conflict, the four modelled scenarios and the decision required are in
+**Superseded.** The flags described below were replaced by the canonical
+settlement rules in `src/lib/payments/settlement-rules.js`. `reverse_transfer`
+still returns the customer's money; `refund_application_fee` is now always
+false, and the exact share of the application fee owed back is refunded through
+Stripe's application-fee endpoint instead. That is what makes "Ceaute absorbs
+the processing cost on an early customer cancellation, the provider bears it on
+a late one or a provider cancellation" expressible at all — a boolean can only
+return all of the fee or none of it. See
 [the refund economics report](../reports/2026-09-18-refund-economics-and-provider-liability.md).
-Nothing has been changed yet.
 
 `reverse_transfer: true` with `refund_application_fee: true`, which is what
 `buildStripeRefundRequest` already sends once the fee is non-zero, is what the

@@ -60,8 +60,25 @@ before it, and evidence cannot be changed after submission.
 5. **Submit or accept in the Stripe Dashboard.** Accepting is the right answer
    when the customer is plainly correct; it closes the dispute immediately and
    costs the same as losing.
-6. **Record what was decided.** There is no notes field on `booking_dispute`
-   yet; keep the reasoning wherever support correspondence lives.
+6. **Record who carries it.** Once the outcome is known, set responsibility so
+   the intended settlement is explicit and auditable:
+
+   ```bash
+   curl -X POST -H "Authorization: Bearer $CEAUTE_OPERATOR_SECRET" \
+     -H 'Content-Type: application/json' \
+     -d '{"stripe_dispute_id":"dp_...","responsibility":"provider","note":"why"}' \
+     https://ceaute.com/api/operator/disputes
+   ```
+
+   `provider`, `ceaute` or `undetermined`. The listing then carries a
+   `settlement` block showing what each side should bear. **Setting it moves no
+   money** — there is no debit mechanism — it records the decision.
+
+   Responsibility drives the outcome: a lost dispute the provider caused means
+   they bear the disputed amount and Ceaute returns its 2%; one Ceaute caused —
+   a duplicate charge, a wrong amount, a payment-system fault — means Ceaute
+   bears the whole cost and the provider bears nothing. Left undetermined, the
+   cost sits with Ceaute, which is the safe default but not an answer.
 
 ## What Ceaute can actually recover
 
