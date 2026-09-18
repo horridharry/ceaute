@@ -18,7 +18,7 @@ function GroupStateForm({ group, archiveAction, restoreAction }) {
         type="submit"
         disabled={pending}
         aria-disabled={pending}
-        className="w-max rounded-lg p-3 px-4 text-sm font-semibold text-rose-600 duration-200 hover:border-transparent hover:bg-rose-50/80 active:bg-rose-600 active:text-white disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
+        className="w-max rounded-lg p-3 px-4 text-sm font-semibold text-bad duration-200 hover:border-transparent hover:bg-bad/5 active:bg-bad active:text-white disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
       >
         {pending
           ? group.is_active

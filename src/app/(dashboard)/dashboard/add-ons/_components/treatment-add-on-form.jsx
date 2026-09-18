@@ -37,7 +37,7 @@ function ArchiveButton({ addOn, archiveAction, restoreAction, pending }) {
       <input type="hidden" name="addOnId" value={addOn.addOnId} />
       <button
         type="submit"
-        className="w-max rounded-lg p-3 px-6 text-sm font-semibold text-rose-600 duration-200 hover:border-transparent hover:bg-rose-50/80 active:bg-rose-600 active:text-white disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
+        className="w-max rounded-lg p-3 px-6 text-sm font-semibold text-bad duration-200 hover:border-transparent hover:bg-bad/5 active:bg-bad active:text-white disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
         aria-disabled={isPending}
         disabled={isPending}
       >

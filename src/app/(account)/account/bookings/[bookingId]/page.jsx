@@ -1,121 +1,152 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { PendingButton } from "@/components/pending-button";
+import {
+  DetailSection,
+  DetailTemplate,
+} from "@/components/templates/detail-template";
+import { ButtonLink } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { CommitBar } from "@/components/ui/commit-bar";
+import { Select, TextArea } from "@/components/ui/field";
+import { InfoNotice, ProblemNotice } from "@/components/ui/notice";
+import { StatusDot } from "@/components/ui/status";
+import { SubmitButton } from "@/components/ui/submit-button";
+import { SummaryCard, SummaryLine } from "@/components/ui/summary-card";
+import { StackedTopBar } from "@/components/ui/top-bar";
 import {
   cancelCustomerBooking,
   getCustomerBooking,
   submitBookingReview,
 } from "../actions";
+import {
+  BookingCancelledLetter,
+  BookingConfirmedLetter,
+} from "./_components/booking-letters";
 
+// The exact address is released only after a paid, confirmed booking, and a
+// cancelled booking loses it again. This mirrors the redaction the database
+// already performs; it is not the only guard.
 const canShowExactAddress = (booking) =>
   Boolean(booking.confirmed_at) &&
   (booking.status === "confirmed" || booking.status === "completed");
 
-function ExactLocation({ booking }) {
+function Where({ booking }) {
   if (!canShowExactAddress(booking)) {
-    return <p className="mt-3 text-black/60">Area: {booking.public_area}</p>;
+    return (
+      <p className="text-body text-black/80">
+        {booking.public_area}
+        {booking.status === "cancelled"
+          ? " · exact address no longer shown"
+          : " · full address is shared once your booking is confirmed"}
+      </p>
+    );
   }
 
   const addressLines = [
     booking.address_line_1,
     booking.address_line_2,
-    booking.city,
-    booking.postcode,
+    [booking.city, booking.postcode].filter(Boolean).join(" "),
   ].filter(Boolean);
 
+  const directions = addressLines.length
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addressLines.join(", "))}`
+    : null;
+
   return (
-    <div className="mt-4 border-t pt-4">
-      <p className="font-semibold">Location</p>
-      <p className="mt-2 text-black/60">Area: {booking.public_area}</p>
-      {addressLines.length ? (
-        <p className="mt-2 whitespace-pre-line">{addressLines.join("\n")}</p>
-      ) : (
-        <p className="mt-2 text-black/60">Exact address unavailable.</p>
-      )}
+    <>
+      <p className="whitespace-pre-line text-body text-black/80">
+        {addressLines.join("\n")}
+      </p>
       {booking.access_instructions ? (
-        <p className="mt-2 text-black/60">
-          Access: {booking.access_instructions}
+        <p className="text-[12.5px] text-black/60">
+          {booking.access_instructions}
         </p>
       ) : null}
-    </div>
+      {directions ? (
+        <ButtonLink
+          href={directions}
+          variant="secondary"
+          target="_blank"
+          rel="noreferrer"
+        >
+          Directions
+        </ButtonLink>
+      ) : null}
+    </>
   );
 }
 
-function CancellationPanel({ booking }) {
-  if (booking.status === "cancelled") {
-    return (
-      <div className="mt-4 border-t pt-4">
-        <p className="font-semibold">Cancellation</p>
-        <p className="mt-2 text-black/60">
-          Cancelled by {booking.cancelled_by_label} on{" "}
-          {booking.cancelled_at_label}.
-        </p>
-        <p className="mt-2">Refunded: {booking.refund_amount_label}</p>
-        <p className="text-black/60">Retained: {booking.retained_amount_label}</p>
-        {booking.refund_status_label ? (
-          <p className="mt-2 text-black/60">{booking.refund_status_label}</p>
-        ) : null}
-        {booking.payment_status === "refund_failed" ? (
-          <p className="mt-2 text-bad">
-            Automatic refund failed. Support will need to review this payment.
-          </p>
-        ) : null}
-      </div>
-    );
-  }
+function CancelledDetail({ booking }) {
+  return (
+    <DetailSection heading="Cancellation">
+      <p className="text-body text-black/80">
+        Cancelled by {booking.cancelled_by_label} on {booking.cancelled_at_label}.
+      </p>
+      <SummaryCard>
+        <SummaryLine label="Refunded" value={booking.refund_amount_label} />
+        <SummaryLine label="Retained" value={booking.retained_amount_label} total />
+      </SummaryCard>
+      {booking.refund_status_label ? (
+        <StatusDot
+          status={booking.payment_status}
+          label={booking.refund_status_label}
+        />
+      ) : null}
+      {booking.payment_status === "refund_failed" ? (
+        <ProblemNotice title="The first refund attempt failed">
+          Ceaute is retrying it and support is alerted. Nothing is needed from
+          you — there is nothing to chase.
+        </ProblemNotice>
+      ) : null}
+    </DetailSection>
+  );
+}
 
+// The outcome is stated as two figures before anything is confirmed, and the
+// acknowledgement is required. Rescheduling does not exist, so the copy says
+// cancel-then-rebook rather than implying a move.
+function CancelPanel({ booking }) {
   if (!booking.can_cancel) {
     return null;
   }
 
   return (
-    <div className="mt-4 border-t pt-4">
-      <p className="font-semibold">Cancel booking</p>
-      <p className="mt-2 text-black/60">
+    <DetailSection heading="Cancel this booking">
+      <SummaryCard>
+        <SummaryLine
+          label="Refunded to your card"
+          value={booking.customer_current_refund_label}
+        />
+        <SummaryLine
+          label={`Retained by ${booking.provider_name}`}
+          value={booking.customer_current_retained_label}
+          total
+        />
+      </SummaryCard>
+
+      <p className="text-[12.5px]/[1.55] text-black/60">
         Before {booking.cancellation_deadline_label}, cancelling refunds{" "}
-        {booking.customer_early_refund_label}. At or after that time, Ceaute
-        refunds {booking.customer_late_refund_label} and retains{" "}
-        {booking.customer_late_retained_label}.
+        {booking.customer_early_refund_label}. At or after that, Ceaute refunds{" "}
+        {booking.customer_late_refund_label} and retains{" "}
+        {booking.customer_late_retained_label}. Refunds usually take 5 to 10
+        working days to show.
       </p>
-      <p className="mt-3 font-medium">
-        Cancelling now refunds {booking.customer_current_refund_label} and
-        retains {booking.customer_current_retained_label}.
+
+      <p className="text-[12.5px]/[1.55] text-black/60">
+        Rather move it? Cancel, then rebook — the refund covers it.
       </p>
-      <form action={cancelCustomerBooking} className="mt-4">
+
+      <form action={cancelCustomerBooking} className="flex flex-col gap-3">
         <input type="hidden" name="booking_id" value={booking.booking_id} />
-        <label className="mb-4 flex gap-2 text-sm text-black/70">
-          <input type="checkbox" required className="mt-1 h-4 w-4" />
-          <span>I understand this cancellation and refund outcome.</span>
-        </label>
-        <PendingButton
-          pendingLabel="Cancelling..."
-          className="rounded-lg border border-rose-200 p-3 px-4 text-sm font-semibold text-rose-700 duration-200 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
-        >
+        <Checkbox
+          name="acknowledged"
+          label="I understand this cancellation and refund outcome."
+          required
+        />
+        <SubmitButton variant="destructive" pendingLabel="Cancelling">
           Cancel booking
-        </PendingButton>
+        </SubmitButton>
       </form>
-    </div>
-  );
-}
-
-function ExistingReview({ review }) {
-  if (!review) {
-    return null;
-  }
-
-  return (
-    <div className="mt-4 border-t pt-4">
-      <p className="font-semibold">Your review</p>
-      <p className="mt-2 text-sm">Rating: {review.rating}/5</p>
-      {review.comment ? (
-        <p className="mt-2 whitespace-pre-line text-sm text-black/70">
-          {review.comment}
-        </p>
-      ) : null}
-      <p className="mt-2 text-xs text-black/50">
-        {review.is_visible ? "Visible publicly" : "Hidden by Ceaute support"}
-      </p>
-    </div>
+    </DetailSection>
   );
 }
 
@@ -125,118 +156,139 @@ function ReviewPanel({ booking }) {
   }
 
   if (booking.review) {
-    return <ExistingReview review={booking.review} />;
+    return (
+      <DetailSection heading="Your review">
+        <StatusDot
+          tone={booking.review.is_visible ? "ok" : "muted"}
+          label={`${booking.review.rating}/5 · ${booking.review.is_visible ? "Visible on her page" : "Hidden by Ceaute support"}`}
+        />
+        {booking.review.comment ? (
+          <p className="whitespace-pre-line text-body text-black/80">
+            {booking.review.comment}
+          </p>
+        ) : null}
+      </DetailSection>
+    );
   }
 
   return (
-    <div className="mt-4 border-t pt-4">
-      <p className="font-semibold">Leave a review</p>
-      <form action={submitBookingReview} className="mt-4 flex flex-col gap-3">
+    <DetailSection heading="How was it?">
+      <form action={submitBookingReview} className="flex flex-col gap-[13px]">
         <input type="hidden" name="booking_id" value={booking.booking_id} />
-        <label htmlFor="rating" className="label">
-          Rating
-        </label>
-        <select id="rating" name="rating" className="field cursor-pointer" required>
-          <option value="">Choose a rating</option>
-          <option value="5">5 stars</option>
-          <option value="4">4 stars</option>
-          <option value="3">3 stars</option>
-          <option value="2">2 stars</option>
-          <option value="1">1 star</option>
-        </select>
-        <label htmlFor="comment" className="label">
-          Comment
-        </label>
-        <textarea
-          id="comment"
+        <Select name="rating" label="Rating" required defaultValue="">
+          <option value="" disabled>
+            Choose a rating
+          </option>
+          {[5, 4, 3, 2, 1].map((rating) => (
+            <option key={rating} value={rating}>
+              {rating} / 5
+            </option>
+          ))}
+        </Select>
+        <TextArea
           name="comment"
+          label="Comment"
+          optional
           maxLength={1000}
-          rows={4}
-          className="field resize-none"
+          helper="One review per booking. Shown by your first name on her page."
         />
-        <PendingButton
-          pendingLabel="Submitting..."
-          className="w-max rounded-lg bg-plum p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-plum-hover disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          Submit review
-        </PendingButton>
+        <SubmitButton pendingLabel="Submitting">Submit review</SubmitButton>
       </form>
-    </div>
+    </DetailSection>
   );
 }
 
-export default async function CustomerBookingPage({ params }) {
+export default async function CustomerBookingPage({ params, searchParams }) {
   const { bookingId } = await params;
+  const resolvedSearchParams = (await searchParams) ?? {};
   const booking = await getCustomerBooking(bookingId);
 
   if (!booking) {
     notFound();
   }
 
+  const isConfirmed =
+    booking.status === "confirmed" && Boolean(booking.confirmed_at);
+
+  // The letter only ever follows a confirmed booking, and the checkout flow is
+  // the only thing that sets `checkout=success`. An unconfirmed booking never
+  // reaches this branch — the checkout page holds it on the confirming screen.
+  if (resolvedSearchParams.checkout === "success" && isConfirmed) {
+    return (
+      <BookingConfirmedLetter
+        booking={booking}
+        customerName={booking.customer_name}
+      />
+    );
+  }
+
+  if (resolvedSearchParams.cancelled === "1" && booking.status === "cancelled") {
+    return <BookingCancelledLetter booking={booking} />;
+  }
+
   return (
-    <main className="container mx-auto max-w-md p-5">
-      <div className="mt-12 flex flex-col">
-        <div className="flex items-end justify-between gap-4">
-          <h1 className="text-2xl font-bold tracking-tight text-black/80">
-            Booking details
-          </h1>
-          <Link
-            href="/account/bookings"
-            className="text-sm font-semibold text-plum"
-          >
-            Back
-          </Link>
-        </div>
-
-        <section className="mt-6 rounded-xl border p-4 text-sm">
-          <h2 className="text-lg font-semibold">{booking.provider_name}</h2>
-          <p className="mt-3 font-medium">{booking.treatment_name}</p>
-          <p className="mt-3">
-            <span className="font-semibold">{booking.date_label}</span>
-            {", "}
-            <span className="font-semibold">{booking.time_label}</span>
-          </p>
-          <p className="text-black/60">Duration: {booking.duration_label}</p>
-          <p className="mt-3 font-medium">
-            Total: {booking.total_price_label}
-          </p>
-          <p className="text-black/60">
-            Paid online: {booking.amount_paid_online_label}
-          </p>
-          <p className="text-black/60">
-            Due at appointment: {booking.amount_due_at_appointment_label}
-          </p>
-          <p className="text-xs text-black/60">{booking.status_label}</p>
-
-          {booking.selected_add_ons.length ? (
-            <div className="mt-4 border-t pt-4">
-              <p className="font-semibold">Add-ons</p>
-              <ul className="mt-2 flex flex-col gap-2">
-                {booking.selected_add_ons.map((addOn) => (
-                  <li key={addOn.id}>
-                    {addOn.name} ({addOn.price_label}, {addOn.duration_label})
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
-
-          <ExactLocation booking={booking} />
-
-          <div className="mt-4 border-t pt-4">
-            <p className="font-semibold">Cancellation terms</p>
-            <p className="mt-2 text-black/60">
-              Cancellation window: {booking.cancellation_window_hours} hours
-            </p>
-            <p className="mt-2 whitespace-pre-line text-black/60">
-              {booking.written_policy || "No written policy stored."}
-            </p>
-          </div>
-
-          <CancellationPanel booking={booking} />
-          <ReviewPanel booking={booking} />
-        </section>
+    <DetailTemplate
+      nav={<StackedTopBar backHref="/account/bookings" backLabel="Bookings" />}
+      title={booking.treatment_name}
+      meta={`${booking.provider_name} · ${booking.date_label} · ${booking.time_label}`}
+      commitBar={
+        booking.can_cancel ? null : booking.status === "cancelled" ? (
+          <CommitBar>
+            <ButtonLink href="/discover">Find another time</ButtonLink>
+          </CommitBar>
+        ) : null
+      }
+    >
+      <div className="flex flex-col gap-3">
+        <StatusDot status={booking.status} label={booking.status_label} />
+        <p className="text-[12.5px] text-black/50">{booking.duration_label}</p>
       </div>
-    </main>
+
+      <DetailSection heading="What you booked">
+        <SummaryCard>
+          <SummaryLine
+            label={booking.treatment_name}
+            value={booking.total_price_label}
+          />
+          {booking.selected_add_ons.map((addOn) => (
+            <SummaryLine
+              key={addOn.id}
+              label={`+ ${addOn.name}`}
+              value={addOn.price_label}
+            />
+          ))}
+          <SummaryLine
+            label="Paid online"
+            value={booking.amount_paid_online_label}
+          />
+          <SummaryLine
+            label="Due at appointment"
+            value={booking.amount_due_at_appointment_label}
+            total
+          />
+        </SummaryCard>
+      </DetailSection>
+
+      <DetailSection heading="Where">
+        <Where booking={booking} />
+      </DetailSection>
+
+      <DetailSection heading="Booking terms">
+        <p className="text-body text-black/80">
+          Cancellation window {booking.cancellation_window_hours} hours. These
+          terms are frozen for this booking.
+        </p>
+        {booking.written_policy ? (
+          <InfoNotice>{booking.written_policy}</InfoNotice>
+        ) : null}
+      </DetailSection>
+
+      {booking.status === "cancelled" ? (
+        <CancelledDetail booking={booking} />
+      ) : null}
+
+      <CancelPanel booking={booking} />
+      <ReviewPanel booking={booking} />
+    </DetailTemplate>
   );
 }

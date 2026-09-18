@@ -106,6 +106,11 @@ export async function cancelCustomerBooking(formData) {
     actor: "customer",
     revalidatePaths: ["/account/bookings", `/account/bookings/${bookingId}`],
   });
+
+  // Navigation only: the cancellation and refund work above is unchanged. The
+  // redirect lands on the cancelled letter, which states the refund outcome as
+  // the first thing she reads.
+  redirect(`/account/bookings/${bookingId}?cancelled=1`);
 }
 
 export async function submitBookingReview(formData) {

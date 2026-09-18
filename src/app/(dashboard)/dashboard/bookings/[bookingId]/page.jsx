@@ -80,7 +80,7 @@ function CancellationPanel({ booking }) {
         </label>
         <PendingButton
           pendingLabel="Cancelling..."
-          className="rounded-lg border border-rose-200 p-3 px-4 text-sm font-semibold text-rose-700 duration-200 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
+          className="rounded-lg border border-bad/35 p-3 px-4 text-sm font-semibold text-bad duration-200 hover:bg-bad/5 disabled:cursor-not-allowed disabled:opacity-60"
         >
           Cancel booking
         </PendingButton>

@@ -24,6 +24,7 @@ export function Checkbox({
   checked,
   onChange,
   disabled = false,
+  required = false,
   className = "",
   "aria-label": ariaLabel,
 }) {
@@ -39,6 +40,7 @@ export function Checkbox({
         checked={checked}
         onChange={onChange}
         disabled={disabled}
+        required={required}
         aria-label={ariaLabel}
         className="peer sr-only"
       />

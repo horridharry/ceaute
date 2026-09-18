@@ -26,7 +26,7 @@ export default function PersonalDetailsForm({
   const [phoneValue, setPhoneValue] = useState(phone);
 
   return (
-    <form action={formAction} className="mt-6 flex flex-col gap-4">
+    <form action={formAction} className="flex flex-col gap-[13px]">
       <span className="field-set">
         <label className="label" htmlFor="full_name">
           Full name
