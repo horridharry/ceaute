@@ -1,6 +1,10 @@
 "use client";
+
 import Link from "next/link";
 import { useActionState } from "react";
+import { Button } from "@/components/ui/button";
+import { TextInput } from "@/components/ui/field";
+import { AuthCard } from "./auth-card";
 
 function signInHref(next) {
   const params = new URLSearchParams();
@@ -13,6 +17,8 @@ function signInHref(next) {
   return query ? `/sign-in?${query}` : "/sign-in";
 }
 
+// T3 · Form. One account covers booking and running a page; creating a
+// provider page later does not create a second one.
 export function SignupForm({
   createUser,
   initialState = { message: "" },
@@ -22,87 +28,42 @@ export function SignupForm({
     createUser,
     initialState,
   );
+
   return (
-    <main className="container mx-auto flex min-h-screen max-w-md items-center justify-center p-2">
-      <div className="flex w-full flex-col border rounded-2xl border-black/10 bg-white p-8">
-        <Link href={"/"} className="flex w-max items-center gap-x-1">
-          <h2 className="select-none text-xs font-bold uppercase tracking-widest opacity-70">
-            ceaute
-          </h2>
+    <AuthCard title="Create your account">
+      <p className="mt-1 text-body text-black/60">
+        One account to book, and to run a page if you want to.
+      </p>
+
+      <form className="mt-6 flex flex-col gap-[13px]" action={createUserAction}>
+        <TextInput name="full_name" label="Full name" required autoComplete="name" />
+        <TextInput
+          name="email"
+          label="Email"
+          type="email"
+          required
+          autoComplete="email"
+          error={state?.message || undefined}
+          helper="We email a six-digit code to finish creating your account."
+        />
+        <Button type="submit" disabled={pending} aria-disabled={pending}>
+          {pending ? "Sending code…" : "Create account"}
+        </Button>
+      </form>
+
+      <p className="mt-6 text-body text-black/60">
+        Already have a Ceaute account?{" "}
+        <Link
+          href={signInHref(next)}
+          className="font-medium text-plum transition duration-150 ease-out hover:text-plum-hover"
+        >
+          Log in
         </Link>
-        <h1 className="mt-8 text-2xl font-bold tracking-tight text-black/90">
-          Create a Ceaute account
-        </h1>
-        <p className="font-medium text-black/70">
-          One last step before starting.
-        </p>
+      </p>
 
-        <form className="mt-6 grid gap-2" action={createUserAction}>
-          <label htmlFor="full_name" className="text-sm">
-            Full Name
-          </label>
-          <input
-            id="full_name"
-            name="full_name"
-            type="text"
-            required
-            className="w-full appearance-none rounded-xl border border-black/20 p-3 outline-none ring-2 ring-transparent duration-200 hover:border-black/30 focus:border-plum focus:ring-plum/20"
-          />
-          <label htmlFor="email" className="mt-4 text-sm">
-            Email
-          </label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            required
-            className="appearance-none rounded-xl border border-black/20 p-3 outline-none ring-2 ring-transparent duration-200 hover:border-black/30 focus:border-plum focus:ring-plum/20"
-          />
-
-          <p className="mt-1 text-xs text-black/50">
-            We will email you a six-digit code to finish creating your account.
-          </p>
-          <p className="text-sm text-bad">{state?.message}</p>
-          <SubmitButton pending={pending} />
-        </form>
-        <p className="mt-6 text-sm">
-          Already have a Ceaute account?{" "}
-          <Link
-            href={signInHref(next)}
-            className="mt-4 text-plum duration-200 hover:text-plum-hover"
-          >
-            Log In
-          </Link>
-        </p>
-        <div className="mt-8 flex gap-5">
-          <Link
-            href="/privacy"
-            className="text-xs font-medium text-black/50 hover:underline"
-          >
-            Privacy
-          </Link>
-          <Link
-            href="/terms"
-            className="text-xs font-medium text-black/50 hover:underline"
-          >
-            Terms
-          </Link>
-        </div>
-      </div>
-    </main>
+      <p className="mt-4 text-[12px]/[1.55] text-black/45">
+        By continuing you agree to the Terms and Privacy policy.
+      </p>
+    </AuthCard>
   );
 }
-
-const SubmitButton = ({ pending }) => {
-  return (
-    <button
-      type="submit"
-      className="cursor-pointer mt-4 rounded-lg bg-plum p-2.5 text-sm font-medium text-white shadow-sm duration-200 hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-30 aria-disabled:cursor-not-allowed aria-disabled:opacity-30
-      active:opacity-60"
-      aria-disabled={pending}
-      disabled={pending}
-    >
-      {!pending ? "Create Ceaute account" : "Sending code..."}
-    </button>
-  );
-};

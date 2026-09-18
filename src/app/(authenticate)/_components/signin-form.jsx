@@ -1,6 +1,10 @@
 "use client";
+
 import Link from "next/link";
 import { useActionState } from "react";
+import { Button } from "@/components/ui/button";
+import { TextInput } from "@/components/ui/field";
+import { AuthCard } from "./auth-card";
 
 function signUpHref(next) {
   const params = new URLSearchParams();
@@ -13,6 +17,8 @@ function signUpHref(next) {
   return query ? `/sign-up?${query}` : "/sign-up";
 }
 
+// T3 · Form. Sign-in is an emailed six-digit code verified at /verify — never
+// a link and never a password. The action and its state are untouched.
 export function SigninForm({
   authenticateUser,
   initialState = { message: "" },
@@ -22,74 +28,38 @@ export function SigninForm({
     authenticateUser,
     initialState,
   );
+
   return (
-    <main className="container mx-auto flex min-h-screen max-w-md items-center justify-center p-2">
-      <div className="flex w-full flex-col border rounded-2xl border-black/10 bg-white p-8">
-        <Link href={"/"} className="flex w-max items-center gap-x-1">
-          <h2 className="select-none text-xs font-bold uppercase tracking-widest opacity-70">
-            ceaute
-          </h2>
+    <AuthCard title="Log in">
+      <p className="mt-1 text-body text-black/60">
+        Continue to your Ceaute account.
+      </p>
+
+      <form className="mt-6 flex flex-col gap-[13px]" action={authenticateUserAction}>
+        <TextInput
+          name="email"
+          label="Email"
+          type="email"
+          required
+          autoFocus
+          autoComplete="email"
+          error={state?.message || undefined}
+          helper="A code is emailed to you. No password."
+        />
+        <Button type="submit" disabled={pending} aria-disabled={pending}>
+          {pending ? "Sending code…" : "Continue with email"}
+        </Button>
+      </form>
+
+      <p className="mt-6 text-body text-black/60">
+        New to Ceaute?{" "}
+        <Link
+          href={signUpHref(next)}
+          className="font-medium text-plum transition duration-150 ease-out hover:text-plum-hover"
+        >
+          Get started
         </Link>
-        <h1 className="mt-8 text-2xl font-bold tracking-tight text-black/90">
-          Log in
-        </h1>
-        <p className="font-medium text-black/60">Continue to Ceaute account</p>
-
-        <form className="mt-6 grid gap-2" action={authenticateUserAction}>
-          <label htmlFor="email" className="text-sm">
-            Email
-          </label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            required
-            autoFocus
-            className="appearance-none rounded-xl border border-black/20 p-3 outline-none ring-2 ring-transparent duration-200 hover:border-black/30 focus:border-plum focus:ring-plum/20"
-          />
-
-          <p className="text-sm text-bad">{state?.message}</p>
-          <SubmitButton pending={pending} />
-        </form>
-
-        <p className="mt-6 text-sm">
-          New to Ceaute?{" "}
-          <Link
-            href={signUpHref(next)}
-            className="mt-4 text-plum duration-200 hover:text-plum-hover"
-          >
-            Get started.
-          </Link>
-        </p>
-        <div className="mt-8 flex gap-5">
-          <Link
-            href="/privacy"
-            className="text-xs font-medium text-black/50 hover:underline"
-          >
-            Privacy
-          </Link>
-          <Link
-            href="/terms"
-            className="text-xs font-medium text-black/50 hover:underline"
-          >
-            Terms
-          </Link>
-        </div>
-      </div>
-    </main>
+      </p>
+    </AuthCard>
   );
 }
-
-const SubmitButton = ({ pending }) => {
-  return (
-    <button
-      type="submit"
-      className="cursor-pointer mt-4 rounded-lg bg-plum p-2.5 text-sm font-medium text-white shadow-sm duration-200 hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-30 aria-disabled:cursor-not-allowed aria-disabled:opacity-30
-      active:opacity-60"
-      aria-disabled={pending}
-      disabled={pending}
-    >
-      {!pending ? "Continue with email" : "Sending code..."}
-    </button>
-  );
-};

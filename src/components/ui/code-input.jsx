@@ -13,15 +13,20 @@ export function CodeInput({
   autoFocus = false,
   error,
   onComplete,
+  onValueChange,
   ...inputProps
 }) {
   const inputRef = useRef(null);
   const [value, setValue] = useState("");
   const [focused, setFocused] = useState(false);
 
+  // `onValueChange` reports the digits so a caller can keep its own submit
+  // button disabled until the code is complete. A raw `onChange` would land
+  // after this component's own handler in the spread below and replace it.
   function handleChange(event) {
     const digits = event.target.value.replace(/\D/g, "").slice(0, length);
     setValue(digits);
+    onValueChange?.(digits);
     if (digits.length === length) onComplete?.(digits);
   }
 

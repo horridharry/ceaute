@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
-import { PendingButton } from "@/components/pending-button";
 import { calculateBookingPaymentAmounts } from "@/lib/payments/booking-payments";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -9,6 +8,16 @@ import {
   startStripeCheckoutForBooking,
 } from "../../actions";
 import { describeCheckoutPaymentNotice } from "../../_lib/checkout-payment-notice";
+import { FormTemplate } from "@/components/templates/form-template";
+import { ButtonLink } from "@/components/ui/button";
+import { CommitBar } from "@/components/ui/commit-bar";
+import { HeldRow } from "@/components/ui/held-row";
+import { InfoNotice, ProblemNotice } from "@/components/ui/notice";
+import { SummaryCard, SummaryLine } from "@/components/ui/summary-card";
+import { SubmitButton } from "@/components/ui/submit-button";
+import { TextInput } from "@/components/ui/field";
+import { StackedTopBar } from "@/components/ui/top-bar";
+import { BookingConfirming } from "../../_components/booking-confirming";
 import { getPublicBookingDetailsPage } from "../../../_lib/public-provider-data";
 import {
   addMinutes,
@@ -299,153 +308,163 @@ export default async function BookingCheckoutPage({ params, searchParams }) {
       holdId: holdSummary.id,
     });
 
+    // A6. Stripe has returned but the webhook has not confirmed yet, so the
+    // booking is not successful and must not be shown as though it were. The
+    // confirmed case above has already redirected away.
+    if (firstSearchValue(resolvedSearchParams?.checkout) === "success") {
+      return (
+        <BookingConfirming
+          providerName={serviceSnapshot.provider_display_name}
+          treatmentName={serviceSnapshot.treatment_name}
+          whenLabel={`${formatDateLabel(holdStartAt)} · ${formatTimeLabel(holdStartAt)}`}
+          amountPaidLabel={formatPricePence(paymentAmounts.amountChargedPence)}
+        />
+      );
+    }
+
+    const paymentState = firstSearchValue(resolvedSearchParams?.payment);
+    // A payment already in flight is the dangerous one: a second payment is a
+    // second charge, so Pay is removed entirely rather than merely warned
+    // about. Amber, not red — nothing has gone wrong yet.
+    const paymentInFlight = paymentState === "processing";
+    const canPay = displayState.canPay && !paymentInFlight;
+    const timeHref = buildTimePath({
+      username: decodedUsername,
+      treatmentId,
+      addOnIds: selectedAddOnIds,
+    });
+
     return (
-      <main className="container max-w-md p-5">
-        <div className="mt-6 flex flex-col">
-          <h1 className="text-3xl font-bold tracking-tighter">
-            {displayState.heading}
-          </h1>
-          <p className="mt-1 text-sm">
-            {displayState.message}
-          </p>
-
-          {paymentNotice ? (
-            <div
-              role="status"
-              className="mt-8 rounded-xl border border-bad/35 p-4 text-sm text-bad"
+      <FormTemplate
+        as="div"
+        nav={
+          <StackedTopBar
+            backHref={timeHref}
+            backLabel="Times"
+            stepLabel="3 / 3"
+          />
+        }
+        commitBar={
+          canPay ? (
+            <CommitBar
+              contextLabel={formatPricePence(paymentAmounts.amountChargedPence)}
+              contextDetail="Card details are taken by Stripe. You'll land back here."
             >
-              <p className="font-semibold">{paymentNotice.heading}</p>
-              <p className="mt-1">{paymentNotice.message}</p>
-            </div>
-          ) : null}
-
-          <section className="mt-8 rounded-xl border p-4">
-            <h2 className="text-lg font-semibold tracking-tighter">
-              Booking summary
-            </h2>
-            <div className="mt-4 flex flex-col gap-3 text-sm">
-              <div>
-                <p className="font-semibold">
-                  {serviceSnapshot.provider_display_name}
-                </p>
-                <p className="text-black/60">
-                  @{serviceSnapshot.provider_username}
-                </p>
-                <p className="text-black/60">{serviceSnapshot.public_area}</p>
-              </div>
-              <div>
-                <p className="font-semibold">{serviceSnapshot.treatment_name}</p>
-                {selectedAddOns.length ? (
-                  <ul className="mt-1 text-black/60">
-                    {selectedAddOns.map((addOn) => (
-                      <li key={addOn.id}>
-                        + {addOn.name} (
-                        {formatPricePence(addOn.additional_price_pence)},{" "}
-                        {formatDurationMinutes(
-                          addOn.additional_duration_minutes,
-                        )}
-                        )
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
-              </div>
-              <div>
-                <p className="font-semibold">
-                  {formatDateLabel(holdStartAt)} · {formatTimeLabel(holdStartAt)}{" "}
-                  - {formatTimeLabel(holdEndAt)}
-                </p>
-                <p className="text-black/60">
-                  Total duration:{" "}
-                  {formatDurationMinutes(serviceSnapshot.duration_minutes)}
-                </p>
-              </div>
-              <div className="border-t pt-3">
-                <p className="flex justify-between">
-                  <span>Total price</span>
-                  <span className="font-semibold">
-                    {formatPricePence(serviceSnapshot.total_price_pence)}
-                  </span>
-                </p>
-                <p className="flex justify-between">
-                  <span>Due now</span>
-                  <span className="font-semibold">
-                    {formatPricePence(paymentAmounts.amountChargedPence)}
-                  </span>
-                </p>
-                <p className="flex justify-between">
-                  <span>Due at appointment</span>
-                  <span className="font-semibold">
-                    {formatPricePence(paymentAmounts.amountDueLaterPence)}
-                  </span>
-                </p>
-              </div>
-              <div className="border-t pt-3 text-black/60">
-                <p>
-                  Cancellation window:{" "}
-                  {serviceSnapshot.cancellation_window_hours ?? 24} hours.
-                </p>
-                <p>
-                  {describeLateCancellationOutcome({
-                    commitmentAmountPence:
-                      serviceSnapshot.commitment_amount_pence,
-                    amountDueNowPence: paymentAmounts.amountChargedPence,
-                  })}
-                </p>
-                {serviceSnapshot.written_policy ? (
-                  <p className="mt-2 whitespace-pre-wrap">
-                    {serviceSnapshot.written_policy}
-                  </p>
-                ) : null}
-              </div>
-              {isConfirmed ? (
-                <div className="border-t pt-3">
-                  <p className="font-semibold">Exact address</p>
-                  <p>{serviceSnapshot.address_line_1}</p>
-                  {serviceSnapshot.address_line_2 ? (
-                    <p>{serviceSnapshot.address_line_2}</p>
-                  ) : null}
-                  <p>
-                    {serviceSnapshot.city} {serviceSnapshot.postcode}
-                  </p>
-                  {serviceSnapshot.access_instructions ? (
-                    <p className="mt-2 text-black/60">
-                      {serviceSnapshot.access_instructions}
-                    </p>
-                  ) : null}
-                </div>
-              ) : (
-                <p className="border-t pt-3 text-black/60">
-                  Exact address and access instructions are shown after
-                  confirmation.
-                </p>
-              )}
-              {displayState.showHoldExpiry ? (
-                <p className="text-black/60">
-                  Hold expires at{" "}
-                  {formatTimeLabel(new Date(holdSummary.expires_at))}.
-                </p>
-              ) : null}
-            </div>
-          </section>
-
-          {displayState.canPay ? (
-            <div className="mt-8 flex flex-col items-end gap-3">
               <form action={startStripeCheckoutForBooking}>
                 <input type="hidden" name="booking_id" value={holdSummary.id} />
                 <input type="hidden" name="return_path" value={returnPath} />
-                <PendingButton
-                  pendingLabel="Opening Stripe..."
-                  className="w-max rounded-lg bg-plum p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-plum-hover disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  Pay with Stripe
-                </PendingButton>
+                <SubmitButton block={false} pendingLabel="Opening Stripe" className="px-6">
+                  {paymentState === "unavailable" ? "Try again" : "Continue to payment"}
+                </SubmitButton>
               </form>
-              <PolicyNotice />
-            </div>
-          ) : null}
-        </div>
-      </main>
+            </CommitBar>
+          ) : (
+            <CommitBar>
+              <ButtonLink
+                href={paymentInFlight ? "/account/bookings" : timeHref}
+                variant={paymentInFlight ? "tertiary" : "primary"}
+              >
+                {paymentInFlight ? "Go to my bookings" : "See other days"}
+              </ButtonLink>
+            </CommitBar>
+          )
+        }
+      >
+        {displayState.showHoldExpiry && holdSummary.expires_at ? (
+          <HeldRow
+            appointmentLabel={`${formatDateLabel(holdStartAt)}, ${formatTimeLabel(holdStartAt)}`}
+            expiresAt={holdSummary.expires_at}
+          />
+        ) : null}
+
+        <header className="flex flex-col gap-1">
+          <h1 className="text-display text-pretty text-ink">
+            {canPay ? "Review & pay" : displayState.heading}
+          </h1>
+          {canPay ? null : (
+            <p className="text-meta text-black/50">{displayState.message}</p>
+          )}
+        </header>
+
+        {paymentInFlight ? (
+          <ProblemNotice tone="pending" title="Waiting on Stripe">
+            An earlier attempt for this booking is still finishing. Give it a few
+            seconds rather than paying again — a second payment would be a second
+            charge. Your slot stays held until{" "}
+            {formatTimeLabel(new Date(holdSummary.expires_at))} while this resolves.
+          </ProblemNotice>
+        ) : paymentNotice ? (
+          <ProblemNotice title={paymentNotice.heading}>
+            {paymentNotice.message}
+          </ProblemNotice>
+        ) : null}
+
+        <SummaryCard>
+          <SummaryLine
+            label={serviceSnapshot.treatment_name}
+            value={formatPricePence(serviceSnapshot.total_price_pence)}
+          />
+          {selectedAddOns.map((addOn) => (
+            <SummaryLine
+              key={addOn.id}
+              label={`+ ${addOn.name}`}
+              value={formatPricePence(addOn.additional_price_pence)}
+            />
+          ))}
+          <SummaryLine
+            label={`${formatDateLabel(holdStartAt)} · ${formatTimeLabel(holdStartAt)} – ${formatTimeLabel(holdEndAt)}`}
+            value={formatDurationMinutes(serviceSnapshot.duration_minutes)}
+          />
+          <SummaryLine
+            label={
+              paymentAmounts.amountDueLaterPence > 0 ? "Pay today (deposit)" : "Pay today"
+            }
+            value={formatPricePence(paymentAmounts.amountChargedPence)}
+            total
+          />
+        </SummaryCard>
+
+        <p className="text-[12.5px]/[1.55] text-black/60">
+          {formatPricePence(paymentAmounts.amountDueLaterPence)} due on the day.
+          Cancellation window {serviceSnapshot.cancellation_window_hours ?? 24}{" "}
+          hours.{" "}
+          {describeLateCancellationOutcome({
+            commitmentAmountPence: serviceSnapshot.commitment_amount_pence,
+            amountDueNowPence: paymentAmounts.amountChargedPence,
+          })}
+        </p>
+
+        {serviceSnapshot.written_policy ? (
+          <InfoNotice>{serviceSnapshot.written_policy}</InfoNotice>
+        ) : null}
+
+        {isConfirmed ? (
+          <div className="flex flex-col gap-1">
+            <p className="text-label uppercase text-black/45">Where</p>
+            <p className="text-body text-black/80">
+              {[
+                serviceSnapshot.address_line_1,
+                serviceSnapshot.address_line_2,
+                `${serviceSnapshot.city} ${serviceSnapshot.postcode}`,
+              ]
+                .filter(Boolean)
+                .join(", ")}
+            </p>
+            {serviceSnapshot.access_instructions ? (
+              <p className="text-[12.5px] text-black/60">
+                {serviceSnapshot.access_instructions}
+              </p>
+            ) : null}
+          </div>
+        ) : (
+          <p className="text-[12.5px] text-black/60">
+            The exact address and access instructions are shown once the booking
+            is confirmed.
+          </p>
+        )}
+
+        {canPay ? <PolicyNotice /> : null}
+      </FormTemplate>
     );
   }
 
@@ -456,7 +475,6 @@ export default async function BookingCheckoutPage({ params, searchParams }) {
       selectedAddOns,
       totalDurationMinutes,
       totalPricePence,
-      location,
       bookingSettings,
       availableDates,
     },
@@ -507,143 +525,106 @@ export default async function BookingCheckoutPage({ params, searchParams }) {
   });
 
   return (
-    <main className="container max-w-md p-5">
-      <div className="mt-6 flex flex-col">
-        <h1 className="text-3xl font-bold tracking-tighter">
-          Review details
-        </h1>
-        <p className="mt-1 text-sm">
-          Confirm your contact details before the final booking step.
-        </p>
-
-        <section className="mt-8 rounded-xl border p-4">
-          <h2 className="text-lg font-semibold tracking-tighter">
-            Order summary
-          </h2>
-          <div className="mt-4 flex flex-col gap-3 text-sm">
-            <div>
-              <p className="font-semibold">{providerPage.display_name}</p>
-              <p className="text-black/60">@{providerPage.username}</p>
-              {location.public_area ? (
-                <p className="text-black/60">{location.public_area}</p>
-              ) : null}
-            </div>
-            <div>
-              <p className="font-semibold">{treatment.name}</p>
-              {selectedAddOns.length ? (
-                <ul className="mt-1 text-black/60">
-                  {selectedAddOns.map((addOn) => (
-                    <li key={addOn.id}>
-                      + {addOn.name} (
-                      {formatPricePence(addOn.additional_price_pence)},{" "}
-                      {formatDurationMinutes(
-                        addOn.additional_duration_minutes,
-                      )}
-                      )
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
-            </div>
-            <div>
-              <p className="font-semibold">
-                {formatDateLabel(startAt)} · {formatTimeLabel(startAt)} -{" "}
-                {formatTimeLabel(endAt)}
-              </p>
-              <p className="text-black/60">
-                Total duration: {formatDurationMinutes(totalDurationMinutes)}
-              </p>
-            </div>
-            <div className="border-t pt-3">
-              <p className="flex justify-between">
-                <span>Total price</span>
-                <span className="font-semibold">
-                  {formatPricePence(totalPricePence)}
-                </span>
-              </p>
-              <p className="flex justify-between">
-                <span>Due now</span>
-                <span className="font-semibold">
-                  {formatPricePence(paymentSummary.amountDueNow)}
-                </span>
-              </p>
-              <p className="flex justify-between">
-                <span>Due at appointment</span>
-                <span className="font-semibold">
-                  {formatPricePence(paymentSummary.amountDueAtAppointment)}
-                </span>
-              </p>
-            </div>
-            <div className="border-t pt-3 text-black/60">
-              <p>
-                Cancellation window:{" "}
-                {bookingSettings.cancellation_window_hours ?? 24} hours.
-              </p>
-              <p>{paymentSummary.cancellationOutcome}</p>
-              {bookingSettings.written_policy ? (
-                <p className="mt-2 whitespace-pre-wrap">
-                  {bookingSettings.written_policy}
-                </p>
-              ) : null}
-            </div>
-          </div>
-        </section>
-
-        <form
-          action={createBookingHoldFromDetails}
-          id="booking_details"
-          className="mt-8 flex flex-col gap-4"
+    <FormTemplate
+      action={createBookingHoldFromDetails}
+      id="booking_details"
+      nav={
+        <StackedTopBar
+          backHref={buildTimePath({
+            username: providerPage.username,
+            treatmentId: treatment.id,
+            addOnIds: selectedAddOns.map((addOn) => addOn.id),
+          })}
+          backLabel="Times"
+          stepLabel="2 / 3"
+        />
+      }
+      notice={
+        bookingSettings.written_policy ? (
+          <InfoNotice>{bookingSettings.written_policy}</InfoNotice>
+        ) : null
+      }
+      commitBar={
+        <CommitBar
+          contextLabel={formatPricePence(paymentSummary.amountDueNow)}
+          contextDetail="Held for five minutes once you continue."
         >
-          <input type="hidden" name="username" value={providerPage.username} />
-          <input type="hidden" name="treatment_id" value={treatment.id} />
-          <input type="hidden" name="start_at" value={startAt.toISOString()} />
-          {selectedAddOns.map((addOn) => (
-            <input key={addOn.id} type="hidden" name="add_on" value={addOn.id} />
-          ))}
-          <span className="field-set">
-            <label htmlFor="full_name" className="label">
-              Full name
-            </label>
-            <input
-              type="text"
-              id="full_name"
-              name="full_name"
-              required
-              defaultValue={profileResult.data?.full_name ?? ""}
-              className="field"
-            />
-          </span>
-          <span className="field-set">
-            <label htmlFor="phone" className="label">
-              Phone number
-            </label>
-            <input
-              type="tel"
-              id="phone"
-              name="phone"
-              required
-              defaultValue={profileResult.data?.phone_e164 ?? ""}
-              className="field"
-            />
-          </span>
-          <div className="mt-8 flex flex-col items-end gap-4">
-            <SubmitButton />
-          </div>
-        </form>
-        <PolicyNotice />
-      </div>
-    </main>
+          <SubmitButton block={false} pendingLabel="Holding your time" className="px-6">
+            Continue
+          </SubmitButton>
+        </CommitBar>
+      }
+    >
+      <header className="flex flex-col gap-1">
+        <h1 className="text-display text-pretty text-ink">Review &amp; pay</h1>
+        <p className="text-meta text-black/50">
+          {providerPage.display_name} · {formatDateLabel(startAt)} ·{" "}
+          {formatTimeLabel(startAt)} – {formatTimeLabel(endAt)}
+        </p>
+      </header>
+
+      {/* Both are required before the hold is created (docs/product.md). The
+          server action validates and normalises them; these are the same two
+          fields under different clothes. */}
+      <input type="hidden" name="username" value={providerPage.username} />
+      <input type="hidden" name="treatment_id" value={treatment.id} />
+      <input type="hidden" name="start_at" value={startAt.toISOString()} />
+      {selectedAddOns.map((addOn) => (
+        <input key={addOn.id} type="hidden" name="add_on" value={addOn.id} />
+      ))}
+
+      <TextInput
+        name="full_name"
+        label="Full name"
+        required
+        autoComplete="name"
+        defaultValue={profileResult.data?.full_name ?? ""}
+      />
+      <TextInput
+        id="phone"
+        name="phone"
+        label="UK mobile"
+        type="tel"
+        required
+        autoComplete="tel"
+        defaultValue={profileResult.data?.phone_e164 ?? ""}
+        helper={`Shared with ${providerPage.display_name} for this appointment only.`}
+      />
+
+      <SummaryCard className="mt-2">
+        <SummaryLine
+          label={treatment.name}
+          value={formatPricePence(treatment.price_pence)}
+        />
+        {selectedAddOns.map((addOn) => (
+          <SummaryLine
+            key={addOn.id}
+            label={`+ ${addOn.name}`}
+            value={formatPricePence(addOn.additional_price_pence)}
+          />
+        ))}
+        <SummaryLine
+          label={formatDurationMinutes(totalDurationMinutes)}
+          value={formatPricePence(totalPricePence)}
+        />
+        <SummaryLine
+          label={
+            paymentSummary.amountDueAtAppointment > 0
+              ? "Pay today (deposit)"
+              : "Pay today"
+          }
+          value={formatPricePence(paymentSummary.amountDueNow)}
+          total
+        />
+      </SummaryCard>
+
+      <p className="text-[12.5px]/[1.55] text-black/60">
+        {formatPricePence(paymentSummary.amountDueAtAppointment)} due on the day.
+        Cancellation window {bookingSettings.cancellation_window_hours ?? 24}{" "}
+        hours. {paymentSummary.cancellationOutcome}
+      </p>
+
+      <PolicyNotice />
+    </FormTemplate>
   );
 }
-
-const SubmitButton = () => {
-  return (
-    <PendingButton
-      form="booking_details"
-      pendingLabel="Continuing..."
-      className="w-max rounded-lg bg-plum p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-plum-hover disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
-    >
-      Continue
-    </PendingButton>
-  );
-};
