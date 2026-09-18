@@ -1,4 +1,10 @@
-import Link from "next/link";
+import {
+  DetailSection,
+  DetailTemplate,
+} from "@/components/templates/detail-template";
+import { ButtonLink } from "@/components/ui/button";
+import { SettingRow } from "@/components/ui/setting-row";
+import { StatusDot } from "@/components/ui/status";
 import {
   getProviderPage,
   publishPage,
@@ -7,62 +13,75 @@ import {
 } from "./actions";
 import { ProviderPageForm } from "./_components/provider-page-form";
 import { PublicationActions } from "./_components/publication-actions";
+import { buildPublicationChecklist } from "../_lib/publication-checklist";
 
+// B7: Page is where everything customers see is edited, so the portfolio,
+// location and working hours are reached from here rather than from three
+// separate items in a drawer.
 export default async function DashboardProfilePage() {
   const { providerPage, publication } = await getProviderPage();
+  const checklist = buildPublicationChecklist(publication.missing);
 
   return (
-    <>
-      <main className="container max-w-md p-5">
-        <section className="mt-6 rounded-xl border p-4 text-sm">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-black/50">
-                Page status
-              </p>
-              <h1 className="mt-1 text-2xl font-bold tracking-tighter capitalize">
-                {providerPage.status}
-              </h1>
-            </div>
-            {providerPage.status === "published" && providerPage.username ? (
-              <Link
-                href={`/@${providerPage.username}`}
-                className="text-sm font-semibold text-plum"
-              >
-                View live page
-              </Link>
-            ) : null}
-          </div>
+    <DetailTemplate
+      title="Your page"
+      meta={providerPage.username ? `ceaute.com/@${providerPage.username}` : undefined}
+    >
+      <div className="flex flex-col gap-3">
+        <StatusDot
+          status={providerPage.status}
+          label={
+            providerPage.status === "published"
+              ? "Published"
+              : `Draft · ${checklist.doneCount} / ${checklist.total} ready`
+          }
+        />
+        {providerPage.status === "published" && providerPage.username ? (
+          <ButtonLink
+            href={`/@${providerPage.username}`}
+            variant="tertiary"
+            block={false}
+            className="w-max px-6"
+          >
+            See it as a customer
+          </ButtonLink>
+        ) : (
+          <ButtonLink href="/dashboard" variant="tertiary" block={false} className="w-max px-6">
+            Publishing checklist
+          </ButtonLink>
+        )}
+        <PublicationActions
+          status={providerPage.status}
+          ready={publication.ready}
+          publishPage={publishPage}
+          unpublishPage={unpublishPage}
+        />
+      </div>
 
-          {publication.ready ? (
-            <p className="mt-4 text-black/60">
-              Your page has everything needed for publication.
-            </p>
-          ) : (
-            <div className="mt-4 text-black/60">
-              <p className="font-semibold text-black">
-                Missing publication requirements
-              </p>
-              <ul className="mt-2 list-inside list-disc">
-                {publication.missing.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            </div>
-          )}
+      <DetailSection heading="Identity">
+        <ProviderPageForm
+          providerPage={providerPage}
+          updateProviderPage={updateProviderPage}
+        />
+      </DetailSection>
 
-          <PublicationActions
-            status={providerPage.status}
-            ready={publication.ready}
-            publishPage={publishPage}
-            unpublishPage={unpublishPage}
-          />
-        </section>
-      </main>
-      <ProviderPageForm
-        providerPage={providerPage}
-        updateProviderPage={updateProviderPage}
-      />
-    </>
+      <DetailSection heading="What customers see">
+        <SettingRow
+          title="Portfolio"
+          value="Photos on your page. The first is the hero."
+          href="/dashboard/profile/portfolio"
+        />
+        <SettingRow
+          title="Location"
+          value="Public area on your page, private address after a confirmed booking."
+          href="/dashboard/locations"
+        />
+        <SettingRow
+          title="Working hours"
+          value="One block per day, plus any blocked dates."
+          href="/dashboard/availability"
+        />
+      </DetailSection>
+    </DetailTemplate>
   );
 }

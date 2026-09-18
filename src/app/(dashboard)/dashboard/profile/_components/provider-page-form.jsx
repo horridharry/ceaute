@@ -67,15 +67,11 @@ export function ProviderPageForm({ providerPage, updateProviderPage }) {
   const hasClientError = businessNameError || usernameError || biographyError;
 
   return (
-    <main className="container max-w-md p-5">
-      <div className="mt-6 flex flex-col">
-        <h1 className="text-3xl font-bold tracking-tighter">Page identity</h1>
-
-        <form
-          id="update_details"
-          className="mt-12 flex flex-col gap-4"
-          action={updateProviderPageAction}
-        >
+    <form
+      id="update_details"
+      className="flex flex-col gap-[13px]"
+      action={updateProviderPageAction}
+    >
           <span className="field-set">
             <label className="label" htmlFor="business_name">
               Business name
@@ -203,8 +199,6 @@ export function ProviderPageForm({ providerPage, updateProviderPage }) {
               {pending ? "Saving..." : "Save"}
             </button>
           </div>
-        </form>
-      </div>
-    </main>
+    </form>
   );
 }
