@@ -77,3 +77,38 @@ export const cancelProviderBooking = async (formData) => {
     revalidatePaths: ["/dashboard/bookings", `/dashboard/bookings/${bookingId}`],
   });
 };
+
+// A2's loader. Not a new query: it reuses the summaries above and splits the
+// upcoming group into today and everything after, in Europe/London so "today"
+// is her day rather than the server's. It lives here, beside the query,
+// because the current time is read per request and a component may not.
+const LONDON = "Europe/London";
+
+function londonDateKey(value) {
+  const date = new Date(value);
+
+  return Number.isNaN(date.getTime())
+    ? ""
+    : new Intl.DateTimeFormat("en-CA", { timeZone: LONDON }).format(date);
+}
+
+export const getProviderDiary = async () => {
+  const bookings = await getAllBookings();
+  const upcoming = bookings.upcoming ?? [];
+  const todayKey = londonDateKey(Date.now());
+
+  return {
+    todayLabel: new Intl.DateTimeFormat("en-GB", {
+      timeZone: LONDON,
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+    }).format(new Date()),
+    today: upcoming.filter(
+      (booking) => londonDateKey(booking.start_at) === todayKey,
+    ),
+    nextUp: upcoming.filter(
+      (booking) => londonDateKey(booking.start_at) !== todayKey,
+    ),
+  };
+};
