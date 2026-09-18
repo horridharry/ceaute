@@ -213,8 +213,11 @@ What was deliberately **not** taken:
 - **Fresha's and Booksy's liability-exclusion sections.** Ceaute excludes
   nothing; CRA 2015 s.57 forbids excluding the s.49 duty anyway, and an
   unnegotiated exclusion is a liability, not an asset.
-- **Platform and service fees.** `calculateCeauteFeePence` returns `0`. The
-  Terms say Ceaute adds no fee, because it does not.
+- **A customer-facing booking or service fee.** The customer pays the
+  advertised price and nothing on top, which is what the Terms say. Ceaute's
+  2% platform fee is a provider-side deduction introduced later (decision 004)
+  and is disclosed in the provider section of the Terms, not as a charge to
+  the customer.
 - **Vouchers, gift cards, promo codes, subscriptions, saved cards, no-show
   fees, rescheduling, provider replies to reviews.** None exist in the MVP.
 - Neither competitor gives address disclosure its own section. Ceaute does,

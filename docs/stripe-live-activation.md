@@ -12,14 +12,13 @@ deliberately. Ceaute refuses to make a Stripe call when `STRIPE_MODE` and
 
 ## Decide these first — they cost money if skipped
 
-- [ ] **Set the platform fee, or accept the subsidy in writing.**
-      `calculateCeauteFeePence()` returns `0`, so the entire charge is
-      transferred to the provider while Stripe's processing fee (~1.5% + 20p on
-      a UK card) is debited from the **platform** balance, which receives
-      nothing. In Test that is invisible; in Live the platform balance goes
-      negative on every booking. A non-zero fee needs no new code — the path
-      through `application_fee_amount` and `refund_application_fee` already
-      exists. If the subsidy is intentional, record it in `docs/decisions/`.
+- [x] **Set the platform fee.** Done. The provider bears Stripe's processing
+      cost and a 2% Ceaute platform fee, both carried by
+      `application_fee_amount`. See
+      [decision 004](decisions/004-providers-bear-stripe-processing-fees.md).
+      One residual exposure remains, recorded there: the processing component
+      is an estimate at Stripe's published UK rate, so a commercial or non-UK
+      card costs more than was retained and Ceaute absorbs the difference.
 - [ ] **Decide who absorbs refunds and chargebacks.** Destination charges plus
       `losses_collector: "application"` mean Stripe debits Ceaute, not the
       provider. Refunds always set `reverse_transfer: true`, which pulls money

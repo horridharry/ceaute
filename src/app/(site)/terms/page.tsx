@@ -247,6 +247,40 @@ export default function TermsPage() {
           customer&rsquo;s appointment, and you become responsible for that
           information under data protection law once you hold it.
         </p>
+        <p>
+          <strong>What you are paid.</strong> The customer pays the price you
+          advertise. Two separate amounts are deducted from each payment Ceaute
+          processes for you, and Stripe transfers the rest to your account:
+        </p>
+        <ul>
+          <li>
+            <strong>Card processing</strong> — Stripe&rsquo;s own charge for
+            taking the payment, not a Ceaute charge and not money Ceaute keeps.
+            Stripe&rsquo;s published rate for a UK card is currently 1.5% + 20p;
+            cards issued outside the UK or to a business cost more, and
+            Stripe sets these rates, not Ceaute.
+          </li>
+          <li>
+            <strong>Ceaute&rsquo;s platform fee</strong> — 2% of the amount
+            processed. This is Ceaute&rsquo;s only charge. There is no
+            subscription, no listing fee and no monthly cost.
+          </li>
+        </ul>
+        <p>
+          Both apply only to money taken through Ceaute. Where you take a
+          deposit, the balance the customer pays you at the appointment is
+          yours in full: it never passes through Ceaute and nothing is deducted
+          from it. Your payments page shows the current split with a worked
+          example.
+        </p>
+        <p>
+          Because the exact card processing cost depends on the card the
+          customer uses and is only known after the payment completes, the
+          amount deducted for it is Stripe&rsquo;s published rate rather than a
+          figure calculated per card. Ceaute does not adjust the transfer
+          afterwards, so on an unusually expensive card Ceaute absorbs the
+          difference rather than passing it on to you.
+        </p>
       </section>
 
       <section>

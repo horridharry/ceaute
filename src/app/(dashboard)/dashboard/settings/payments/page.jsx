@@ -5,6 +5,64 @@ import {
   startOrResumeOnboarding,
 } from "./actions";
 import { PaymentActions } from "./_components/payment-actions";
+import { calculateBookingFeeSplit } from "@/lib/payments/booking-payments";
+
+const money = new Intl.NumberFormat("en-GB", {
+  style: "currency",
+  currency: "GBP",
+});
+
+// Worked on a round £50 so the two deductions are legible side by side. The
+// figures come from the same calculation the checkout uses, so this cannot
+// drift away from what a provider is actually paid.
+function ProviderPricing() {
+  const example = calculateBookingFeeSplit({ amountChargedPence: 5000 });
+
+  return (
+    <section className="mt-8 rounded-xl border p-4 text-sm">
+      <h2 className="text-lg font-semibold">What you receive</h2>
+      <p className="mt-2 text-black/60">
+        Customers pay the price you advertise. Two amounts come out of every
+        payment Ceaute processes for you, and the rest is transferred to your
+        Stripe account.
+      </p>
+      <dl className="mt-4 grid gap-2">
+        <div className="flex justify-between gap-4">
+          <dt>Customer pays</dt>
+          <dd className="font-semibold">
+            {money.format(example.amountChargedPence / 100)}
+          </dd>
+        </div>
+        <div className="flex justify-between gap-4 text-black/60">
+          <dt>Card processing, charged by Stripe</dt>
+          <dd>&minus; {money.format(example.estimatedStripeFeePence / 100)}</dd>
+        </div>
+        <div className="flex justify-between gap-4 text-black/60">
+          <dt>Ceaute platform fee, 2%</dt>
+          <dd>&minus; {money.format(example.platformFeePence / 100)}</dd>
+        </div>
+        <div className="flex justify-between gap-4 border-t pt-2">
+          <dt>You receive</dt>
+          <dd className="font-semibold">
+            {money.format(example.providerNetPence / 100)}
+          </dd>
+        </div>
+      </dl>
+      <p className="mt-4 text-black/60">
+        The Ceaute platform fee is 2% of the amount processed. Card processing
+        is Stripe&rsquo;s own charge, not Ceaute&rsquo;s: it is shown above at
+        Stripe&rsquo;s published UK rate of 1.5% + 20p, and cards issued outside
+        the UK or to a business cost more.
+      </p>
+      <p className="mt-2 text-black/60">
+        Both apply only to money taken through Ceaute. Where you take a deposit,
+        the balance your customer pays you in person is yours in full &mdash; it
+        never passes through Ceaute and is never charged for. There is no
+        subscription and no monthly fee.
+      </p>
+    </section>
+  );
+}
 
 export default async function DashboardPaymentSettingsPage() {
   const { configured, paymentAccount, state } = await getPaymentSettings();
@@ -67,6 +125,8 @@ export default async function DashboardPaymentSettingsPage() {
             </div>
           ) : null}
         </section>
+
+        <ProviderPricing />
 
         <PaymentActions
           configured={configured}
