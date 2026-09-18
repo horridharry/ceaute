@@ -19,18 +19,22 @@ deliberately. Ceaute refuses to make a Stripe call when `STRIPE_MODE` and
       One residual exposure remains, recorded there: the processing component
       is an estimate at Stripe's published UK rate, so a commercial or non-UK
       card costs more than was retained and Ceaute absorbs the difference.
-- [ ] **Decide who absorbs refunds and chargebacks.** Destination charges plus
-      `losses_collector: "application"` mean Stripe debits Ceaute, not the
-      provider. Refunds always set `reverse_transfer: true`, which pulls money
-      back from the provider's connected account — and once a provider has been
-      paid out, that balance is often insufficient, leaving them negative and
-      the shortfall with Ceaute. There is no provider agreement giving Ceaute a
-      right of set-off. This is a commercial decision, not a code change.
+- [ ] **Decide who absorbs refunds and chargebacks.** Now modelled on all four
+      scenarios in
+      [the refund economics report](reports/2026-09-18-refund-economics-and-provider-liability.md),
+      which sets out the three coherent answers and the draft agreement
+      wording. Today Ceaute absorbs 35p on every fully refunded £10 deposit and
+      goes negative on any partial refund above ~37%. A provider agreement can
+      allocate the liability but cannot create a way to collect it: there is no
+      set-off against future payouts.
 - [ ] **Subscribe to and handle dispute events.** Neither endpoint listens for
-      `charge.dispute.created`. In Live, Ceaute carries the chargeback
-      liability and would learn nothing. Handling this properly is a product
-      change (a record, an operator notification) and was deliberately left out
-      of the readiness work.
+      `charge.dispute.created`, nothing reverses the transfer and nobody is
+      notified. Modelled: a disputed £10.00 deposit costs Ceaute **£24.80** —
+      the deposit, Stripe's £15.00 dispute fee and the original processing fee
+      — while the provider keeps £9.45. Even a perfect manual clawback leaves
+      £15.35 with Ceaute, because Stripe's Connect terms forbid passing a
+      dispute fee to a connected account. This is the most urgent item on the
+      list before real payments start.
 - [ ] **Decide what happens to existing Test-mode data.** Stored `acct_*` and
       `pi_*` identifiers are UNIQUE with no mode column. After the switch every
       one of them refers to a non-existent Live object: provider accounts will
