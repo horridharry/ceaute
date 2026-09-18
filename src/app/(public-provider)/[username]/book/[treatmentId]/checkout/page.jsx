@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
 import { PendingButton } from "@/components/pending-button";
 import { calculateBookingPaymentAmounts } from "@/lib/payments/booking-payments";
@@ -84,6 +85,24 @@ function buildTimePath({ username, treatmentId, addOnIds }) {
   return `/@${username}/book/${treatmentId}/time${query ? `?${query}` : ""}`;
 }
 
+// Mirrors prepare_booking_cancellation: a late customer cancellation retains
+// least(commitment amount, amount actually paid online) and refunds the rest.
+// Both checkout steps state this, because the Terms promise the retained
+// amount is shown before the customer pays.
+function describeLateCancellationOutcome({
+  commitmentAmountPence,
+  amountDueNowPence,
+}) {
+  const retainedPence = Math.min(
+    Math.max(0, Number(commitmentAmountPence ?? 0)),
+    amountDueNowPence,
+  );
+
+  return retainedPence < amountDueNowPence
+    ? `${formatPricePence(retainedPence)} is retained after late cancellation and the rest is refunded.`
+    : `${formatPricePence(retainedPence)} is retained after late cancellation.`;
+}
+
 function calculatePaymentSummary({ bookingSettings, totalPricePence }) {
   if (bookingSettings.payment_mode === "fixed_deposit") {
     const amountDueNow = Math.min(
@@ -94,20 +113,41 @@ function calculatePaymentSummary({ bookingSettings, totalPricePence }) {
     return {
       amountDueNow,
       amountDueAtAppointment: totalPricePence - amountDueNow,
-      cancellationOutcome: `${formatPricePence(amountDueNow)} is retained after late cancellation.`,
+      cancellationOutcome: describeLateCancellationOutcome({
+        commitmentAmountPence: bookingSettings.commitment_amount_pence,
+        amountDueNowPence: amountDueNow,
+      }),
     };
   }
-
-  const retainedAmount = Math.min(
-    Number(bookingSettings.commitment_amount_pence ?? totalPricePence),
-    totalPricePence,
-  );
 
   return {
     amountDueNow: totalPricePence,
     amountDueAtAppointment: 0,
-    cancellationOutcome: `${formatPricePence(retainedAmount)} is retained after late cancellation and the rest is refunded.`,
+    cancellationOutcome: describeLateCancellationOutcome({
+      commitmentAmountPence:
+        bookingSettings.commitment_amount_pence ?? totalPricePence,
+      amountDueNowPence: totalPricePence,
+    }),
   };
+}
+
+// There is no acceptance checkbox: continuing to payment is the acceptance
+// interaction (see docs/product.md), so the policies must be reachable from
+// both checkout steps before the customer pays.
+function PolicyNotice() {
+  return (
+    <p className="mt-4 text-xs text-black/60">
+      By continuing you agree to Ceaute&rsquo;s{" "}
+      <Link href="/terms" className="font-semibold underline">
+        Terms
+      </Link>{" "}
+      and{" "}
+      <Link href="/privacy" className="font-semibold underline">
+        Privacy notice
+      </Link>
+      .
+    </p>
+  );
 }
 
 function getBookingDisplayState(booking, now = Date.now()) {
@@ -345,6 +385,13 @@ export default async function BookingCheckoutPage({ params, searchParams }) {
                   Cancellation window:{" "}
                   {serviceSnapshot.cancellation_window_hours ?? 24} hours.
                 </p>
+                <p>
+                  {describeLateCancellationOutcome({
+                    commitmentAmountPence:
+                      serviceSnapshot.commitment_amount_pence,
+                    amountDueNowPence: paymentAmounts.amountChargedPence,
+                  })}
+                </p>
                 {serviceSnapshot.written_policy ? (
                   <p className="mt-2 whitespace-pre-wrap">
                     {serviceSnapshot.written_policy}
@@ -383,7 +430,7 @@ export default async function BookingCheckoutPage({ params, searchParams }) {
           </section>
 
           {displayState.canPay ? (
-            <div className="mt-8 ml-auto flex flex-col items-end gap-3">
+            <div className="mt-8 flex flex-col items-end gap-3">
               <form action={startStripeCheckoutForBooking}>
                 <input type="hidden" name="booking_id" value={holdSummary.id} />
                 <input type="hidden" name="return_path" value={returnPath} />
@@ -394,6 +441,7 @@ export default async function BookingCheckoutPage({ params, searchParams }) {
                   Pay with Stripe
                 </PendingButton>
               </form>
+              <PolicyNotice />
             </div>
           ) : null}
         </div>
@@ -578,10 +626,11 @@ export default async function BookingCheckoutPage({ params, searchParams }) {
               className="field"
             />
           </span>
-          <div className="ml-auto mt-8 flex items-center gap-4">
+          <div className="mt-8 flex flex-col items-end gap-4">
             <SubmitButton />
           </div>
         </form>
+        <PolicyNotice />
       </div>
     </main>
   );

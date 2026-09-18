@@ -121,10 +121,11 @@ booking. Late or duplicate successful payments are routed into a recorded refund
 operation. Webhook events and payment attempts are designed for replay because
 Stripe delivery and network outcomes are not exactly-once.
 
-The checkout summary shows the cancellation outcome and any written policy.
-There is no separate policy-version record or acceptance checkbox: continuing
-to payment is the current acceptance interaction, and the displayed terms are
-preserved in the booking snapshot.
+Both checkout steps show the cancellation window, the amount the provider
+retains after a late cancellation, and any written policy, and both link to
+`/terms` and `/privacy`. There is no separate policy-version record or
+acceptance checkbox: continuing to payment is the current acceptance
+interaction, and the displayed terms are preserved in the booking snapshot.
 
 The booking snapshots the customer contact details and the selected provider,
 treatment, add-ons, price, duration, location, address, booking terms, and
