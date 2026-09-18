@@ -12,6 +12,26 @@
   .field-set {
     @apply flex flex-col gap-2 flex-1;
   }
+
+  .legal-prose section h2 {
+    @apply text-lg font-semibold tracking-tight text-black;
+  }
+
+  .legal-prose section p {
+    @apply mt-2 text-sm leading-relaxed text-black/70;
+  }
+
+  .legal-prose section ul {
+    @apply mt-2 flex flex-col gap-1 list-disc pl-5 text-sm leading-relaxed text-black/70;
+  }
+
+  .legal-prose section strong {
+    @apply text-black;
+  }
+
+  .legal-prose section + section {
+    @apply border-t border-black/10 pt-8;
+  }
 }
 
 /* Inline navigation hint rendered by <LinkPendingHint>. It reserves its space
