@@ -17,12 +17,17 @@ export default function PrivacyPage() {
         <p>
           Ceaute operates the booking platform at ceaute.com and decides how
           the information described here is used, which makes Ceaute the data
-          controller for it. The legal entity behind Ceaute has not yet been
-          established, so this notice cannot yet name a registered company,
-          company number or registered address, and Ceaute does not yet
-          publish a contact address for privacy requests. Neither is invented
-          here. While Ceaute is in private alpha, use the email address the
-          Ceaute team gave you when you were invited.
+          controller for it. Ceaute is operated by Harrison as a sole trader
+          under the trading name Ceaute, so the data controller is an
+          individual rather than a company — there is no company registration
+          number and no registered office.
+        </p>
+        <p>
+          For anything in this notice, including a request about your own
+          information, email{" "}
+          <a href="mailto:ndu.harry02@gmail.com">ndu.harry02@gmail.com</a>. A
+          postal address for Ceaute is not yet arranged, so this notice does
+          not publish one.
         </p>
         <p>
           Ceaute has not appointed a Data Protection Officer; it is not
@@ -320,16 +325,17 @@ export default function PrivacyPage() {
         </ul>
         <p>
           You do not have to pay to exercise any of these, and we must respond
-          within one month. There is no published address to send a request to
-          yet; while Ceaute is in private alpha, use the email address the
-          Ceaute team gave you when you were invited.
+          within one month. Send a request to{" "}
+          <a href="mailto:ndu.harry02@gmail.com">ndu.harry02@gmail.com</a>.
         </p>
       </section>
 
       <section>
         <h2>How to complain</h2>
         <p>
-          Please tell us first so we can put it right. You can also complain to
+          Please tell us first, at{" "}
+          <a href="mailto:ndu.harry02@gmail.com">ndu.harry02@gmail.com</a>, so
+          we can put it right. You can also complain to
           the Information Commissioner&rsquo;s Office, the UK&rsquo;s data
           protection regulator, at ico.org.uk/make-a-complaint or on 0303 123
           1113, or by writing to the Information Commissioner&rsquo;s Office,

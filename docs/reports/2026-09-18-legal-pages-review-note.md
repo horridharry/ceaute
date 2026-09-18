@@ -7,11 +7,121 @@ that facts Ceaute has not established stay here, in a dated report, instead of
 appearing on the public site as confident legal text. Read it before changing
 either page.
 
-**Status: neither page is final.** Two facts required by law are missing (see
-[Unresolved owner decisions](#unresolved-owner-decisions)). Both pages
-therefore keep the `draft` notice on `LegalPage`, and neither should be
-described to a user, an investor or a provider as an approved policy until
-that notice can be removed honestly.
+**Status: neither page is final.** The operator and the contact email were
+settled on 18 September 2026 (see below) and both pages now state them. What
+still blocks finality is the **address disclosure**: a business trading online
+under a name that is not the owner's surname must publish a geographic address
+and give an address for service, and Ceaute has neither. Both pages therefore
+keep the `draft` notice on `LegalPage`, retargeted at that gap, and neither
+should be described to a user, an investor or a provider as an approved policy
+until it can be removed honestly.
+
+## Confirmed operator decisions (18 September 2026)
+
+| Fact | Confirmed value |
+| --- | --- |
+| Trading name | Ceaute |
+| Legal structure | **Sole trader** — not a limited company, not an LLP |
+| Operator | Harrison, personally, trading as Ceaute |
+| Contact email | `ndu.harry02@gmail.com` |
+| Business contact address | **Not yet arranged** |
+| Full legal name of the operator | **Not established** — "Harrison" is all that was confirmed, and a surname must not be inferred from the git author or the email address |
+| Governing law | England and Wales |
+
+Consequences already applied to the pages:
+
+- `/terms` and `/privacy` identify the operator as a sole trader trading under
+  a business name, and state explicitly that there is **no** company
+  registration number and **no** registered office. The 2015 Trading
+  Disclosures Regulations apply to companies and LLPs and therefore do **not**
+  apply to Ceaute; the earlier draft's references to them as an open item are
+  superseded.
+- `ndu.harry02@gmail.com` is now the single published route for support,
+  complaints, and data-protection requests, on both pages.
+- No address is published anywhere, and the owner's home address must not be
+  used. See the address analysis below.
+
+Two smaller points worth noting rather than acting on immediately. First,
+`ndu.harry02@gmail.com` is a personal mailbox on a third-party domain; it
+satisfies the "rapid, direct and effective" email requirement, but a
+`ceaute.com` address would be better once the domain's inbound mail is set up,
+and it would keep the operator's personal address off the public site.
+Second, a sole trader registers with the ICO personally, so the data protection
+fee is no longer blocked on incorporation — see item 3 below.
+
+## Address disclosures still required of a UK sole trader
+
+These are the specific obligations, and a **geographic address and an address
+for service are not the same thing**. Getting one does not discharge the other.
+
+### 1. Geographic address — required on the website
+
+**Electronic Commerce (EC Directive) Regulations 2002, reg 6(1)(b)**: the
+"geographic address at which the service provider is established" must be
+"easily, directly and permanently accessible" to users of the site. This
+applies to a sole trader exactly as it applies to a company. It must be a real
+physical location associated with the business; a PO box on its own does not
+satisfy it. Reg 6(1)(c) separately requires an email address enabling rapid,
+direct and effective communication — `ndu.harry02@gmail.com` satisfies that
+limb now.
+
+**Consumer Contracts (Information, Cancellation and Additional Charges)
+Regulations 2013, Schedule 2(c)**: the same geographic address must be given
+to the consumer **before they are bound** by the booking contract, together
+with a telephone number and email address where available. Schedule 2(e) adds
+a separate complaints address only where it differs from the Schedule 2(c)
+address. Because Ceaute is an intermediary, Schedule 2(d) also bites: the
+identity and address of the trader on whose behalf Ceaute acts — that is, the
+provider — is part of the same pre-contract disclosure, which is the separate
+gap already recorded under "Other compliance gaps found, not fixed here".
+
+### 2. Address for service — required because "Ceaute" is not the owner's surname
+
+**Companies Act 2006, Part 41 (ss.1200–1206)** governs business names used by
+individuals and partnerships. Because "Ceaute" is not Harrison's surname, s.1202
+applies: business letters, written orders for goods or services, invoices and
+receipts, and written demands for payment must state the individual's **name**
+and "an address in the United Kingdom at which service of any document relating
+to the business will be effective". Section 1204 requires the same particulars
+to be displayed at any premises where the business is carried on and to which
+customers or suppliers have access, and to be supplied in writing to anyone
+with whom the business deals, on request.
+
+Two things follow:
+
+- **s.1202 requires the individual's name**, which is why the operator's full
+  legal name remains an open item and why the pages say "Harrison" and nothing
+  more.
+- **An address for service may be a third-party service address** — an
+  accountant's office or a commercial business-address service — and does not
+  have to be where the business operates. This is the cheap half of the
+  problem.
+
+### 3. Why a virtual address does not fully solve it
+
+A business-address service gives a compliant **address for service** under
+s.1202 and, in practice, a usable address on invoices. It is a weaker answer to
+reg 6(1)(b), which asks for the address at which the provider is
+**established**. Many UK sole traders use a virtual address for both, and
+enforcement of reg 6 against a small trader is rare, but the two requirements
+are legally distinct and the gap should be a conscious choice rather than an
+assumption.
+
+**Practical route:** take a UK business-address service with mail forwarding,
+use it as the s.1202 address for service and as the Schedule 2(c) / reg 6(1)(b)
+address on the site, and record the decision here. That is one purchase and it
+closes the last thing keeping these pages in draft. Do **not** publish the
+owner's home address to close it.
+
+### Where the address must appear once it exists
+
+- `/terms` and `/privacy`, replacing the "not yet arranged" sentences.
+- A site footer or a short legal-information page, so it is "permanently
+  accessible" per reg 6 — a link buried only on the sign-in screen is not.
+- Before the customer is bound at checkout, per CCR Schedule 2 read with
+  reg 13.
+- On the booking confirmation email, which is the durable medium under reg 16.
+- On any invoice, receipt or written demand for payment, per s.1202.
 
 ## What the pages are based on
 
@@ -35,7 +145,8 @@ implementation won and the text describes what the code actually does.
 | [Consumer Rights Act 2015, Part 1 Chapter 4](https://www.legislation.gov.uk/ukpga/2015/15/part/1/chapter/4) | Services: reasonable care and skill, s.50 binding statements, s.57 no exclusion |
 | [CMA207, unfair commercial practices (DMCCA 2024)](https://www.gov.uk/government/publications/unfair-commercial-practices-cma207/unfair-commercial-practices) | Drip pricing, fake reviews, platform duties |
 | [E-Commerce Regulations 2002 reg 6](https://www.legislation.gov.uk/uksi/2002/2013/regulation/6) | Required website disclosures |
-| [Company, LLP and Business (Names and Trading Disclosures) Regulations 2015, Part 6](https://www.legislation.gov.uk/uksi/2015/17/part/6/made) | Company name, number, registered office on a website |
+| [Companies Act 2006, Part 41 (ss.1200-1206)](https://www.legislation.gov.uk/ukpga/2006/46/part/41) | Business-name disclosures for a sole trader: name and UK address for service (s.1202), display and disclosure on request (s.1204) |
+| [Company, LLP and Business (Names and Trading Disclosures) Regulations 2015, Part 6](https://www.legislation.gov.uk/uksi/2015/17/part/6/made) | Checked and found **not applicable** — company and LLP website disclosures only, and Ceaute is a sole trader |
 | [Stripe UK privacy policy](https://stripe.com/gb/privacy), [Stripe DPA](https://stripe.com/legal/dpa), [Connect charges](https://docs.stripe.com/connect/charges), [Stripe security](https://docs.stripe.com/security) | Accurate description of Stripe's role and the money flow |
 
 ### Competitor references
@@ -247,31 +358,29 @@ a legal-text problem, so none was changed in this branch.
 
 ## Unresolved owner decisions
 
-The first two block calling either page final.
+The first two block calling either page final. Items 1 and 2 of the previous
+revision — the operating entity and a contact address — are **resolved**; see
+[Confirmed operator decisions](#confirmed-operator-decisions-18-september-2026).
 
-1. **The legal entity operating Ceaute.** Not established as of 18 September
-   2026 (owner confirmed). Blocks: the trader identity required by CCR 2013
-   Schedule 2(b), the name, geographic address, registration number and VAT
-   number required by E-Commerce Regulations 2002 reg 6, the registered name,
-   place of registration, company number and registered office required on a
-   website by the 2015 Trading Disclosures Regulations if it is a company, and
-   the controller identity required by UK GDPR Article 13(1)(a). Nothing may
-   be invented in its place. Once settled, add it to both pages and to a
-   footer.
-2. **A monitored contact address.** None exists (owner confirmed).
-   `bookings@ceaute.com` is the outbound Resend sender and the Supabase admin
-   address; there is no evidence it receives inbound mail. Blocks: the contact
-   details required by Article 13(1)(a), a route for data-subject rights
-   requests, the complaints-handling policy required by Schedule 2(k), and the
-   rapid-and-direct email contact required by reg 6. Both pages currently
-   direct alpha users to the address the Ceaute team gave them at invitation,
-   which is true but is not a published contact route.
+1. **A UK business address.** Not arranged (owner confirmed). This is now the
+   only thing keeping both pages in draft. A geographic address is required on
+   the site by E-Commerce Regulations 2002 reg 6(1)(b) and before the consumer
+   is bound by CCR 2013 Schedule 2(c); an address for service is separately
+   required by Companies Act 2006 s.1202 because "Ceaute" is not the owner's
+   surname. The two are distinct — see the address analysis above. Neither may
+   be invented, and the owner's home address must not be published.
+2. **The operator's full legal name.** Only "Harrison" was confirmed, and it
+   must not be inferred from the git author name or the email address. Needed
+   for the s.1202 name disclosure and for the trader identity under CCR 2013
+   Schedule 2(b). Both pages currently say "Harrison" and nothing more, which
+   is honest but incomplete.
 3. **ICO data protection fee.** Ceaute must pay the annual fee under the Data
    Protection (Charges and Information) Regulations 2018 — running a booking
-   marketplace matches no exemption. Tier 1 applies at this size (£52, £47 by
-   direct debit). Cannot be registered before the operating entity exists. The
-   ICO flags several fee pages as under review following the Data (Use and
-   Access) Act 2025, so re-check the amount at the time.
+   marketplace matches no exemption, and sole traders are within scope. Tier 1
+   applies at this size (£52, £47 by direct debit). A sole trader registers
+   personally, so this is **no longer blocked** on incorporation and can be
+   done now. The ICO flags several fee pages as under review following the
+   Data (Use and Access) Act 2025, so re-check the amount at the time.
 4. **Who bears refunds and chargebacks between Ceaute and the provider.** With
    destination charges, Stripe debits the platform's balance, not the
    provider's. Ceaute has no provider agreement giving it a right to reverse a

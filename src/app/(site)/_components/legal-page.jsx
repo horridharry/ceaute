@@ -1,11 +1,13 @@
 import Link from "next/link";
 
 // Shared shell for /terms and /privacy. Both pass `draft`, which renders a
-// visible notice naming the two facts Ceaute has not yet established: the
-// legal entity operating the service and a monitored contact address. Until
-// the owner settles those, the pages must not read as approved final policies
-// — and neither the entity nor the address may be invented to remove the
-// notice. See docs/reports/2026-09-18-legal-pages-review-note.md.
+// visible notice naming what Ceaute has still not published: the operator's
+// full legal name and a business address. The operator and contact email are
+// now settled (sole trader, 18 September 2026); the address disclosures
+// required of a sole trader trading under a business name are not. Until they
+// are, the pages must not read as approved final policies — and no address
+// may be invented to remove the notice. See
+// docs/reports/2026-09-18-legal-pages-review-note.md.
 export function LegalPage({ title, summary, updated, draft = false, children }) {
   return (
     <main className="container max-w-2xl mx-auto p-5 pb-16 bg-white">
@@ -17,15 +19,22 @@ export function LegalPage({ title, summary, updated, draft = false, children }) 
         {draft && (
           <div className="mt-6 rounded-xl border border-dashed border-pink-300 bg-pink-50 p-4 text-sm">
             <p className="font-semibold text-pink-600">
-              Not yet final — private alpha
+              Not yet final — business address outstanding
             </p>
             <p className="mt-1 text-black/70">
               This page describes how Ceaute actually works today, but it is
-              not a finished policy. Two things are still missing: the legal
-              entity that operates Ceaute has not been established, and there
-              is no published contact address for support, complaints or data
-              protection requests. During the private alpha, use the email
-              address the Ceaute team gave you when you were invited.
+              not a finished policy. Ceaute is run by a sole trader who has
+              not yet published a business address or a full legal name, both
+              of which the law requires of a business trading online under a
+              trading name. Everything else here is accurate, and you can
+              reach Ceaute at{" "}
+              <a
+                href="mailto:ndu.harry02@gmail.com"
+                className="font-semibold underline"
+              >
+                ndu.harry02@gmail.com
+              </a>
+              .
             </p>
           </div>
         )}

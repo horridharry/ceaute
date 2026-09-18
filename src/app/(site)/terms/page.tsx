@@ -15,13 +15,17 @@ export default function TermsPage() {
       <section>
         <h2>Who operates Ceaute</h2>
         <p>
-          Ceaute is a booking platform at ceaute.com. The legal entity that
-          operates it has not yet been established, so these terms cannot name
-          a trading company, company number or registered address. Until they
-          can, treat Ceaute as a private alpha run by its founder rather than
-          as a registered business, and use the email address the Ceaute team
-          gave you when you were invited for anything you would normally send
-          to a company address.
+          Ceaute is a booking platform at ceaute.com, operated by Harrison as a
+          sole trader under the trading name Ceaute. Ceaute is not a limited
+          company, so it has no company registration number and no registered
+          office. You are contracting with an individual trading under a
+          business name.
+        </p>
+        <p>
+          Contact Ceaute at{" "}
+          <a href="mailto:ndu.harry02@gmail.com">ndu.harry02@gmail.com</a>. A
+          business address is not yet arranged, so these terms do not publish
+          one.
         </p>
       </section>
 
@@ -247,10 +251,9 @@ export default function TermsPage() {
         <h2>Complaints and support</h2>
         <p>
           If something goes wrong with how Ceaute itself worked — a payment, a
-          refund, a booking that did not appear — contact Ceaute and we will
-          look into it. Ceaute is in private alpha and does not yet publish a
-          support address; use the email address the Ceaute team gave you when
-          you were invited.
+          refund, a booking that did not appear — email{" "}
+          <a href="mailto:ndu.harry02@gmail.com">ndu.harry02@gmail.com</a> and
+          we will look into it.
         </p>
         <p>
           A complaint about the treatment itself, or about how a provider
