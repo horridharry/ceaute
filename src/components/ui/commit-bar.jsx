@@ -4,7 +4,19 @@
 //
 // With `contextLabel` the bar becomes a row: what it costs on the left, the
 // commit on the right.
-export function CommitBar({ contextLabel, contextDetail, className = "", children }) {
+//
+// `note` is a full-width line beneath the row, for the sentence that has to be
+// read rather than glanced at — "Card details are taken by Stripe. You'll land
+// back here." It does not go in `contextDetail`, which shares its line with the
+// button and truncates, and which is only drawn when there is a `contextLabel`
+// to sit above.
+export function CommitBar({
+  contextLabel,
+  contextDetail,
+  note,
+  className = "",
+  children,
+}) {
   return (
     <div
       className={`sticky bottom-0 z-30 border-t border-black/8 bg-white px-5 pb-6 pt-3 ${className}`.trim()}
@@ -26,6 +38,10 @@ export function CommitBar({ contextLabel, contextDetail, className = "", childre
       ) : (
         children
       )}
+
+      {note ? (
+        <p className="mt-2 text-[11.5px]/[1.5] text-black/60">{note}</p>
+      ) : null}
     </div>
   );
 }

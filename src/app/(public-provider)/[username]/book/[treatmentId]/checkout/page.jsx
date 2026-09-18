@@ -348,7 +348,7 @@ export default async function BookingCheckoutPage({ params, searchParams }) {
           canPay ? (
             <CommitBar
               contextLabel={formatPricePence(paymentAmounts.amountChargedPence)}
-              contextDetail="Card details are taken by Stripe. You'll land back here."
+              note="Card details are taken by Stripe. You'll land back here."
             >
               <form action={startStripeCheckoutForBooking}>
                 <input type="hidden" name="booking_id" value={holdSummary.id} />
@@ -547,7 +547,7 @@ export default async function BookingCheckoutPage({ params, searchParams }) {
       commitBar={
         <CommitBar
           contextLabel={formatPricePence(paymentSummary.amountDueNow)}
-          contextDetail="Held for five minutes once you continue."
+          note="Your time is held for five minutes once you continue."
         >
           <SubmitButton block={false} pendingLabel="Holding your time" className="px-6">
             Continue
@@ -603,10 +603,12 @@ export default async function BookingCheckoutPage({ params, searchParams }) {
             value={formatPricePence(addOn.additional_price_pence)}
           />
         ))}
-        <SummaryLine
-          label={formatDurationMinutes(totalDurationMinutes)}
-          value={formatPricePence(totalPricePence)}
-        />
+        {selectedAddOns.length ? (
+          <SummaryLine
+            label={`Total · ${formatDurationMinutes(totalDurationMinutes)}`}
+            value={formatPricePence(totalPricePence)}
+          />
+        ) : null}
         <SummaryLine
           label={
             paymentSummary.amountDueAtAppointment > 0

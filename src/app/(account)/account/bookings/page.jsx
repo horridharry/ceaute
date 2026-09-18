@@ -24,12 +24,16 @@ function splitDateLabel(dateLabel) {
   };
 }
 
+// booking-display.js returns "Unavailable" when a booking has no payment
+// attempt yet — a hold that has not been paid for. Appending "due" to that
+// produces "Unavailable due", so the amount is simply left off instead.
 function amountLabel(booking) {
-  if (booking.amount_due_at_appointment_label === "£0.00") {
-    return "Paid in full";
-  }
+  const amount = booking.amount_due_at_appointment_label;
 
-  return `${booking.amount_due_at_appointment_label} due`;
+  if (!amount || amount === "Unavailable") return undefined;
+  if (amount === "£0.00") return "Paid in full";
+
+  return `${amount} due`;
 }
 
 function Bookings({ bookings }) {

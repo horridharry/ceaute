@@ -60,7 +60,7 @@ export function BookingSettingsForm({ settings, updateBookingSettings }) {
         ) : null
       }
       commitBar={
-        <CommitBar contextDetail="Existing bookings keep the terms they were made under.">
+        <CommitBar note="Existing bookings keep the terms they were made under.">
           <SubmitButton
             form="booking_settings"
             block={false}

@@ -12,6 +12,18 @@ const TABS = [
   { value: "cancelled", label: "Cancelled", group: "cancelled" },
 ];
 
+// booking-display.js returns "Unavailable" when a booking has no payment
+// attempt yet, so the amount is left off rather than reading "Unavailable to
+// collect".
+function providerAmountLabel(booking) {
+  const amount = booking.amount_due_at_appointment_label;
+
+  if (!amount || amount === "Unavailable") return undefined;
+  if (amount === "£0.00") return "Paid in full";
+
+  return `${amount} to collect`;
+}
+
 function splitDateLabel(dateLabel) {
   const [weekday, rest] = String(dateLabel ?? "").split(",");
 
@@ -89,11 +101,7 @@ export default async function DashboardBookingsPage({ searchParams }) {
                 weekdayLabel={weekdayLabel}
                 dayLabel={dayLabel}
                 title={`${booking.customer_name} · ${booking.treatment_name}`}
-                amountLabel={
-                  booking.amount_due_at_appointment_label === "£0.00"
-                    ? "Paid in full"
-                    : `${booking.amount_due_at_appointment_label} to collect`
-                }
+                amountLabel={providerAmountLabel(booking)}
                 meta={`${booking.time_label} · ${booking.duration_label}`}
                 status={booking.status}
                 statusLabel={booking.status_label}

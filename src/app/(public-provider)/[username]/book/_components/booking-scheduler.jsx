@@ -8,14 +8,23 @@ import { CommitBar } from "@/components/ui/commit-bar";
 import { DayStrip } from "@/components/ui/day-strip";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SlotGrid } from "@/components/ui/slot-grid";
-import {
-  addMinutes,
-  formatTimeLabel,
-} from "../../_lib/public-provider-format";
+import { addMinutes } from "../../_lib/public-provider-format";
 
 // Five days visible, never seven — reviewers consistently read a full week as
 // too much at once (02-components.md, "Day strip").
 const CALENDAR_DAY_COUNT = 5;
+
+// The slot labels are 24-hour (`09:00`), so the end time in the commit bar has
+// to be too. `formatTimeLabel` is the 12-hour format used in prose elsewhere,
+// and "09:00 until 9:10 am" reads as two different clocks.
+function endTimeLabel(date) {
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/London",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).format(date);
+}
 
 function formatDateParts(localDate) {
   const [year, month, day] = localDate.split("-").map(Number);
@@ -141,7 +150,7 @@ export default function BookingScheduler({
   }
 
   const endLabel = selectedSlot
-    ? formatTimeLabel(
+    ? endTimeLabel(
         addMinutes(new Date(selectedSlot.start_at), totalDurationMinutes),
       )
     : "";

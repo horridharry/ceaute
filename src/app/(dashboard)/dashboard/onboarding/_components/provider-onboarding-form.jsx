@@ -55,7 +55,7 @@ export function ProviderOnboardingForm({ action, providerPage }) {
         ) : null
       }
       commitBar={
-        <CommitBar contextDetail="Then: location, hours, a treatment, terms, a photo, Stripe.">
+        <CommitBar note="Then: location, hours, a treatment, terms, a photo, Stripe.">
           <SubmitButton
             block={false}
             disabled={Boolean(usernameError)}
