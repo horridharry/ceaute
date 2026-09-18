@@ -48,9 +48,14 @@ port = 54329
 # Configure one of the supported pooler modes: `transaction`, `session`.
 pool_mode = "transaction"
 # How many server connections to allow per user/database pair.
-default_pool_size = 20
+# Left undeclared on purpose: these are `supabase init` template defaults for the
+# local pooler (which is disabled above), and `supabase config push` would apply
+# them to whichever hosted project it targets, overwriting the sizing Supabase
+# tuned for that instance (ceaute-prod is 15/200). Declare them only if we
+# deliberately want to manage pooler sizing from this file.
+# default_pool_size = 20
 # Maximum number of client connections allowed.
-max_client_conn = 100
+# max_client_conn = 100
 
 # [db.vault]
 # secret_key = "env(SECRET_VALUE)"
@@ -203,7 +208,11 @@ password_requirements = ""
 
 [auth.rate_limit]
 # Number of emails that can be sent per hour. Requires auth.email.smtp to be enabled.
-email_sent = 2
+# 2/hour is the `supabase init` template default for local testing and is far too
+# low once a hosted project sends real Auth mail: a single customer retrying a
+# six-digit code would exhaust it. 30/hour matches Supabase's own default for a
+# project with custom SMTP and is applied to any project this file is pushed to.
+email_sent = 30
 # Number of SMS messages that can be sent per hour. Requires auth.sms to be enabled.
 sms_sent = 30
 # Number of anonymous sign-ins that can be made per hour per IP address. Requires enable_anonymous_sign_ins = true.
@@ -252,13 +261,13 @@ otp_expiry = 900
 # sender_name = "Admin"
 
 # Sign-up and sign-in emails carry a six-digit code instead of a link. `supabase
-# config push` can apply these to a hosted project's Auth settings, but the
-# Management API refuses template changes on a free-tier project that still
-# uses Supabase's default email provider ("Email template modification is not
-# available for free tier projects using the default email provider."). Until
-# the project is upgraded or given a custom SMTP provider (`[auth.email.smtp]`
-# below), push this file with these two tables commented out and paste the
-# templates into the Dashboard by hand instead.
+# config push` applies these to a hosted project's Auth settings. The Management
+# API refuses template changes on a free-tier project that still uses Supabase's
+# default email provider ("Email template modification is not available for free
+# tier projects using the default email provider."), so a custom SMTP provider is
+# a prerequisite, not just a delivery preference. Both ceaute-dev and ceaute-prod
+# now send Auth mail through Resend (see [remotes.production.auth.email.smtp]),
+# so these subjects and their content_path files push cleanly to both.
 [auth.email.template.confirmation]
 subject = "Your Ceaute verification code"
 content_path = "./supabase/templates/confirmation.html"
@@ -453,12 +462,17 @@ additional_redirect_urls = [
   "https://ceaute.com/auth/confirm",
 ]
 
-# Supabase's Management API refuses to change email templates on a free-tier
-# project still using its own default email provider (see the comment above
-# [auth.email.template.confirmation]). Routing Auth email through the same
-# Resend account the app already uses for booking email removes that
-# restriction and gets the customised, code-only templates onto production
-# without a paid Supabase plan.
+# Routing Auth email through the same Resend account the app already uses for
+# booking email lifts the free-tier template restriction described above and
+# gets the customised, code-only templates onto production without a paid
+# Supabase plan. Applied and verified against ceaute-prod: the templates and
+# their subjects pushed successfully, and a real sign-up code was relayed
+# through Resend from bookings@ceaute.com.
+#
+# `pass` reads RESEND_API_KEY from the environment; it is never stored here.
+# Note `auth.rate_limit.email_sent` above only takes effect once this is
+# enabled, which is why it is set to a production-sane value rather than the
+# local template's 2/hour.
 [remotes.production.auth.email.smtp]
 enabled = true
 host = "smtp.resend.com"
