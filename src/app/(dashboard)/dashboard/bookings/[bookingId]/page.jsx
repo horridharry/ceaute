@@ -1,62 +1,57 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { PendingButton } from "@/components/pending-button";
+import {
+  DetailSection,
+  DetailTemplate,
+} from "@/components/templates/detail-template";
+import { ButtonLink } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { InfoNotice, ProblemNotice } from "@/components/ui/notice";
+import { StatusDot } from "@/components/ui/status";
+import { SubmitButton } from "@/components/ui/submit-button";
+import { SummaryCard, SummaryLine } from "@/components/ui/summary-card";
+import { StackedTopBar } from "@/components/ui/top-bar";
 import { cancelProviderBooking, getProviderBooking } from "../actions";
 
 const canShowExactAddress = (booking) =>
   Boolean(booking.confirmed_at) &&
   (booking.status === "confirmed" || booking.status === "completed");
 
-function ExactLocation({ booking }) {
-  if (!canShowExactAddress(booking)) {
-    return <p className="mt-3 text-black/60">Area: {booking.public_area}</p>;
-  }
+// The customer's phone is only a link when there is a number to call. D10:
+// there is no Message button — provider replies are not a product flow, and a
+// button that does nothing is worse than no button.
+function telHref(phone) {
+  const digits = String(phone ?? "").replace(/[^\d+]/g, "");
 
-  const addressLines = [
-    booking.address_line_1,
-    booking.address_line_2,
-    booking.city,
-    booking.postcode,
-  ].filter(Boolean);
-
-  return (
-    <div className="mt-4 border-t pt-4">
-      <p className="font-semibold">Location</p>
-      <p className="mt-2 text-black/60">Area: {booking.public_area}</p>
-      {addressLines.length ? (
-        <p className="mt-2 whitespace-pre-line">{addressLines.join("\n")}</p>
-      ) : (
-        <p className="mt-2 text-black/60">Exact address unavailable.</p>
-      )}
-      {booking.access_instructions ? (
-        <p className="mt-2 text-black/60">
-          Access: {booking.access_instructions}
-        </p>
-      ) : null}
-    </div>
-  );
+  return digits.length > 5 ? `tel:${digits}` : null;
 }
 
-function CancellationPanel({ booking }) {
+function Cancellation({ booking }) {
   if (booking.status === "cancelled") {
     return (
-      <div className="mt-4 border-t pt-4">
-        <p className="font-semibold">Cancellation</p>
-        <p className="mt-2 text-black/60">
-          Cancelled by {booking.cancelled_by_label} on{" "}
-          {booking.cancelled_at_label}.
+      <DetailSection heading="Cancellation">
+        <p className="text-body text-black/80">
+          Cancelled by {booking.cancelled_by_label} on {booking.cancelled_at_label}.
         </p>
-        <p className="mt-2">Refunded: {booking.refund_amount_label}</p>
-        <p className="text-black/60">Retained: {booking.retained_amount_label}</p>
+        <SummaryCard>
+          <SummaryLine label="Refunded" value={booking.refund_amount_label} />
+          <SummaryLine
+            label="Retained"
+            value={booking.retained_amount_label}
+            total
+          />
+        </SummaryCard>
         {booking.refund_status_label ? (
-          <p className="mt-2 text-black/60">{booking.refund_status_label}</p>
+          <StatusDot
+            status={booking.payment_status}
+            label={booking.refund_status_label}
+          />
         ) : null}
         {booking.payment_status === "refund_failed" ? (
-          <p className="mt-2 text-bad">
-            Automatic refund failed. Support will need to review this payment.
-          </p>
+          <ProblemNotice title="The automatic refund failed">
+            Support reviews this payment. Nothing is needed from you.
+          </ProblemNotice>
         ) : null}
-      </div>
+      </DetailSection>
     );
   }
 
@@ -65,27 +60,23 @@ function CancellationPanel({ booking }) {
   }
 
   return (
-    <div className="mt-4 border-t pt-4">
-      <p className="font-semibold">Cancel booking</p>
-      <p className="mt-2 text-black/60">
-        Provider cancellation refunds the full amount paid online:{" "}
-        {booking.provider_refund_label}. The appointment time is released as
-        soon as the booking is cancelled.
+    <DetailSection heading="Cancel as provider">
+      <p className="text-body text-black/80">
+        Refunds her full {booking.provider_refund_label} regardless of timing,
+        and frees the slot immediately. She is emailed.
       </p>
-      <form action={cancelProviderBooking} className="mt-4">
+      <form action={cancelProviderBooking} className="flex flex-col gap-3">
         <input type="hidden" name="booking_id" value={booking.booking_id} />
-        <label className="mb-4 flex gap-2 text-sm text-black/70">
-          <input type="checkbox" required className="mt-1 h-4 w-4" />
-          <span>I understand this will cancel the booking and refund the customer.</span>
-        </label>
-        <PendingButton
-          pendingLabel="Cancelling..."
-          className="rounded-lg border border-bad/35 p-3 px-4 text-sm font-semibold text-bad duration-200 hover:bg-bad/5 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          Cancel booking
-        </PendingButton>
+        <Checkbox
+          name="acknowledged"
+          required
+          label="I understand this cancels the booking and refunds the customer."
+        />
+        <SubmitButton variant="destructive" pendingLabel="Cancelling">
+          Cancel booking · refund {booking.provider_refund_label}
+        </SubmitButton>
       </form>
-    </div>
+    </DetailSection>
   );
 }
 
@@ -97,76 +88,91 @@ export default async function BookingDetailPage({ params }) {
     notFound();
   }
 
+  const call = telHref(booking.customer_phone);
+  const addressLines = [
+    booking.address_line_1,
+    booking.address_line_2,
+    [booking.city, booking.postcode].filter(Boolean).join(" "),
+  ].filter(Boolean);
+
   return (
-    <main className="container mx-auto max-w-md p-5">
-      <div className="mt-12 flex flex-col">
-        <div className="flex items-end justify-between gap-4">
-          <h1 className="text-2xl font-bold tracking-tight text-black/80">
-            Booking details
-          </h1>
-          <Link
-            href="/dashboard/bookings"
-            className="text-sm font-semibold text-plum"
-          >
-            Back
-          </Link>
-        </div>
-
-        <section className="mt-6 rounded-xl border p-4 text-sm">
-          <h2 className="text-lg font-semibold">{booking.customer_name}</h2>
-          <p className="mt-3 font-medium">{booking.treatment_name}</p>
-          <p className="mt-3">
-            <span className="font-semibold">{booking.date_label}</span>
-            {", "}
-            <span className="font-semibold">{booking.time_label}</span>
-          </p>
-          <p className="text-black/60">Duration: {booking.duration_label}</p>
-          <p className="mt-3 font-medium">
-            Total: {booking.total_price_label}
-          </p>
-          <p className="text-black/60">
-            Paid online: {booking.amount_paid_online_label}
-          </p>
-          <p className="text-black/60">
-            Due at appointment: {booking.amount_due_at_appointment_label}
-          </p>
-          <p className="text-xs text-black/60">{booking.status_label}</p>
-
-          {booking.selected_add_ons.length ? (
-            <div className="mt-4 border-t pt-4">
-              <p className="font-semibold">Add-ons</p>
-              <ul className="mt-2 flex flex-col gap-2">
-                {booking.selected_add_ons.map((addOn) => (
-                  <li key={addOn.id}>
-                    {addOn.name} ({addOn.price_label}, {addOn.duration_label})
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
-
-          <div className="mt-4 border-t pt-4">
-            <p className="font-semibold">Customer</p>
-            <p className="mt-2">{booking.customer_name}</p>
-            <p className="text-black/60">{booking.customer_email}</p>
-            <p className="text-black/60">{booking.customer_phone}</p>
-          </div>
-
-          <ExactLocation booking={booking} />
-
-          <div className="mt-4 border-t pt-4">
-            <p className="font-semibold">Cancellation terms</p>
-            <p className="mt-2 text-black/60">
-              Cancellation window: {booking.cancellation_window_hours} hours
-            </p>
-            <p className="mt-2 whitespace-pre-line text-black/60">
-              {booking.written_policy || "No written policy stored."}
-            </p>
-          </div>
-
-          <CancellationPanel booking={booking} />
-        </section>
+    <DetailTemplate
+      nav={<StackedTopBar backHref="/dashboard/bookings" backLabel="Bookings" />}
+      title={booking.customer_name}
+      meta={`${booking.treatment_name} · ${booking.date_label} · ${booking.time_label}`}
+    >
+      <div className="flex flex-col gap-3">
+        <StatusDot status={booking.status} label={booking.status_label} />
+        <p className="text-[12.5px] text-black/50">{booking.duration_label}</p>
+        {call ? (
+          <ButtonLink href={call} variant="secondary" block={false} className="w-max px-6">
+            Call {booking.customer_phone}
+          </ButtonLink>
+        ) : null}
       </div>
-    </main>
+
+      <DetailSection heading="What she booked">
+        <SummaryCard>
+          <SummaryLine
+            label={booking.treatment_name}
+            value={booking.total_price_label}
+          />
+          {booking.selected_add_ons.map((addOn) => (
+            <SummaryLine
+              key={addOn.id}
+              label={`+ ${addOn.name}`}
+              value={addOn.price_label}
+            />
+          ))}
+          <SummaryLine
+            label="Paid online → your Stripe"
+            value={booking.amount_paid_online_label}
+          />
+          <SummaryLine
+            label="Collect on the day"
+            value={booking.amount_due_at_appointment_label}
+            total
+          />
+        </SummaryCard>
+      </DetailSection>
+
+      <DetailSection heading="Customer">
+        <p className="text-body text-black/80">{booking.customer_name}</p>
+        <p className="text-[12.5px] text-black/60">{booking.customer_email}</p>
+        <p className="text-[12.5px] text-black/60">{booking.customer_phone}</p>
+        <p className="text-[12.5px] text-black/45">
+          Contact details are the ones she gave at booking.
+        </p>
+      </DetailSection>
+
+      <DetailSection heading="Where">
+        {canShowExactAddress(booking) && addressLines.length ? (
+          <>
+            <p className="whitespace-pre-line text-body text-black/80">
+              {addressLines.join("\n")}
+            </p>
+            {booking.access_instructions ? (
+              <p className="text-[12.5px] text-black/60">
+                {booking.access_instructions}
+              </p>
+            ) : null}
+          </>
+        ) : (
+          <p className="text-body text-black/80">{booking.public_area}</p>
+        )}
+      </DetailSection>
+
+      <DetailSection heading="Booked under">
+        <p className="text-body text-black/80">
+          {booking.cancellation_window_hours}-hour cancellation window. These
+          terms are frozen for this booking even if you change your settings.
+        </p>
+        {booking.written_policy ? (
+          <InfoNotice>{booking.written_policy}</InfoNotice>
+        ) : null}
+      </DetailSection>
+
+      <Cancellation booking={booking} />
+    </DetailTemplate>
   );
 }

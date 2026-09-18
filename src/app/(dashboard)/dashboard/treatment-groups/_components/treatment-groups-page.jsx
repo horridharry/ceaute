@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { CatalogueTabs } from "../../_components/catalogue-tabs";
 import { useActionState } from "react";
 
 function ActionMessage({ message }) {
@@ -81,6 +82,7 @@ function GroupList({
 }
 
 export function TreatmentGroupsPage({
+  counts,
   groups,
   archiveAction,
   restoreAction,
@@ -89,27 +91,20 @@ export function TreatmentGroupsPage({
   const archivedGroups = groups.filter((group) => !group.is_active);
 
   return (
-    <main className="container max-w-md p-5">
-      <div className="mt-6 flex flex-col">
-        <div className="flex items-end justify-between gap-4">
-          <h1 className="text-3xl font-bold tracking-tighter">
-            Treatment groups
-          </h1>
-          <div className="flex items-center gap-2">
-            <Link
-              href="/dashboard/treatments"
-              className="w-max rounded-lg border border-black/10 p-3 px-4 text-sm font-semibold text-plum duration-200 hover:border-black/20"
-            >
-              Back
-            </Link>
-            <Link
-              href="/dashboard/treatment-groups/new"
-              className="flex w-max items-center rounded-3xl bg-white p-1.5 px-3 text-sm font-semibold text-plum duration-300 hover:bg-surface"
-            >
-              Create
-            </Link>
-          </div>
+    <main className="mx-auto w-full max-w-[720px] px-5 py-6">
+      <div className="flex flex-col gap-4">
+        <div className="flex items-end justify-between gap-3">
+          <h1 className="text-display text-pretty text-ink">Treatments</h1>
+          <Link
+            href="/dashboard/treatment-groups/new"
+            className="shrink-0 text-[13px] font-medium text-plum transition duration-150 ease-out hover:text-plum-hover"
+          >
+            + New group
+          </Link>
         </div>
+
+        <CatalogueTabs value="groups" counts={counts} />
+
 
         <GroupList
           title="Active groups"

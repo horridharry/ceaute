@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { CatalogueTabs } from "../../_components/catalogue-tabs";
 
 const currencyFormatter = new Intl.NumberFormat("en-GB", {
   style: "currency",
@@ -80,30 +81,25 @@ function AddOnList({ title, addOns, emptyMessage }) {
   );
 }
 
-export function TreatmentAddOnsPage({ addOns }) {
+export function TreatmentAddOnsPage({ addOns, counts }) {
   const activeAddOns = addOns.filter((addOn) => addOn.is_active);
   const archivedAddOns = addOns.filter((addOn) => !addOn.is_active);
 
   return (
-    <main className="container max-w-md p-5">
-      <div className="mt-6 flex flex-col">
-        <div className="flex items-end justify-between gap-4">
-          <h1 className="text-3xl font-bold tracking-tighter">Add-ons</h1>
-          <div className="flex items-center gap-2">
-            <Link
-              href="/dashboard/treatments"
-              className="w-max rounded-lg border border-black/10 p-3 px-4 text-sm font-semibold text-plum duration-200 hover:border-black/20 active:border-transparent active:bg-surface active:text-plum-hover"
-            >
-              Back
-            </Link>
-            <Link
-              href="/dashboard/add-ons/new"
-              className="flex w-max items-center overflow-hidden rounded-3xl bg-white p-1.5 px-3 text-center text-sm font-semibold text-plum duration-300 hover:bg-surface"
-            >
-              Create
-            </Link>
-          </div>
+    <main className="mx-auto w-full max-w-[720px] px-5 py-6">
+      <div className="flex flex-col gap-4">
+        <div className="flex items-end justify-between gap-3">
+          <h1 className="text-display text-pretty text-ink">Treatments</h1>
+          <Link
+            href="/dashboard/add-ons/new"
+            className="shrink-0 text-[13px] font-medium text-plum transition duration-150 ease-out hover:text-plum-hover"
+          >
+            + New add-on
+          </Link>
         </div>
+
+        <CatalogueTabs value="add-ons" counts={counts} />
+
 
         <AddOnList
           title="Active add-ons"

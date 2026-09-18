@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CatalogueTabs } from "../../_components/catalogue-tabs";
 import { formatDurationMinutes } from "../../_lib/provider-data";
 
 const NoTreatments = () => (
@@ -62,37 +63,23 @@ const TreatmentItem = ({ treatment }) => (
   </Link>
 );
 
-export function TreatmentsUI({ treatments }) {
+export function TreatmentsUI({ treatments, counts }) {
   return (
-    <main className="container max-w-md p-5">
-      <div className="mt-6 flex flex-col">
-        <div className="flex items-end justify-between">
-          <h1 className="text-3xl font-bold tracking-tighter">Treatments</h1>
-          <div className="flex items-center gap-2">
-            <Link
-              href="/dashboard/treatment-groups"
-              className="flex w-max items-center overflow-hidden rounded-3xl bg-white p-1.5 px-3 text-center text-sm font-semibold text-plum duration-300 hover:bg-surface"
-            >
-              Manage groups
-            </Link>
-            <Link
-              href="/dashboard/add-ons"
-              className="flex w-max items-center overflow-hidden rounded-3xl bg-white p-1.5 px-3 text-center text-sm font-semibold text-plum duration-300 hover:bg-surface"
-            >
-              Manage add-ons
-            </Link>
-            {treatments.length !== 0 ? (
-              <Link
-                href="/dashboard/treatments/new"
-                className="flex w-max items-center overflow-hidden rounded-3xl bg-white p-1.5 px-3 text-center text-sm font-semibold text-plum duration-300 hover:bg-surface"
-              >
-                Create
-              </Link>
-            ) : null}
-          </div>
+    <main className="mx-auto w-full max-w-[720px] px-5 py-6">
+      <div className="flex flex-col gap-4">
+        <div className="flex items-end justify-between gap-3">
+          <h1 className="text-display text-pretty text-ink">Treatments</h1>
+          <Link
+            href="/dashboard/treatments/new"
+            className="shrink-0 text-[13px] font-medium text-plum transition duration-150 ease-out hover:text-plum-hover"
+          >
+            + New
+          </Link>
         </div>
 
-        <div className="mt-12 flex flex-col gap-4">
+        <CatalogueTabs value="treatments" counts={counts} />
+
+        <div className="mt-2 flex flex-col gap-4">
           {treatments.map((treatment) => (
             <li key={treatment.treatmentId} className="list-none">
               <TreatmentItem treatment={treatment} />

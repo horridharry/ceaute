@@ -1,67 +1,25 @@
-import Link from "next/link";
 import { unstable_rethrow } from "next/navigation";
+import { ListGroup, ListTemplate } from "@/components/templates/list-template";
+import { BookingCard } from "@/components/ui/booking-card";
+import { EmptyState } from "@/components/ui/empty-state";
+import { ProblemNotice } from "@/components/ui/notice";
+import { Tabs } from "@/components/ui/tabs";
 import { getAllBookings } from "./actions";
 
-const NoBookings = () => (
-  <div className="duration-200 rounded-xl border p-2 h-52 flex">
-    <p className="text-sm  text-center m-auto">
-      You don&apos;t have any bookings yet
-    </p>
-  </div>
-);
+const TABS = [
+  { value: "upcoming", label: "Upcoming", group: "upcoming" },
+  { value: "past", label: "Past", group: "previous" },
+  { value: "cancelled", label: "Cancelled", group: "cancelled" },
+];
 
-const BookingsLoadFailed = () => (
-  <div className="duration-200 rounded-xl border p-2 h-52 flex">
-    <p className="text-sm  text-center m-auto">
-      Could not load bookings. Refresh to try again.
-    </p>
-  </div>
-);
+function splitDateLabel(dateLabel) {
+  const [weekday, rest] = String(dateLabel ?? "").split(",");
 
-const BookingItem = ({ booking }) => (
-  <Link href={`/dashboard/bookings/${booking.booking_id}`}>
-    <div className="appearance-none list-none rounded-xl border p-2.5 duration-200 hover:border-black/20 hover:bg-black/5 ">
-      <div className="flex h-full">
-        <div className="max-w-sm flex-1 overflow-hidden text-ellipsis">
-          <h2 className="font-semibold">{booking.customer_name}</h2>
-          <p className="mt-3 text-sm">{booking.treatment_name}</p>
-
-          <span className="flex flex-wrap gap-1 text-sm">
-            <p className="font-semibold">{booking.date_label},</p>
-            <p className="font-semibold">{booking.time_label}</p>
-            <p>{`(${booking.duration_label})`}</p>
-          </span>
-          <p className="mt-2 text-sm font-medium">{booking.total_price_label}</p>
-          <p className="text-sm text-black/60">
-            Paid online: {booking.amount_paid_online_label}
-          </p>
-          <p className="text-sm text-black/60">
-            Due at appointment: {booking.amount_due_at_appointment_label}
-          </p>
-          <p className="text-xs text-black/60">{booking.status_label}</p>
-        </div>
-      </div>
-    </div>
-  </Link>
-);
-
-const BookingSection = ({ title, bookings }) => (
-  <section className="mt-8">
-    <h2 className="text-lg font-semibold">{title}</h2>
-    <ul className="mt-3 flex flex-col gap-4">
-      {bookings.map((booking) => (
-        <li className="list-none" key={booking.booking_id}>
-          <BookingItem booking={booking} />
-        </li>
-      ))}
-      {bookings.length === 0 ? (
-        <li className="list-none rounded-xl border p-4 text-sm text-black/60">
-          No bookings.
-        </li>
-      ) : null}
-    </ul>
-  </section>
-);
+  return {
+    weekdayLabel: (weekday ?? "").trim().slice(0, 3),
+    dayLabel: (rest ?? "").trim().split(" ")[0] ?? "",
+  };
+}
 
 // Loads bookings during the server render, like the customer bookings page.
 // The previous client component rendered an empty shell and then called the
@@ -79,31 +37,71 @@ async function loadBookingGroups() {
   }
 }
 
-export default async function DashboardBookingsPage() {
+export default async function DashboardBookingsPage({ searchParams }) {
+  const resolvedSearchParams = (await searchParams) ?? {};
+  const requested = String(resolvedSearchParams.tab ?? "").trim();
+  const activeTab = TABS.find((tab) => tab.value === requested) ?? TABS[0];
+
   const { bookingGroups, failed } = await loadBookingGroups();
+  const bookings = failed ? [] : (bookingGroups[activeTab.group] ?? []);
   const hasBookings =
-    !failed &&
-    (bookingGroups.upcoming.length > 0 ||
-      bookingGroups.previous.length > 0 ||
-      bookingGroups.cancelled.length > 0);
+    !failed && TABS.some((tab) => (bookingGroups[tab.group] ?? []).length > 0);
 
   return (
-    <main className="container max-w-md p-5">
-      <div className="mt-6 flex flex-col">
-        <h1 className="text-3xl font-bold tracking-tighter">Bookings</h1>
-        <p className="text-sm mt-1">Manage your bookings with clients</p>
-        <div className="mt-12">
-          {failed ? <BookingsLoadFailed /> : null}
-          {!failed && !hasBookings ? <NoBookings /> : null}
-          {hasBookings ? (
-            <>
-              <BookingSection title="Upcoming" bookings={bookingGroups.upcoming} />
-              <BookingSection title="Previous" bookings={bookingGroups.previous} />
-              <BookingSection title="Cancelled" bookings={bookingGroups.cancelled} />
-            </>
-          ) : null}
-        </div>
-      </div>
-    </main>
+    <ListTemplate
+      title="Bookings"
+      filters={
+        hasBookings ? (
+          <Tabs
+            label="Bookings"
+            value={activeTab.value}
+            items={TABS.map((tab) => ({
+              value: tab.value,
+              label: tab.label,
+              href: `/dashboard/bookings?tab=${tab.value}`,
+            }))}
+          />
+        ) : null
+      }
+    >
+      {failed ? (
+        <ProblemNotice title="Could not load your bookings">
+          Refresh to try again.
+        </ProblemNotice>
+      ) : !hasBookings ? (
+        <EmptyState title="No bookings yet">
+          When someone books you, the appointment shows here with their number
+          and what to collect.
+        </EmptyState>
+      ) : bookings.length === 0 ? (
+        <EmptyState title={`Nothing ${activeTab.label.toLowerCase()}`}>
+          There is nothing in this list yet.
+        </EmptyState>
+      ) : (
+        <ListGroup>
+          {bookings.map((booking) => {
+            const { weekdayLabel, dayLabel } = splitDateLabel(booking.date_label);
+
+            return (
+              <BookingCard
+                key={booking.booking_id}
+                href={`/dashboard/bookings/${booking.booking_id}`}
+                weekdayLabel={weekdayLabel}
+                dayLabel={dayLabel}
+                title={`${booking.customer_name} · ${booking.treatment_name}`}
+                amountLabel={
+                  booking.amount_due_at_appointment_label === "£0.00"
+                    ? "Paid in full"
+                    : `${booking.amount_due_at_appointment_label} to collect`
+                }
+                meta={`${booking.time_label} · ${booking.duration_label}`}
+                status={booking.status}
+                statusLabel={booking.status_label}
+              />
+            );
+          })}
+        </ListGroup>
+      )}
+    </ListTemplate>
   );
 }
