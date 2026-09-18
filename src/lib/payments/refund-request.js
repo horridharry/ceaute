@@ -1,3 +1,17 @@
+// These two flags decide who absorbs Stripe's processing fee on a refund, and
+// the answer is currently "Ceaute": `refund_application_fee` returns the whole
+// application fee to the provider, so the provider ends at zero and Stripe's
+// non-refundable charge lands on the platform. That contradicts the agreed
+// model in which providers bear refunds, and changing it is a business
+// decision, not a cleanup — see
+// docs/reports/2026-09-18-refund-economics-and-provider-liability.md.
+//
+// `refund-settlement.js` models the outcome of both settings and the tests
+// assert it, so flipping either flag here fails a test rather than quietly
+// moving money.
+//
+// `refund_application_fee` is omitted when there is no application fee, which
+// is every attempt created before fees were introduced.
 export function buildStripeRefundRequest(operation) {
   return {
     parameters: {
