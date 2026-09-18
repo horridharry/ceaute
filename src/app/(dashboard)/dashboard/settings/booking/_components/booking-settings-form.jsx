@@ -1,7 +1,13 @@
 "use client";
 
-import Link from "next/link";
 import { useActionState, useState } from "react";
+import { FormTemplate } from "@/components/templates/form-template";
+import { CommitBar } from "@/components/ui/commit-bar";
+import { Field, Select, TextArea } from "@/components/ui/field";
+import { InfoNotice, ProblemNotice } from "@/components/ui/notice";
+import { OptionCard, OptionCardPair } from "@/components/ui/option-card";
+import { SubmitButton } from "@/components/ui/submit-button";
+import { StackedTopBar } from "@/components/ui/top-bar";
 import { keepFormValuesOnSubmit } from "@/lib/forms/keep-form-values";
 
 const MONEY_PATTERN = /^\d+(\.\d{1,2})?$/;
@@ -19,7 +25,8 @@ function buildExplanation(paymentMode, commitmentAmount) {
 }
 
 export function BookingSettingsForm({ settings, updateBookingSettings }) {
-  const [stateMessage, formAction, pending] = useActionState(
+  // SubmitButton reads pending from the surrounding form.
+  const [stateMessage, formAction] = useActionState(
     updateBookingSettings,
     "",
   );
@@ -42,108 +49,107 @@ export function BookingSettingsForm({ settings, updateBookingSettings }) {
   };
 
   return (
-    <main className="container max-w-md p-5">
-      <div className="mt-6 flex flex-col">
-        <h1 className="text-3xl font-bold tracking-tighter">
-          Booking settings
-        </h1>
+    <FormTemplate
+      id="booking_settings"
+      action={formAction}
+      onSubmit={keepFormValuesOnSubmit(formAction)}
+      nav={<StackedTopBar backHref="/dashboard/settings" backLabel="Settings" />}
+      notice={
+        stateMessage ? (
+          <ProblemNotice title="That did not save">{stateMessage}</ProblemNotice>
+        ) : null
+      }
+      commitBar={
+        <CommitBar contextDetail="Existing bookings keep the terms they were made under.">
+          <SubmitButton
+            form="booking_settings"
+            block={false}
+            disabled={Boolean(moneyError)}
+            pendingLabel="Saving"
+            className="px-6"
+          >
+            Save terms
+          </SubmitButton>
+        </CommitBar>
+      }
+    >
+      <header className="flex flex-col gap-1">
+        <h1 className="text-display text-pretty text-ink">Booking terms</h1>
+      </header>
 
-        <form
-          id="booking_settings"
-          className="mt-12 flex flex-col gap-4"
-          action={formAction}
-          onSubmit={keepFormValuesOnSubmit(formAction)}
-        >
-          <span className="field-set">
-            <label className="label" htmlFor="payment_mode">
-              Payment mode
-            </label>
-            <select
-              id="payment_mode"
-              name="payment_mode"
-              value={paymentMode}
-              onChange={(event) => setPaymentMode(event.target.value)}
-              className="field cursor-pointer"
-            >
-              <option value="full">Full payment</option>
-              <option value="fixed_deposit">Fixed deposit</option>
-            </select>
+      {/* Two choices that each need a line of explanation, so option cards
+          rather than a select. The radios carry the same `payment_mode` value
+          the action already reads. */}
+      <p className="text-label uppercase text-black/45">Customers pay</p>
+      <OptionCardPair>
+        <OptionCard
+          name="payment_mode"
+          value="fixed_deposit"
+          title="A fixed deposit"
+          explanation="Rest on the day."
+          checked={paymentMode === "fixed_deposit"}
+          onChange={() => setPaymentMode("fixed_deposit")}
+        />
+        <OptionCard
+          name="payment_mode"
+          value="full"
+          title="In full"
+          explanation="Nothing on the day."
+          checked={paymentMode === "full"}
+          onChange={() => setPaymentMode("full")}
+        />
+      </OptionCardPair>
+
+      <Field
+        id="commitment_amount"
+        label={
+          paymentMode === "fixed_deposit" ? "Deposit" : "Commitment amount"
+        }
+        error={moneyError || undefined}
+        helper={
+          moneyError
+            ? undefined
+            : "Must be more than £0 — there's no pay-later."
+        }
+      >
+        <div className="relative">
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-y-0 left-[13px] flex items-center text-[14px] text-black/45"
+          >
+            £
           </span>
+          <input
+            id="commitment_amount"
+            name="commitment_amount"
+            inputMode="decimal"
+            value={commitmentAmount}
+            onChange={updateCommitmentAmount}
+            aria-invalid={moneyError ? true : undefined}
+            className="field pl-[26px]"
+          />
+        </div>
+      </Field>
 
-          <span className="field-set">
-            <label className="label" htmlFor="commitment_amount">
-              {paymentMode === "fixed_deposit"
-                ? "Deposit amount"
-                : "Commitment amount"}
-            </label>
-            <p className="text-sm text-bad">{moneyError}</p>
-            <div className="relative flex items-center rounded-lg">
-              <span className="absolute z-40 ml-3 text-sm opacity-80">£</span>
-              <input
-                id="commitment_amount"
-                name="commitment_amount"
-                inputMode="decimal"
-                value={commitmentAmount}
-                onChange={updateCommitmentAmount}
-                className="relative w-full appearance-none rounded-lg border p-2.5 pl-8 outline-none ring-1 ring-transparent duration-200 hover:border-black/25 focus:border-plum focus:ring-plum"
-              />
-            </div>
-          </span>
+      <Select
+        name="cancellation_window_hours"
+        label="Free cancellation up to"
+        defaultValue={settings.cancellation_window_hours}
+      >
+        <option value="12">12 hours</option>
+        <option value="24">24 hours</option>
+        <option value="48">48 hours</option>
+      </Select>
 
-          <span className="field-set">
-            <label className="label" htmlFor="cancellation_window_hours">
-              Cancellation window
-            </label>
-            <select
-              id="cancellation_window_hours"
-              name="cancellation_window_hours"
-              defaultValue={settings.cancellation_window_hours}
-              className="field cursor-pointer"
-            >
-              <option value="12">12 hours</option>
-              <option value="24">24 hours</option>
-              <option value="48">48 hours</option>
-            </select>
-          </span>
+      <InfoNotice>{buildExplanation(paymentMode, commitmentAmount)}</InfoNotice>
 
-          <p className="rounded-lg bg-black/5 p-3 text-sm text-black/70">
-            {buildExplanation(paymentMode, commitmentAmount)}
-          </p>
-
-          <span className="field-set">
-            <label className="label" htmlFor="written_policy">
-              Written booking policies
-            </label>
-            <textarea
-              id="written_policy"
-              name="written_policy"
-              rows={6}
-              defaultValue={settings.written_policy}
-              className="field resize-none"
-            />
-          </span>
-
-          <p className="mt-4 text-sm text-bad">{stateMessage}</p>
-
-          <div className="mt-8 flex items-center justify-end gap-2">
-            <Link
-              href="/dashboard/settings"
-              className="w-max rounded-lg border border-black/10 p-3 px-6 text-sm font-semibold text-plum duration-200 hover:border-black/20 active:border-transparent active:bg-surface active:text-plum-hover"
-            >
-              Back
-            </Link>
-            <button
-              form="booking_settings"
-              type="submit"
-              disabled={pending || Boolean(moneyError)}
-              aria-disabled={pending || Boolean(moneyError)}
-              className="w-max rounded-lg bg-plum p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-plum-hover disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
-            >
-              {pending ? "Saving..." : "Save"}
-            </button>
-          </div>
-        </form>
-      </div>
-    </main>
+      <TextArea
+        name="written_policy"
+        label="Written policy"
+        optional
+        rows={5}
+        defaultValue={settings.written_policy}
+      />
+    </FormTemplate>
   );
 }

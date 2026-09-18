@@ -1,10 +1,27 @@
-import Link from "next/link";
+import {
+  DetailSection,
+  DetailTemplate,
+} from "@/components/templates/detail-template";
+import { ProblemNotice } from "@/components/ui/notice";
+import { StatusDot } from "@/components/ui/status";
+import { SummaryCard, SummaryLine } from "@/components/ui/summary-card";
+import { StackedTopBar } from "@/components/ui/top-bar";
 import {
   getPaymentSettings,
   refreshPaymentStatus,
   startOrResumeOnboarding,
 } from "./actions";
 import { PaymentActions } from "./_components/payment-actions";
+
+// The five states classifyStripePaymentAccount can return, each with the tone
+// the status dot should use. Amber is the only place "pending" appears in the
+// dashboard: Stripe is working on it and nothing has gone wrong.
+const TONE_BY_STATE = {
+  needs_information: "pending",
+  pending_review: "pending",
+  ready: "ok",
+  restricted: "bad",
+};
 
 export default async function DashboardPaymentSettingsPage() {
   const { configured, paymentAccount, state } = await getPaymentSettings();
@@ -13,60 +30,29 @@ export default async function DashboardPaymentSettingsPage() {
   const pastDue = paymentAccount?.requirements_past_due ?? [];
   const titleByState = {
     needs_information: hasAccount ? "Setup incomplete" : "Not connected",
-    pending_review: "Stripe is reviewing your information",
+    pending_review: "Stripe is reviewing",
     ready: "Payments ready",
-    restricted: "Payments restricted",
+    restricted: "Restricted — fix in Stripe",
   };
 
   return (
-    <main className="container max-w-md p-5">
-      <div className="mt-6 flex flex-col">
-        <Link href="/dashboard/settings" className="text-sm font-semibold text-plum">
-          Back to settings
-        </Link>
-        <h1 className="mt-8 text-3xl font-bold tracking-tighter">Payments</h1>
-        <p className="mt-1 text-sm text-black/60">
-          Connect Stripe Express so Ceaute can route customer payments to you.
-        </p>
+    <DetailTemplate
+      nav={<StackedTopBar backHref="/dashboard/settings" backLabel="Settings" />}
+      title="Payments"
+      meta="Customer payments go straight to your Stripe account. Ceaute's fee is currently £0."
+    >
+      {!configured ? (
+        <ProblemNotice title="Stripe is not configured on this environment">
+          Nothing here can connect until it is.
+        </ProblemNotice>
+      ) : null}
 
-        {!configured ? (
-          <p className="mt-8 rounded-xl border border-bad/35 p-4 text-sm text-bad">
-            Stripe is not configured on this environment.
-          </p>
-        ) : null}
-
-        <section className="mt-8 rounded-xl border p-4 text-sm">
-          <h2 className="text-lg font-semibold">
-            {titleByState[state.state]}
-          </h2>
-          <p className="mt-2 text-black/60">{state.message}</p>
-          {hasAccount ? (
-            <dl className="mt-4 grid gap-2">
-              <div className="flex justify-between gap-4">
-                <dt>Transfers</dt>
-                <dd>{paymentAccount.stripe_transfers_status ?? "Unavailable"}</dd>
-              </div>
-              <div className="flex justify-between gap-4">
-                <dt>Payouts</dt>
-                <dd>{paymentAccount.payouts_status ?? "Unavailable"}</dd>
-              </div>
-              <div className="flex justify-between gap-4">
-                <dt>Recipient setup</dt>
-                <dd>{paymentAccount.recipient_applied ? "Applied" : "Incomplete"}</dd>
-              </div>
-            </dl>
-          ) : null}
-          {currentlyDue.length || pastDue.length ? (
-            <div className="mt-4 text-black/60">
-              <p className="font-semibold text-black">Required by Stripe</p>
-              <ul className="mt-2 list-inside list-disc">
-                {[...pastDue, ...currentlyDue].map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
-        </section>
+      <div className="flex flex-col gap-3">
+        <StatusDot
+          tone={hasAccount ? (TONE_BY_STATE[state.state] ?? "muted") : "muted"}
+          label={titleByState[state.state] ?? "Not connected"}
+        />
+        <p className="text-body text-black/80">{state.message}</p>
 
         <PaymentActions
           configured={configured}
@@ -76,6 +62,45 @@ export default async function DashboardPaymentSettingsPage() {
           startOrResumeOnboarding={startOrResumeOnboarding}
         />
       </div>
-    </main>
+
+      {hasAccount ? (
+        <DetailSection heading="What Stripe says">
+          <SummaryCard>
+            <SummaryLine
+              label="Transfers"
+              value={paymentAccount.stripe_transfers_status ?? "Unavailable"}
+            />
+            <SummaryLine
+              label="Payouts"
+              value={paymentAccount.payouts_status ?? "Unavailable"}
+            />
+            <SummaryLine
+              label="Recipient setup"
+              value={paymentAccount.recipient_applied ? "Applied" : "Incomplete"}
+              total
+            />
+          </SummaryCard>
+        </DetailSection>
+      ) : null}
+
+      {currentlyDue.length || pastDue.length ? (
+        <DetailSection heading="Required by Stripe">
+          <ul className="flex flex-col gap-1.5">
+            {[...pastDue, ...currentlyDue].map((item) => (
+              <li key={item} className="flex items-start gap-2.5">
+                <span
+                  aria-hidden="true"
+                  className="mt-[7px] block size-[7px] shrink-0 rounded-full bg-pending"
+                />
+                <span className="text-body text-black/80">{item}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="text-[12.5px] text-black/60">
+            Your page cannot publish until Stripe has these.
+          </p>
+        </DetailSection>
+      ) : null}
+    </DetailTemplate>
   );
 }

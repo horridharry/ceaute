@@ -35,7 +35,7 @@ export function PaymentActions({
               type="submit"
               disabled={!configured || busy}
               aria-disabled={!configured || busy}
-              className="rounded-lg border border-black/10 p-3 px-4 text-sm font-semibold text-plum duration-200 hover:border-black/20 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex h-12 select-none items-center justify-center rounded-control border border-black/16 px-6 text-body-strong text-ink transition duration-150 ease-out hover:border-black/30 disabled:pointer-events-none disabled:opacity-40"
             >
               {refreshPending ? "Refreshing..." : "Refresh status"}
             </button>
@@ -47,7 +47,7 @@ export function PaymentActions({
               type="submit"
               disabled={!configured || busy}
               aria-disabled={!configured || busy}
-              className="rounded-lg bg-plum p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-plum-hover disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex h-12 select-none items-center justify-center rounded-control bg-plum px-6 text-body-strong font-semibold text-white transition duration-150 ease-out hover:bg-plum-hover disabled:pointer-events-none disabled:opacity-40"
             >
               {onboardingPending
                 ? "Connecting..."
@@ -63,8 +63,8 @@ export function PaymentActions({
           role="status"
           className={
             outcome.error
-              ? "rounded-lg border border-bad/35 p-3 text-sm text-bad"
-              : "text-sm text-black/60"
+              ? "border-y border-black/8 py-3 text-[12.5px]/[1.55] text-bad"
+              : "text-[12.5px] text-black/60"
           }
         >
           {outcome.message}
