@@ -1,7 +1,12 @@
 "use client";
 
-import Link from "next/link";
 import { useActionState, useState } from "react";
+import { FormTemplate } from "@/components/templates/form-template";
+import { CommitBar } from "@/components/ui/commit-bar";
+import { FieldPair, TextArea, TextInput } from "@/components/ui/field";
+import { ProblemNotice } from "@/components/ui/notice";
+import { SubmitButton } from "@/components/ui/submit-button";
+import { StackedTopBar } from "@/components/ui/top-bar";
 
 const validateLength = (value, maxLength, label) => {
   if (value.length > maxLength) {
@@ -11,8 +16,15 @@ const validateLength = (value, maxLength, label) => {
   return null;
 };
 
+// T3 · Form, in two labelled halves. The visual split is the whole point:
+// this is the screen where a woman decides whether to trust the product with
+// her home address, so what is public and what is private are stated above
+// the fields rather than left to be inferred.
+//
+// The same client-side length checks still gate the submit; the server action
+// and its validation are untouched.
 export function LocationFormUI({ location, updateLocation }) {
-  const [stateMessage, updateLocationAction, pending] = useActionState(
+  const [stateMessage, updateLocationAction] = useActionState(
     updateLocation,
     "",
   );
@@ -26,157 +38,92 @@ export function LocationFormUI({ location, updateLocation }) {
   };
 
   const hasClientError = Object.values(errors).some(Boolean);
+  const onChangeLength = (field, maxLength, label) => (event) =>
+    updateFieldError(field, validateLength(event.target.value, maxLength, label));
 
   return (
-    <main className="container max-w-md p-5">
-      <div className="mt-6 flex flex-col">
-        <h1 className="text-3xl font-bold tracking-tighter">Location</h1>
-        <p className="mt-2 text-sm text-black/60">
-          Public area appears on your page. The exact address and access
-          instructions stay private until booking confirmation.
+    <FormTemplate
+      id="update_location"
+      action={updateLocationAction}
+      nav={<StackedTopBar backHref="/dashboard/profile" backLabel="Your page" />}
+      notice={
+        stateMessage ? (
+          <ProblemNotice title="That did not save">{stateMessage}</ProblemNotice>
+        ) : null
+      }
+      commitBar={
+        <CommitBar>
+          <SubmitButton disabled={hasClientError} pendingLabel="Saving">
+            Save location
+          </SubmitButton>
+        </CommitBar>
+      }
+    >
+      <header className="flex flex-col gap-1">
+        <h1 className="text-display text-pretty text-ink">Location</h1>
+      </header>
+
+      <div className="flex items-center gap-2">
+        <span aria-hidden="true" className="block size-[7px] rounded-full bg-ok" />
+        <p className="text-label uppercase text-black/45">
+          Public — shown in Discover and on your page
         </p>
-
-        <form
-          id="update_location"
-          className="mt-12 flex flex-col gap-4"
-          action={updateLocationAction}
-        >
-          <span className="field-set">
-            <label className="label" htmlFor="public_area">
-              Public area
-            </label>
-            <p className="text-sm text-bad">
-              {errors.public_area ?? ""}
-            </p>
-            <input
-              id="public_area"
-              name="public_area"
-              defaultValue={location.public_area}
-              onChange={(event) =>
-                updateFieldError(
-                  "public_area",
-                  validateLength(event.target.value, 120, "Public area"),
-                )
-              }
-              className="field"
-              placeholder="Shoreditch, London"
-            />
-          </span>
-
-          <span className="field-set">
-            <label className="label" htmlFor="address_line_1">
-              Address line 1
-            </label>
-            <p className="text-sm text-bad">
-              {errors.address_line_1 ?? ""}
-            </p>
-            <input
-              id="address_line_1"
-              name="address_line_1"
-              defaultValue={location.address_line_1}
-              onChange={(event) =>
-                updateFieldError(
-                  "address_line_1",
-                  validateLength(event.target.value, 160, "Address line 1"),
-                )
-              }
-              className="field"
-            />
-          </span>
-
-          <span className="field-set">
-            <label className="label" htmlFor="address_line_2">
-              Address line 2
-            </label>
-            <p className="text-sm text-bad">
-              {errors.address_line_2 ?? ""}
-            </p>
-            <input
-              id="address_line_2"
-              name="address_line_2"
-              defaultValue={location.address_line_2}
-              onChange={(event) =>
-                updateFieldError(
-                  "address_line_2",
-                  validateLength(event.target.value, 160, "Address line 2"),
-                )
-              }
-              className="field"
-            />
-          </span>
-
-          <span className="field-set">
-            <label className="label" htmlFor="city">
-              City
-            </label>
-            <p className="text-sm text-bad">{errors.city ?? ""}</p>
-            <input
-              id="city"
-              name="city"
-              defaultValue={location.city}
-              onChange={(event) =>
-                updateFieldError(
-                  "city",
-                  validateLength(event.target.value, 100, "City"),
-                )
-              }
-              className="field"
-            />
-          </span>
-
-          <span className="field-set">
-            <label className="label" htmlFor="postcode">
-              Postcode
-            </label>
-            <p className="text-sm text-bad">{errors.postcode ?? ""}</p>
-            <input
-              id="postcode"
-              name="postcode"
-              defaultValue={location.postcode}
-              onChange={(event) =>
-                updateFieldError(
-                  "postcode",
-                  validateLength(event.target.value, 12, "Postcode"),
-                )
-              }
-              className="field"
-            />
-          </span>
-
-          <span className="field-set">
-            <label className="label" htmlFor="access_instructions">
-              Access instructions
-            </label>
-            <textarea
-              id="access_instructions"
-              name="access_instructions"
-              rows={5}
-              defaultValue={location.access_instructions}
-              className="field resize-none"
-            />
-          </span>
-
-          <p className="mt-4 text-sm text-bad">{stateMessage}</p>
-
-          <div className="mt-8 flex items-center justify-end gap-2">
-            <Link
-              href="/dashboard/profile"
-              className="w-max rounded-lg border border-black/10 p-3 px-6 text-sm font-semibold text-plum duration-200 hover:border-black/20 active:border-transparent active:bg-surface active:text-plum-hover"
-            >
-              Back
-            </Link>
-            <button
-              form="update_location"
-              type="submit"
-              disabled={pending || hasClientError}
-              aria-disabled={pending || hasClientError}
-              className="w-max rounded-lg bg-plum p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-plum-hover disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
-            >
-              {pending ? "Saving..." : "Save"}
-            </button>
-          </div>
-        </form>
       </div>
-    </main>
+
+      <TextInput
+        name="public_area"
+        label="Area"
+        defaultValue={location.public_area}
+        error={errors.public_area ?? undefined}
+        helper="Keep it broad — a neighbourhood or town, not a street."
+        onChange={onChangeLength("public_area", 120, "Public area")}
+      />
+
+      <div className="mt-2 flex items-center gap-2">
+        <span aria-hidden="true" className="block size-[7px] rounded-full bg-plum" />
+        <p className="text-label uppercase text-black/45">
+          Private — only after a paid, confirmed booking
+        </p>
+      </div>
+
+      <TextInput
+        name="address_line_1"
+        label="Address line 1"
+        defaultValue={location.address_line_1}
+        error={errors.address_line_1 ?? undefined}
+        onChange={onChangeLength("address_line_1", 120, "Address line 1")}
+      />
+      <TextInput
+        name="address_line_2"
+        label="Address line 2"
+        optional
+        defaultValue={location.address_line_2}
+        error={errors.address_line_2 ?? undefined}
+        onChange={onChangeLength("address_line_2", 120, "Address line 2")}
+      />
+      <FieldPair>
+        <TextInput
+          name="city"
+          label="City"
+          defaultValue={location.city}
+          error={errors.city ?? undefined}
+          onChange={onChangeLength("city", 80, "City")}
+        />
+        <TextInput
+          name="postcode"
+          label="Postcode"
+          defaultValue={location.postcode}
+          error={errors.postcode ?? undefined}
+          onChange={onChangeLength("postcode", 12, "Postcode")}
+        />
+      </FieldPair>
+      <TextArea
+        name="access_instructions"
+        label="Access instructions"
+        optional
+        rows={4}
+        defaultValue={location.access_instructions}
+      />
+    </FormTemplate>
   );
 }

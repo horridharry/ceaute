@@ -1,11 +1,21 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import Link from "next/link";
+import { FormTemplate } from "@/components/templates/form-template";
+import { CommitBar } from "@/components/ui/commit-bar";
+import { Field, TextArea, TextInput } from "@/components/ui/field";
+import { ProblemNotice } from "@/components/ui/notice";
+import { SubmitButton } from "@/components/ui/submit-button";
+import { StackedTopBar } from "@/components/ui/top-bar";
 import { normalizeUsername, validateUsername } from "../../_lib/username";
 
+// T3 · Form. Creating a draft page: nothing is public until she publishes.
+// The username still follows the business name until she edits it, and the
+// same client-side validation still gates the submit — only the clothes moved.
 export function ProviderOnboardingForm({ action, providerPage }) {
-  const [stateMessage, formAction, pending] = useActionState(action, "");
+  // SubmitButton reads the pending flag from the surrounding form, so this
+  // component does not need to hold one of its own.
+  const [stateMessage, formAction] = useActionState(action, "");
   const [businessName, setBusinessName] = useState(providerPage.businessName);
   const [username, setUsername] = useState(providerPage.username);
   // A saved or hand-typed username belongs to the user; only an untouched one
@@ -36,37 +46,54 @@ export function ProviderOnboardingForm({ action, providerPage }) {
   };
 
   return (
-    <form className="mt-8 flex flex-col gap-4" action={formAction}>
-      <span className="field-set">
-        <label className="label" htmlFor="business_name">
-          Business Name
-        </label>
-        <input
-          id="business_name"
-          name="business_name"
-          required
-          value={businessName}
-          onChange={updateBusinessName}
-          className="field"
-        />
-      </span>
-
-      <span className="field-set">
-        <label className="label" htmlFor="username">
-          Ceaute Username
-        </label>
-        <p
-          className={
-            usernameError
-              ? "text-sm transition-opacity ease-in opacity-100 duration-500 text-bad"
-              : "text-sm transition-opacity ease-in opacity-0 duration-500 text-bad"
-          }
-        >
-          {usernameError || "Username is valid"}
+    <FormTemplate
+      action={formAction}
+      nav={<StackedTopBar backHref="/account" backLabel="Account" />}
+      notice={
+        stateMessage ? (
+          <ProblemNotice title="That did not save">{stateMessage}</ProblemNotice>
+        ) : null
+      }
+      commitBar={
+        <CommitBar contextDetail="Then: location, hours, a treatment, terms, a photo, Stripe.">
+          <SubmitButton
+            block={false}
+            disabled={Boolean(usernameError)}
+            pendingLabel="Creating your draft"
+            className="px-6"
+          >
+            Create draft page
+          </SubmitButton>
+        </CommitBar>
+      }
+    >
+      <header className="flex flex-col gap-1">
+        <h1 className="text-display text-pretty text-ink">Create your page</h1>
+        <p className="text-meta text-black/50">
+          This makes a draft. Nothing is public until you publish.
         </p>
-        <div className="relative flex items-center rounded-lg">
-          <span className="absolute z-40 ml-3 text-sm opacity-80">
-            ceaute.com /@
+      </header>
+
+      <TextInput
+        name="business_name"
+        label="Business name"
+        required
+        value={businessName}
+        onChange={updateBusinessName}
+      />
+
+      <Field
+        id="username"
+        label="Username"
+        error={usernameError || undefined}
+        helper={usernameError ? undefined : "This is the link for your Instagram bio."}
+      >
+        <div className="relative">
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-y-0 left-[13px] flex items-center text-[14px] text-black/45"
+          >
+            ceaute.com/@
           </span>
           <input
             id="username"
@@ -75,44 +102,21 @@ export function ProviderOnboardingForm({ action, providerPage }) {
             required
             value={username}
             onChange={updateUsername}
-            className="relative w-full appearance-none ring-1 ring-transparent rounded-lg border p-2.5 pl-28 outline-none duration-200 hover:border-black/25 focus:border-plum focus:ring-plum"
+            aria-invalid={usernameError ? true : undefined}
+            className="field pl-[105px]"
           />
         </div>
-      </span>
+      </Field>
 
-      <span className="field-set">
-        <label className="label" htmlFor="biography">
-          Short bio
-        </label>
-        <textarea
-          id="biography"
-          name="biography"
-          value={biography}
-          onChange={(event) => setBiography(event.target.value)}
-          rows={4}
-          maxLength={500}
-          className="field resize-none"
-        />
-      </span>
-
-      <p className="text-sm text-bad">{stateMessage}</p>
-
-      <div className="mt-4 flex items-center justify-end gap-2">
-        <Link
-          href="/account"
-          className="w-max rounded-lg font-semibold hover:border-black/20 border-black/10 text-plum p-3 px-6 text-sm border duration-200 active:bg-surface active:border-transparent active:text-plum-hover"
-        >
-          Back
-        </Link>
-        <button
-          type="submit"
-          disabled={pending || Boolean(usernameError)}
-          aria-disabled={pending || Boolean(usernameError)}
-          className="w-max rounded-lg font-semibold bg-plum p-3 px-4 text-sm text-white shadow-sm duration-200 hover:bg-plum-hover disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
-        >
-          {pending ? "Saving..." : "Save and continue"}
-        </button>
-      </div>
-    </form>
+      <TextArea
+        name="biography"
+        label="Biography"
+        optional
+        rows={4}
+        maxLength={500}
+        value={biography}
+        onChange={(event) => setBiography(event.target.value)}
+      />
+    </FormTemplate>
   );
 }
