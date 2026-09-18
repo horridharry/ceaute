@@ -44,9 +44,10 @@ leaves `confirmation_sent_at` unset, so this confirms Resend accepted the
 message from `bookings@ceaute.com` — which also confirms `ceaute.com` is a
 verified Resend sending domain, the open question from the 2026-09-17 report.
 
-**Not proven here:** that the message reached the inbox. Resend accepting a
-message is not the same as delivery. The recipient should confirm receipt and
-that the body shows a six-digit code under the Ceaute subject.
+**Delivery confirmed by the recipient.** Resend accepting a message is not the
+same as delivery, so this was held open until the owner confirmed the email
+reached the approved test inbox. It did. End-to-end Production Auth email —
+GoTrue → Resend SMTP → inbox — is therefore proven, not merely accepted.
 
 ## 3. Two `supabase init` template defaults corrected, not pushed blind
 
@@ -169,11 +170,19 @@ Vercel still resolves Production → `agpnrsrotofnmfzzbcpw` and Preview →
 `fgnusdbpuvndilryvudc`.
 
 **Auth.** A further OTP request against `ceaute-prod` returned HTTP 200 and
-updated `confirmation_sent_at` to 12:09:37 UTC. Inbox receipt still needs the
-recipient's confirmation.
+updated `confirmation_sent_at` to 12:09:37 UTC. The owner confirmed the message
+arrived in the approved test inbox, closing the last open item in §2.
 
-The technical portion of Stage 1 is complete. No application code changed in
-this verification pass.
+The technical portion of Stage 1 is complete: Production is a separate Supabase
+project with its own credentials, its Auth email is delivered through Resend
+with the Ceaute OTP templates, its scheduled jobs authenticate and succeed, and
+Development and Preview cannot reach it. No application code changed in this
+verification pass.
+
+Two non-blocking follow-ups remain, both deliberately untouched:
+`auth.sms.twilio.enabled` cannot be turned off via `config push` and needs a
+Dashboard toggle to match this file (inert — SMS sign-up is off and no Twilio
+credentials are set), and the test auth/profile rows from §8 are still present.
 
 ## 6. Environment isolation verified
 
