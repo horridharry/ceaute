@@ -1,4 +1,5 @@
 import Link from "next/link";
+import AppHeader from "@/components/app-header/app-header";
 import Form from "next/form";
 import { PendingButton } from "@/components/pending-button";
 import {
@@ -144,7 +145,9 @@ export default async function DiscoverPage({ searchParams }) {
   );
 
   return (
-    <main className="container max-w-md p-5 bg-white">
+    <>
+      <AppHeader />
+      <main className="container max-w-md p-5 bg-white">
       <div className="mt-6 flex flex-col">
         <h1 className="text-3xl font-bold tracking-tighter">Discover</h1>
         <p className="mt-1 text-sm">
@@ -160,7 +163,8 @@ export default async function DiscoverPage({ searchParams }) {
         ) : (
           <SearchResults results={searchResult.results} searched={searched} />
         )}
-      </div>
-    </main>
+        </div>
+      </main>
+    </>
   );
 }

@@ -8,11 +8,14 @@ import { LinkPendingHint } from "@/components/link-pending-hint";
 // reach.
 const BAR = "flex h-[52px] items-center gap-3 bg-white";
 
-export function RootTopBar({ className = "", children }) {
+// `homeHref` is where the wordmark goes: /discover for a customer, /dashboard
+// for a provider. It is deliberately not "/" — the root is a redirect, and a
+// user should not be bounced through it on every tap of the logo.
+export function RootTopBar({ homeHref = "/discover", className = "", children }) {
   return (
     <header className={`${BAR} justify-between ${className}`.trim()}>
       <Link
-        href="/"
+        href={homeHref}
         className="text-[16px] font-semibold tracking-[-0.03em] text-ink"
       >
         Ceaute

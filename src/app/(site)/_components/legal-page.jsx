@@ -1,4 +1,5 @@
 import Link from "next/link";
+import AppHeader from "@/components/app-header/app-header";
 
 // Shared shell for /terms and /privacy. Both pass `draft`, which renders a
 // visible notice naming what Ceaute has still not published: the operator's
@@ -10,7 +11,9 @@ import Link from "next/link";
 // docs/reports/2026-09-18-legal-pages-review-note.md.
 export function LegalPage({ title, summary, updated, draft = false, children }) {
   return (
-    <main className="container max-w-2xl mx-auto p-5 pb-16 bg-white">
+    <>
+      <AppHeader />
+      <main className="container max-w-2xl mx-auto p-5 pb-16 bg-white">
       <div className="mt-6 flex flex-col">
         <h1 className="text-3xl font-bold tracking-tighter">{title}</h1>
         <p className="mt-1 text-sm text-black/60">{summary}</p>
@@ -47,7 +50,8 @@ export function LegalPage({ title, summary, updated, draft = false, children }) 
         >
           Back to Ceaute
         </Link>
-      </div>
-    </main>
+        </div>
+      </main>
+    </>
   );
 }

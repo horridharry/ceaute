@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Geist } from "next/font/google";
-import AppHeader from "@/components/app-header/app-header";
 
 import "./globals.css";
 
@@ -34,10 +33,10 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
       lang="en"
       className={`${geist.variable} ${geist.className} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
-        <AppHeader />
-        {children}
-      </body>
+      {/* The header is rendered by the screens that want it, not here: the
+          stacked, modal and letter templates each supply their own nav, and a
+          letter screen must have nothing at all in its top right. */}
+      <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );
 }

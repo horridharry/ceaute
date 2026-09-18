@@ -1,8 +1,11 @@
 import Link from 'next/link';
+import AppHeader from '@/components/app-header/app-header';
 
 export default function NotFound() {
   return (
-    <main className="container mx-auto flex max-w-md flex-col p-5">
+    <>
+      <AppHeader />
+      <main className="container mx-auto flex max-w-md flex-col p-5">
       <section className="mt-6 flex flex-col rounded-2xl border border-black/10 bg-white p-6">
         <p className="text-xs font-bold uppercase tracking-widest text-plum">
           Page not found
@@ -20,6 +23,7 @@ export default function NotFound() {
           Discover providers
         </Link>
       </section>
-    </main>
+      </main>
+    </>
   );
 }

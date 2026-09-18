@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect } from 'react';
 import { describeRouteError } from '@/lib/errors/route-error';
+import { PAGE_COLUMN } from '@/components/templates/page-column';
 
 type RouteErrorProps = {
   error: Error & { digest?: string };
@@ -20,7 +21,22 @@ export default function RouteError({ error, reset }: RouteErrorProps) {
   const copy = describeRouteError(error);
 
   return (
-    <main className="container mx-auto flex max-w-md flex-col p-5">
+    <>
+      {/* A client boundary cannot render the async <AppHeader />, and it has no
+          session to read anyway, so the bar here is the wordmark alone. */}
+      <div className="border-b border-black/8 bg-white">
+        <div className={PAGE_COLUMN}>
+          <header className="flex h-[52px] items-center">
+            <Link
+              href="/discover"
+              className="text-[16px] font-semibold tracking-[-0.03em] text-ink"
+            >
+              Ceaute
+            </Link>
+          </header>
+        </div>
+      </div>
+      <main className="container mx-auto flex max-w-md flex-col p-5">
       <section className="mt-6 flex flex-col rounded-2xl border border-black/10 bg-white p-6">
         <p className="text-xs font-bold uppercase tracking-widest text-plum">
           {copy.heading}
@@ -47,7 +63,8 @@ export default function RouteError({ error, reset }: RouteErrorProps) {
             Check my bookings
           </Link>
         </div>
-      </section>
-    </main>
+        </section>
+      </main>
+    </>
   );
 }

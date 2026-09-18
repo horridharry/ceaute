@@ -1,103 +1,46 @@
 "use client";
-import Link from "next/link";
-import Image from "next/image";
-import { useState } from "react";
-import { usePathname } from "next/navigation";
-import { logoutUser } from "@/app/(authenticate)/actions";
-import { LinkPendingHint } from "@/components/link-pending-hint";
-import { PendingButton } from "@/components/pending-button";
 
-const routes = [
-  { name: "Overview", path: "/dashboard" },
-  { name: "Bookings", path: "/dashboard/bookings" },
-  { name: "Treatments", path: "/dashboard/treatments" },
-  { name: "Treatment groups", path: "/dashboard/treatment-groups" },
-  { name: "Add-ons", path: "/dashboard/add-ons" },
-  { name: "Availability", path: "/dashboard/availability" },
-  { name: "Locations", path: "/dashboard/locations" },
-  { name: "Page", path: "/dashboard/profile" },
+import { usePathname } from "next/navigation";
+import { ProviderNav } from "@/components/ui/provider-nav";
+
+// B7: the eight-item drawer becomes the five-item visible strip. A provider
+// works two-handed between clients — a strip she can see beats a menu she has
+// to open.
+//
+// The three sections that disappeared are not gone, they moved: groups and
+// add-ons are reached from Treatments, location and working hours from Page.
+// Sign out moved to the avatar menu in the top bar, which every dashboard
+// screen now carries.
+const SECTION_BY_PREFIX = [
+  ["/dashboard/bookings", "bookings"],
+  ["/dashboard/treatments", "treatments"],
+  ["/dashboard/treatment-groups", "treatments"],
+  ["/dashboard/add-ons", "treatments"],
+  ["/dashboard/profile", "page"],
+  ["/dashboard/locations", "page"],
+  ["/dashboard/availability", "page"],
+  ["/dashboard/settings", "settings"],
 ];
+
+export function activeProviderSection(pathname) {
+  if (pathname === "/dashboard") return "today";
+
+  const match = SECTION_BY_PREFIX.find(
+    ([prefix]) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  );
+
+  return match ? match[1] : null;
+}
 
 export function DashboardNav() {
   const pathname = usePathname();
-  const [navOpen, setNavOpen] = useState(false);
-  // Selecting a destination closes the menu straight away; the Link has
-  // already started the client-side navigation by the time this runs.
-  const closeNav = () => setNavOpen(false);
 
-  const isCurrentRoute = (routePath) => {
-    if (routePath === "/dashboard") {
-      return pathname === routePath;
-    }
+  // Onboarding is the one dashboard URL reachable before a provider page
+  // exists, and every other section redirects back to it until one does.
+  // Offering the strip there would be five links to the same screen.
+  if (pathname === "/dashboard/onboarding") {
+    return null;
+  }
 
-    return pathname === routePath || pathname.startsWith(`${routePath}/`);
-  };
-
-  return (
-    <>
-      <section className="relative p-3 border-b flex">
-        <button
-          type="button"
-          aria-expanded={navOpen}
-          aria-controls="dashboard-nav"
-          onClick={() => setNavOpen(!navOpen)}
-          className="p-1 px-2 rounded-md hover:bg-black/5 flex gap-1 duration-200"
-        >
-          <Image src="/svg/menu.svg" alt="" width={18} height={18} />
-          <p className="text-sm font-semibold">Menu</p>
-        </button>
-      </section>
-      <nav
-        id="dashboard-nav"
-        aria-label="Dashboard"
-        className={`${
-          navOpen ? "block" : "hidden"
-        } ml-auto duration-200 transition-all bg-white p-3`}
-      >
-        <ul className="grid inset-0 bg-white gap-4">
-          {routes.map((route) => (
-            <li key={route.path}>
-              <Link
-                href={route.path}
-                onClick={closeNav}
-                aria-current={isCurrentRoute(route.path) ? "page" : undefined}
-                className={`${
-                  isCurrentRoute(route.path) ? "font-semibold" : "font-normal"
-                } block border-b p-2 hover:bg-black/5 text-sm`}
-              >
-                {route.name}
-                <LinkPendingHint />
-              </Link>
-            </li>
-          ))}
-        </ul>
-
-        <div className="mt-8 border-t pt-4">
-          <Link
-            href="/dashboard/settings"
-            onClick={closeNav}
-            aria-current={
-              isCurrentRoute("/dashboard/settings") ? "page" : undefined
-            }
-            className={`${
-              isCurrentRoute("/dashboard/settings")
-                ? "font-semibold"
-                : "font-normal"
-            } block border-b p-2 text-sm hover:bg-black/5`}
-          >
-            Settings
-            <LinkPendingHint />
-          </Link>
-          <form action={logoutUser}>
-            <PendingButton
-              pendingLabel="Signing out..."
-              className="mt-4 w-full border-b p-2 text-left text-sm font-medium text-bad hover:border-bad/60 hover:bg-bad/5 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              Sign out
-            </PendingButton>
-          </form>
-        </div>
-      </nav>
-    </>
-  );
+  return <ProviderNav value={activeProviderSection(pathname)} />;
 }
