@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { StackedTopBar } from "@/components/ui/top-bar";
 import { useActionState, useMemo, useState } from "react";
 
 function ErrorMessage({ message }) {
@@ -17,7 +18,7 @@ function SubmitButton({ pending, mode, hasClientError, formId }) {
       form={formId}
       disabled={pending || hasClientError}
       aria-disabled={pending || hasClientError}
-      className="w-max rounded-lg bg-plum p-3 px-4 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
+      className="inline-flex h-12 select-none items-center justify-center rounded-control bg-plum px-6 text-body-strong font-semibold text-white transition duration-150 ease-out hover:bg-plum-hover disabled:pointer-events-none disabled:opacity-40 aria-disabled:pointer-events-none aria-disabled:opacity-40"
     >
       {pending ? pendingLabel : idleLabel}
     </button>
@@ -96,9 +97,13 @@ export function TreatmentAddOnForm({
   const heading = mode === "create" ? "Create add-on" : "Edit add-on";
 
   return (
-    <main className="container max-w-md p-5">
+    <>
+      <div className="mx-auto w-full max-w-[720px] px-5">
+        <StackedTopBar backHref="/dashboard/add-ons" backLabel="Add-ons" />
+      </div>
+      <main className="mx-auto w-full max-w-[720px] px-5 pb-8">
       <div className="mt-6 flex flex-col">
-        <h1 className="text-3xl font-bold tracking-tighter">{heading}</h1>
+        <h1 className="text-display text-pretty text-ink">{heading}</h1>
 
         <form
           id="treatment_add_on_form"
@@ -206,7 +211,7 @@ export function TreatmentAddOnForm({
           ) : null}
           <Link
             href="/dashboard/add-ons"
-            className="w-max rounded-lg border border-black/10 p-3 px-6 text-sm font-semibold text-plum duration-200 hover:border-black/20 active:border-transparent active:bg-surface active:text-plum-hover disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+            className="inline-flex h-12 select-none items-center justify-center rounded-control border border-black/16 px-6 text-body-strong text-ink transition duration-150 ease-out hover:border-black/30"
           >
             Back
           </Link>
@@ -218,6 +223,7 @@ export function TreatmentAddOnForm({
           />
         </div>
       </div>
-    </main>
+      </main>
+    </>
   );
 }

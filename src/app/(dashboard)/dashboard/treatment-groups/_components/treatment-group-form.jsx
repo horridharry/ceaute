@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { StackedTopBar } from "@/components/ui/top-bar";
 import { useActionState } from "react";
 
 export function TreatmentGroupForm({ action, group = null }) {
@@ -8,9 +9,13 @@ export function TreatmentGroupForm({ action, group = null }) {
   const editing = Boolean(group);
 
   return (
-    <main className="container max-w-md p-5">
+    <>
+      <div className="mx-auto w-full max-w-[720px] px-5">
+        <StackedTopBar backHref="/dashboard/treatment-groups" backLabel="Groups" />
+      </div>
+      <main className="mx-auto w-full max-w-[720px] px-5 pb-8">
       <div className="mt-6 flex flex-col">
-        <h1 className="text-3xl font-bold tracking-tighter">
+        <h1 className="text-display text-pretty text-ink">
           {editing ? "Edit treatment group" : "New treatment group"}
         </h1>
         <form action={formAction} className="mt-10 flex flex-col gap-3">
@@ -32,7 +37,7 @@ export function TreatmentGroupForm({ action, group = null }) {
           <div className="mt-4 flex items-center justify-end gap-2">
             <Link
               href="/dashboard/treatment-groups"
-              className="w-max rounded-lg border border-black/10 p-3 px-6 text-sm font-semibold text-plum duration-200 hover:border-black/20"
+              className="inline-flex h-12 select-none items-center justify-center rounded-control border border-black/16 px-6 text-body-strong text-ink transition duration-150 ease-out hover:border-black/30"
             >
               Back
             </Link>
@@ -40,7 +45,7 @@ export function TreatmentGroupForm({ action, group = null }) {
               type="submit"
               disabled={pending}
               aria-disabled={pending}
-              className="w-max rounded-lg bg-plum p-3 px-4 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex h-12 select-none items-center justify-center rounded-control bg-plum px-6 text-body-strong font-semibold text-white transition duration-150 ease-out hover:bg-plum-hover disabled:pointer-events-none disabled:opacity-40 aria-disabled:pointer-events-none aria-disabled:opacity-40"
             >
               {pending
                 ? editing
@@ -53,6 +58,7 @@ export function TreatmentGroupForm({ action, group = null }) {
           </div>
         </form>
       </div>
-    </main>
+      </main>
+    </>
   );
 }
