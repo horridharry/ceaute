@@ -6,6 +6,7 @@ import {
   recordBookingRefundState,
 } from '@/lib/payments/refunds';
 import { createServiceRoleClient } from '@/lib/supabase/service-role';
+import { eventMatchesStripeMode, resolveStripeMode } from '@/lib/stripe/mode';
 import { getStripe } from '@/lib/stripe/server';
 
 const PAYMENT_EVENT_TYPES = new Set([
@@ -217,6 +218,14 @@ export async function POST(request: NextRequest) {
     event = stripe.webhooks.constructEvent(rawBody, signature, webhookSecret);
   } catch {
     return NextResponse.json({ error: 'Invalid signature.' }, { status: 400 });
+  }
+
+  // A correctly signed event carrying the other mode's data means the endpoint
+  // is wired to the wrong Stripe mode. Rejecting is safer than processing it:
+  // 400 is not retried into a loop, and the mismatch surfaces in Stripe's own
+  // webhook log rather than silently mutating bookings.
+  if (!eventMatchesStripeMode(event, resolveStripeMode())) {
+    return NextResponse.json({ error: 'Stripe mode mismatch.' }, { status: 400 });
   }
 
   if (!PAYMENT_EVENT_TYPES.has(event.type)) {

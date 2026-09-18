@@ -1,4 +1,8 @@
 import { LegalPage } from "../_components/legal-page";
+import {
+  legalIdentity,
+  needsSeparateAddressForService,
+} from "@/lib/legal/identity";
 
 export const metadata = {
   title: "Privacy · Ceaute",
@@ -10,24 +14,42 @@ export default function PrivacyPage() {
       title="Privacy"
       summary="What personal information Ceaute holds, why, and what you can do about it."
       updated="18 September 2026"
-      draft
     >
       <section>
         <h2>Who we are and how to contact us</h2>
         <p>
           Ceaute operates the booking platform at ceaute.com and decides how
           the information described here is used, which makes Ceaute the data
-          controller for it. Ceaute is operated by Harrison as a sole trader
-          under the trading name Ceaute, so the data controller is an
-          individual rather than a company — there is no company registration
-          number and no registered office.
+          controller for it. Ceaute is operated by {legalIdentity.operatorName}{" "}
+          as a {legalIdentity.structure} under the trading name{" "}
+          {legalIdentity.tradingName}, so the data controller is an individual
+          rather than a company — there is no company registration number and
+          no registered office.
         </p>
+        <ul>
+          <li>
+            <strong>Data controller:</strong> {legalIdentity.operatorName},
+            trading as {legalIdentity.tradingName}
+          </li>
+          <li>
+            <strong>Address:</strong> {legalIdentity.businessAddress}
+          </li>
+          {needsSeparateAddressForService() ? (
+            <li>
+              <strong>Address for service:</strong>{" "}
+              {legalIdentity.addressForService}
+            </li>
+          ) : null}
+          <li>
+            <strong>Email:</strong>{" "}
+            <a href={`mailto:${legalIdentity.contactEmail}`}>
+              {legalIdentity.contactEmail}
+            </a>
+          </li>
+        </ul>
         <p>
-          For anything in this notice, including a request about your own
-          information, email{" "}
-          <a href="mailto:ndu.harry02@gmail.com">ndu.harry02@gmail.com</a>. A
-          postal address for Ceaute is not yet arranged, so this notice does
-          not publish one.
+          Use that email for anything in this notice, including a request about
+          your own information.
         </p>
         <p>
           Ceaute has not appointed a Data Protection Officer; it is not
@@ -326,7 +348,10 @@ export default function PrivacyPage() {
         <p>
           You do not have to pay to exercise any of these, and we must respond
           within one month. Send a request to{" "}
-          <a href="mailto:ndu.harry02@gmail.com">ndu.harry02@gmail.com</a>.
+          <a href={`mailto:${legalIdentity.contactEmail}`}>
+            {legalIdentity.contactEmail}
+          </a>{" "}
+          or to {legalIdentity.businessAddress}.
         </p>
       </section>
 
@@ -334,8 +359,10 @@ export default function PrivacyPage() {
         <h2>How to complain</h2>
         <p>
           Please tell us first, at{" "}
-          <a href="mailto:ndu.harry02@gmail.com">ndu.harry02@gmail.com</a>, so
-          we can put it right. You can also complain to
+          <a href={`mailto:${legalIdentity.contactEmail}`}>
+            {legalIdentity.contactEmail}
+          </a>
+          , so we can put it right. You can also complain to
           the Information Commissioner&rsquo;s Office, the UK&rsquo;s data
           protection regulator, at ico.org.uk/make-a-complaint or on 0303 123
           1113, or by writing to the Information Commissioner&rsquo;s Office,

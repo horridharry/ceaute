@@ -3,6 +3,7 @@ import { redirect, notFound } from "next/navigation";
 import { PendingButton } from "@/components/pending-button";
 import { calculateBookingPaymentAmounts } from "@/lib/payments/booking-payments";
 import { createClient } from "@/lib/supabase/server";
+import { legalIdentity } from "@/lib/legal/identity";
 import {
   createBookingHoldFromDetails,
   getBookingHoldSummary,
@@ -133,20 +134,37 @@ function calculatePaymentSummary({ bookingSettings, totalPricePence }) {
 
 // There is no acceptance checkbox: continuing to payment is the acceptance
 // interaction (see docs/product.md), so the policies must be reachable from
-// both checkout steps before the customer pays.
+// both checkout steps before the customer pays. CCR 2013 Schedule 2 (b) and
+// (c) also want the trader's identity and geographic address given before the
+// consumer is bound, which is why they appear here and not only on /terms.
 function PolicyNotice() {
   return (
-    <p className="mt-4 text-xs text-black/60">
-      By continuing you agree to Ceaute&rsquo;s{" "}
-      <Link href="/terms" className="font-semibold underline">
-        Terms
-      </Link>{" "}
-      and{" "}
-      <Link href="/privacy" className="font-semibold underline">
-        Privacy notice
-      </Link>
-      .
-    </p>
+    <div className="mt-4 text-xs leading-relaxed text-black/60">
+      <p>
+        By continuing you agree to Ceaute&rsquo;s{" "}
+        <Link href="/terms" className="font-semibold underline">
+          Terms
+        </Link>{" "}
+        and{" "}
+        <Link href="/privacy" className="font-semibold underline">
+          Privacy notice
+        </Link>
+        .
+      </p>
+      <p className="mt-2">
+        Ceaute is a trading name of {legalIdentity.operatorName}, a{" "}
+        {legalIdentity.structure}, of {legalIdentity.businessAddress}.
+        Questions and complaints:{" "}
+        <a
+          href={`mailto:${legalIdentity.contactEmail}`}
+          className="font-semibold underline"
+        >
+          {legalIdentity.contactEmail}
+        </a>
+        . Your appointment is carried out by the provider named above, not by
+        Ceaute.
+      </p>
+    </div>
   );
 }
 

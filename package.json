@@ -7,12 +7,13 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "node scripts/assert-legal-identity.mjs && next build",
     "start": "next start",
     "lint": "eslint",
     "test": "node --import ./tests/_support/register-alias.mjs --test",
     "test:db": "supabase test db",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "check:legal": "node scripts/assert-legal-identity.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.6",

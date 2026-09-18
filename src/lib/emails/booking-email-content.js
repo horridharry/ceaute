@@ -3,6 +3,7 @@ import {
   formatSingleDateTime,
 } from "@/lib/bookings/booking-display";
 import { renderEmailLayout } from "./email-layout";
+import { legalContactLine } from "@/lib/legal/identity";
 
 const FALLBACK_SUBJECT = "Ceaute booking update";
 
@@ -190,6 +191,7 @@ export function renderBookingEmailText(email, appUrl) {
     ...content.sections.flatMap((entry) =>
       entry.rows.map(({ label, value }) => `${label}: ${value}`),
     ),
+    legalContactLine(),
     `View booking: ${content.bookingUrl || "Unavailable"}`,
   ].join("\n");
 }

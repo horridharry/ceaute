@@ -43,6 +43,14 @@ export function calculateBookingPaymentAmounts(serviceSnapshot) {
   };
 }
 
+// Zero today, which means `application_fee_amount` is never sent and the whole
+// charge is transferred to the provider. Under destination charges with
+// `fees_collector: "application"` (see stripe/recipient-account.js), Stripe's
+// processing fee is still debited from the PLATFORM balance — which receives
+// nothing. In Test mode that costs nothing and is invisible; in Live it makes
+// the platform balance negative on every booking. Settle the fee, or record
+// the subsidy as a decision, before Stripe Live is activated. The plumbing for
+// a non-zero fee already exists end to end and needs no new code.
 export function calculateCeauteFeePence() {
   return 0;
 }

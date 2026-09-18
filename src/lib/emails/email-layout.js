@@ -3,6 +3,8 @@
 // block is only a progressive enhancement for narrow screens. Every dynamic
 // value passes through escapeHtml here, so callers hand over plain strings.
 
+import { legalContactLine } from "@/lib/legal/identity";
+
 const FONT_STACK =
   "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
 
@@ -140,7 +142,7 @@ ${renderAction(action, tone)}
 <tr>
 <td style="padding:20px 8px 8px;font-size:12px;line-height:18px;color:#8a8a8a;">
 ${footerNote ? `<p style="margin:0 0 6px;">${escapeHtml(footerNote)}</p>` : ""}
-<p style="margin:0;">Sent by Ceaute</p>
+<p style="margin:0;">${escapeHtml(legalContactLine())}</p>
 </td>
 </tr>
 </table>

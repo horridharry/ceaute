@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createServiceRoleClient } from '@/lib/supabase/service-role';
+import { eventMatchesStripeMode, resolveStripeMode } from '@/lib/stripe/mode';
 import {
   getStripe,
   retrieveStripeAccount,
@@ -19,6 +20,7 @@ const STRIPE_ACCOUNT_EVENT_TYPES = new Set([
 type StripeAccountEvent = {
   id: string;
   type: string;
+  livemode?: boolean;
   data?: { account_id?: unknown };
   related_object?: { type?: unknown; id?: unknown } | null;
 };
@@ -85,6 +87,13 @@ export async function POST(request: NextRequest) {
     ) as StripeAccountEvent;
   } catch {
     return NextResponse.json({ error: 'Invalid signature.' }, { status: 400 });
+  }
+
+  // Same reasoning as the payments endpoint: an event from the other mode means
+  // this endpoint is pointed at the wrong Stripe mode, and syncing a provider's
+  // payment account from it would corrupt real state.
+  if (!eventMatchesStripeMode(event, resolveStripeMode())) {
+    return NextResponse.json({ error: 'Stripe mode mismatch.' }, { status: 400 });
   }
 
   if (!STRIPE_ACCOUNT_EVENT_TYPES.has(event.type)) {

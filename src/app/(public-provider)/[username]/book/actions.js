@@ -228,6 +228,20 @@ export async function getBookingHoldSummary(bookingId) {
 }
 
 function getRequestOrigin(headerStore) {
+  // In Production, pin to the canonical origin. Stripe bakes success_url and
+  // cancel_url into the Session and they are persisted with the payment
+  // attempt, so a paying customer must not be returned to whatever host
+  // happened to serve the request. CEAUTE_APP_URL is already the canonical
+  // origin for booking emails.
+  //
+  // Preview and local deployments keep using the request origin, because there
+  // the whole point is to land back on the deployment under test.
+  const configuredOrigin = process.env.CEAUTE_APP_URL?.trim();
+
+  if (process.env.VERCEL_ENV === "production" && configuredOrigin) {
+    return configuredOrigin.replace(/\/+$/, "");
+  }
+
   const origin = headerStore.get("origin");
 
   if (origin) {
