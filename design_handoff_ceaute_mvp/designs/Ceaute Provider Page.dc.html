@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics><meta name="design_doc_mode" content="canvas"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet"><style>body{margin:0;background:#f0eee9;font-family:Geist,system-ui,sans-serif}a{color:#8c2b52}a:hover{color:#6f2141}</style></helmet>
+
+<div style="padding:40px 44px 44px">
+<div style="font:600 15px/1.3 Geist,sans-serif;color:#0b0b0b">Provider page — locked spec</div>
+<div style="margin-top:6px;font:400 12px/1.6 Geist,sans-serif;color:rgba(0,0,0,.55);max-width:760px">Design 8b, locked 16 Sep 2026. Profile at <span style="font-family:'Geist Mono',monospace;font-size:11px">/@username</span> in reading order — identity, bio, portfolio, treatments, reviews, policies, similar providers — with the full treatment list on <span style="font-family:'Geist Mono',monospace;font-size:11px">/@username/treatments</span>. Real Cluxeklaws data; photos are hers. Swipe hero with a plain counter, no invented affordance; chips filter treatments only.</div>
+
+<div style="display:flex;gap:18px;flex-wrap:wrap;margin-top:26px">
+
+<div style="display:flex;flex-direction:column;gap:10px">
+<div style="font:500 11px 'Geist Mono',monospace;color:rgba(0,0,0,.45);letter-spacing:.04em">PROFILE · 1</div>
+<div style="width:390px;height:800px;background:#fff;border:1px solid rgba(0,0,0,.14);border-radius:30px;overflow:hidden;display:flex;flex-direction:column;font-family:Geist,sans-serif;color:#0b0b0b;box-shadow:0 2px 10px rgba(0,0,0,.06)">
+<div style="height:186px;position:relative;flex:none;background:url('uploads/774468106_18005965076970416_2449061266499155646_n.jpg') center/cover">
+<div style="position:absolute;top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;padding:15px 24px 4px;font:500 13px Geist,sans-serif;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.45)"><span>9:41</span><div style="display:flex;gap:5px;align-items:center"><span style="width:15px;height:8px;border-radius:2px;background:#fff;opacity:.85"></span><span style="width:20px;height:9px;border-radius:3px;border:1px solid rgba(255,255,255,.7)"></span></div></div>
+<div style="position:absolute;top:44px;left:18px;right:18px;display:flex;justify-content:space-between"><span style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.92);display:grid;place-items:center;font:500 14px Geist,sans-serif">←</span><span style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.92);display:grid;place-items:center;font:500 13px Geist,sans-serif">♡</span></div>
+<span style="position:absolute;bottom:12px;right:14px;font:500 11px 'Geist Mono',monospace;color:#fff;background:rgba(0,0,0,.55);padding:6px 10px;border-radius:999px">1 / 9</span>
+</div>
+<div style="flex:1;overflow:hidden;padding:16px 20px 0">
+<div style="display:flex;gap:14px;align-items:flex-start"><div style="flex:1"><div style="font:600 24px Geist,sans-serif;letter-spacing:-.035em">Cluxeklaws</div><div style="margin-top:4px;font:400 12.5px Geist,sans-serif;color:rgba(0,0,0,.5)">@cluxeklaws · Manchester · 4.9 (34)</div></div><div style="width:48px;height:48px;border-radius:50%;flex:none;background:url('uploads/542753068_17960995832970416_9109832535221333394_n.jpg') center/cover;border:1px solid rgba(0,0,0,.08)"></div></div>
+<div style="margin-top:10px;font:400 13px/1.6 Geist,sans-serif;color:rgba(0,0,0,.8)">MANCHESTER NAIL TECH | ACRYLIC | GEL | RUSSIAN MANI | TOES<br>Time • Precision • Quality • Care<br>𝖦𝗅𝗈𝗋𝗒 𝗍𝗈 𝖩𝖾𝗌𝗎𝗌</div>
+<div style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(0,0,0,.09);display:flex;align-items:baseline;justify-content:space-between"><span style="font:600 16px Geist,sans-serif;letter-spacing:-.02em">Portfolio</span><span style="font:400 12.5px Geist,sans-serif;color:#8c2b52">See all 9</span></div>
+<div style="margin-top:3px;font:400 12.5px Geist,sans-serif;color:rgba(0,0,0,.5)">Recent sets by Cluxeklaws</div>
+<div style="display:flex;gap:7px;margin-top:11px;overflow:hidden">
+<div style="width:130px;height:104px;border-radius:10px;flex:none;background:url('uploads/781338939_18007639835970416_2674606861232786530_n.jpg') center/cover"></div>
+<div style="width:130px;height:104px;border-radius:10px;flex:none;background:url('uploads/790476101_18008657093970416_5915040309482860222_n.jpg') center/cover"></div>
+<div style="width:130px;height:104px;border-radius:10px;flex:none;background:url('uploads/793139991_18009224492970416_6208624817278613365_n.jpg') center/cover"></div>
+</div>
+<div style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(0,0,0,.09);font:600 16px Geist,sans-serif;letter-spacing:-.02em">Treatments</div>
+<div style="margin-top:12px;display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;justify-content:space-between;gap:12px;background:#f7f6f5;border-radius:12px;padding:13px 14px"><div><div style="font:500 14.5px Geist,sans-serif">French tips</div><div style="font:400 12px Geist,sans-serif;color:rgba(0,0,0,.55);margin-top:3px">Bundle · hands + toes</div></div><div style="text-align:right;flex:none"><div style="font:500 14px Geist,sans-serif">£71</div><div style="font:400 12px Geist,sans-serif;color:rgba(0,0,0,.5)">4h</div></div></div>
+</div>
+<div style="margin-top:10px;border:1px solid rgba(0,0,0,.16);border-radius:12px;padding:13px 14px;display:flex;justify-content:space-between;align-items:center"><span style="font:500 14px Geist,sans-serif">See all 21 treatments</span><span style="font:500 14px Geist,sans-serif;color:#8c2b52">→</span></div>
+</div>
+<div style="border-top:1px solid rgba(0,0,0,.1);padding:12px 20px 24px;display:flex;align-items:center;gap:12px"><div style="flex:1"><div style="font:500 14px Geist,sans-serif">from £31</div><div style="font:400 11.5px Geist,sans-serif;color:rgba(0,0,0,.55)">Next free: tomorrow 11:45</div></div><div style="background:#8c2b52;color:#fff;border-radius:11px;padding:13px 28px;font:600 14px Geist,sans-serif">Book</div></div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px">
+<div style="font:500 11px 'Geist Mono',monospace;color:rgba(0,0,0,.45);letter-spacing:.04em">PROFILE · 2</div>
+<div style="width:390px;height:800px;background:#fff;border:1px solid rgba(0,0,0,.14);border-radius:30px;overflow:hidden;display:flex;flex-direction:column;font-family:Geist,sans-serif;color:#0b0b0b;box-shadow:0 2px 10px rgba(0,0,0,.06)">
+<div style="display:flex;align-items:center;justify-content:space-between;padding:15px 24px 4px;font:500 13px Geist,sans-serif"><span>9:41</span><div style="display:flex;gap:5px;align-items:center"><span style="width:15px;height:8px;border-radius:2px;background:#0b0b0b;opacity:.7"></span><span style="width:20px;height:9px;border-radius:3px;border:1px solid rgba(0,0,0,.35)"></span></div></div>
+<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 20px 12px;border-bottom:1px solid rgba(0,0,0,.08)"><span style="font:500 14px Geist,sans-serif">Cluxeklaws</span><span style="width:26px;height:26px;border-radius:50%;background:url('uploads/542753068_17960995832970416_9109832535221333394_n.jpg') center/cover"></span></div>
+<div style="flex:1;overflow:hidden;padding:18px 20px 0">
+<div style="display:flex;align-items:baseline;justify-content:space-between"><span style="font:600 16px Geist,sans-serif;letter-spacing:-.02em">Reviews</span><span style="font:400 12.5px Geist,sans-serif;color:#8c2b52">All 34</span></div>
+<div style="margin-top:3px;font:400 12.5px Geist,sans-serif;color:rgba(0,0,0,.5)">4.9 average · verified bookings only</div>
+<div style="margin-top:12px;display:flex;flex-direction:column;gap:8px">
+<div style="border:1px solid rgba(0,0,0,.12);border-radius:12px;padding:13px 14px"><div style="display:flex;justify-content:space-between"><span style="font:500 13.5px Geist,sans-serif">Shanice · 5/5</span><span style="font:400 12px Geist,sans-serif;color:rgba(0,0,0,.45)">Aug · Freestyle Tier 2</span></div><div style="margin-top:6px;font:400 13px/1.5 Geist,sans-serif;color:rgba(0,0,0,.75)">Took her time and the shape was perfect. Lasted five weeks with no lifting.</div></div>
+</div>
+<div style="margin-top:20px;padding-top:18px;border-top:1px solid rgba(0,0,0,.09);font:600 16px Geist,sans-serif;letter-spacing:-.02em">Booking policies</div>
+<div style="margin-top:12px;display:flex;flex-direction:column;gap:8px">
+<div style="border:1px solid rgba(0,0,0,.12);border-radius:12px;padding:13px 14px"><div style="font:500 13.5px Geist,sans-serif">£10 deposit</div><div style="margin-top:4px;font:400 12.5px/1.5 Geist,sans-serif;color:rgba(0,0,0,.6)">Balance paid on the day. Deposit comes off the total.</div></div>
+<div style="border:1px solid rgba(0,0,0,.12);border-radius:12px;padding:13px 14px"><div style="font:500 13.5px Geist,sans-serif">Free cancellation up to 24 hours before</div><div style="margin-top:4px;font:400 12.5px/1.5 Geist,sans-serif;color:rgba(0,0,0,.6)">After that the deposit is kept.</div></div>
+<div style="border:1px solid rgba(0,0,0,.12);border-radius:12px;padding:13px 14px"><div style="font:500 13.5px Geist,sans-serif">Home studio, Manchester</div><div style="margin-top:4px;font:400 12.5px/1.5 Geist,sans-serif;color:rgba(0,0,0,.6)">Full address is shared once your booking is confirmed.</div></div>
+</div>
+<div style="margin-top:20px;padding-top:18px;border-top:1px solid rgba(0,0,0,.09);font:600 16px Geist,sans-serif;letter-spacing:-.02em">Similar in Manchester</div>
+<div style="margin-top:12px;display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;gap:12px;align-items:center;border:1px solid rgba(0,0,0,.12);border-radius:14px;padding:11px"><div style="width:56px;height:56px;border-radius:10px;flex:none;background:url('uploads/790476101_18008657093970416_5915040309482860222_n.jpg') center/cover"></div><div style="flex:1;min-width:0"><div style="font:500 14.5px Geist,sans-serif">Studio Kalu</div><div style="font:400 12.5px Geist,sans-serif;color:rgba(0,0,0,.5);margin-top:3px">Chorlton · 5.0</div></div><div style="text-align:right"><div style="font:500 13.5px Geist,sans-serif">£45</div><div style="font:400 11.5px Geist,sans-serif;color:rgba(0,0,0,.45)">from</div></div></div>
+</div>
+</div>
+<div style="border-top:1px solid rgba(0,0,0,.1);padding:12px 20px 24px;display:flex;align-items:center;gap:12px"><div style="flex:1"><div style="font:500 14px Geist,sans-serif">from £31</div><div style="font:400 11.5px Geist,sans-serif;color:rgba(0,0,0,.55)">Next free: tomorrow 11:45</div></div><div style="background:#8c2b52;color:#fff;border-radius:11px;padding:13px 28px;font:600 14px Geist,sans-serif">Book</div></div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px">
+<div style="font:500 11px 'Geist Mono',monospace;color:rgba(0,0,0,.45);letter-spacing:.04em">/@CLUXEKLAWS/TREATMENTS</div>
+<div style="width:390px;height:800px;background:#fff;border:1px solid rgba(0,0,0,.14);border-radius:30px;overflow:hidden;display:flex;flex-direction:column;font-family:Geist,sans-serif;color:#0b0b0b;box-shadow:0 2px 10px rgba(0,0,0,.06)">
+<div style="display:flex;align-items:center;justify-content:space-between;padding:15px 24px 4px;font:500 13px Geist,sans-serif"><span>9:41</span><div style="display:flex;gap:5px;align-items:center"><span style="width:15px;height:8px;border-radius:2px;background:#0b0b0b;opacity:.7"></span><span style="width:20px;height:9px;border-radius:3px;border:1px solid rgba(0,0,0,.35)"></span></div></div>
+<div style="display:flex;align-items:center;padding:10px 20px 12px"><span style="font:500 14px Geist,sans-serif;color:rgba(0,0,0,.6)">← Cluxeklaws</span></div>
+<div style="padding:4px 20px 0"><div style="font:600 25px Geist,sans-serif;letter-spacing:-.035em">Treatments</div><div style="margin-top:4px;font:400 12.5px Geist,sans-serif;color:rgba(0,0,0,.5)">21 across 8 groups</div></div>
+<div style="display:flex;gap:7px;padding:14px 20px 12px;overflow:hidden;border-bottom:1px solid rgba(0,0,0,.08)">
+<span style="font:500 12.5px Geist,sans-serif;padding:7px 12px;border-radius:999px;background:#0b0b0b;color:#fff;white-space:nowrap">All</span>
+<span style="font:500 12.5px Geist,sans-serif;padding:7px 12px;border-radius:999px;border:1px solid rgba(0,0,0,.14);white-space:nowrap">Bundles</span>
+<span style="font:500 12.5px Geist,sans-serif;padding:7px 12px;border-radius:999px;border:1px solid rgba(0,0,0,.14);white-space:nowrap">Freestyle</span>
+<span style="font:500 12.5px Geist,sans-serif;padding:7px 12px;border-radius:999px;border:1px solid rgba(0,0,0,.14);white-space:nowrap">Toes</span>
+</div>
+<div style="flex:1;overflow:hidden;padding:0 20px">
+<div style="padding:14px 0 8px;font:500 11px 'Geist Mono',monospace;color:rgba(0,0,0,.4);letter-spacing:.04em">BUNDLES · 3</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;justify-content:space-between;gap:12px;background:#f7f6f5;border-radius:12px;padding:13px 14px"><div><div style="font:500 14.5px Geist,sans-serif">French tips</div><div style="font:400 12px/1.45 Geist,sans-serif;color:rgba(0,0,0,.55);margin-top:3px">Short French tip hands + French tip toes</div></div><div style="text-align:right;flex:none"><div style="font:500 14px Geist,sans-serif">£71</div><div style="font:400 12px Geist,sans-serif;color:rgba(0,0,0,.5)">4h</div></div></div>
+<div style="display:flex;justify-content:space-between;gap:12px;background:#f7f6f5;border-radius:12px;padding:13px 14px"><div><div style="font:500 14.5px Geist,sans-serif">Freestyle/French</div><div style="font:400 12px/1.45 Geist,sans-serif;color:rgba(0,0,0,.55);margin-top:3px">3 designs min, 2 charms + acrygel toes</div></div><div style="text-align:right;flex:none"><div style="font:500 14px Geist,sans-serif">£86</div><div style="font:400 12px Geist,sans-serif;color:rgba(0,0,0,.5)">4h 30m</div></div></div>
+<div style="display:flex;justify-content:space-between;gap:12px;background:#f7f6f5;border-radius:12px;padding:13px 14px"><div><div style="font:500 14.5px Geist,sans-serif">Gel | French</div><div style="font:400 12px/1.45 Geist,sans-serif;color:rgba(0,0,0,.55);margin-top:3px">Hard gel | BIAB hands, acrygel toes</div></div><div style="text-align:right;flex:none"><div style="font:500 14px Geist,sans-serif">£76</div><div style="font:400 12px Geist,sans-serif;color:rgba(0,0,0,.5)">4h</div></div></div>
+</div>
+<div style="padding:18px 0 8px;font:500 11px 'Geist Mono',monospace;color:rgba(0,0,0,.4);letter-spacing:.04em">FREESTYLE · 2</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;justify-content:space-between;gap:12px;background:#f7f6f5;border-radius:12px;padding:13px 14px"><div><div style="font:500 14.5px Geist,sans-serif">Freestyle Tier 1</div><div style="font:400 12px/1.45 Geist,sans-serif;color:rgba(0,0,0,.55);margin-top:3px">3–4 designs, short–medium, 2 charms</div></div><div style="text-align:right;flex:none"><div style="font:500 14px Geist,sans-serif">£56</div><div style="font:400 12px Geist,sans-serif;color:rgba(0,0,0,.5)">2h 50m</div></div></div>
+<div style="display:flex;justify-content:space-between;gap:12px;background:#f7f6f5;border-radius:12px;padding:13px 14px"><div><div style="font:500 14.5px Geist,sans-serif">Freestyle Tier 2</div><div style="font:400 12px/1.45 Geist,sans-serif;color:rgba(0,0,0,.55);margin-top:3px">4–6 designs, 2 charms, 2 3D flowers</div></div><div style="text-align:right;flex:none"><div style="font:500 14px Geist,sans-serif">£61</div><div style="font:400 12px Geist,sans-serif;color:rgba(0,0,0,.5)">3h</div></div></div>
+</div>
+<div style="padding:18px 0 8px;font:500 11px 'Geist Mono',monospace;color:rgba(0,0,0,.4);letter-spacing:.04em">TOES · 4</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;justify-content:space-between;gap:12px;background:#f7f6f5;border-radius:12px;padding:13px 14px"><div><div style="font:500 14.5px Geist,sans-serif">French tips</div><div style="font:400 12px/1.45 Geist,sans-serif;color:rgba(0,0,0,.55);margin-top:3px">Acrygel | Hard gel | BIAB</div></div><div style="text-align:right;flex:none"><div style="font:500 14px Geist,sans-serif">£36</div><div style="font:400 12px Geist,sans-serif;color:rgba(0,0,0,.5)">2h</div></div></div>
+</div>
+</div>
+</div>
+</div>
+
+</div>
+
+<div style="margin-top:28px;max-width:760px">
+<div style="font:600 13px Geist,sans-serif">Open, not blocking</div>
+<div style="margin-top:8px;font:400 12px/1.7 Geist,sans-serif;color:rgba(0,0,0,.6)">Treatment detail screen — her "What is Acrygel?" explainer has no home yet.<br>Add-ons per group or copied between treatments, so she isn't ticking them 21 times.<br>Whether the portfolio couples to the treatment chips — one person's instinct, untested, needs 5–6 customers.<br>Reviews page and full-screen gallery are referenced by "All 34" and "See all 9" but not designed.</div>
+</div>
+</div>
+</x-dc>
+</body>
+</html>

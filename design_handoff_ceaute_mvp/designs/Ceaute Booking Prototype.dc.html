@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet"><style>body{margin:0;background:#f0eee9;font-family:Geist,system-ui,sans-serif}a{color:#8c2b52}a:hover{color:#6f2141}@keyframes scrIn{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}@keyframes scrBack{from{opacity:0;transform:translateX(-24px)}to{opacity:1;transform:none}}@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}@keyframes spin{to{transform:rotate(360deg)}}@keyframes fadeIn{from{opacity:0}to{opacity:1}}input{outline:none}</style></helmet>
+
+<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:28px 16px;box-sizing:border-box">
+<div style="display:flex;flex-direction:column;gap:12px;align-items:center">
+<div style="position:relative;width:390px;height:800px;background:#fff;border:1px solid rgba(0,0,0,.14);border-radius:30px;overflow:hidden;display:flex;flex-direction:column;font-family:Geist,sans-serif;color:#0b0b0b;box-shadow:0 24px 60px rgba(0,0,0,.12)">
+
+<sc-if value="{{ isDiscover }}" hint-placeholder-val="{{ true }}">
+<div style="position:absolute;inset:0;display:flex;flex-direction:column;animation:{{ anim }}">
+<div style="display:flex;align-items:center;justify-content:center;padding:12px 20px 0"><div style="display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.06);border-radius:999px;padding:6px 12px;font:500 11.5px Geist,sans-serif;color:rgba(0,0,0,.65)"><span style="width:8px;height:9px;border:1.5px solid currentColor;border-radius:2px 2px 1px 1px;opacity:.6"></span>ceaute.com/discover</div></div>
+<div style="display:flex;align-items:center;justify-content:space-between;height:52px;padding:0 20px;border-bottom:1px solid rgba(0,0,0,.08)"><span style="font:600 16px Geist,sans-serif;letter-spacing:-.03em">Ceaute</span><span style="font:500 13px Geist,sans-serif;color:#8c2b52">Log in</span></div>
+<div style="flex:1;overflow:auto;padding:14px 20px 24px">
+<div style="font:600 27px Geist,sans-serif;letter-spacing:-.035em">Nails in Manchester</div>
+<div style="margin-top:14px;display:flex;align-items:center;gap:9px;background:#f4f3f1;border-radius:11px;padding:12px 13px"><span style="width:13px;height:13px;border:1.5px solid rgba(0,0,0,.4);border-radius:50%"></span><span style="font:400 14px Geist,sans-serif">Manchester</span><span style="margin-left:auto;font:500 12.5px Geist,sans-serif;color:#8c2b52">Change</span></div>
+<div style="display:flex;gap:7px;margin-top:12px;overflow:hidden"><span style="font:500 12.5px Geist,sans-serif;padding:7px 12px;border-radius:999px;background:#0b0b0b;color:#fff">Nails</span><span style="font:500 12.5px Geist,sans-serif;padding:7px 12px;border-radius:999px;border:1px solid rgba(0,0,0,.14)">Lashes</span><span style="font:500 12.5px Geist,sans-serif;padding:7px 12px;border-radius:999px;border:1px solid rgba(0,0,0,.14)">Hair</span><span style="font:500 12.5px Geist,sans-serif;padding:7px 12px;border-radius:999px;border:1px solid rgba(0,0,0,.14)">Brows</span></div>
+<div style="margin-top:16px;display:flex;flex-direction:column;gap:10px">
+<div onClick="{{ goProfile }}" style="border-radius:16px;overflow:hidden;border:1px solid rgba(0,0,0,.1);cursor:pointer;transition:transform .15s" style-active="transform:scale(.985)"><div style="height:168px;background:url('uploads/774468106_18005965076970416_2449061266499155646_n.jpg') center/cover;position:relative"><span style="position:absolute;bottom:10px;left:12px;font:500 10px 'Geist Mono',monospace;color:#fff;background:rgba(0,0,0,.5);padding:4px 8px;border-radius:999px">9 PHOTOS</span></div><div style="padding:12px 14px 13px;display:flex;justify-content:space-between;gap:10px"><div><div style="font:600 16.5px Geist,sans-serif;letter-spacing:-.025em">Cluxeklaws</div><div style="font:400 12.5px Geist,sans-serif;color:rgba(0,0,0,.55);margin-top:3px">Manchester · 4.9</div></div><div style="text-align:right;flex:none"><div style="font:500 14.5px Geist,sans-serif">£31</div><div style="font:400 11.5px Geist,sans-serif;color:rgba(0,0,0,.45)">from</div></div></div></div>
+<div style="border-radius:16px;overflow:hidden;border:1px solid rgba(0,0,0,.1);opacity:.55"><div style="height:168px;background:url('uploads/790476101_18008657093970416_5915040309482860222_n.jpg') center/cover"></div><div style="padding:12px 14px 13px;display:flex;justify-content:space-between;gap:10px"><div><div style="font:600 16.5px Geist,sans-serif;letter-spacing:-.025em">Studio Kalu</div><div style="font:400 12.5px Geist,sans-serif;color:rgba(0,0,0,.55);margin-top:3px">Chorlton · 5.0</div></div><div style="text-align:right;flex:none"><div style="font:500 14.5px Geist,sans-serif">£45</div><div style="font:400 11.5px Geist,sans-serif;color:rgba(0,0,0,.45)">from</div></div></div></div>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isProfile }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;display:flex;flex-direction:column;animation:{{ anim }}">
+<div style="flex:1;overflow:auto">
+<div onClick="{{ nextHero }}" style="height:300px;position:relative;flex:none;background:url('{{ heroUrl }}') center/cover;cursor:pointer;transition:background .3s">
+<div style="position:absolute;top:0;left:0;right:0;display:flex;align-items:center;justify-content:center;padding:12px 20px 0"><div style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.18);border-radius:999px;padding:6px 12px;font:500 11.5px Geist,sans-serif;color:#fff;backdrop-filter:blur(8px)"><span style="width:8px;height:9px;border:1.5px solid currentColor;border-radius:2px 2px 1px 1px;opacity:.6"></span>ceaute.com/@cluxeklaws</div></div>
+<div style="position:absolute;top:50px;left:18px;right:18px;display:flex;justify-content:space-between"><span onClick="{{ backDiscover }}" style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.92);display:grid;place-items:center;font:500 14px Geist,sans-serif;cursor:pointer">←</span><span style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.92);display:grid;place-items:center;font:500 13px Geist,sans-serif">♡</span></div>
+<span style="position:absolute;bottom:12px;right:14px;font:500 11px 'Geist Mono',monospace;color:#fff;background:rgba(0,0,0,.55);padding:6px 10px;border-radius:999px">{{ heroCounter }}</span>
+</div>
+<div style="padding:16px 20px 0">
+<div style="display:flex;gap:14px;align-items:flex-start"><div style="flex:1"><div style="font:600 24px Geist,sans-serif;letter-spacing:-.035em">Cluxeklaws</div><div style="margin-top:4px;font:400 12.5px Geist,sans-serif;color:rgba(0,0,0,.5)">@cluxeklaws · Manchester · 4.9 (34)</div></div><div style="width:48px;height:48px;border-radius:50%;flex:none;background:url('uploads/542753068_17960995832970416_9109832535221333394_n.jpg') center/cover;border:1px solid rgba(0,0,0,.08)"></div></div>
+<div style="margin-top:10px;font:400 13px/1.6 Geist,sans-serif;color:rgba(0,0,0,.8)">MANCHESTER NAIL TECH | ACRYLIC | GEL | RUSSIAN MANI | TOES<br>Time • Precision • Quality • Care<br>𝖦𝗅𝗈𝗋𝗒 𝗍𝗈 𝖩𝖾𝗌𝗎𝗌</div>
+<div style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(0,0,0,.09);display:flex;align-items:baseline;justify-content:space-between"><span style="font:600 16px Geist,sans-serif;letter-spacing:-.02em">Portfolio</span><span style="font:400 12.5px Geist,sans-serif;color:#8c2b52">See all 9</span></div>
+<div style="margin-top:3px;font:400 12.5px Geist,sans-serif;color:rgba(0,0,0,.5)">Recent sets by Cluxeklaws</div>
+<div style="display:flex;gap:7px;margin-top:11px;overflow:auto;margin-right:-20px;padding-right:20px">
+<sc-for list="{{ portfolio }}" as="p" hint-placeholder-count="3"><div onClick="{{ p.open }}" style="width:130px;height:150px;border-radius:10px;flex:none;background:url('{{ p.url }}') center/cover;cursor:pointer"></div></sc-for>
+</div>
+<div style="margin-top:18px;padding-top:14px;border-top:1px solid rgba(0,0,0,.09);font:600 16px Geist,sans-serif;letter-spacing:-.02em">Treatments</div>
+<div style="margin-top:12px;display:flex;flex-direction:column;gap:8px">
+<sc-for list="{{ featured }}" as="t" hint-placeholder-count="3">
+<div onClick="{{ t.open }}" style="display:flex;justify-content:space-between;gap:12px;background:#f7f6f5;border-radius:12px;padding:13px 14px;cursor:pointer" style-active="background:#efeeec"><div><div style="font:500 14.5px Geist,sans-serif">{{ t.name }}</div><div style="font:400 12px Geist,sans-serif;color:rgba(0,0,0,.55);margin-top:3px">{{ t.short }}</div></div><div style="text-align:right;flex:none"><div style="font:500 14px Geist,sans-serif">{{ t.priceLabel }}</div><div style="font:400 12px Geist,sans-serif;color:rgba(0,0,0,.5)">{{ t.durLabel }}</div></div></div>
+</sc-for>
+</div>
+<div onClick="{{ goTreatments }}" style="margin-top:10px;border:1px solid rgba(0,0,0,.16);border-radius:12px;padding:13px 14px;display:flex;justify-content:space-between;align-items:center;cursor:pointer"><span style="font:500 14px Geist,sans-serif">See all 21 treatments</span><span style="font:500 14px Geist,sans-serif;color:#8c2b52">→</span></div>
+<div style="margin-top:20px;padding-top:14px;border-top:1px solid rgba(0,0,0,.09);display:flex;align-items:baseline;justify-content:space-between"><span style="font:600 16px Geist,sans-serif;letter-spacing:-.02em">Reviews</span><span style="font:400 12.5px Geist,sans-serif;color:#8c2b52">All 34</span></div>
+<div style="margin-top:12px;border:1px solid rgba(0,0,0,.12);border-radius:12px;padding:13px 14px"><div style="display:flex;justify-content:space-between"><span style="font:500 13.5px Geist,sans-serif">Shanice · 5/5</span><span style="font:400 12px Geist,sans-serif;color:rgba(0,0,0,.45)">Aug · Freestyle Tier 2</span></div><div style="margin-top:6px;font:400 13px/1.5 Geist,sans-serif;color:rgba(0,0,0,.75)">Took her time and the shape was perfect. Lasted five weeks with no lifting.</div></div>
+<div style="margin-top:20px;padding-top:14px;border-top:1px solid rgba(0,0,0,.09);font:600 16px Geist,sans-serif;letter-spacing:-.02em">Booking policies</div>
+<div style="margin-top:12px;display:flex;flex-direction:column;gap:8px;padding-bottom:24px">
+<div style="border:1px solid rgba(0,0,0,.12);border-radius:12px;padding:13px 14px"><div style="font:500 13.5px Geist,sans-serif">£10 deposit</div><div style="margin-top:4px;font:400 12.5px/1.5 Geist,sans-serif;color:rgba(0,0,0,.6)">Balance paid on the day.</div></div>
+<div style="border:1px solid rgba(0,0,0,.12);border-radius:12px;padding:13px 14px"><div style="font:500 13.5px Geist,sans-serif">Free cancellation up to 24 hours before</div><div style="margin-top:4px;font:400 12.5px/1.5 Geist,sans-serif;color:rgba(0,0,0,.6)">After that the deposit is kept.</div></div>
+</div>
+</div>
+</div>
+<div style="border-top:1px solid rgba(0,0,0,.1);padding:12px 20px 24px;display:flex;align-items:center;gap:12px;background:#fff"><div style="flex:1"><div style="font:500 14px Geist,sans-serif">from £31</div><div style="font:400 11.5px Geist,sans-serif;color:rgba(0,0,0,.55)">Next free: tomorrow 11:45</div></div><div onClick="{{ goTreatments }}" style="background:#8c2b52;color:#fff;border-radius:11px;padding:13px 28px;font:600 14px Geist,sans-serif;cursor:pointer" style-active="opacity:.85">Book</div></div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isTreatments }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;display:flex;flex-direction:column;animation:{{ anim }}">
+<div style="display:flex;align-items:center;justify-content:center;padding:12px 20px 0"><div style="display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.06);border-radius:999px;padding:6px 12px;font:500 11.5px Geist,sans-serif;color:rgba(0,0,0,.65)"><span style="width:8px;height:9px;border:1.5px solid currentColor;border-radius:2px 2px 1px 1px;opacity:.6"></span>ceaute.com/@cluxeklaws/treatments</div></div>
+<div onClick="{{ backProfile }}" style="display:flex;align-items:center;height:52px;padding:0 20px;cursor:pointer"><span style="font:500 14px Geist,sans-serif;color:rgba(0,0,0,.6)">← Cluxeklaws</span></div>
+<div style="padding:0 20px"><div style="font:600 25px Geist,sans-serif;letter-spacing:-.035em">Treatments</div><div style="margin-top:4px;font:400 12.5px Geist,sans-serif;color:rgba(0,0,0,.5)">{{ treatmentCountLabel }}</div></div>
+<div style="display:flex;gap:7px;padding:14px 20px 12px;overflow:auto;border-bottom:1px solid rgba(0,0,0,.08)">
+<sc-for list="{{ groupChips }}" as="g" hint-placeholder-count="4"><span onClick="{{ g.pick }}" style="font:500 12.5px Geist,sans-serif;padding:7px 12px;border-radius:999px;white-space:nowrap;cursor:pointer;background:{{ g.bg }};color:{{ g.fg }};border:1px solid {{ g.border }};transition:all .15s">{{ g.label }}</span></sc-for>
+</div>
+<div style="flex:1;overflow:auto;padding:0 20px 24px">
+<sc-for list="{{ sections }}" as="sec" hint-placeholder-count="2">
+<div style="padding:16px 0 8px;font:500 11px 'Geist Mono',monospace;color:rgba(0,0,0,.4);letter-spacing:.04em">{{ sec.label }}</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<sc-for list="{{ sec.items }}" as="t" hint-placeholder-count="2">
+<div onClick="{{ t.open }}" style="display:flex;justify-content:space-between;gap:12px;background:#f7f6f5;border-radius:12px;padding:13px 14px;cursor:pointer" style-active="background:#efeeec"><div><div style="font:500 14.5px Geist,sans-serif">{{ t.name }}</div><div style="font:400 12px/1.45 Geist,sans-serif;color:rgba(0,0,0,.55);margin-top:3px">{{ t.short }}</div></div><div style="text-align:right;flex:none"><div style="font:500 14px Geist,sans-serif">{{ t.priceLabel }}</div><div style="font:400 12px Geist,sans-serif;color:rgba(0,0,0,.5)">{{ t.durLabel }}</div></div></div>
+</sc-for>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isDetail }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;display:flex;flex-direction:column;animation:{{ anim }}">
+<div style="display:flex;align-items:center;justify-content:center;padding:12px 20px 0"><div style="display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.06);border-radius:999px;padding:6px 12px;font:500 11.5px Geist,sans-serif;color:rgba(0,0,0,.65)"><span style="width:8px;height:9px;border:1.5px solid currentColor;border-radius:2px 2px 1px 1px;opacity:.6"></span>ceaute.com/@cluxeklaws/book/{{ sel.slug }}</div></div>
+<div onClick="{{ backFromDetail }}" style="display:flex;align-items:center;height:52px;padding:0 20px;cursor:pointer"><span style="font:500 14px Geist,sans-serif;color:rgba(0,0,0,.6)">← {{ backLabel }}</span></div>
+<div style="flex:1;overflow:auto;padding:0 20px 24px">
+<div style="font:400 11px 'Geist Mono',monospace;color:rgba(0,0,0,.4);letter-spacing:.04em">{{ sel.groupUpper }}</div>
+<div style="margin-top:6px;font:600 25px Geist,sans-serif;letter-spacing:-.035em">{{ sel.name }}</div>
+<div style="margin-top:6px;font:400 13.5px Geist,sans-serif;color:rgba(0,0,0,.55)">{{ sel.priceLabel }} · {{ sel.durLabel }}</div>
+<div style="margin-top:16px;font:400 14px/1.6 Geist,sans-serif;color:rgba(0,0,0,.8);white-space:pre-line">{{ sel.desc }}</div>
+
+<div style="margin-top:22px;display:flex;align-items:baseline;justify-content:space-between"><span style="font:600 16px Geist,sans-serif;letter-spacing:-.02em">Add-ons</span><span style="font:400 12.5px Geist,sans-serif;color:rgba(0,0,0,.5)">{{ addonHint }}</span></div>
+<div style="margin-top:10px;display:flex;flex-direction:column;gap:8px">
+<sc-for list="{{ addons }}" as="a" hint-placeholder-count="3">
+<div onClick="{{ a.toggle }}" style="display:flex;justify-content:space-between;align-items:center;gap:12px;border-radius:12px;padding:12px 14px;cursor:pointer;border:1px solid {{ a.border }};background:{{ a.bg }};transition:all .15s"><div style="display:flex;align-items:center;gap:11px"><span style="width:20px;height:20px;border-radius:6px;flex:none;display:grid;place-items:center;font:600 11px Geist,sans-serif;color:#fff;background:{{ a.boxBg }};border:1.5px solid {{ a.boxBorder }};transition:all .15s">{{ a.tick }}</span><div><div style="font:500 14px Geist,sans-serif">{{ a.name }}</div><div style="font:400 12px Geist,sans-serif;color:rgba(0,0,0,.5);margin-top:2px">{{ a.meta }}</div></div></div><span style="font:500 13.5px Geist,sans-serif">{{ a.priceLabel }}</span></div>
+</sc-for>
+</div>
+</div>
+<div style="border-top:1px solid rgba(0,0,0,.1);padding:12px 20px 24px;display:flex;align-items:center;gap:12px;background:#fff"><div style="flex:1"><div style="font:500 14px Geist,sans-serif;transition:all .2s">{{ totalLabel }}</div><div style="font:400 11.5px Geist,sans-serif;color:rgba(0,0,0,.55)">{{ totalDurLabel }} · £10 deposit today</div></div><div onClick="{{ goTime }}" style="background:#8c2b52;color:#fff;border-radius:11px;padding:13px 24px;font:600 14px Geist,sans-serif;cursor:pointer" style-active="opacity:.85">Pick a time</div></div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isTime }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;display:flex;flex-direction:column;animation:{{ anim }}">
+<div style="display:flex;align-items:center;justify-content:center;padding:12px 20px 0"><div style="display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.06);border-radius:999px;padding:6px 12px;font:500 11.5px Geist,sans-serif;color:rgba(0,0,0,.65)"><span style="width:8px;height:9px;border:1.5px solid currentColor;border-radius:2px 2px 1px 1px;opacity:.6"></span>ceaute.com/@cluxeklaws/book/{{ sel.slug }}/time</div></div>
+<div style="display:flex;align-items:center;justify-content:space-between;height:52px;padding:0 20px"><span onClick="{{ backDetail }}" style="font:500 14px Geist,sans-serif;color:rgba(0,0,0,.6);cursor:pointer">← {{ sel.name }}</span><span style="font:500 11px 'Geist Mono',monospace;color:rgba(0,0,0,.4)">1 / 3</span></div>
+<div style="padding:0 20px"><div style="font:600 25px Geist,sans-serif;letter-spacing:-.035em">Pick a time</div><div style="margin-top:4px;font:400 12.5px Geist,sans-serif;color:rgba(0,0,0,.5)">{{ totalDurLabel }} · Europe/London · at least 24h ahead</div></div>
+<div style="display:flex;gap:7px;padding:16px 20px 0;overflow:auto">
+<sc-for list="{{ days }}" as="d" hint-placeholder-count="5">
+<div onClick="{{ d.pick }}" style="flex:none;width:58px;border-radius:12px;padding:10px 0;text-align:center;cursor:pointer;background:{{ d.bg }};color:{{ d.fg }};border:1px solid {{ d.border }};opacity:{{ d.opacity }};transition:all .15s"><div style="font:500 10.5px 'Geist Mono',monospace;letter-spacing:.04em">{{ d.dow }}</div><div style="font:600 17px Geist,sans-serif;margin-top:3px">{{ d.num }}</div></div>
+</sc-for>
+</div>
+<div style="flex:1;overflow:auto;padding:18px 20px 24px">
+<div style="font:500 11px 'Geist Mono',monospace;color:rgba(0,0,0,.4);letter-spacing:.04em">{{ dayLabel }}</div>
+<sc-if value="{{ dayHasSlots }}" hint-placeholder-val="{{ true }}">
+<div style="margin-top:10px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+<sc-for list="{{ slots }}" as="sl" hint-placeholder-count="6">
+<div onClick="{{ sl.pick }}" style="border-radius:10px;padding:12px 0;text-align:center;font:500 14px Geist,sans-serif;cursor:pointer;background:{{ sl.bg }};color:{{ sl.fg }};border:1px solid {{ sl.border }};transition:all .15s">{{ sl.label }}</div>
+</sc-for>
+</div>
+<div style="margin-top:14px;font:400 12.5px/1.5 Geist,sans-serif;color:rgba(0,0,0,.5)">Times are start times. Your {{ totalDurLabel }} has to fit inside her working day, so late slots disappear for longer treatments.</div>
+</sc-if>
+<sc-if value="{{ dayClosed }}" hint-placeholder-val="{{ false }}">
+<div style="margin-top:12px;background:#f7f6f5;border-radius:12px;padding:16px 14px;font:400 13.5px/1.5 Geist,sans-serif;color:rgba(0,0,0,.65)">Cluxeklaws doesn't work on this day. Try the days highlighted above.</div>
+</sc-if>
+</div>
+<div style="border-top:1px solid rgba(0,0,0,.1);padding:12px 20px 24px;display:flex;align-items:center;gap:12px;background:#fff"><div style="flex:1"><div style="font:500 14px Geist,sans-serif">{{ pickedLabel }}</div><div style="font:400 11.5px Geist,sans-serif;color:rgba(0,0,0,.55)">{{ pickedSub }}</div></div><div onClick="{{ goSignin }}" style="background:#8c2b52;color:#fff;border-radius:11px;padding:13px 24px;font:600 14px Geist,sans-serif;cursor:pointer;opacity:{{ continueOpacity }};transition:opacity .2s" style-active="opacity:.85">Continue</div></div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isSignin }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;display:flex;flex-direction:column;animation:{{ anim }}">
+<div style="display:flex;align-items:center;justify-content:center;padding:12px 20px 0"><div style="display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.06);border-radius:999px;padding:6px 12px;font:500 11.5px Geist,sans-serif;color:rgba(0,0,0,.65)"><span style="width:8px;height:9px;border:1.5px solid currentColor;border-radius:2px 2px 1px 1px;opacity:.6"></span>ceaute.com/sign-in</div></div>
+<div style="display:flex;align-items:center;justify-content:space-between;height:52px;padding:0 20px"><span onClick="{{ backTime }}" style="font:500 14px Geist,sans-serif;color:rgba(0,0,0,.6);cursor:pointer">← Pick a time</span><span style="font:500 11px 'Geist Mono',monospace;color:rgba(0,0,0,.4)">2 / 3</span></div>
+<div style="margin:0 20px;background:#f7edf1;border-radius:11px;padding:11px 14px;display:flex;justify-content:space-between;align-items:center"><span style="font:500 13px Geist,sans-serif;color:#8c2b52">{{ holdLabel }}</span><span style="font:500 13px 'Geist Mono',monospace;color:#8c2b52">{{ holdClock }}</span></div>
+<sc-if value="{{ linkNotSent }}" hint-placeholder-val="{{ true }}">
+<div style="padding:26px 20px 0;animation:rise .3s ease-out">
+<div style="font:600 25px Geist,sans-serif;letter-spacing:-.035em">Your time is held</div>
+<div style="margin-top:6px;font:400 13.5px/1.55 Geist,sans-serif;color:rgba(0,0,0,.6)">Log in to pay the deposit. We'll email you a link, no password.</div>
+<div style="margin-top:22px;font:500 11px 'Geist Mono',monospace;letter-spacing:.04em;color:rgba(0,0,0,.45)">EMAIL</div>
+<input value="{{ email }}" onChange="{{ setEmail }}" placeholder="you@example.com" type="email" style="margin-top:6px;width:100%;box-sizing:border-box;background:#f4f3f1;border:none;border-radius:12px;padding:13px 14px;font:400 15px Geist,sans-serif;color:#0b0b0b;box-shadow:inset 0 0 0 1.5px {{ emailRing }};transition:box-shadow .15s">
+<div onClick="{{ sendLink }}" style="margin-top:14px;background:#8c2b52;color:#fff;border-radius:11px;padding:14px;text-align:center;font:500 14.5px Geist,sans-serif;cursor:pointer;opacity:{{ emailOpacity }};transition:opacity .2s">Continue with email</div>
+</div>
+</sc-if>
+<sc-if value="{{ linkSent }}" hint-placeholder-val="{{ false }}">
+<div style="padding:26px 20px 0;animation:rise .3s ease-out">
+<div style="font:600 25px Geist,sans-serif;letter-spacing:-.035em">Enter your code</div>
+<div style="margin-top:6px;font:400 13.5px/1.55 Geist,sans-serif;color:rgba(0,0,0,.6)">A 6-digit code was sent to <span style="color:#0b0b0b;font-weight:500">{{ email }}</span>. Your time stays held.</div>
+<div style="margin-top:22px"><div style="font:500 12.5px Geist,sans-serif;margin-bottom:6px">Verification code</div><div style="border:1.5px solid #8c2b52;border-radius:12px;padding:14px;display:flex;justify-content:center;gap:12px;font:600 26px Geist,sans-serif;letter-spacing:.1em;font-variant-numeric:tabular-nums"><span>4</span><span>8</span><span>2</span><span>9</span><span>1</span><span>7</span></div></div>
+<div onClick="{{ goPay }}" style="margin-top:12px;background:#8c2b52;color:#fff;border-radius:11px;padding:14px;text-align:center;font:500 14.5px Geist,sans-serif;cursor:pointer">Continue</div>
+<div style="margin-top:18px;display:flex;justify-content:space-between;font:400 13px Geist,sans-serif;color:rgba(0,0,0,.55)"><span>Nothing arrived? <span style="color:rgba(0,0,0,.4);font-weight:500">New code in 42s</span></span><span onClick="{{ resetEmail }}" style="color:#8c2b52;font-weight:500;cursor:pointer">Different email</span></div>
+</div>
+</sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ isPay }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;display:flex;flex-direction:column;animation:{{ anim }}">
+<div style="display:flex;align-items:center;justify-content:center;padding:12px 20px 0"><div style="display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.06);border-radius:999px;padding:6px 12px;font:500 11.5px Geist,sans-serif;color:rgba(0,0,0,.65)"><span style="width:8px;height:9px;border:1.5px solid currentColor;border-radius:2px 2px 1px 1px;opacity:.6"></span>ceaute.com/@cluxeklaws/book/{{ sel.slug }}/checkout</div></div>
+<div style="display:flex;align-items:center;justify-content:space-between;height:52px;padding:0 20px"><span onClick="{{ backTime }}" style="font:500 14px Geist,sans-serif;color:rgba(0,0,0,.6);cursor:pointer">← Back</span><span style="font:500 11px 'Geist Mono',monospace;color:rgba(0,0,0,.4)">3 / 3</span></div>
+<div style="margin:0 20px;background:#f7edf1;border-radius:11px;padding:11px 14px;display:flex;justify-content:space-between;align-items:center"><span style="font:500 13px Geist,sans-serif;color:#8c2b52">{{ holdLabel }}</span><span style="font:500 13px 'Geist Mono',monospace;color:#8c2b52">{{ holdClock }}</span></div>
+<div style="flex:1;overflow:auto;padding:18px 20px 24px">
+<div style="font:600 25px Geist,sans-serif;letter-spacing:-.035em">Review &amp; pay</div>
+<div style="margin-top:14px;border:1px solid rgba(0,0,0,.12);border-radius:14px;padding:12px 14px;display:flex;gap:12px;align-items:center"><div style="width:40px;height:40px;border-radius:50%;flex:none;background:url('uploads/542753068_17960995832970416_9109832535221333394_n.jpg') center/cover"></div><div style="flex:1"><div style="font:500 14px Geist,sans-serif">{{ summaryName }}</div><div style="font:400 12px Geist,sans-serif;color:rgba(0,0,0,.55);margin-top:2px">Cluxeklaws · {{ pickedLabel }} – {{ endLabel }}</div></div></div>
+<div style="margin-top:16px;font:500 11px 'Geist Mono',monospace;color:rgba(0,0,0,.4);letter-spacing:.04em">YOUR DETAILS</div>
+<div style="margin-top:8px;display:flex;flex-direction:column;gap:8px">
+<input value="{{ name }}" onChange="{{ setName }}" placeholder="Full name" style="width:100%;box-sizing:border-box;background:#f4f3f1;border:none;border-radius:10px;padding:11px 13px;font:400 14px Geist,sans-serif;color:#0b0b0b">
+<input value="{{ phone }}" onChange="{{ setPhone }}" placeholder="UK mobile" type="tel" style="width:100%;box-sizing:border-box;background:#f4f3f1;border:none;border-radius:10px;padding:11px 13px;font:400 14px Geist,sans-serif;color:#0b0b0b">
+</div>
+<div style="margin-top:14px;border:1px solid rgba(0,0,0,.12);border-radius:14px;padding:2px 14px">
+<sc-for list="{{ lines }}" as="l" hint-placeholder-count="2"><div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(0,0,0,.08);font:400 13.5px Geist,sans-serif"><span style="color:rgba(0,0,0,.6)">{{ l.name }}</span><span>{{ l.price }}</span></div></sc-for>
+<div style="display:flex;justify-content:space-between;padding:10px 0;font:500 15px Geist,sans-serif"><span>Pay today (deposit)</span><span>£10.00</span></div>
+</div>
+<div style="margin-top:12px;font:400 12.5px/1.55 Geist,sans-serif;color:rgba(0,0,0,.55)">{{ balanceLabel }} is paid to Cluxeklaws on the day. Cancel free until {{ cancelBy }}; after that the £10 deposit is retained. Continuing accepts these terms.</div>
+</div>
+<div style="border-top:1px solid rgba(0,0,0,.1);padding:12px 20px 24px;background:#fff"><div onClick="{{ pay }}" style="background:#8c2b52;color:#fff;border-radius:11px;padding:14px;text-align:center;font:500 14.5px Geist,sans-serif;cursor:pointer;opacity:{{ payOpacity }};transition:opacity .2s">Pay £10 with Stripe</div><div style="text-align:center;font:400 11.5px Geist,sans-serif;color:rgba(0,0,0,.45);margin-top:9px">Stripe opens in a secure page and returns you here.</div></div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isVerifying }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;display:flex;flex-direction:column;animation:fadeIn .3s">
+<div style="display:flex;align-items:center;justify-content:center;padding:12px 20px 0"><div style="display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.06);border-radius:999px;padding:6px 12px;font:500 11.5px Geist,sans-serif;color:rgba(0,0,0,.65)"><span style="width:8px;height:9px;border:1.5px solid currentColor;border-radius:2px 2px 1px 1px;opacity:.6"></span>ceaute.com/bookings/return</div></div>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:0 20px">
+<div style="width:36px;height:36px;border-radius:50%;border:2px solid rgba(140,43,82,.2);border-top-color:#8c2b52;animation:spin .9s linear infinite"></div>
+<div style="margin-top:20px;font:600 25px Geist,sans-serif;letter-spacing:-.035em">Confirming your booking</div>
+<div style="margin-top:8px;font:400 13.5px/1.55 Geist,sans-serif;color:rgba(0,0,0,.6)">Stripe took your payment. We're waiting for it to confirm the time with Cluxeklaws — usually a few seconds.</div>
+<div style="margin-top:22px;border:1px solid rgba(0,0,0,.12);border-radius:14px;padding:14px"><div style="font:500 14px Geist,sans-serif">{{ summaryName }}</div><div style="margin-top:3px;font:400 12.5px Geist,sans-serif;color:rgba(0,0,0,.55)">{{ pickedLabel }} · £10 deposit</div></div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isConfirmed }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;display:flex;flex-direction:column;animation:fadeIn .5s">
+<div style="position:absolute;inset:0;background:url('uploads/774468106_18005965076970416_2449061266499155646_n.jpg') center/cover;animation:fadeIn 1.1s ease-out"></div>
+<div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.25) 0%,rgba(0,0,0,0) 30%,rgba(0,0,0,0) 45%,rgba(11,11,11,.92) 72%,#0b0b0b 100%)"></div>
+<div style="position:relative;display:flex;align-items:center;justify-content:center;padding:12px 20px 0"><div style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.18);border-radius:999px;padding:6px 12px;font:500 11.5px Geist,sans-serif;color:#fff;backdrop-filter:blur(8px)"><span style="width:8px;height:9px;border:1.5px solid currentColor;border-radius:2px 2px 1px 1px;opacity:.6"></span>ceaute.com/bookings/CX-4471</div></div>
+<div style="position:relative;display:flex;justify-content:flex-end;padding:8px 20px 0"><span onClick="{{ done }}" style="font:500 13px Geist,sans-serif;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.45);cursor:pointer">Done</span></div>
+<div style="position:relative;margin-top:auto;padding:0 24px 26px;color:#fff">
+<div style="font:600 16px Geist,sans-serif;letter-spacing:-.03em;color:rgba(255,255,255,.85);animation:rise .6s .5s both">Ceaute</div>
+<div style="margin-top:14px;font:400 15px/1.5 Geist,sans-serif;color:rgba(255,255,255,.85);animation:rise .6s .8s both">{{ firstName }},</div>
+<div style="margin-top:6px;font:600 30px/1.12 Geist,sans-serif;letter-spacing:-.04em;text-wrap:pretty;animation:rise .7s 1.1s both">you're booked with Cluxeklaws on {{ confirmedWhen }}.</div>
+<div style="margin-top:14px;font:400 14px/1.6 Geist,sans-serif;color:rgba(255,255,255,.75);animation:rise .7s 1.7s both">{{ confirmedBody }}</div>
+<div style="margin-top:22px;display:flex;gap:8px;animation:rise .6s 2.3s both"><span style="flex:1;background:#fff;color:#0b0b0b;border-radius:11px;padding:13px;text-align:center;font:500 14px Geist,sans-serif;cursor:pointer">Add to calendar</span><span style="flex:1;border:1px solid rgba(255,255,255,.35);border-radius:11px;padding:13px;text-align:center;font:500 14px Geist,sans-serif;cursor:pointer">Directions</span></div>
+<div style="margin-top:14px;font:400 12px Geist,sans-serif;color:rgba(255,255,255,.5);animation:rise .6s 2.6s both">Receipt sent to {{ email }} · Booking CX-4471</div>
+</div>
+</div>
+</sc-if>
+
+</div>
+<div style="font:400 12px Geist,sans-serif;color:rgba(0,0,0,.5);text-align:center;max-width:390px">Customer booking path · tap through. Cluxeklaws' real treatments and add-ons; 24h notice, 15-minute grid, 5-minute hold, emailed sign-in link.</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:460,&quot;height&quot;:880}}">
+class Component extends DCLogic {
+  state = { screen: 'discover', dir: 'fwd', hero: 0, sel: null, from: 'profile', group: 'All', addons: {}, day: 1, slot: null, email: '', name: '', phone: '', linkSent: false, hold: 300, holdOn: false };
+  imgs = ['uploads/774468106_18005965076970416_2449061266499155646_n.jpg','uploads/781338939_18007639835970416_2674606861232786530_n.jpg','uploads/790476101_18008657093970416_5915040309482860222_n.jpg','uploads/793139991_18009224492970416_6208624817278613365_n.jpg'];
+  groups = ['Bundles','Freestyle','French tip (acrylics)','Gel','Infills','Plain sets','Removals','Toes'];
+  treatments = [
+    {slug:'french-tips-bundle',group:'Bundles',name:'French tips',price:71,dur:240,short:'Short French tip hands + French tip toes',desc:'Includes:\n• Short French tip hands\n• French tip toes'},
+    {slug:'freestyle-french',group:'Bundles',name:'Freestyle/French',price:86,dur:270,short:'3 designs min, 2 charms + acrygel toes',desc:'Includes:\n• Freestyle nail set short–medium (must have 3 different nail designs minimum), 2 charms\n• French tip acrygel or hard gel toes\nSelect any relevant add-ons.'},
+    {slug:'gel-french',group:'Bundles',name:'Gel | French',price:76,dur:240,short:'Hard gel | BIAB hands, acrygel toes',desc:'Short French tips hard gel or BIAB on hands.\nFrench tip acrygel or hard gel on toes.'},
+    {slug:'freestyle-1',group:'Freestyle',name:'Freestyle Tier 1',price:56,dur:170,short:'3–4 designs, short–medium, 2 charms',desc:'Designs chosen by you (must have 3–4 different designs).\nIncludes:\n• Lengths short–medium\n• 2 charms\nSelect relevant add-ons: long length, 3D flower, rhinestone French tip.'},
+    {slug:'freestyle-2',group:'Freestyle',name:'Freestyle Tier 2',price:61,dur:180,short:'4–6 designs, 2 charms, 2 3D flowers',desc:'Designs chosen by you (must have 4–6 different designs).\nIncludes:\n• Lengths short–medium\n• 2 charms\n• 3D flowers (2)'},
+    {slug:'french-long',group:'French tip (acrylics)',name:'French tips long',price:51,dur:150,short:'Long length acrylic French',desc:'Long acrylic French tips.'},
+    {slug:'french-medium',group:'French tip (acrylics)',name:'French tips medium',price:46,dur:120,short:'Medium length acrylic French',desc:'Medium acrylic French tips.'},
+    {slug:'french-short',group:'French tip (acrylics)',name:'French tips short',price:41,dur:120,short:'Short length acrylic French',desc:'Short acrylic French tips.'},
+    {slug:'biab',group:'Gel',name:'BIAB overlay',price:38,dur:90,short:'Builder gel on natural nails',desc:'Builder gel overlay on natural nails, one colour.'},
+    {slug:'gel-polish-hands',group:'Gel',name:'Gel polish (natural nails)',price:28,dur:60,short:'One colour, natural nails',desc:'Clean long-lasting gel manicure, one colour.'},
+    {slug:'infill-acrylic',group:'Infills',name:'Acrylic infill',price:36,dur:120,short:'Existing acrylic set, 2–3 weeks',desc:'Infill on an existing acrylic set (2–3 weeks).'},
+    {slug:'infill-gel',group:'Infills',name:'Hard gel infill',price:34,dur:105,short:'Existing hard gel set',desc:'Infill on an existing hard gel set.'},
+    {slug:'plain-short',group:'Plain sets',name:'Plain set short',price:36,dur:105,short:'One colour, short',desc:'Plain acrylic set, one colour, short.'},
+    {slug:'plain-medium',group:'Plain sets',name:'Plain set medium',price:41,dur:120,short:'One colour, medium',desc:'Plain acrylic set, one colour, medium.'},
+    {slug:'soak-off',group:'Removals',name:'Soak-off only',price:10,dur:30,short:'Acrylic or gel removal',desc:'Removal without a new set.'},
+    {slug:'soak-off-set',group:'Removals',name:'Removal with new set',price:8,dur:30,short:'Added to any set',desc:'Removal added to any new set.'},
+    {slug:'toes-french',group:'Toes',name:'French tips',price:36,dur:120,short:'Acrygel | Hard gel | BIAB',desc:'Acrygel | Hard gel | BIAB.\n\nWhat is Acrygel? A hybrid acrylic and gel that works as a hard gel. Mouldable and lightweight, perfect for open- or closed-toed footwear.'},
+    {slug:'toes-plain',group:'Toes',name:'Plain',price:31,dur:120,short:'Nude base, no gel colours',desc:'Acrygel | Hard gel | BIAB.\nIncludes:\n• Nude base colour\n• No gel colours\n\nWhat is Acrygel? A hybrid acrylic and gel that works as a hard gel. Mouldable and lightweight, perfect for open- or closed-toed footwear.'},
+    {slug:'toes-one-gel',group:'Toes',name:'One gel colour',price:36,dur:120,short:'Any gel colour, acrygel or hard gel',desc:'Includes:\n• Any gel colour of your choice\nAcrygel | Hard gel | BIAB.\n\nWhat is Acrygel? A hybrid acrylic and gel that works as a hard gel. Mouldable and lightweight, perfect for open- or closed-toed footwear.'},
+    {slug:'toes-gel-polish',group:'Toes',name:'Gel polish (natural nails)',price:31,dur:120,short:'One colour, natural toes',desc:'Achieve a clean finish, long-lasting gel toe manicure perfect for lightweight wear.\nWhat is included:\n• Gel polish toes (one colour)'}
+  ];
+  addonDefs = [
+    {id:'flower2',name:'3D flower (2)',price:8,dur:10,for:['Toes','Freestyle','French tip (acrylics)','Plain sets','Bundles']},
+    {id:'flower4',name:'3D flower (4)',price:10,dur:15,for:['Freestyle','Bundles']},
+    {id:'gellines',name:'3D gel lines',price:5,dur:0,for:['Toes','Freestyle','French tip (acrylics)','Plain sets','Bundles','Gel']},
+    {id:'accent',name:'Accent nail (initial, heart…)',price:5,dur:0,for:['Freestyle','French tip (acrylics)','Plain sets','Gel','Bundles']},
+    {id:'airbrush',name:'Airbrush (1 colour)',price:5,dur:0,for:['Freestyle','French tip (acrylics)','Plain sets','Bundles']},
+    {id:'cateye',name:'Cat eye',price:5,dur:0,for:['Toes','Freestyle','Plain sets','Gel','Bundles']},
+    {id:'long',name:'Long length',price:5,dur:15,for:['Freestyle','Plain sets']},
+    {id:'rhinestone',name:'Rhinestone French tip',price:6,dur:10,for:['Freestyle','French tip (acrylics)','Bundles']},
+    {id:'removal',name:'Removal of old set',price:8,dur:30,for:['Freestyle','French tip (acrylics)','Plain sets','Gel','Bundles','Toes']}
+  ];
+  hours = {1:[10,18],2:[10,18],3:[9,19],4:null,5:[10,20],6:[9,17],0:null};
+  go(screen, dir='fwd', extra={}) { this.setState({ screen, dir, ...extra }); }
+  componentDidMount() { this.timer = setInterval(() => { if (this.state.holdOn && this.state.hold > 0) this.setState(s => ({ hold: s.hold - 1 })); }, 1000); }
+  componentWillUnmount() { clearInterval(this.timer); }
+  money(n) { return '£' + n; }
+  durLabel(m) { const h = Math.floor(m/60), r = m%60; return h ? (r ? `${h}h ${r}m` : `${h}h`) : `${r}m`; }
+  dayList() {
+    const out = []; const base = new Date(2026, 8, 16, 9, 41);
+    for (let i = 1; i <= 10; i++) { const d = new Date(base); d.setDate(base.getDate() + i); out.push(d); }
+    return out;
+  }
+  renderVals() {
+    const s = this.state;
+    const anim = s.dir === 'fwd' ? 'scrIn .28s cubic-bezier(.2,.8,.2,1)' : 'scrBack .28s cubic-bezier(.2,.8,.2,1)';
+    const wrap = t => ({ ...t, priceLabel: this.money(t.price), durLabel: this.durLabel(t.dur), groupUpper: t.group.toUpperCase(), open: () => this.go('detail','fwd',{ sel: t, addons: {}, from: s.screen }) });
+    const all = this.treatments.map(wrap);
+    const sel = s.sel ? wrap(s.sel) : all[18];
+    const groupsShown = s.group === 'All' ? this.groups : [s.group];
+    const sections = groupsShown.map(g => ({ label: g.toUpperCase() + ' · ' + all.filter(t => t.group === g).length, items: all.filter(t => t.group === g) }));
+    const groupChips = ['All', ...this.groups].map(g => { const on = s.group === g; return { label: g === 'All' ? 'All' : g + ' ' + all.filter(t => t.group === g).length, bg: on ? '#0b0b0b' : '#fff', fg: on ? '#fff' : '#0b0b0b', border: on ? '#0b0b0b' : 'rgba(0,0,0,.14)', pick: () => this.setState({ group: g }) }; });
+    const addons = this.addonDefs.filter(a => a.for.includes(sel.group)).map(a => { const on = !!s.addons[a.id]; return { ...a, priceLabel: '+' + this.money(a.price), meta: a.dur ? `+${a.dur} min` : 'No extra time', tick: on ? '✓' : '', bg: on ? '#f7edf1' : '#fff', border: on ? 'rgba(140,43,82,.4)' : 'rgba(0,0,0,.12)', boxBg: on ? '#8c2b52' : 'transparent', boxBorder: on ? '#8c2b52' : 'rgba(0,0,0,.25)', toggle: () => this.setState(st => ({ addons: { ...st.addons, [a.id]: !st.addons[a.id] } })) }; });
+    const chosen = addons.filter(a => s.addons[a.id]);
+    const total = sel.price + chosen.reduce((n, a) => n + a.price, 0);
+    const totalDur = sel.dur + chosen.reduce((n, a) => n + a.dur, 0);
+    const daysRaw = this.dayList();
+    const days = daysRaw.map((d, i) => { const open = !!this.hours[d.getDay()]; const on = s.day === i; return { dow: d.toLocaleDateString('en-GB',{weekday:'short'}).toUpperCase(), num: d.getDate(), bg: on ? '#0b0b0b' : '#fff', fg: on ? '#fff' : '#0b0b0b', border: on ? '#0b0b0b' : 'rgba(0,0,0,.14)', opacity: open ? 1 : .35, pick: () => this.setState({ day: i, slot: null }) }; });
+    const day = daysRaw[s.day]; const hrs = this.hours[day.getDay()];
+    const slots = [];
+    if (hrs) { for (let m = hrs[0]*60; m + totalDur <= hrs[1]*60; m += 15) { if (m % 45 === 30 && m > hrs[0]*60 + 60) continue; const label = `${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`; const on = s.slot === m; slots.push({ m, label, bg: on ? '#8c2b52' : '#fff', fg: on ? '#fff' : '#0b0b0b', border: on ? '#8c2b52' : 'rgba(0,0,0,.14)', pick: () => this.setState({ slot: m }) }); } }
+    const fmtTime = m => `${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`;
+    const dayLong = day.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});
+    const dayShort = day.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
+    const picked = s.slot != null;
+    const cancelBy = new Date(day); cancelBy.setDate(day.getDate()-1);
+    const emailOk = /.+@.+\..+/.test(s.email);
+    const detailsOk = s.name.trim().length > 1 && /^0\d{10}$|^\+44/.test(s.phone.replace(/\s/g,''));
+    const lines = [{ name: sel.name, price: this.money(sel.price) + '.00' }, ...chosen.map(a => ({ name: a.name, price: this.money(a.price) + '.00' }))];
+    return {
+      anim, sel, sections, groupChips, addons, days, slots, lines,
+      isDiscover: s.screen==='discover', isProfile: s.screen==='profile', isTreatments: s.screen==='treatments', isDetail: s.screen==='detail', isTime: s.screen==='time', isSignin: s.screen==='signin', isPay: s.screen==='pay', isVerifying: s.screen==='verifying', isConfirmed: s.screen==='confirmed',
+      heroUrl: this.imgs[s.hero], heroCounter: `${s.hero+1} / 9`, nextHero: () => this.setState(st => ({ hero: (st.hero+1) % this.imgs.length })),
+      portfolio: this.imgs.slice(1).map((url, i) => ({ url, open: () => this.setState({ hero: i+1 }) })),
+      featured: [all[0], all[3], all[18]],
+      treatmentCountLabel: `${all.length} across ${this.groups.length} groups`,
+      backLabel: s.from === 'treatments' ? 'Treatments' : 'Cluxeklaws',
+      addonHint: chosen.length ? `${chosen.length} chosen` : 'Optional',
+      totalLabel: `${this.money(total)} total`, totalDurLabel: this.durLabel(totalDur),
+      dayLabel: dayLong.toUpperCase(), dayHasSlots: !!hrs, dayClosed: !hrs,
+      pickedLabel: picked ? `${dayShort}, ${fmtTime(s.slot)}` : 'Pick a start time',
+      pickedSub: picked ? `until ${fmtTime(s.slot + totalDur)} · £10 deposit today` : `${slots.length} times on this day`,
+      endLabel: picked ? fmtTime(s.slot + totalDur) : '',
+      continueOpacity: picked ? 1 : .4,
+      holdLabel: picked ? `${dayShort}, ${fmtTime(s.slot)} held for you` : 'Held', holdClock: s.hold > 0 ? `${Math.floor(s.hold/60)}:${String(s.hold%60).padStart(2,'0')}` : 'expired',
+      email: s.email, setEmail: e => this.setState({ email: e.target.value }), emailRing: emailOk ? '#8c2b52' : 'transparent', emailOpacity: emailOk ? 1 : .4,
+      linkNotSent: !s.linkSent, linkSent: s.linkSent,
+      name: s.name, phone: s.phone, setName: e => this.setState({ name: e.target.value }), setPhone: e => this.setState({ phone: e.target.value }),
+      payOpacity: detailsOk ? 1 : .4,
+      summaryName: chosen.length ? `${sel.name} + ${chosen.map(a => a.name).join(', ')}` : sel.name,
+      balanceLabel: this.money(total - 10) + '.00',
+      cancelBy: `${cancelBy.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})}, ${picked ? fmtTime(s.slot) : ''}`,
+      firstName: (s.name.trim().split(' ')[0]) || 'Hello',
+      confirmedWhen: picked ? `${dayLong} at ${fmtTime(s.slot)}` : dayLong,
+      confirmedBody: `${sel.name}${chosen.length ? ' with ' + chosen.map(a => a.name.toLowerCase()).join(' and ') : ''}, ${this.durLabel(totalDur).replace('h',' hours').replace('m',' minutes').trim()}. £10 is paid; ${this.money(total-10)} is hers on the day. The address is in your booking now that it's confirmed.`,
+      goProfile: () => this.go('profile'), backDiscover: () => this.go('discover','back'),
+      goTreatments: () => this.go('treatments'), backProfile: () => this.go('profile','back'),
+      backFromDetail: () => this.go(s.from === 'treatments' ? 'treatments' : 'profile','back'),
+      goTime: () => this.go('time'), backDetail: () => this.go('detail','back'),
+      goSignin: () => { if (picked) this.go('signin','fwd',{ holdOn: true, hold: 300 }); }, backTime: () => this.go('time','back'),
+      sendLink: () => { if (emailOk) this.setState({ linkSent: true }); }, resetEmail: () => this.setState({ linkSent: false }),
+      goPay: () => this.go('pay'),
+      pay: () => { if (!detailsOk) return; this.go('verifying'); setTimeout(() => this.go('confirmed','fwd',{ holdOn: false }), 2200); },
+      done: () => this.setState({ screen: 'discover', dir: 'back', sel: null, addons: {}, slot: null, linkSent: false, holdOn: false, hold: 300 })
+    };
+  }
+}
+</script>
+</body>
+</html>

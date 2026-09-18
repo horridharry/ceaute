@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics><meta name="design_doc_mode" content="canvas"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet"><style>body{margin:0;background:#f0eee9;font-family:Geist,system-ui,sans-serif}a{color:#8c2b52}a:hover{color:#6f2141}</style></helmet>
+
+<div style="padding:40px 44px 44px">
+<div style="font:600 20px/1.2 Geist,sans-serif;letter-spacing:-.02em;color:#0b0b0b">Reframes — what if booking wasn't a menu?</div>
+<div style="margin-top:8px;font:400 12.5px/1.6 Geist,sans-serif;color:rgba(0,0,0,.55);max-width:840px">Every booking tool copies the salon till: a list of services, a price, a calendar. But a nail tech's customers don't think in services — they think in <em>looks</em>, in <em>her</em>, and in <em>when I'm next due</em>. And the techs don't think in catalogues; they think in Instagram posts and DMs. Eight experiments below, each borrowing a pattern from another industry and asking what it does to the loop. Tags: <span style="font:500 11px 'Geist Mono',monospace;color:#2f6f4f">MVP</span> works on data you already store; <span style="font:500 11px 'Geist Mono',monospace;color:#c98a1a">+1 FIELD</span> needs one new column or link; <span style="font:500 11px 'Geist Mono',monospace;color:#b3261e">DREAM</span> needs a real feature.</div>
+
+<div style="margin-top:30px;padding:18px 22px;background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:16px;max-width:840px">
+<div style="font:500 11px 'Geist Mono',monospace;color:rgba(0,0,0,.4);letter-spacing:.04em">THE LOOP THESE ADD UP TO</div>
+<div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;font:500 13px Geist,sans-serif">
+<span style="padding:8px 12px;border-radius:999px;background:#0b0b0b;color:#fff">She finishes a set</span><span style="color:rgba(0,0,0,.3)">→</span>
+<span style="padding:8px 12px;border-radius:999px;border:1px solid rgba(0,0,0,.14)">photographs it from the booking (07)</span><span style="color:rgba(0,0,0,.3)">→</span>
+<span style="padding:8px 12px;border-radius:999px;border:1px solid rgba(0,0,0,.14)">photo is tagged with what made it</span><span style="color:rgba(0,0,0,.3)">→</span>
+<span style="padding:8px 12px;border-radius:999px;border:1px solid rgba(0,0,0,.14)">next customer books the look (01)</span><span style="color:rgba(0,0,0,.3)">→</span>
+<span style="padding:8px 12px;border-radius:999px;border:1px solid rgba(0,0,0,.14)">arrives with a brief she already understands (03)</span><span style="color:rgba(0,0,0,.3)">→</span>
+<span style="padding:8px 12px;border-radius:999px;background:#8c2b52;color:#fff">three weeks later, rebooked in one tap (02)</span>
+</div>
+<div style="margin-top:10px;font:400 12.5px/1.6 Geist,sans-serif;color:rgba(0,0,0,.55)">Acuity and Fresha have none of this because they were built for salons with menus. The portfolio becomes the catalogue, the booking becomes the portfolio's source, and the calendar stops being the front door.</div>
+</div>
+
+<div style="margin-top:44px;padding-top:34px;border-top:1px solid rgba(0,0,0,.1)"><div style="font:600 15px/1.3 Geist,sans-serif;color:#0b0b0b">Round 2 — answers to your notes</div>
+<div style="margin-top:6px;font:400 12px/1.6 Geist,sans-serif;color:rgba(0,0,0,.55);max-width:840px">04 and 08 parked as agreed. 06 becomes a shareable <span style="font-family:'Geist Mono',monospace;font-size:11px">/@username/sets</span> later, not the default page. The rest answered with frames.</div></div>
+<div style="display:flex;gap:18px;flex-wrap:wrap;margin-top:18px">
+
+<div style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;justify-content:space-between;font:500 11px 'Geist Mono',monospace;color:rgba(0,0,0,.45);letter-spacing:.04em"><span>01b · THE PHOTO IS THE PAGE</span><span style="color:#c98a1a">+1 FIELD</span></div>
+<div style="position:relative;width:390px;height:800px;background:#0b0b0b;border:1px solid rgba(0,0,0,.14);border-radius:30px;overflow:hidden;display:flex;flex-direction:column;font-family:Geist,sans-serif;color:#fff;box-shadow:0 2px 10px rgba(0,0,0,.06)">
+<div style="position:absolute;inset:0;background:url('uploads/781338939_18007639835970416_2674606861232786530_n.jpg') center/cover"></div>
+<div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.3) 0%,rgba(0,0,0,0) 18%,rgba(0,0,0,0) 78%,rgba(0,0,0,.55) 100%)"></div>
+<div style="position:relative;display:flex;align-items:center;justify-content:center;padding:12px 20px 0"><div style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.18);border-radius:999px;padding:6px 12px;font:500 11.5px Geist,sans-serif"><span style="width:8px;height:9px;border:1.5px solid currentColor;border-radius:2px 2px 1px 1px;opacity:.6"></span>ceaute.com</div></div>
+<div style="position:relative;display:flex;justify-content:space-between;align-items:center;padding:10px 16px 0"><span style="width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.92);color:#0b0b0b;display:grid;place-items:center;font:500 14px Geist,sans-serif">×</span><span style="font:500 11px 'Geist Mono',monospace;background:rgba(0,0,0,.5);padding:8px 11px;border-radius:999px">4 / 9</span></div>
+<div style="position:relative;margin-top:auto;padding:0 16px 18px;display:flex;align-items:flex-end;justify-content:space-between;gap:12px">
+<div style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.92);border-radius:999px;padding:5px 11px 5px 5px;color:#0b0b0b"><span style="width:22px;height:22px;border-radius:50%;background:url('uploads/542753068_17960995832970416_9109832535221333394_n.jpg') center/cover"></span><span style="font:500 12px Geist,sans-serif">Cluxeklaws · Aug</span></div>
+<div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.92);color:#0b0b0b;border-radius:14px;padding:9px 9px 9px 14px"><div><div style="font:600 14px Geist,sans-serif;letter-spacing:-.02em">£69</div><div style="font:400 11px Geist,sans-serif;color:rgba(0,0,0,.5)">Freestyle Tier 2 · 3h 20m</div></div><span style="background:#8c2b52;color:#fff;border-radius:9px;padding:9px 12px;font:600 12.5px Geist,sans-serif">Book</span></div>
+</div>
+</div>
+<div style="font:400 12px/1.65 Geist,sans-serif;color:rgba(0,0,0,.6)">Full-screen photo, swipe through. The only chrome is a price tag in the corner — price, treatment name, Book. Tap the tag and the itemised breakdown from 01 slides up; don't, and she just keeps swiping. Text costs nothing until asked for.</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;justify-content:space-between;font:500 11px 'Geist Mono',monospace;color:rgba(0,0,0,.45);letter-spacing:.04em"><span>02b · THE RITUAL — THREE SURFACES, NO SPLASH</span><span style="color:#2f6f4f">MVP</span></div>
+<div style="position:relative;width:390px;height:800px;background:#fff;border:1px solid rgba(0,0,0,.14);border-radius:30px;overflow:hidden;display:flex;flex-direction:column;font-family:Geist,sans-serif;color:#0b0b0b;box-shadow:0 2px 10px rgba(0,0,0,.06)">
+<div style="display:flex;align-items:center;justify-content:center;padding:12px 20px 0"><div style="display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.06);border-radius:999px;padding:6px 12px;font:500 11.5px Geist,sans-serif;color:rgba(0,0,0,.65)"><span style="width:8px;height:9px;border:1.5px solid currentColor;border-radius:2px 2px 1px 1px;opacity:.6"></span>ceaute.com</div></div>
+<div style="display:flex;align-items:center;justify-content:space-between;height:52px;padding:0 20px"><span style="font:600 16px Geist,sans-serif;letter-spacing:-.03em">Ceaute</span><span style="width:32px;height:32px;border-radius:50%;background:#f4ecef;display:grid;place-items:center;font:600 12px Geist,sans-serif;color:#8c2b52">H</span></div>
+<div style="padding:8px 20px 0;font:500 11px 'Geist Mono',monospace;letter-spacing:.04em;color:rgba(0,0,0,.4)">A · ON HOME, WHEN SHE OPENS THE SITE</div>
+<div style="margin:8px 20px 0;border:1px solid rgba(0,0,0,.12);border-radius:16px;padding:14px;display:flex;gap:12px;align-items:center"><div style="width:48px;height:48px;border-radius:12px;flex:none;background:url('uploads/774468106_18005965076970416_2449061266499155646_n.jpg') center/cover"></div><div style="flex:1;min-width:0"><div style="font:500 14px Geist,sans-serif;letter-spacing:-.01em">About due for infills</div><div style="font:400 12.5px Geist,sans-serif;color:rgba(0,0,0,.5);margin-top:2px">Cluxeklaws · Tue 13 Oct 11:45 is free</div></div><span style="font:500 12.5px Geist,sans-serif;color:#8c2b52;flex:none">Hold it</span></div>
+<div style="padding:26px 20px 0;font:500 11px 'Geist Mono',monospace;letter-spacing:.04em;color:rgba(0,0,0,.4)">B · IN THE BOOKINGS LIST, WHERE THE LAST SET LIVES</div>
+<div style="margin:8px 20px 0;border:1px solid rgba(0,0,0,.12);border-radius:14px;padding:13px 14px;display:flex;gap:13px"><div style="width:44px;flex:none"><div style="font:500 11px 'Geist Mono',monospace;color:rgba(0,0,0,.45)">TUE</div><div style="font:600 19px Geist,sans-serif;letter-spacing:-.02em">22</div></div><div style="flex:1"><div style="font:500 14.5px Geist,sans-serif">One gel colour</div><div style="font:400 12.5px Geist,sans-serif;color:rgba(0,0,0,.55);margin-top:3px">Cluxeklaws · completed · 3 weeks ago</div><div style="margin-top:9px;display:flex;gap:6px"><span style="font:500 12px Geist,sans-serif;padding:7px 11px;border-radius:999px;background:#8c2b52;color:#fff">Rebook · Tue 13, 11:45</span><span style="font:500 12px Geist,sans-serif;padding:7px 11px;border-radius:999px;border:1px solid rgba(0,0,0,.14)">Review</span></div></div></div>
+<div style="padding:26px 20px 0;font:500 11px 'Geist Mono',monospace;letter-spacing:.04em;color:rgba(0,0,0,.4)">C · THE EMAIL, ~3 WEEKS AFTER · THE ONLY ONE THAT REACHES HER</div>
+<div style="margin:8px 20px 0;border:1px solid rgba(0,0,0,.12);border-radius:16px;overflow:hidden"><div style="padding:12px 16px;border-bottom:1px solid rgba(0,0,0,.08);display:flex;justify-content:space-between;font:400 12px Geist,sans-serif;color:rgba(0,0,0,.5)"><span><span style="color:#0b0b0b;font-weight:500">Ceaute</span> · to Harriso</span><span>Mon 12 Oct</span></div><div style="padding:16px 16px 18px"><div style="font:600 19px/1.2 Geist,sans-serif;letter-spacing:-.03em;text-wrap:pretty">Three weeks since your gel set. Cluxeklaws has your usual slot free.</div><div style="margin-top:8px;font:400 13px/1.5 Geist,sans-serif;color:rgba(0,0,0,.6)">Tuesday 13 October, 11:45. Infills are £41 with a £10 deposit.</div><div style="margin-top:14px;display:inline-block;background:#8c2b52;color:#fff;border-radius:9px;padding:11px 16px;font:500 13px Geist,sans-serif">Hold Tuesday 11:45</div></div></div>
+<div style="margin-top:auto;padding:0 20px 24px;font:400 12px/1.5 Geist,sans-serif;color:rgba(0,0,0,.45)">All three deep-link to the time step with treatment and slot pre-filled.</div>
+</div>
+<div style="font:400 12px/1.65 Geist,sans-serif;color:rgba(0,0,0,.6)">A web app can't interrupt anyone, so no splash. The nudge lives in three places she already goes: a card on home, a rebook button on the completed booking, and the email — which is the only surface that brings her back unprompted. A and B are MVP; C needs a scheduled job (same infrastructure as the evening-before digest — build it once, both use it). The cadence per category is a constant to start (nails 21 days, lashes 14), not a setting.</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;justify-content:space-between;font:500 11px 'Geist Mono',monospace;color:rgba(0,0,0,.45);letter-spacing:.04em"><span>03b · THE BRIEF, BEFORE PAYING</span><span style="color:#b3261e">DREAM · UPLOAD</span></div>
+<div style="position:relative;width:390px;height:800px;background:#fff;border:1px solid rgba(0,0,0,.14);border-radius:30px;overflow:hidden;display:flex;flex-direction:column;font-family:Geist,sans-serif;color:#0b0b0b;box-shadow:0 2px 10px rgba(0,0,0,.06)">
+<div style="display:flex;align-items:center;justify-content:center;padding:12px 20px 0"><div style="display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.06);border-radius:999px;padding:6px 12px;font:500 11.5px Geist,sans-serif;color:rgba(0,0,0,.65)"><span style="width:8px;height:9px;border:1.5px solid currentColor;border-radius:2px 2px 1px 1px;opacity:.6"></span>ceaute.com</div></div>
+<div style="display:flex;align-items:center;justify-content:space-between;height:52px;padding:0 20px"><span style="font:500 14px Geist,sans-serif;color:rgba(0,0,0,.6)">← Times</span><span style="font:500 11px 'Geist Mono',monospace;color:rgba(0,0,0,.4)">2 / 4</span></div>
+<div style="margin:0 20px;background:#f7edf1;border-radius:11px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center"><span style="font:500 13px Geist,sans-serif;color:#8c2b52">Tue 22 Sep, 11:45 held</span><span style="font:500 13px 'Geist Mono',monospace;color:#8c2b52">4:41</span></div>
+<div style="padding:18px 24px 0">
+<div style="font:600 25px/1.12 Geist,sans-serif;letter-spacing:-.04em;text-wrap:pretty">What are you thinking?</div>
+<div style="margin-top:6px;font:400 13.5px/1.55 Geist,sans-serif;color:rgba(0,0,0,.6)">Freestyle Tier 2 is 4–6 designs. A couple of references now saves the back-and-forth. Optional.</div>
+</div>
+<div style="margin:16px 24px 0;display:grid;grid-template-columns:repeat(3,1fr);gap:7px">
+<div style="aspect-ratio:1;border-radius:12px;background:url('uploads/793139991_18009224492970416_6208624817278613365_n.jpg') center/cover;position:relative"><span style="position:absolute;top:6px;left:6px;font:500 9.5px 'Geist Mono',monospace;color:#fff;background:rgba(0,0,0,.55);padding:3px 6px;border-radius:999px">HER SET</span></div>
+<div style="aspect-ratio:1;border-radius:12px;border:1.5px dashed rgba(140,43,82,.5);display:grid;place-items:center;font:500 12px Geist,sans-serif;color:#8c2b52;text-align:center;line-height:1.3">Add<br>photo</div>
+<div style="aspect-ratio:1;border-radius:12px;border:1px dashed rgba(0,0,0,.14)"></div>
+</div>
+<div style="margin:6px 24px 0;font:400 11.5px Geist,sans-serif;color:rgba(0,0,0,.45)">Up to 3 · resized on your phone before upload</div>
+<div style="margin:14px 24px 0"><div style="border:1px solid rgba(0,0,0,.16);border-radius:12px;padding:12px 13px;font:400 13.5px/1.5 Geist,sans-serif;color:rgba(0,0,0,.8);height:70px">Chrome on two nails like your August set, rest nude.</div></div>
+<div style="margin:12px 24px 0;display:flex;gap:7px;flex-wrap:wrap"><span style="font:500 12.5px Geist,sans-serif;padding:8px 12px;border-radius:999px;border:1px solid rgba(0,0,0,.14)">Same as last time</span><span style="font:500 12.5px Geist,sans-serif;padding:8px 12px;border-radius:999px;border:1px solid rgba(0,0,0,.14)">Surprise me</span></div>
+<div style="margin-top:auto;padding:0 24px 26px"><div style="background:#8c2b52;color:#fff;border-radius:11px;padding:14px;text-align:center;font:500 14.5px Geist,sans-serif">Continue to sign in</div><div style="margin-top:10px;text-align:center;font:500 13px Geist,sans-serif;color:rgba(0,0,0,.5)">Skip for now — add it from the booking later</div></div>
+</div>
+<div style="font:400 12px/1.65 Geist,sans-serif;color:rgba(0,0,0,.6)">Moved to right after the time is held: she has the design in her head at this moment, not after Stripe. Optional and skippable, so the hold timer isn't a threat. Only shown when the treatment is design-led (freestyle, ombre) — French tips don't need a brief. On cost: resize client-side to ~1200px JPEG (~150 KB each), cap at three, delete 30 days after the appointment. A thousand bookings a month is under half a gigabyte — pennies on any object store.</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;justify-content:space-between;font:500 11px 'Geist Mono',monospace;color:rgba(0,0,0,.45);letter-spacing:.04em"><span>05b · HOME — NOTHING BOOKED</span><span style="color:#2f6f4f">MVP</span></div>
+<div style="position:relative;width:390px;height:800px;background:#fff;border:1px solid rgba(0,0,0,.14);border-radius:30px;overflow:hidden;display:flex;flex-direction:column;font-family:Geist,sans-serif;color:#0b0b0b;box-shadow:0 2px 10px rgba(0,0,0,.06)">
+<div style="display:flex;align-items:center;justify-content:center;padding:12px 20px 0"><div style="display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.06);border-radius:999px;padding:6px 12px;font:500 11.5px Geist,sans-serif;color:rgba(0,0,0,.65)"><span style="width:8px;height:9px;border:1.5px solid currentColor;border-radius:2px 2px 1px 1px;opacity:.6"></span>ceaute.com</div></div>
+<div style="display:flex;align-items:center;justify-content:space-between;height:52px;padding:0 20px"><span style="font:600 16px Geist,sans-serif;letter-spacing:-.03em">Ceaute</span><span style="width:32px;height:32px;border-radius:50%;background:#f4ecef;display:grid;place-items:center;font:600 12px Geist,sans-serif;color:#8c2b52">H</span></div>
+<div style="padding:14px 24px 0">
+<div style="font:500 11px 'Geist Mono',monospace;letter-spacing:.04em;color:rgba(0,0,0,.4)">NOTHING BOOKED</div>
+<div style="margin-top:10px;font:600 30px/1.1 Geist,sans-serif;letter-spacing:-.04em;text-wrap:pretty">Your last set was 5 weeks ago.</div>
+<div style="margin-top:8px;font:400 14px/1.55 Geist,sans-serif;color:rgba(0,0,0,.6)">Cluxeklaws is free Tuesday and Friday this week.</div>
+</div>
+<div style="margin:18px 24px 0;border:1px solid rgba(0,0,0,.12);border-radius:18px;overflow:hidden"><div style="height:160px;background:url('uploads/774468106_18005965076970416_2449061266499155646_n.jpg') center/cover"></div><div style="padding:13px 14px 14px;display:flex;justify-content:space-between;align-items:center"><div><div style="font:500 14.5px Geist,sans-serif">Book Cluxeklaws again</div><div style="font:400 12.5px Geist,sans-serif;color:rgba(0,0,0,.5);margin-top:2px">Last: One gel colour · £36</div></div><span style="background:#8c2b52;color:#fff;border-radius:10px;padding:11px 16px;font:600 13px Geist,sans-serif">Times</span></div></div>
+<div style="margin:24px 24px 0;display:flex;justify-content:space-between;align-items:baseline"><span style="font:500 11px 'Geist Mono',monospace;letter-spacing:.04em;color:rgba(0,0,0,.4)">OR SOMEONE NEW · MANCHESTER</span></div>
+<div style="margin:12px 20px 0;display:flex;align-items:center;gap:9px;background:#f4f3f1;border-radius:12px;padding:14px 14px"><span style="width:13px;height:13px;border:1.5px solid rgba(0,0,0,.4);border-radius:50%"></span><span style="font:400 14px Geist,sans-serif;color:rgba(0,0,0,.45)">Treatment or place</span></div>
+<div style="margin:10px 20px 0;display:flex;gap:7px;flex-wrap:wrap"><span style="font:500 13px Geist,sans-serif;padding:9px 13px;border-radius:999px;border:1px solid rgba(0,0,0,.14)">Nails 7</span><span style="font:500 13px Geist,sans-serif;padding:9px 13px;border-radius:999px;border:1px solid rgba(0,0,0,.14)">Lashes 3</span><span style="font:500 13px Geist,sans-serif;padding:9px 13px;border-radius:999px;border:1px solid rgba(0,0,0,.14)">Hair 1</span><span style="font:500 13px Geist,sans-serif;padding:9px 13px;border-radius:999px;border:1px solid rgba(0,0,0,.14)">Brows 1</span></div>
+<div style="margin-top:auto;padding:0 24px 24px;font:400 12px/1.5 Geist,sans-serif;color:rgba(0,0,0,.45)">Brand-new account with no history: home <em>is</em> Discover (the masthead from Signature Moments 09).</div>
+</div>
+<div style="font:400 12px/1.65 Geist,sans-serif;color:rgba(0,0,0,.6)">Three states, one rule: <strong>lead with the most useful next action.</strong> No bookings but history → "book again" leads, Discover second. No history at all → Discover is home, no wrapper. Multiple upcoming → next one leads as in 05, and the rest stack beneath it as compact rows (right).</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;justify-content:space-between;font:500 11px 'Geist Mono',monospace;color:rgba(0,0,0,.45);letter-spacing:.04em"><span>05c · HOME — THREE UPCOMING</span><span style="color:#2f6f4f">MVP</span></div>
+<div style="position:relative;width:390px;height:800px;background:#fff;border:1px solid rgba(0,0,0,.14);border-radius:30px;overflow:hidden;display:flex;flex-direction:column;font-family:Geist,sans-serif;color:#0b0b0b;box-shadow:0 2px 10px rgba(0,0,0,.06)">
+<div style="display:flex;align-items:center;justify-content:center;padding:12px 20px 0"><div style="display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.06);border-radius:999px;padding:6px 12px;font:500 11.5px Geist,sans-serif;color:rgba(0,0,0,.65)"><span style="width:8px;height:9px;border:1.5px solid currentColor;border-radius:2px 2px 1px 1px;opacity:.6"></span>ceaute.com</div></div>
+<div style="display:flex;align-items:center;justify-content:space-between;height:52px;padding:0 20px"><span style="font:600 16px Geist,sans-serif;letter-spacing:-.03em">Ceaute</span><span style="width:32px;height:32px;border-radius:50%;background:#f4ecef;display:grid;place-items:center;font:600 12px Geist,sans-serif;color:#8c2b52">H</span></div>
+<div style="padding:14px 24px 0">
+<div style="font:500 11px 'Geist Mono',monospace;letter-spacing:.04em;color:#8c2b52">NEXT · TOMORROW</div>
+<div style="margin-top:10px;font:600 30px/1.1 Geist,sans-serif;letter-spacing:-.04em;text-wrap:pretty">Friday 14:00, lashes with Lash by Ola.</div>
+<div style="margin-top:8px;font:400 14px/1.55 Geist,sans-serif;color:rgba(0,0,0,.6)">Classic full set · 1h 30m · £15 on the day.</div>
+</div>
+<div style="margin:16px 24px 0;border-radius:18px;overflow:hidden;position:relative;height:150px;background:url('uploads/790476101_18008657093970416_5915040309482860222_n.jpg') center/cover"><div style="position:absolute;left:12px;right:12px;bottom:12px;display:flex;gap:8px"><span style="flex:1;background:#fff;color:#0b0b0b;border-radius:10px;padding:11px;text-align:center;font:500 13px Geist,sans-serif">Booking &amp; address</span><span style="flex:1;background:rgba(255,255,255,.22);color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:10px;padding:11px;text-align:center;font:500 13px Geist,sans-serif">Directions</span></div></div>
+<div style="margin:22px 24px 0;font:500 11px 'Geist Mono',monospace;letter-spacing:.04em;color:rgba(0,0,0,.4)">THEN</div>
+<div style="margin:8px 24px 0">
+<div style="display:flex;gap:13px;padding:12px 0;border-top:1px solid rgba(0,0,0,.09)"><div style="width:44px;flex:none"><div style="font:500 11px 'Geist Mono',monospace;color:rgba(0,0,0,.45)">TUE</div><div style="font:600 19px Geist,sans-serif;letter-spacing:-.02em">22</div></div><div style="flex:1"><div style="font:500 14.5px Geist,sans-serif">One gel colour · Cluxeklaws</div><div style="font:400 12.5px Geist,sans-serif;color:rgba(0,0,0,.5);margin-top:2px">11:45 · Manchester · £34 on the day</div></div></div>
+<div style="display:flex;gap:13px;padding:12px 0;border-top:1px solid rgba(0,0,0,.09);border-bottom:1px solid rgba(0,0,0,.09)"><div style="width:44px;flex:none"><div style="font:500 11px 'Geist Mono',monospace;color:rgba(0,0,0,.45)">SAT</div><div style="font:600 19px Geist,sans-serif;letter-spacing:-.02em">3</div></div><div style="flex:1"><div style="font:500 14.5px Geist,sans-serif">Brow lamination · Arch House</div><div style="font:400 12.5px Geist,sans-serif;color:rgba(0,0,0,.5);margin-top:2px">Oct · 10:30 · Didsbury · paid in full</div></div></div>
+</div>
+<div style="margin:22px 24px 0;display:flex;justify-content:space-between;align-items:baseline"><span style="font:500 11px 'Geist Mono',monospace;letter-spacing:.04em;color:rgba(0,0,0,.4)">YOUR PEOPLE</span><span style="font:400 12.5px Geist,sans-serif;color:#8c2b52">Find someone new</span></div>
+<div style="margin:10px 24px 0;display:flex;gap:8px"><span style="width:40px;height:40px;border-radius:50%;background:url('uploads/542753068_17960995832970416_9109832535221333394_n.jpg') center/cover"></span><span style="width:40px;height:40px;border-radius:50%;background:url('uploads/790476101_18008657093970416_5915040309482860222_n.jpg') center/cover"></span><span style="width:40px;height:40px;border-radius:50%;background:url('uploads/781338939_18007639835970416_2674606861232786530_n.jpg') center/cover"></span></div>
+</div>
+<div style="font:400 12px/1.65 Geist,sans-serif;color:rgba(0,0,0,.6)">The soonest gets the letter treatment; everything else is a dated row. Sorted by date, never by provider. Beyond three, "and 2 more" links to Bookings.</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;justify-content:space-between;font:500 11px 'Geist Mono',monospace;color:rgba(0,0,0,.45);letter-spacing:.04em"><span>07b · WHERE "DONE" LIVES — THE PROVIDER'S TODAY</span><span style="color:#c98a1a">+1 FIELD</span></div>
+<div style="position:relative;width:390px;height:800px;background:#fff;border:1px solid rgba(0,0,0,.14);border-radius:30px;overflow:hidden;display:flex;flex-direction:column;font-family:Geist,sans-serif;color:#0b0b0b;box-shadow:0 2px 10px rgba(0,0,0,.06)">
+<div style="display:flex;align-items:center;justify-content:center;padding:12px 20px 0"><div style="display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.06);border-radius:999px;padding:6px 12px;font:500 11.5px Geist,sans-serif;color:rgba(0,0,0,.65)"><span style="width:8px;height:9px;border:1.5px solid currentColor;border-radius:2px 2px 1px 1px;opacity:.6"></span>ceaute.com</div></div>
+<div style="display:flex;align-items:center;justify-content:space-between;height:52px;padding:0 20px;border-bottom:1px solid rgba(0,0,0,.08)"><span style="font:600 16px Geist,sans-serif;letter-spacing:-.03em">Ceaute</span><span style="width:30px;height:30px;border-radius:50%;background:url('uploads/542753068_17960995832970416_9109832535221333394_n.jpg') center/cover"></span></div>
+<div style="padding:18px 24px 0"><div style="font:600 24px Geist,sans-serif;letter-spacing:-.035em">Today</div><div style="font:400 12.5px Geist,sans-serif;color:rgba(0,0,0,.5);margin-top:2px">Tuesday 22 September · 3 sets</div></div>
+<div style="margin:14px 24px 0;display:flex;flex-direction:column;gap:8px">
+<div style="border:1px solid rgba(0,0,0,.12);border-radius:14px;padding:12px 14px;display:flex;gap:13px;align-items:center;opacity:.6"><div style="font:500 13px 'Geist Mono',monospace;width:44px;flex:none">10:00</div><div style="flex:1"><div style="font:500 14px Geist,sans-serif">Sade · Freestyle Tier 2</div><div style="font:400 12px Geist,sans-serif;color:rgba(0,0,0,.5);margin-top:2px">Done 13:05 · £51 collected · photo added</div></div><span style="width:20px;height:20px;border-radius:50%;background:#2f6f4f;color:#fff;display:grid;place-items:center;font:600 11px Geist,sans-serif">✓</span></div>
+<div style="border:1.5px solid #8c2b52;border-radius:14px;padding:12px 14px"><div style="display:flex;gap:13px;align-items:center"><div style="font:500 13px 'Geist Mono',monospace;width:44px;flex:none;color:#8c2b52">13:15</div><div style="flex:1"><div style="font:500 14px Geist,sans-serif">Harriso · One gel colour</div><div style="font:400 12px Geist,sans-serif;color:rgba(0,0,0,.5);margin-top:2px">+ 3D flower (2) · ended 15:25 · £34 to collect</div></div></div><div style="margin-top:11px;display:flex;gap:8px"><span style="flex:1;background:#0b0b0b;color:#fff;border-radius:10px;padding:11px;text-align:center;font:500 13px Geist,sans-serif">Mark done</span><span style="flex:1;border:1px solid rgba(0,0,0,.16);border-radius:10px;padding:11px;text-align:center;font:500 13px Geist,sans-serif">Didn't show</span></div></div>
+<div style="border:1px solid rgba(0,0,0,.12);border-radius:14px;padding:12px 14px;display:flex;gap:13px;align-items:center"><div style="font:500 13px 'Geist Mono',monospace;width:44px;flex:none;color:rgba(0,0,0,.6)">15:45</div><div style="flex:1"><div style="font:500 14px Geist,sans-serif">Maryam · French tips medium</div><div style="font:400 12px Geist,sans-serif;color:rgba(0,0,0,.5);margin-top:2px">2h · £36 to collect · brief attached</div></div></div>
+</div>
+<div style="margin:16px 24px 0;font:400 12.5px/1.55 Geist,sans-serif;color:rgba(0,0,0,.55)">"Mark done" appears on a booking once its end time has passed. Tapping it opens the photo prompt (07). Not marked by midnight → completed automatically, no photo.</div>
+<div style="margin-top:auto;display:flex;border-top:1px solid rgba(0,0,0,.1);padding:11px 26px 22px;justify-content:space-between">
+<div style="display:flex;flex-direction:column;align-items:center;gap:5px"><span style="width:17px;height:17px;border:1.5px solid #0b0b0b;border-radius:4px"></span><span style="font:500 10.5px Geist,sans-serif">Today</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:5px;opacity:.42"><span style="width:17px;height:17px;border:1.5px solid #0b0b0b;border-radius:4px"></span><span style="font:500 10.5px Geist,sans-serif">Bookings</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:5px;opacity:.42"><span style="width:17px;height:17px;border:1.5px solid #0b0b0b;border-radius:4px"></span><span style="font:500 10.5px Geist,sans-serif">Treatments</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:5px;opacity:.42"><span style="width:17px;height:17px;border:1.5px solid #0b0b0b;border-radius:50%"></span><span style="font:500 10.5px Geist,sans-serif">Page</span></div>
+</div>
+</div>
+<div style="font:400 12px/1.65 Geist,sans-serif;color:rgba(0,0,0,.6)">No clicking into bookings. The dashboard's first tab becomes <strong>Today</strong>: her diary for the day, and the booking whose end time has passed grows a "Mark done" button in place. That's the trigger for 07. Two taps total — done, then photo — standing next to the client. The overview stats move down a screen; today's work is what she opens the phone for.</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;justify-content:space-between;font:500 11px 'Geist Mono',monospace;color:rgba(0,0,0,.45);letter-spacing:.04em"><span>09b · SENTENCE OR FORM — IT REMEMBERS</span><span style="color:#2f6f4f">MVP + PARSER</span></div>
+<div style="position:relative;width:390px;height:800px;background:#fff;border:1px solid rgba(0,0,0,.14);border-radius:30px;overflow:hidden;display:flex;flex-direction:column;font-family:Geist,sans-serif;color:#0b0b0b;box-shadow:0 2px 10px rgba(0,0,0,.06)">
+<div style="display:flex;align-items:center;justify-content:center;padding:12px 20px 0"><div style="display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.06);border-radius:999px;padding:6px 12px;font:500 11.5px Geist,sans-serif;color:rgba(0,0,0,.65)"><span style="width:8px;height:9px;border:1.5px solid currentColor;border-radius:2px 2px 1px 1px;opacity:.6"></span>ceaute.com</div></div>
+<div style="display:flex;align-items:center;justify-content:space-between;height:52px;padding:0 20px"><span style="font:500 14px Geist,sans-serif;color:rgba(0,0,0,.6)">Cancel</span><span style="font:600 14px Geist,sans-serif">New treatment</span><span style="font:500 14px Geist,sans-serif;color:rgba(0,0,0,.25)">Save</span></div>
+<div style="margin:6px 20px 0;display:flex;background:#f4f3f1;border-radius:11px;padding:3px"><span style="flex:1;text-align:center;padding:9px;border-radius:9px;font:500 13px Geist,sans-serif;color:rgba(0,0,0,.5)">Quick</span><span style="flex:1;text-align:center;padding:9px;border-radius:9px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.08);font:500 13px Geist,sans-serif">Form</span></div>
+<div style="padding:16px 24px 0;display:flex;flex-direction:column;gap:13px">
+<div><div style="font:500 12.5px Geist,sans-serif;margin-bottom:6px">Name</div><div style="border:1px solid rgba(0,0,0,.16);border-radius:10px;padding:12px 13px;font:400 14px Geist,sans-serif">Ombre toes</div></div>
+<div style="display:flex;gap:10px"><div style="flex:1"><div style="font:500 12.5px Geist,sans-serif;margin-bottom:6px">Price</div><div style="border:1px solid rgba(0,0,0,.16);border-radius:10px;padding:12px 13px;font:400 14px Geist,sans-serif">£40.00</div></div><div style="flex:1"><div style="font:500 12.5px Geist,sans-serif;margin-bottom:6px">Duration</div><div style="border:1px solid rgba(0,0,0,.16);border-radius:10px;padding:12px 13px;font:400 14px Geist,sans-serif">2h 15m</div></div></div>
+<div><div style="font:500 12.5px Geist,sans-serif;margin-bottom:6px">Group</div><div style="display:flex;gap:7px;flex-wrap:wrap"><span style="font:500 12.5px Geist,sans-serif;padding:8px 13px;border-radius:999px;border:1px solid rgba(0,0,0,.14)">Bundles</span><span style="font:500 12.5px Geist,sans-serif;padding:8px 13px;border-radius:999px;background:#0b0b0b;color:#fff">Toes</span><span style="font:500 12.5px Geist,sans-serif;padding:8px 13px;border-radius:999px;border:1px solid rgba(0,0,0,.14)">No group</span></div></div>
+<div><div style="font:500 12.5px Geist,sans-serif;margin-bottom:6px">Description</div><div style="border:1px solid rgba(0,0,0,.16);border-radius:10px;padding:12px 13px;font:400 13.5px/1.5 Geist,sans-serif;color:rgba(0,0,0,.35);height:64px">What's included, what to arrive with…</div></div>
+</div>
+<div style="margin:14px 24px 0;font:400 12px/1.5 Geist,sans-serif;color:rgba(0,0,0,.45)">You used Form last time, so it opens here. Switch any time; we'll remember.</div>
+<div style="margin-top:auto;padding:0 24px 26px"><div style="background:#8c2b52;color:#fff;border-radius:11px;padding:14px;text-align:center;font:500 14.5px Geist,sans-serif">Create treatment</div></div>
+</div>
+<div style="font:400 12px/1.65 Geist,sans-serif;color:rgba(0,0,0,.6)">A Quick / Form segment at the top of the same screen; whichever she used last is where it opens next time (one preference on the provider, or just localStorage). Quick is the sentence + "we read it as" card; Form is the fields. Both save to the same treatment.</div>
+</div>
+
+</div>
+
+<div style="margin-top:40px;font:500 11px 'Geist Mono',monospace;color:rgba(0,0,0,.45);letter-spacing:.04em">ROUND 1 · HOW CUSTOMERS BOOK</div>
+<div style="display:flex;gap:18px;flex-wrap:wrap;margin-top:12px">
+
+<div style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;justify-content:space-between;font:500 11px 'Geist Mono',monospace;color:rgba(0,0,0,.45);letter-spacing:.04em"><span>01 · BOOK THE LOOK</span><span style="color:#c98a1a">+1 FIELD</span></div>
+<div style="position:relative;width:390px;height:800px;background:#fff;border:1px solid rgba(0,0,0,.14);border-radius:30px;overflow:hidden;display:flex;flex-direction:column;font-family:Geist,sans-serif;color:#0b0b0b;box-shadow:0 2px 10px rgba(0,0,0,.06)">
+<div style="height:440px;position:relative;flex:none;background:url('uploads/781338939_18007639835970416_2674606861232786530_n.jpg') center/cover">
+<div style="position:absolute;top:0;left:0;right:0;display:flex;align-items:center;justify-content:center;padding:12px 20px 0"><div style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.18);border-radius:999px;padding:6px 12px;font:500 11.5px Geist,sans-serif;color:#fff"><span style="width:8px;height:9px;border:1.5px solid currentColor;border-radius:2px 2px 1px 1px;opacity:.6"></span>ceaute.com</div></div>
+<div style="position:absolute;top:48px;left:16px;right:16px;display:flex;justify-content:space-between"><span style="width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.92);display:grid;place-items:center;font:500 14px Geist,sans-serif">←</span><span style="font:500 11px 'Geist Mono',monospace;color:#fff;background:rgba(0,0,0,.5);padding:8px 11px;border-radius:999px;align-self:center">4 / 9</span></div>
+<div style="position:absolute;left:16px;bottom:14px;display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.92);border-radius:999px;padding:5px 11px 5px 5px"><span style="width:22px;height:22px;border-radius:50%;background:url('uploads/542753068_17960995832970416_9109832535221333394_n.jpg') center/cover"></span><span style="font:500 12px Geist,sans-serif">Cluxeklaws · Aug</span></div>
+</div>
+<div style="flex:1;padding:18px 22px 0">
+<div style="font:500 11px 'Geist Mono',monospace;letter-spacing:.04em;color:#8c2b52">WHAT MADE THIS SET</div>
+<div style="margin-top:8px;font:600 22px/1.15 Geist,sans-serif;letter-spacing:-.035em;text-wrap:pretty">Freestyle Tier 2, long length, two 3D flowers.</div>
+<div style="margin-top:12px;display:flex;flex-direction:column;gap:6px">
+<div style="display:flex;justify-content:space-between;font:400 13.5px Geist,sans-serif"><span>Freestyle Tier 2 · 3h</span><span>£61</span></div>
+<div style="display:flex;justify-content:space-between;font:400 13.5px Geist,sans-serif;color:rgba(0,0,0,.6)"><span>Long length · +20m</span><span>£8</span></div>
+<div style="display:flex;justify-content:space-between;font:400 13.5px Geist,sans-serif;color:rgba(0,0,0,.6)"><span>3D flower (2) included</span><span>—</span></div>
+</div>
+</div>
+<div style="padding:12px 22px 24px;display:flex;align-items:center;gap:12px"><div style="flex:1"><div style="font:600 20px Geist,sans-serif;letter-spacing:-.03em">£69</div><div style="font:400 11.5px Geist,sans-serif;color:rgba(0,0,0,.5)">3h 20m · next free Tue 22, 10:00</div></div><div style="background:#8c2b52;color:#fff;border-radius:11px;padding:13px 24px;font:600 14px Geist,sans-serif">Book this look</div></div>
+</div>
+<div style="font:400 12px/1.65 Geist,sans-serif;color:rgba(0,0,0,.6)"><strong>Borrowed from</strong> shoppable posts (Instagram, Pinterest). The portfolio stops being proof and becomes the menu: each photo carries the treatment and add-ons that produced it, so "I want that" is a single tap and a correct basket. Needs one link — portfolio image → treatment (+ add-ons). She tags it once when uploading (see 07).</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;justify-content:space-between;font:500 11px 'Geist Mono',monospace;color:rgba(0,0,0,.45);letter-spacing:.04em"><span>02 · THE RITUAL — REBOOK WHEN YOU'RE DUE</span><span style="color:#2f6f4f">MVP</span></div>
+<div style="position:relative;width:390px;height:800px;background:#fff;border:1px solid rgba(0,0,0,.14);border-radius:30px;overflow:hidden;display:flex;flex-direction:column;font-family:Geist,sans-serif;color:#0b0b0b;box-shadow:0 2px 10px rgba(0,0,0,.06)">
+<div style="display:flex;align-items:center;justify-content:center;padding:12px 20px 0"><div style="display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.06);border-radius:999px;padding:6px 12px;font:500 11.5px Geist,sans-serif;color:rgba(0,0,0,.65)"><span style="width:8px;height:9px;border:1.5px solid currentColor;border-radius:2px 2px 1px 1px;opacity:.6"></span>ceaute.com</div></div>
+<div style="display:flex;align-items:center;justify-content:space-between;height:52px;padding:0 20px"><span style="font:600 16px Geist,sans-serif;letter-spacing:-.03em">Ceaute</span><span style="width:32px;height:32px;border-radius:50%;background:#f4ecef;display:grid;place-items:center;font:600 12px Geist,sans-serif;color:#8c2b52">H</span></div>
+<div style="padding:18px 24px 0">
+<div style="font:500 11px 'Geist Mono',monospace;letter-spacing:.04em;color:rgba(0,0,0,.4)">YOUR NAILS · SET ON 22 SEP</div>
+<div style="margin-top:12px;font:600 30px/1.12 Geist,sans-serif;letter-spacing:-.04em;text-wrap:pretty">Three weeks in. Infills are usually due about now.</div>
+<div style="margin-top:12px;font:400 14px/1.6 Geist,sans-serif;color:rgba(0,0,0,.6)">Cluxeklaws has Tuesday 13 October at 11:45 free — the same slot as last time.</div>
+</div>
+<div style="margin:22px 24px 0;border:1px solid rgba(0,0,0,.12);border-radius:18px;overflow:hidden">
+<div style="display:flex;gap:12px;padding:14px;align-items:center;border-bottom:1px solid rgba(0,0,0,.08)"><div style="width:52px;height:52px;border-radius:12px;flex:none;background:url('uploads/774468106_18005965076970416_2449061266499155646_n.jpg') center/cover"></div><div style="flex:1"><div style="font:500 14.5px Geist,sans-serif">Infills · Gel</div><div style="font:400 12.5px Geist,sans-serif;color:rgba(0,0,0,.5);margin-top:2px">2h · £41 · £10 deposit</div></div></div>
+<div style="display:flex;gap:6px;padding:12px 14px">
+<span style="flex:1;text-align:center;border-radius:10px;padding:10px 0;background:#0b0b0b;color:#fff"><span style="display:block;font:500 10.5px 'Geist Mono',monospace">TUE 13</span><span style="display:block;font:600 15px Geist,sans-serif;margin-top:2px">11:45</span></span>
+<span style="flex:1;text-align:center;border-radius:10px;padding:10px 0;border:1px solid rgba(0,0,0,.14)"><span style="display:block;font:500 10.5px 'Geist Mono',monospace;color:rgba(0,0,0,.5)">WED 14</span><span style="display:block;font:600 15px Geist,sans-serif;margin-top:2px">10:00</span></span>
+<span style="flex:1;text-align:center;border-radius:10px;padding:10px 0;border:1px solid rgba(0,0,0,.14)"><span style="display:block;font:500 10.5px 'Geist Mono',monospace;color:rgba(0,0,0,.5)">FRI 16</span><span style="display:block;font:600 15px Geist,sans-serif;margin-top:2px">14:15</span></span>
+<span style="flex:1;text-align:center;border-radius:10px;padding:10px 0;border:1px solid rgba(0,0,0,.14);color:rgba(0,0,0,.5)"><span style="display:block;font:500 10.5px 'Geist Mono',monospace">MORE</span><span style="display:block;font:600 15px Geist,sans-serif;margin-top:2px">→</span></span>
+</div>
+</div>
+<div style="margin:14px 24px 0;font:400 12.5px/1.55 Geist,sans-serif;color:rgba(0,0,0,.5)">Ready for a new set instead? Her freestyle and French are one tap away too.</div>
+<div style="margin-top:auto;padding:0 24px 26px"><div style="background:#8c2b52;color:#fff;border-radius:11px;padding:14px;text-align:center;font:500 14.5px Geist,sans-serif">Hold Tuesday 13th, 11:45</div><div style="margin-top:10px;text-align:center;font:500 13px Geist,sans-serif;color:rgba(0,0,0,.5)">Not yet</div></div>
+</div>
+<div style="font:400 12px/1.65 Geist,sans-serif;color:rgba(0,0,0,.6)"><strong>Borrowed from</strong> the barber's standing appointment and subscription refills. Nails have a cadence (infills 3–4 weeks, lashes 2–3); the app knows the last set's date and treatment, so the home screen can lead with "you're due" and the same slot. No new data — completed booking + availability calc. The most valuable screen on this page for retention.</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;justify-content:space-between;font:500 11px 'Geist Mono',monospace;color:rgba(0,0,0,.45);letter-spacing:.04em"><span>03 · THE BRIEF — TALK TO HER BEFORE YOU ARRIVE</span><span style="color:#b3261e">DREAM · IMAGE UPLOAD</span></div>
+<div style="position:relative;width:390px;height:800px;background:#fff;border:1px solid rgba(0,0,0,.14);border-radius:30px;overflow:hidden;display:flex;flex-direction:column;font-family:Geist,sans-serif;color:#0b0b0b;box-shadow:0 2px 10px rgba(0,0,0,.06)">
+<div style="display:flex;align-items:center;justify-content:center;padding:12px 20px 0"><div style="display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.06);border-radius:999px;padding:6px 12px;font:500 11.5px Geist,sans-serif;color:rgba(0,0,0,.65)"><span style="width:8px;height:9px;border:1.5px solid currentColor;border-radius:2px 2px 1px 1px;opacity:.6"></span>ceaute.com</div></div>
+<div style="display:flex;align-items:center;justify-content:space-between;height:52px;padding:0 20px"><span style="font:500 14px Geist,sans-serif;color:rgba(0,0,0,.6)">← Confirmed</span><span style="font:500 13px Geist,sans-serif;color:#8c2b52">Skip</span></div>
+<div style="padding:12px 24px 0">
+<div style="font:600 27px/1.12 Geist,sans-serif;letter-spacing:-.04em;text-wrap:pretty">Show Cluxeklaws what you're thinking.</div>
+<div style="margin-top:8px;font:400 14px/1.6 Geist,sans-serif;color:rgba(0,0,0,.6)">Freestyle Tier 2 needs 4–6 designs. Drop references now so she can plan the set, not guess on the day.</div>
+</div>
+<div style="margin:18px 24px 0;display:grid;grid-template-columns:repeat(3,1fr);gap:7px">
+<div style="aspect-ratio:1;border-radius:12px;background:url('uploads/793139991_18009224492970416_6208624817278613365_n.jpg') center/cover;position:relative"><span style="position:absolute;top:6px;left:6px;font:500 9.5px 'Geist Mono',monospace;color:#fff;background:rgba(0,0,0,.55);padding:3px 6px;border-radius:999px">HER PAGE</span></div>
+<div style="aspect-ratio:1;border-radius:12px;background:url('uploads/790476101_18008657093970416_5915040309482860222_n.jpg') center/cover"></div>
+<div style="aspect-ratio:1;border-radius:12px;border:1.5px dashed rgba(140,43,82,.5);display:grid;place-items:center;font:500 12px Geist,sans-serif;color:#8c2b52;text-align:center;line-height:1.3">Add from<br>camera roll</div>
+</div>
+<div style="margin:16px 24px 0"><div style="font:500 12.5px Geist,sans-serif;margin-bottom:6px">Anything she should know</div><div style="border:1px solid rgba(0,0,0,.16);border-radius:12px;padding:12px 13px;font:400 13.5px/1.5 Geist,sans-serif;color:rgba(0,0,0,.8);height:84px">Chrome on two nails like your August set, rest nude. I bite my thumbs so short is fine there.</div></div>
+<div style="margin:14px 24px 0;display:flex;gap:7px;flex-wrap:wrap"><span style="font:500 12.5px Geist,sans-serif;padding:8px 12px;border-radius:999px;border:1px solid rgba(0,0,0,.14)">Same as last time</span><span style="font:500 12.5px Geist,sans-serif;padding:8px 12px;border-radius:999px;border:1px solid rgba(0,0,0,.14)">Surprise me</span><span style="font:500 12.5px Geist,sans-serif;padding:8px 12px;border-radius:999px;border:1px solid rgba(0,0,0,.14)">Match an outfit</span></div>
+<div style="margin-top:auto;padding:0 24px 26px"><div style="background:#0b0b0b;color:#fff;border-radius:11px;padding:14px;text-align:center;font:500 14.5px Geist,sans-serif">Send brief</div><div style="margin-top:10px;font:400 12px/1.5 Geist,sans-serif;color:rgba(0,0,0,.45);text-align:center">She sees it on the booking. You can edit until the day before.</div></div>
+</div>
+<div style="font:400 12px/1.65 Geist,sans-serif;color:rgba(0,0,0,.6)"><strong>Borrowed from</strong> tattoo consultations and the "notes for your driver" field. Right now the brief happens in Instagram DMs, after the booking, in a thread she can't find. Attaching it to the booking gives her a plan for the morning and gives Ceaute the reason to be the place the conversation lives. Needs an image upload and a text field on the booking — a real feature, but the one that would make providers switch.</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;justify-content:space-between;font:500 11px 'Geist Mono',monospace;color:rgba(0,0,0,.45);letter-spacing:.04em"><span>04 · SEARCH BY WHEN — "FREE SATURDAY"</span><span style="color:#2f6f4f">MVP</span></div>
+<div style="position:relative;width:390px;height:800px;background:#fff;border:1px solid rgba(0,0,0,.14);border-radius:30px;overflow:hidden;display:flex;flex-direction:column;font-family:Geist,sans-serif;color:#0b0b0b;box-shadow:0 2px 10px rgba(0,0,0,.06)">
+<div style="display:flex;align-items:center;justify-content:center;padding:12px 20px 0"><div style="display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.06);border-radius:999px;padding:6px 12px;font:500 11.5px Geist,sans-serif;color:rgba(0,0,0,.65)"><span style="width:8px;height:9px;border:1.5px solid currentColor;border-radius:2px 2px 1px 1px;opacity:.6"></span>ceaute.com</div></div>
+<div style="display:flex;align-items:center;justify-content:space-between;height:52px;padding:0 20px"><span style="font:600 16px Geist,sans-serif;letter-spacing:-.03em">Ceaute</span><span style="width:32px;height:32px;border-radius:50%;background:#f4ecef;display:grid;place-items:center;font:600 12px Geist,sans-serif;color:#8c2b52">H</span></div>
+<div style="padding:12px 20px 0"><div style="display:flex;align-items:center;gap:9px;background:#f4f3f1;box-shadow:inset 0 0 0 1.5px #8c2b52;border-radius:12px;padding:13px 14px"><span style="font:400 14px Geist,sans-serif">Nails · Manchester</span><span style="margin-left:auto;font:500 13px Geist,sans-serif;color:rgba(0,0,0,.4)">×</span></div></div>
+<div style="padding:12px 20px 0;display:flex;gap:6px;overflow:hidden">
+<span style="flex:none;text-align:center;border-radius:10px;padding:9px 0;width:58px;border:1px solid rgba(0,0,0,.14)"><span style="display:block;font:500 10px 'Geist Mono',monospace;color:rgba(0,0,0,.5)">THU</span><span style="display:block;font:600 15px Geist,sans-serif;margin-top:1px">17</span></span>
+<span style="flex:none;text-align:center;border-radius:10px;padding:9px 0;width:58px;border:1px solid rgba(0,0,0,.14)"><span style="display:block;font:500 10px 'Geist Mono',monospace;color:rgba(0,0,0,.5)">FRI</span><span style="display:block;font:600 15px Geist,sans-serif;margin-top:1px">18</span></span>
+<span style="flex:none;text-align:center;border-radius:10px;padding:9px 0;width:58px;background:#0b0b0b;color:#fff"><span style="display:block;font:500 10px 'Geist Mono',monospace">SAT</span><span style="display:block;font:600 15px Geist,sans-serif;margin-top:1px">19</span></span>
+<span style="flex:none;text-align:center;border-radius:10px;padding:9px 0;width:58px;border:1px solid rgba(0,0,0,.14)"><span style="display:block;font:500 10px 'Geist Mono',monospace;color:rgba(0,0,0,.5)">SUN</span><span style="display:block;font:600 15px Geist,sans-serif;margin-top:1px">20</span></span>
+<span style="flex:none;text-align:center;border-radius:10px;padding:9px 0;width:58px;border:1px solid rgba(0,0,0,.14)"><span style="display:block;font:500 10px 'Geist Mono',monospace;color:rgba(0,0,0,.5)">MON</span><span style="display:block;font:600 15px Geist,sans-serif;margin-top:1px">21</span></span>
+<span style="flex:none;text-align:center;border-radius:10px;padding:9px 0;width:58px;border:1px solid rgba(0,0,0,.14);color:rgba(0,0,0,.5)"><span style="display:block;font:500 10px 'Geist Mono',monospace">ANY</span><span style="display:block;font:600 15px Geist,sans-serif;margin-top:1px">day</span></span>
+</div>
+<div style="padding:18px 20px 0;font:600 20px Geist,sans-serif;letter-spacing:-.03em">4 techs free this Saturday</div>
+<div style="padding:12px 20px 0;display:flex;flex-direction:column;gap:10px">
+<div style="border-radius:16px;overflow:hidden;border:1px solid rgba(0,0,0,.1)"><div style="height:118px;background:url('uploads/774468106_18005965076970416_2449061266499155646_n.jpg') center/cover"></div><div style="padding:11px 14px 12px"><div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:600 16px Geist,sans-serif;letter-spacing:-.025em">Cluxeklaws</span><span style="font:500 13.5px Geist,sans-serif">from £31</span></div><div style="margin-top:6px;display:flex;gap:6px"><span style="font:500 12px Geist,sans-serif;padding:6px 10px;border-radius:999px;background:#f4ecef;color:#8c2b52">09:00</span><span style="font:500 12px Geist,sans-serif;padding:6px 10px;border-radius:999px;background:#f4ecef;color:#8c2b52">13:15</span><span style="font:500 12px Geist,sans-serif;padding:6px 10px;border-radius:999px;border:1px solid rgba(0,0,0,.12);color:rgba(0,0,0,.5)">+3</span></div></div></div>
+<div style="border-radius:16px;overflow:hidden;border:1px solid rgba(0,0,0,.1)"><div style="height:118px;background:url('uploads/790476101_18008657093970416_5915040309482860222_n.jpg') center/cover"></div><div style="padding:11px 14px 12px"><div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:600 16px Geist,sans-serif;letter-spacing:-.025em">Set by Nia</span><span style="font:500 13.5px Geist,sans-serif">from £38</span></div><div style="margin-top:6px;display:flex;gap:6px"><span style="font:500 12px Geist,sans-serif;padding:6px 10px;border-radius:999px;background:#f4ecef;color:#8c2b52">11:30</span><span style="font:500 12px Geist,sans-serif;padding:6px 10px;border-radius:999px;background:#f4ecef;color:#8c2b52">15:00</span></div></div></div>
+</div>
+</div>
+<div style="font:400 12px/1.65 Geist,sans-serif;color:rgba(0,0,0,.6)"><strong>Borrowed from</strong> restaurant booking (Resy, OpenTable): you say when, it shows who. Most bookings start with "I need my nails done before Saturday", not with a name. The availability calculator already exists per provider; running it across the result set turns Discover into a time-first search, and puts the slot chips one tap from a hold. You said no dates on search — this is the counter-argument, as an optional row, not a required field.</div>
+</div>
+
+</div>
+
+<div style="margin-top:44px;font:500 11px 'Geist Mono',monospace;color:rgba(0,0,0,.45);letter-spacing:.04em">HOW THE APP IS ORGANISED</div>
+<div style="display:flex;gap:18px;flex-wrap:wrap;margin-top:12px">
+
+<div style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;justify-content:space-between;font:500 11px 'Geist Mono',monospace;color:rgba(0,0,0,.45);letter-spacing:.04em"><span>05 · THE BOOKING IS HOME</span><span style="color:#2f6f4f">MVP</span></div>
+<div style="position:relative;width:390px;height:800px;background:#fff;border:1px solid rgba(0,0,0,.14);border-radius:30px;overflow:hidden;display:flex;flex-direction:column;font-family:Geist,sans-serif;color:#0b0b0b;box-shadow:0 2px 10px rgba(0,0,0,.06)">
+<div style="display:flex;align-items:center;justify-content:center;padding:12px 20px 0"><div style="display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.06);border-radius:999px;padding:6px 12px;font:500 11.5px Geist,sans-serif;color:rgba(0,0,0,.65)"><span style="width:8px;height:9px;border:1.5px solid currentColor;border-radius:2px 2px 1px 1px;opacity:.6"></span>ceaute.com</div></div>
+<div style="display:flex;align-items:center;justify-content:space-between;height:52px;padding:0 20px"><span style="font:600 16px Geist,sans-serif;letter-spacing:-.03em">Ceaute</span><span style="width:32px;height:32px;border-radius:50%;background:#f4ecef;display:grid;place-items:center;font:600 12px Geist,sans-serif;color:#8c2b52">H</span></div>
+<div style="padding:14px 24px 0">
+<div style="font:500 11px 'Geist Mono',monospace;letter-spacing:.04em;color:#8c2b52">NEXT · IN 5 DAYS</div>
+<div style="margin-top:10px;font:600 30px/1.1 Geist,sans-serif;letter-spacing:-.04em;text-wrap:pretty">Tuesday 11:45 with Cluxeklaws.</div>
+<div style="margin-top:8px;font:400 14px/1.55 Geist,sans-serif;color:rgba(0,0,0,.6)">One gel colour + 3D flower. Address unlocks in the booking; £34 on the day.</div>
+</div>
+<div style="margin:18px 24px 0;border-radius:18px;overflow:hidden;position:relative;height:190px;background:url('uploads/774468106_18005965076970416_2449061266499155646_n.jpg') center/cover"><div style="position:absolute;left:12px;right:12px;bottom:12px;display:flex;gap:8px"><span style="flex:1;background:#fff;color:#0b0b0b;border-radius:10px;padding:11px;text-align:center;font:500 13px Geist,sans-serif">Booking</span><span style="flex:1;background:rgba(255,255,255,.22);color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:10px;padding:11px;text-align:center;font:500 13px Geist,sans-serif">Add a brief</span></div></div>
+<div style="margin:24px 24px 0;display:flex;justify-content:space-between;align-items:baseline"><span style="font:500 11px 'Geist Mono',monospace;letter-spacing:.04em;color:rgba(0,0,0,.4)">YOUR PEOPLE</span><span style="font:400 12.5px Geist,sans-serif;color:#8c2b52">Find someone new</span></div>
+<div style="margin:10px 24px 0;display:flex;gap:8px">
+<div style="flex:1;border:1px solid rgba(0,0,0,.12);border-radius:14px;padding:11px;display:flex;gap:10px;align-items:center"><span style="width:36px;height:36px;border-radius:50%;flex:none;background:url('uploads/542753068_17960995832970416_9109832535221333394_n.jpg') center/cover"></span><div style="min-width:0"><div style="font:500 13.5px Geist,sans-serif">Cluxeklaws</div><div style="font:400 11.5px Geist,sans-serif;color:rgba(0,0,0,.5)">Nails · 3 sets</div></div></div>
+<div style="flex:1;border:1px solid rgba(0,0,0,.12);border-radius:14px;padding:11px;display:flex;gap:10px;align-items:center"><span style="width:36px;height:36px;border-radius:50%;flex:none;background:url('uploads/790476101_18008657093970416_5915040309482860222_n.jpg') center/cover"></span><div style="min-width:0"><div style="font:500 13.5px Geist,sans-serif">Set by Nia</div><div style="font:400 11.5px Geist,sans-serif;color:rgba(0,0,0,.5)">Nails · 1 set</div></div></div>
+</div>
+<div style="margin:22px 24px 0;font:500 11px 'Geist Mono',monospace;letter-spacing:.04em;color:rgba(0,0,0,.4)">SOMETHING NEW · MANCHESTER</div>
+<div style="margin:10px 24px 0;display:flex;gap:7px;flex-wrap:wrap"><span style="font:500 13px Geist,sans-serif;padding:9px 13px;border-radius:999px;border:1px solid rgba(0,0,0,.14)">Lashes 3</span><span style="font:500 13px Geist,sans-serif;padding:9px 13px;border-radius:999px;border:1px solid rgba(0,0,0,.14)">Brows 1</span><span style="font:500 13px Geist,sans-serif;padding:9px 13px;border-radius:999px;border:1px solid rgba(0,0,0,.14)">Hair 1</span></div>
+</div>
+<div style="font:400 12px/1.65 Geist,sans-serif;color:rgba(0,0,0,.6)"><strong>Borrowed from</strong> airline apps, where the trip is the home screen, not the search. A returning customer isn't shopping; she has a person and a next appointment. Home leads with what's next, then her people, then "something new". Discover becomes the second screen, reached when she wants it. Same routes, different default — nothing to build except the redirect.</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;justify-content:space-between;font:500 11px 'Geist Mono',monospace;color:rgba(0,0,0,.45);letter-spacing:.04em"><span>06 · THE PROVIDER PAGE AS A FEED</span><span style="color:#c98a1a">+1 FIELD</span></div>
+<div style="position:relative;width:390px;height:800px;background:#fff;border:1px solid rgba(0,0,0,.14);border-radius:30px;overflow:hidden;display:flex;flex-direction:column;font-family:Geist,sans-serif;color:#0b0b0b;box-shadow:0 2px 10px rgba(0,0,0,.06)">
+<div style="display:flex;align-items:center;justify-content:center;padding:12px 20px 0"><div style="display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.06);border-radius:999px;padding:6px 12px;font:500 11.5px Geist,sans-serif;color:rgba(0,0,0,.65)"><span style="width:8px;height:9px;border:1.5px solid currentColor;border-radius:2px 2px 1px 1px;opacity:.6"></span>ceaute.com/@cluxeklaws</div></div>
+<div style="display:flex;align-items:center;justify-content:space-between;height:52px;padding:0 20px"><span style="font:500 14px Geist,sans-serif;color:rgba(0,0,0,.6)">← Discover</span><span style="font:500 13px Geist,sans-serif">♡ Save</span></div>
+<div style="padding:6px 20px 0;display:flex;gap:14px;align-items:center"><div style="width:56px;height:56px;border-radius:50%;flex:none;background:url('uploads/542753068_17960995832970416_9109832535221333394_n.jpg') center/cover"></div><div style="flex:1"><div style="font:600 22px Geist,sans-serif;letter-spacing:-.035em">Cluxeklaws</div><div style="font:400 12.5px Geist,sans-serif;color:rgba(0,0,0,.5);margin-top:2px">Nails · Manchester · 4.9 (34) · next free Tue</div></div></div>
+<div style="display:flex;gap:18px;padding:16px 20px 0;font:500 13px Geist,sans-serif;border-bottom:1px solid rgba(0,0,0,.08)"><span style="padding-bottom:10px;border-bottom:1.5px solid #0b0b0b">Sets</span><span style="color:rgba(0,0,0,.45)">Treatments 21</span><span style="color:rgba(0,0,0,.45)">Reviews 34</span><span style="color:rgba(0,0,0,.45)">About</span></div>
+<div style="flex:1;overflow:hidden;padding:14px 20px 0">
+<div style="border-radius:16px;overflow:hidden;border:1px solid rgba(0,0,0,.1)"><div style="height:230px;background:url('uploads/793139991_18009224492970416_6208624817278613365_n.jpg') center/cover"></div><div style="padding:12px 14px 13px"><div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:500 14.5px Geist,sans-serif">Freestyle Tier 2 · long · chrome</span><span style="font:600 14.5px Geist,sans-serif">£69</span></div><div style="margin-top:4px;display:flex;justify-content:space-between;align-items:center"><span style="font:400 12.5px Geist,sans-serif;color:rgba(0,0,0,.5)">Set on 12 Sep · 3h 20m</span><span style="font:500 12.5px Geist,sans-serif;color:#8c2b52">Book this look →</span></div></div></div>
+<div style="margin-top:10px;border-radius:16px;overflow:hidden;border:1px solid rgba(0,0,0,.1)"><div style="height:150px;background:url('uploads/781338939_18007639835970416_2674606861232786530_n.jpg') center/cover"></div><div style="padding:12px 14px 13px;display:flex;justify-content:space-between;align-items:baseline"><span style="font:500 14.5px Geist,sans-serif">French tips medium</span><span style="font:600 14.5px Geist,sans-serif">£46</span></div></div>
+</div>
+<div style="border-top:1px solid rgba(0,0,0,.1);padding:12px 20px 24px;display:flex;align-items:center;gap:12px"><div style="flex:1"><div style="font:500 14px Geist,sans-serif">from £31</div><div style="font:400 11.5px Geist,sans-serif;color:rgba(0,0,0,.55)">Next free: Tue 22, 10:00</div></div><div style="background:#8c2b52;color:#fff;border-radius:11px;padding:13px 28px;font:600 14px Geist,sans-serif">Book</div></div>
+</div>
+<div style="font:400 12px/1.65 Geist,sans-serif;color:rgba(0,0,0,.6)"><strong>Borrowed from</strong> Instagram, but with the price on the post. Her page opens on <em>Sets</em> — dated, priced, bookable — and Treatments becomes the second tab, the index rather than the front. It's the 8b page with the portfolio promoted from strip to feed, which is where her customers already scroll. Same +1 field as 01 (photo → treatment); the date is the upload date you already store.</div>
+</div>
+
+</div>
+
+<div style="margin-top:44px;font:500 11px 'Geist Mono',monospace;color:rgba(0,0,0,.45);letter-spacing:.04em">HOW PROVIDERS BUILD AND RUN IT</div>
+<div style="display:flex;gap:18px;flex-wrap:wrap;margin-top:12px">
+
+<div style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;justify-content:space-between;font:500 11px 'Geist Mono',monospace;color:rgba(0,0,0,.45);letter-spacing:.04em"><span>07 · CLOSE THE BOOKING WITH A PHOTO</span><span style="color:#c98a1a">+1 FIELD</span></div>
+<div style="position:relative;width:390px;height:800px;background:#fff;border:1px solid rgba(0,0,0,.14);border-radius:30px;overflow:hidden;display:flex;flex-direction:column;font-family:Geist,sans-serif;color:#0b0b0b;box-shadow:0 2px 10px rgba(0,0,0,.06)">
+<div style="display:flex;align-items:center;justify-content:center;padding:12px 20px 0"><div style="display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.06);border-radius:999px;padding:6px 12px;font:500 11.5px Geist,sans-serif;color:rgba(0,0,0,.65)"><span style="width:8px;height:9px;border:1.5px solid currentColor;border-radius:2px 2px 1px 1px;opacity:.6"></span>ceaute.com</div></div>
+<div style="display:flex;align-items:center;justify-content:space-between;height:52px;padding:0 20px"><span style="font:500 14px Geist,sans-serif;color:rgba(0,0,0,.6)">← Today</span><span style="font:500 13px Geist,sans-serif;color:#8c2b52">Skip</span></div>
+<div style="padding:12px 24px 0">
+<div style="font:500 11px 'Geist Mono',monospace;letter-spacing:.04em;color:#2f6f4f">HARRISO · 11:45 – 13:55 · DONE</div>
+<div style="margin-top:10px;font:600 27px/1.12 Geist,sans-serif;letter-spacing:-.04em;text-wrap:pretty">Add her set to your portfolio?</div>
+<div style="margin-top:8px;font:400 14px/1.6 Geist,sans-serif;color:rgba(0,0,0,.6)">It's tagged already — One gel colour + 3D flower (2), £44 — so the next person can book exactly this.</div>
+</div>
+<div style="margin:18px 24px 0;height:270px;border-radius:18px;border:1.5px dashed rgba(140,43,82,.5);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:#fdf8fa"><span style="width:44px;height:44px;border-radius:50%;background:#8c2b52;color:#fff;display:grid;place-items:center;font:500 20px Geist,sans-serif">+</span><span style="font:500 14px Geist,sans-serif;color:#8c2b52">Take a photo</span><span style="font:400 12px Geist,sans-serif;color:rgba(0,0,0,.45)">or choose from camera roll</span></div>
+<div style="margin:14px 24px 0;display:flex;flex-direction:column;gap:6px">
+<div style="display:flex;justify-content:space-between;align-items:center;padding:11px 13px;border:1px solid rgba(0,0,0,.12);border-radius:12px"><span style="font:400 13.5px Geist,sans-serif">Show on my page</span><span style="width:38px;height:22px;border-radius:999px;background:#8c2b52;position:relative"><span style="position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;background:#fff"></span></span></div>
+<div style="display:flex;justify-content:space-between;align-items:center;padding:11px 13px;border:1px solid rgba(0,0,0,.12);border-radius:12px"><span style="font:400 13.5px Geist,sans-serif">Ask Harriso for a review</span><span style="font:400 12.5px Geist,sans-serif;color:rgba(0,0,0,.45)">Sent when marked done</span></div>
+</div>
+<div style="margin-top:auto;padding:0 24px 26px"><div style="background:#0b0b0b;color:#fff;border-radius:11px;padding:14px;text-align:center;font:500 14.5px Geist,sans-serif">Mark done · collected £34</div></div>
+</div>
+<div style="font:400 12px/1.65 Geist,sans-serif;color:rgba(0,0,0,.6)"><strong>Borrowed from</strong> the delivery driver's proof-of-delivery photo. Marking a booking complete is the one moment she has the set in front of her and the phone in her hand. Making the photo part of closing the booking means the portfolio grows without a separate chore, and the tag comes free from the booking. This is what makes 01 and 06 real: the tagging is a side effect, not a job.</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;justify-content:space-between;font:500 11px 'Geist Mono',monospace;color:rgba(0,0,0,.45);letter-spacing:.04em"><span>08 · PASTE YOUR OLD MENU</span><span style="color:#b3261e">DREAM · IMPORT</span></div>
+<div style="position:relative;width:390px;height:800px;background:#fff;border:1px solid rgba(0,0,0,.14);border-radius:30px;overflow:hidden;display:flex;flex-direction:column;font-family:Geist,sans-serif;color:#0b0b0b;box-shadow:0 2px 10px rgba(0,0,0,.06)">
+<div style="display:flex;align-items:center;justify-content:center;padding:12px 20px 0"><div style="display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.06);border-radius:999px;padding:6px 12px;font:500 11.5px Geist,sans-serif;color:rgba(0,0,0,.65)"><span style="width:8px;height:9px;border:1.5px solid currentColor;border-radius:2px 2px 1px 1px;opacity:.6"></span>ceaute.com</div></div>
+<div style="display:flex;align-items:center;justify-content:space-between;height:52px;padding:0 20px"><span style="font:500 14px Geist,sans-serif;color:rgba(0,0,0,.6)">← Set up</span><span style="font:500 11px 'Geist Mono',monospace;color:rgba(0,0,0,.4)">TREATMENTS</span></div>
+<div style="padding:12px 24px 0">
+<div style="font:600 27px/1.12 Geist,sans-serif;letter-spacing:-.04em;text-wrap:pretty">Bring your menu over.</div>
+<div style="margin-top:8px;font:400 14px/1.6 Geist,sans-serif;color:rgba(0,0,0,.6)">Paste what you have — an Acuity page, a Linktree, your Instagram price list, even a screenshot. We'll draft the treatments; you check them.</div>
+</div>
+<div style="margin:18px 24px 0;border:1.5px solid #8c2b52;border-radius:12px;padding:12px 13px;font:400 13.5px/1.5 Geist,sans-serif;color:rgba(0,0,0,.8);height:110px">BUNDLES<br>French tips — 4 hours @ £71.00<br>Freestyle/French — 4 hours 30 minutes @ £86.00<br>FREESTYLE<br>Freestyle Tier 1 — 2 hours 50 minutes @ £56.00…</div>
+<div style="margin:16px 24px 0;font:500 11px 'Geist Mono',monospace;letter-spacing:.04em;color:rgba(0,0,0,.4)">DRAFTED · 21 TREATMENTS IN 8 GROUPS</div>
+<div style="margin:10px 24px 0;display:flex;flex-direction:column;gap:6px">
+<div style="display:flex;justify-content:space-between;gap:12px;background:#f7f6f5;border-radius:12px;padding:11px 13px;align-items:center"><div><div style="font:500 14px Geist,sans-serif">French tips</div><div style="font:400 12px Geist,sans-serif;color:rgba(0,0,0,.55);margin-top:2px">Bundles · 4h · £71</div></div><span style="font:500 12px Geist,sans-serif;color:#2f6f4f">Looks right</span></div>
+<div style="display:flex;justify-content:space-between;gap:12px;background:#f7f6f5;border-radius:12px;padding:11px 13px;align-items:center"><div><div style="font:500 14px Geist,sans-serif">Freestyle Tier 1</div><div style="font:400 12px Geist,sans-serif;color:rgba(0,0,0,.55);margin-top:2px">Freestyle · 2h 50m · £56</div></div><span style="font:500 12px Geist,sans-serif;color:#2f6f4f">Looks right</span></div>
+<div style="display:flex;justify-content:space-between;gap:12px;background:#fff;border:1.5px solid #c98a1a;border-radius:12px;padding:11px 13px;align-items:center"><div><div style="font:500 14px Geist,sans-serif">Toes · French tips</div><div style="font:400 12px Geist,sans-serif;color:rgba(0,0,0,.55);margin-top:2px">"£1 towards transaction fees" — price £35 or £36?</div></div><span style="font:500 12px Geist,sans-serif;color:#c98a1a">Check</span></div>
+</div>
+<div style="margin-top:auto;padding:0 24px 26px"><div style="background:#8c2b52;color:#fff;border-radius:11px;padding:14px;text-align:center;font:500 14.5px Geist,sans-serif">Review all 21</div><div style="margin-top:10px;font:400 12px/1.5 Geist,sans-serif;color:rgba(0,0,0,.45);text-align:center">Nothing is live until you publish. Add-ons come next.</div></div>
+</div>
+<div style="font:400 12px/1.65 Geist,sans-serif;color:rgba(0,0,0,.6)"><strong>Borrowed from</strong> bank switching (Plaid, the UK Current Account Switch) and Shopify's store import. The reason your sister hasn't moved isn't the UI, it's re-typing 21 treatments. A paste-to-draft step turns a Sunday afternoon into a five-minute check, and it surfaces her Acuity workarounds (the £1 fee line) as questions instead of copying them in. A real feature — parsing text into drafts — but it decides whether providers arrive at all.</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;justify-content:space-between;font:500 11px 'Geist Mono',monospace;color:rgba(0,0,0,.45);letter-spacing:.04em"><span>09 · ADD A TREATMENT IN ONE SENTENCE</span><span style="color:#c98a1a">PARSER, NO NEW DATA</span></div>
+<div style="position:relative;width:390px;height:800px;background:#fff;border:1px solid rgba(0,0,0,.14);border-radius:30px;overflow:hidden;display:flex;flex-direction:column;font-family:Geist,sans-serif;color:#0b0b0b;box-shadow:0 2px 10px rgba(0,0,0,.06)">
+<div style="display:flex;align-items:center;justify-content:center;padding:12px 20px 0"><div style="display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.06);border-radius:999px;padding:6px 12px;font:500 11.5px Geist,sans-serif;color:rgba(0,0,0,.65)"><span style="width:8px;height:9px;border:1.5px solid currentColor;border-radius:2px 2px 1px 1px;opacity:.6"></span>ceaute.com</div></div>
+<div style="display:flex;align-items:center;justify-content:space-between;height:52px;padding:0 20px"><span style="font:500 14px Geist,sans-serif;color:rgba(0,0,0,.6)">Cancel</span><span style="font:600 14px Geist,sans-serif">New treatment</span><span style="font:500 14px Geist,sans-serif;color:#8c2b52">Save</span></div>
+<div style="padding:16px 24px 0">
+<div style="font:500 12.5px Geist,sans-serif;margin-bottom:6px">Say it like you'd text it</div>
+<div style="border:1.5px solid #8c2b52;border-radius:12px;padding:13px 14px;font:400 16px/1.45 Geist,sans-serif">Ombre toes, 2 hours 15, £40, goes in toes</div>
+</div>
+<div style="margin:22px 24px 0;font:500 11px 'Geist Mono',monospace;letter-spacing:.04em;color:rgba(0,0,0,.4)">WE READ IT AS</div>
+<div style="margin:10px 24px 0;border:1px solid rgba(0,0,0,.12);border-radius:16px;padding:4px 14px">
+<div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(0,0,0,.08)"><span style="font:400 13px Geist,sans-serif;color:rgba(0,0,0,.5)">Name</span><span style="font:500 14px Geist,sans-serif">Ombre toes</span></div>
+<div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(0,0,0,.08)"><span style="font:400 13px Geist,sans-serif;color:rgba(0,0,0,.5)">Duration</span><span style="font:500 14px Geist,sans-serif">2h 15m</span></div>
+<div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(0,0,0,.08)"><span style="font:400 13px Geist,sans-serif;color:rgba(0,0,0,.5)">Price</span><span style="font:500 14px Geist,sans-serif">£40.00</span></div>
+<div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(0,0,0,.08)"><span style="font:400 13px Geist,sans-serif;color:rgba(0,0,0,.5)">Group</span><span style="font:500 14px Geist,sans-serif">Toes</span></div>
+<div style="display:flex;justify-content:space-between;padding:12px 0"><span style="font:400 13px Geist,sans-serif;color:rgba(0,0,0,.5)">Category</span><span style="font:500 14px Geist,sans-serif;color:#8c2b52">Nails · from your page</span></div>
+</div>
+<div style="margin:12px 24px 0;font:400 12.5px/1.55 Geist,sans-serif;color:rgba(0,0,0,.5)">Tap any line to change it. Description and add-ons after.</div>
+<div style="margin-top:auto;padding:0 24px 26px"><div style="background:#8c2b52;color:#fff;border-radius:11px;padding:14px;text-align:center;font:500 14.5px Geist,sans-serif">Create Ombre toes</div><div style="margin-top:10px;text-align:center;font:500 13px Geist,sans-serif;color:rgba(0,0,0,.5)">Use the full form instead</div></div>
+</div>
+<div style="font:400 12px/1.65 Geist,sans-serif;color:rgba(0,0,0,.6)"><strong>Borrowed from</strong> natural-language event entry (Fantastical, Todoist). She's on her phone between clients; five labelled fields is a desktop idea. One sentence plus a "we read it as" card that's tappable to correct is faster and less error-prone than the form, and needs only a small parser over the same fields — no schema change. The form stays as fallback.</div>
+</div>
+
+</div>
+
+<div style="margin-top:40px;max-width:840px">
+<div style="font:600 13px Geist,sans-serif">What I'd take into the MVP, in order</div>
+<div style="margin-top:8px;font:400 12px/1.7 Geist,sans-serif;color:rgba(0,0,0,.6)"><strong>05 Booking is home</strong> and <strong>02 the ritual</strong> — zero schema, and they make a returning customer's app feel like hers. <strong>07 close with a photo</strong> next: one link (image → booking → treatment) that pays for itself immediately in portfolio growth, then unlocks <strong>01 book the look</strong> and <strong>06 the feed</strong> for free. <strong>09 the sentence</strong> is a weekend of parsing. <strong>04 search by when</strong> is the one I'd test rather than assume — it contradicts your no-dates call, and your sister's customers can settle it. <strong>03 the brief</strong> and <strong>08 the import</strong> are the two real features; if only one, the import, because it's the reason providers arrive, and the brief is what they do in DMs today anyway.</div>
+</div>
+</div>
+</x-dc>
+</body>
+</html>

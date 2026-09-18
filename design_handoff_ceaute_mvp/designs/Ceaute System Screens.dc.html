@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics><meta name="design_doc_mode" content="canvas"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&display=swap" rel="stylesheet"><style>body{margin:0;background:#f0eee9;font-family:Geist,system-ui,sans-serif}a{color:#8c2b52}a:hover{color:#6f2141}</style></helmet>
+
+<div style="padding:40px 44px 44px;color:#0b0b0b">
+<div style="font:600 22px/1.2 Geist,sans-serif;letter-spacing:-.025em">System screens — email, legal, failures</div>
+<div style="margin-top:8px;font:400 12.5px/1.6 Geist,sans-serif;color:rgba(0,0,0,.55);max-width:820px">Everything the app does outside the two happy paths. Emails are rebuilt as letters rather than receipts. Then the three checkout bounce-backs, the auth error, not-found and the crash page, all grounded in the routes that exist. Legal and the root-route decision are at the bottom.</div>
+
+<div style="margin-top:40px;font:500 11.5px Geist,sans-serif;letter-spacing:.06em;color:rgba(0,0,0,.45)">EMAIL · REBUILT</div>
+<div style="margin-top:8px;max-width:820px;background:#fff;border:1px solid rgba(0,0,0,.12);border-radius:16px;padding:20px 22px">
+<div style="font:600 14px Geist,sans-serif;letter-spacing:-.02em">What was wrong with the first version</div>
+<div style="margin-top:8px;font:400 13px/1.7 Geist,sans-serif;color:rgba(0,0,0,.7)">It was a receipt: a coloured bar, a pill badge, a caps micro-label over every block, and thirteen grey-label-plus-bold-value rows. That layout treats every fact as equally important, so the two things she actually needs at 13:50 on Friday — the time and the address — are buried among nine things she does not. It also looks like software, not like her nail tech.</div>
+<div style="margin-top:12px;font:600 14px Geist,sans-serif;letter-spacing:-.02em">What these do instead</div>
+<div style="margin-top:8px;font:400 13px/1.7 Geist,sans-serif;color:rgba(0,0,0,.7)">The Confirmed screen she liked is the model: a second-person sentence, then the time set large, then the address as prose, then money as one line. No badges, no tables, one uppercase label per email at most. Every fact from the content file is still present and in the same order — Booking, Payment, Where — just weighted by what gets acted on. All of it is still tables and inline styles underneath, so nothing here needs CSS an email client would drop.</div>
+</div>
+<div style="margin-top:16px;display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start">
+
+<div style="display:flex;flex-direction:column;gap:10px;width:600px">
+<div style="font:500 11.5px Geist,sans-serif;letter-spacing:.06em;color:rgba(0,0,0,.45)">1 · BOOKING_CONFIRMED_CUSTOMER</div>
+<div style="width:600px;background:#f0eee9;border:1px solid rgba(0,0,0,.12);border-radius:16px;padding:22px 20px">
+<div style="font:600 12px Geist,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:#8c2b52">ceaute</div>
+<div style="margin-top:14px;background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:14px;padding:36px 36px 32px">
+<div style="font:600 30px/1.14 Geist,sans-serif;letter-spacing:-.04em;max-width:420px">Harriso, you're booked with Byuwauk.</div>
+<div style="margin-top:26px;display:flex;align-items:flex-end;gap:20px;padding-bottom:22px;border-bottom:1px solid rgba(0,0,0,.1)">
+<div><div style="font:500 15px Geist,sans-serif;color:rgba(0,0,0,.55)">Friday 18 September</div><div style="margin-top:2px;font:600 46px/1 Geist,sans-serif;letter-spacing:-.04em;font-variant-numeric:tabular-nums">14:00</div></div>
+<div style="padding-bottom:6px;font:400 14px Geist,sans-serif;color:rgba(0,0,0,.5)">until 16:30 · 2h 30m</div>
+</div>
+<div style="margin-top:22px;font:400 15px/1.6 Geist,sans-serif">Volume Full Set with bottoms only.</div>
+<div style="margin-top:22px;padding-top:22px;border-top:1px solid rgba(0,0,0,.1)">
+<div style="font:400 15px/1.6 Geist,sans-serif">41 Wilmslow Road, Manchester M14 5TB</div>
+<div style="margin-top:4px;font:400 14px/1.6 Geist,sans-serif;color:rgba(0,0,0,.55)">Buzzer 2, second floor. Street parking is free after 10am.</div>
+<div style="margin-top:18px;display:flex;gap:10px"><span style="background:#8c2b52;color:#fff;border-radius:10px;padding:13px 24px;font:600 15px Geist,sans-serif">Directions</span><span style="border:1px solid rgba(0,0,0,.16);border-radius:10px;padding:12px 24px;font:600 15px Geist,sans-serif">View booking</span></div>
+</div>
+<div style="margin-top:26px;padding-top:20px;border-top:1px solid rgba(0,0,0,.1);font:400 14px/1.7 Geist,sans-serif;color:rgba(0,0,0,.6)"><span style="color:#0b0b0b;font-weight:500">£10.00 paid. £51.00 due on the day.</span><br>Free cancellation until Thursday 17 September, 14:00.</div>
+</div>
+<div style="padding:18px 8px 2px;font:400 12px/1.6 Geist,sans-serif;color:rgba(0,0,0,.5)">ceaute.com/account/bookings/4482<br>You are receiving this email because of a booking made through Ceaute.</div>
+</div>
+<div style="font:400 12px/1.65 Geist,sans-serif;color:rgba(0,0,0,.6)">Same seven booking facts, ranked. The time is 46px because it is the one thing she checks twice; the address is prose because that is how it gets read aloud to a taxi driver. Directions is the primary action — on Friday afternoon it is more useful than View booking, and it is a maps link, so it needs no session. Every frame is drawn in Geist to match the spec, but email must ship with the system stack already in email-layout.js.</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px;width:600px">
+<div style="font:500 11.5px Geist,sans-serif;letter-spacing:.06em;color:rgba(0,0,0,.45)">2 · BOOKING_CONFIRMED_PROVIDER</div>
+<div style="width:600px;background:#f0eee9;border:1px solid rgba(0,0,0,.12);border-radius:16px;padding:22px 20px">
+<div style="font:600 12px Geist,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:#8c2b52">ceaute</div>
+<div style="margin-top:14px;background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:14px;padding:36px 36px 32px">
+<div style="font:600 30px/1.14 Geist,sans-serif;letter-spacing:-.04em;max-width:440px">Harriso booked Volume Full Set for Friday at 14:00.</div>
+<div style="margin-top:26px;display:flex;align-items:flex-end;gap:20px;padding-bottom:22px;border-bottom:1px solid rgba(0,0,0,.1)">
+<div><div style="font:500 15px Geist,sans-serif;color:rgba(0,0,0,.55)">Friday 18 September</div><div style="margin-top:2px;font:600 46px/1 Geist,sans-serif;letter-spacing:-.04em;font-variant-numeric:tabular-nums">14:00</div></div>
+<div style="padding-bottom:6px;font:400 14px Geist,sans-serif;color:rgba(0,0,0,.5)">until 16:30 · 2h 30m</div>
+</div>
+<div style="margin-top:22px;font:400 15px/1.6 Geist,sans-serif">Volume Full Set with bottoms only.</div>
+<div style="margin-top:22px;padding-top:22px;border-top:1px solid rgba(0,0,0,.1)">
+<div style="font:400 15px/1.7 Geist,sans-serif">Harriso Adeyemi<br><span style="color:#8c2b52">07700 900123</span> · <span style="color:#8c2b52">harriso@example.com</span></div>
+<div style="margin-top:18px;display:flex;gap:10px"><span style="background:#8c2b52;color:#fff;border-radius:10px;padding:13px 24px;font:600 15px Geist,sans-serif">Open booking</span><span style="border:1px solid rgba(0,0,0,.16);border-radius:10px;padding:12px 24px;font:600 15px Geist,sans-serif">Your diary</span></div>
+</div>
+<div style="margin-top:26px;padding-top:20px;border-top:1px solid rgba(0,0,0,.1);font:400 14px/1.7 Geist,sans-serif;color:rgba(0,0,0,.6)"><span style="color:#0b0b0b;font-weight:500">£10.00 is in your Stripe. Collect £51.00 on the day.</span><br>She can cancel free until Thursday 17 September, 14:00.</div>
+</div>
+<div style="padding:18px 8px 2px;font:400 12px/1.6 Geist,sans-serif;color:rgba(0,0,0,.5)">ceaute.com/dashboard/bookings/4482<br>You are receiving this email because of a booking made through Ceaute.</div>
+</div>
+<div style="font:400 12px/1.65 Geist,sans-serif;color:rgba(0,0,0,.6)">The customer's name and number take the place the address holds in the customer's version — she needs to reach Harriso, not be told her own street. Phone and email are tappable links. Two content-file changes: drop the Where section for providers, and phrase the payment rows from her side.</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px;width:600px">
+<div style="font:500 11.5px Geist,sans-serif;letter-spacing:.06em;color:rgba(0,0,0,.45)">3 · CUSTOMER_CANCELLED_CUSTOMER</div>
+<div style="width:600px;background:#f0eee9;border:1px solid rgba(0,0,0,.12);border-radius:16px;padding:22px 20px">
+<div style="font:600 12px Geist,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:#8c2b52">ceaute</div>
+<div style="margin-top:14px;background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:14px;padding:36px 36px 32px">
+<div style="font:600 30px/1.14 Geist,sans-serif;letter-spacing:-.04em;max-width:430px">Your £10.00 is on its way back to your card.</div>
+<div style="margin-top:14px;font:400 15px/1.65 Geist,sans-serif;color:rgba(0,0,0,.65)">Friday 18 September at 14:00 with Byuwauk is cancelled, and the time is free for someone else.</div>
+<div style="margin-top:26px;padding-top:20px;border-top:1px solid rgba(0,0,0,.1);display:flex;gap:11px;align-items:flex-start"><span style="width:9px;height:9px;border-radius:50%;background:#c98a1a;flex:none;margin-top:6px"></span><div><div style="font:500 15px Geist,sans-serif">Refund processing with Stripe</div><div style="margin-top:3px;font:400 14px/1.6 Geist,sans-serif;color:rgba(0,0,0,.6)">Usually 5 to 10 working days to reach the card you paid with. Nothing was retained.</div></div></div>
+<div style="margin-top:24px;padding-top:20px;border-top:1px solid rgba(0,0,0,.1);font:400 14px/1.7 Geist,sans-serif;color:rgba(0,0,0,.6)">Cancelled by you on Wednesday 16 September, 08:12. Volume Full Set, £61.00 total, £10.00 of it paid online.</div>
+<div style="margin-top:22px;display:flex;gap:10px"><span style="border:1px solid rgba(0,0,0,.16);border-radius:10px;padding:12px 24px;font:600 15px Geist,sans-serif">Book Byuwauk again</span></div>
+</div>
+<div style="padding:18px 8px 2px;font:400 12px/1.6 Geist,sans-serif;color:rgba(0,0,0,.5)">ceaute.com/account/bookings/4482<br>You are receiving this email because of a booking made through Ceaute.</div>
+</div>
+<div style="font:400 12px/1.65 Geist,sans-serif;color:rgba(0,0,0,.6)">The money is the headline because that is the only open question after a cancellation. Refund status keeps the dot from the spec. The four-row refund table collapses into one sentence plus one status line; who cancelled and when moves to the quiet paragraph, where an audit fact belongs. No address, matching the code.</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px;width:600px">
+<div style="font:500 11.5px Geist,sans-serif;letter-spacing:.06em;color:rgba(0,0,0,.45)">4 · PROVIDER_CANCELLED_CUSTOMER · REFUND FAILED</div>
+<div style="width:600px;background:#f0eee9;border:1px solid rgba(0,0,0,.12);border-radius:16px;padding:22px 20px">
+<div style="font:600 12px Geist,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:#8c2b52">ceaute</div>
+<div style="margin-top:14px;background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:14px;padding:36px 36px 32px">
+<div style="font:600 30px/1.14 Geist,sans-serif;letter-spacing:-.04em;max-width:450px">Eluxe UK cancelled your Wednesday appointment.</div>
+<div style="margin-top:14px;font:400 15px/1.65 Geist,sans-serif;color:rgba(0,0,0,.65)">Infills on 23 September at 11:45 is off, and your full £10.00 is being refunded — a provider cancellation never keeps anything.</div>
+<div style="margin-top:26px;padding-top:20px;border-top:1px solid rgba(0,0,0,.1);display:flex;gap:11px;align-items:flex-start"><span style="width:9px;height:9px;border-radius:50%;background:#b3261e;flex:none;margin-top:6px"></span><div><div style="font:500 15px Geist,sans-serif">The first refund attempt failed. Ceaute is retrying it.</div><div style="margin-top:3px;font:400 14px/1.6 Geist,sans-serif;color:rgba(0,0,0,.6)">Nothing is needed from you. The retry runs automatically and support is alerted if it fails again.</div></div></div>
+<div style="margin-top:24px;padding-top:20px;border-top:1px solid rgba(0,0,0,.1);font:400 15px/1.65 Geist,sans-serif">Three other nail techs in Salford have Wednesday free.</div>
+<div style="margin-top:18px;display:flex;gap:10px"><span style="background:#8c2b52;color:#fff;border-radius:10px;padding:13px 24px;font:600 15px Geist,sans-serif">Find another time</span><span style="border:1px solid rgba(0,0,0,.16);border-radius:10px;padding:12px 24px;font:600 15px Geist,sans-serif">View booking</span></div>
+</div>
+<div style="padding:18px 8px 2px;font:400 12px/1.6 Geist,sans-serif;color:rgba(0,0,0,.5)">ceaute.com/account/bookings/4491<br>You are receiving this email because of a booking made through Ceaute.</div>
+</div>
+<div style="font:400 12px/1.65 Geist,sans-serif;color:rgba(0,0,0,.6)">The only email where Ceaute has let someone down, so it does two things the others do not: says plainly that a provider cancellation never retains money, and offers a way out. The "three others free" line is the one new query needed — same availability calculation Discover already runs.</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px;width:600px">
+<div style="font:500 11.5px Geist,sans-serif;letter-spacing:.06em;color:rgba(0,0,0,.45)">5 · CUSTOMER_CANCELLED_PROVIDER · LATE</div>
+<div style="width:600px;background:#f0eee9;border:1px solid rgba(0,0,0,.12);border-radius:16px;padding:22px 20px">
+<div style="font:600 12px Geist,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:#8c2b52">ceaute</div>
+<div style="margin-top:14px;background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:14px;padding:36px 36px 32px">
+<div style="font:600 30px/1.14 Geist,sans-serif;letter-spacing:-.04em;max-width:430px">Aisha cancelled Thursday. You keep the £10.00.</div>
+<div style="margin-top:14px;font:400 15px/1.65 Geist,sans-serif;color:rgba(0,0,0,.65)">She cancelled after the deadline, so the deposit stays with you and nothing is refunded. Thursday 10:00 to 12:30 is open on your page again.</div>
+<div style="margin-top:26px;padding-top:20px;border-top:1px solid rgba(0,0,0,.1);display:flex;gap:11px;align-items:flex-start"><span style="width:9px;height:9px;border-radius:50%;background:#2f6f4f;flex:none;margin-top:6px"></span><div><div style="font:500 15px Geist,sans-serif">Settled — no refund due</div><div style="margin-top:3px;font:400 14px/1.6 Geist,sans-serif;color:rgba(0,0,0,.6)">Nothing goes back to Aisha's card. The £10.00 is already in your Stripe balance.</div></div></div>
+<div style="margin-top:24px;padding-top:20px;border-top:1px solid rgba(0,0,0,.1);font:400 14px/1.7 Geist,sans-serif;color:rgba(0,0,0,.6)">Aisha Bello, 07700 900456 · Long set, cancelled Wednesday 16 September, 21:40.</div>
+<div style="margin-top:22px;display:flex;gap:10px"><span style="border:1px solid rgba(0,0,0,.16);border-radius:10px;padding:12px 24px;font:600 15px Geist,sans-serif">Your diary</span></div>
+</div>
+<div style="padding:18px 8px 2px;font:400 12px/1.6 Geist,sans-serif;color:rgba(0,0,0,.5)">ceaute.com/dashboard/bookings/4475<br>You are receiving this email because of a booking made through Ceaute.</div>
+</div>
+<div style="font:400 12px/1.65 Geist,sans-serif;color:rgba(0,0,0,.6)">Her two questions answered in the headline and the first line: do I keep the money, is the slot free. Event 6 (provider_cancelled_provider) is this layout with "You cancelled Thursday with Aisha" and a refund-issued status instead.</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px;width:600px">
+<div style="font:500 11.5px Geist,sans-serif;letter-spacing:.06em;color:rgba(0,0,0,.45)">7 · SIGN-IN CODE · SENT BY SUPABASE</div>
+<div style="width:600px;background:#f0eee9;border:1px solid rgba(0,0,0,.12);border-radius:16px;padding:22px 20px">
+<div style="font:600 12px Geist,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:#8c2b52">ceaute</div>
+<div style="margin-top:14px;background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:14px;padding:36px">
+<div style="font:600 30px/1.14 Geist,sans-serif;letter-spacing:-.04em">Your code is</div>
+<div style="margin-top:14px;font:600 54px/1 Geist,sans-serif;letter-spacing:.14em;font-variant-numeric:tabular-nums">482917</div>
+<div style="margin-top:22px;padding-top:20px;border-top:1px solid rgba(0,0,0,.1);font:400 14px/1.7 Geist,sans-serif;color:rgba(0,0,0,.6)">Type it into the tab you were on. Asking for another code replaces this one.<br>If you did not ask to sign in, ignore this — nothing happens without the code.</div>
+</div>
+<div style="padding:18px 8px 2px;font:400 12px/1.6 Geist,sans-serif;color:rgba(0,0,0,.5)">Sent by Ceaute</div>
+</div>
+<div style="font:400 12px/1.65 Geist,sans-serif;color:rgba(0,0,0,.6)">Supabase sends this, so it is not in email-layout.js — the template is editable and this is what it should say. The code is the whole message, so it is the largest thing on the page and there is no button. No expiry claimed in copy, since the window is a Supabase setting that can change.</div>
+</div>
+
+</div>
+
+<div style="margin-top:44px;font:500 11.5px Geist,sans-serif;letter-spacing:.06em;color:rgba(0,0,0,.45)">WHEN PAYMENT CANNOT START · THREE BOUNCE-BACKS FROM STRIPE</div>
+<div style="margin-top:6px;font:400 12px/1.6 Geist,sans-serif;color:rgba(0,0,0,.55);max-width:820px">The checkout action redirects back with <span style="font-size:11.5px">payment=unavailable | expired | processing</span> when it cannot hand over to Stripe. All three land on the same Review and pay screen, so the notice sits under the nav where the held row lives — a hairline row with a dot, never a coloured box. The hold state differs in each, and that is what decides the button.</div>
+<div style="margin-top:14px;display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start">
+
+<div style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="font:500 11.5px Geist,sans-serif;letter-spacing:.06em;color:rgba(0,0,0,.45)">PAYMENT=UNAVAILABLE · HOLD ALIVE</div>
+<div style="width:390px;height:800px;background:#fff;border:1px solid rgba(0,0,0,.14);border-radius:30px;overflow:hidden;display:flex;flex-direction:column">
+<div style="display:flex;align-items:center;justify-content:center;padding:12px 20px 0"><div style="display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.06);border-radius:999px;padding:6px 12px;font:500 11.5px Geist,sans-serif;color:rgba(0,0,0,.65)"><span style="width:8px;height:9px;border:1.5px solid currentColor;border-radius:2px 2px 1px 1px;opacity:.6"></span>ceaute.com</div></div>
+<div style="display:flex;align-items:center;justify-content:space-between;height:52px;padding:0 20px"><span style="display:inline-flex;align-items:center;gap:6px;font:500 14px Geist,sans-serif;color:#8c2b52"><span style="font-size:17px;line-height:1;margin-left:-2px">‹</span>Time</span><span style="font:500 12px Geist,sans-serif;color:rgba(0,0,0,.4)">3 / 3</span></div>
+<div style="margin:0 20px;border-bottom:1px solid rgba(0,0,0,.08);padding:10px 0;display:flex;justify-content:space-between;align-items:center"><span style="font:500 13px Geist,sans-serif">Wed 23 Sep, 11:45 is yours for</span><span style="font:500 13px Geist,sans-serif;color:#8c2b52;font-variant-numeric:tabular-nums">3:48 min</span></div>
+<div style="margin:0 20px;padding:14px 0;border-bottom:1px solid rgba(0,0,0,.08);display:flex;gap:11px;align-items:flex-start"><span style="width:8px;height:8px;border-radius:50%;background:#b3261e;flex:none;margin-top:5px"></span><div><div style="font:500 13.5px Geist,sans-serif">Payment is not available</div><div style="margin-top:2px;font:400 12.5px/1.55 Geist,sans-serif;color:rgba(0,0,0,.65)">Eluxe UK cannot take card payments right now. Your time is still held while you decide.</div></div></div>
+<div style="flex:1;overflow:hidden;padding:18px 20px 0">
+<div style="font:600 24px Geist,sans-serif;letter-spacing:-.035em">Review &amp; pay</div>
+<div style="margin-top:16px;border:1px solid rgba(0,0,0,.12);border-radius:14px;padding:2px 14px">
+<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(0,0,0,.08);font:400 13.5px Geist,sans-serif"><span style="color:rgba(0,0,0,.6)">Infills · 1h 30m</span><span>£25.00</span></div>
+<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(0,0,0,.08);font:400 13.5px Geist,sans-serif"><span style="color:rgba(0,0,0,.6)">Chrome</span><span>£1.00</span></div>
+<div style="display:flex;justify-content:space-between;padding:10px 0;font:500 15px Geist,sans-serif"><span>Pay today (deposit)</span><span>£10.00</span></div>
+</div>
+<div style="margin-top:20px;font:400 13.5px/1.6 Geist,sans-serif;color:rgba(0,0,0,.65)">This is between Ceaute and Eluxe — nothing to fix on your side. Most cases clear within a day.</div>
+</div>
+<div style="border-top:1px solid rgba(0,0,0,.1);padding:12px 20px 24px"><div style="background:#8c2b52;color:#fff;border-radius:11px;padding:14px;text-align:center;font:500 14.5px Geist,sans-serif">Try again</div><div style="margin-top:12px;text-align:center;font:500 14px Geist,sans-serif;color:rgba(0,0,0,.55);padding:6px">Find another provider</div></div>
+</div>
+<div style="font:400 12px/1.65 Geist,sans-serif;color:rgba(0,0,0,.6)">The code's copy names the provider's Stripe state; this does not, because she cannot act on it and the same redirect also covers an unpublished page. It says whose problem it is and leaves the hold visible so the retry is worth trying.</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="font:500 11.5px Geist,sans-serif;letter-spacing:.06em;color:rgba(0,0,0,.45)">PAYMENT=EXPIRED · HOLD GONE</div>
+<div style="width:390px;height:800px;background:#fff;border:1px solid rgba(0,0,0,.14);border-radius:30px;overflow:hidden;display:flex;flex-direction:column">
+<div style="display:flex;align-items:center;justify-content:center;padding:12px 20px 0"><div style="display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.06);border-radius:999px;padding:6px 12px;font:500 11.5px Geist,sans-serif;color:rgba(0,0,0,.65)"><span style="width:8px;height:9px;border:1.5px solid currentColor;border-radius:2px 2px 1px 1px;opacity:.6"></span>ceaute.com</div></div>
+<div style="display:flex;align-items:center;justify-content:space-between;height:52px;padding:0 20px"><span style="display:inline-flex;align-items:center;gap:6px;font:500 14px Geist,sans-serif;color:#8c2b52"><span style="font-size:17px;line-height:1;margin-left:-2px">‹</span>Eluxe UK</span></div>
+<div style="padding:18px 20px 0">
+<div style="font:600 27px/1.14 Geist,sans-serif;letter-spacing:-.04em">That payment session expired.</div>
+<div style="margin-top:10px;font:400 14px/1.6 Geist,sans-serif;color:rgba(0,0,0,.65)">Nothing was charged, and 11:45 on Wednesday has been released. It may still be free — Eluxe's times are below.</div>
+</div>
+<div style="margin:22px 20px 0;border:1px solid rgba(0,0,0,.12);border-radius:14px;padding:13px 14px;display:flex;gap:12px;align-items:center"><div style="width:44px;height:44px;border-radius:11px;flex:none;background:url('uploads/775319868_17943981993271305_4563255844033183095_n.jpg') center/cover"></div><div style="flex:1"><div style="font:500 14px Geist,sans-serif">Infills + Chrome</div><div style="font:400 12.5px Geist,sans-serif;color:rgba(0,0,0,.5);margin-top:2px">1h 35m · £26.00 · £10 deposit</div></div></div>
+<div style="padding:24px 20px 0;font:500 14px Geist,sans-serif">Wednesday 23 September</div>
+<div style="padding:10px 20px 0;display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+<span style="font:500 15px Geist,sans-serif;padding:14px 0;text-align:center;border-radius:11px;border:1px solid rgba(0,0,0,.14)">10:00</span>
+<span style="font:500 15px Geist,sans-serif;padding:14px 0;text-align:center;border-radius:11px;border:1px solid rgba(0,0,0,.14)">11:45</span>
+<span style="font:500 15px Geist,sans-serif;padding:14px 0;text-align:center;border-radius:11px;border:1px solid rgba(0,0,0,.14)">13:30</span>
+<span style="font:500 15px Geist,sans-serif;padding:14px 0;text-align:center;border-radius:11px;border:1px solid rgba(0,0,0,.14)">14:30</span>
+<span style="font:500 15px Geist,sans-serif;padding:14px 0;text-align:center;border-radius:11px;border:1px solid rgba(0,0,0,.14)">15:30</span>
+<span style="font:500 15px Geist,sans-serif;padding:14px 0;text-align:center;border-radius:11px;border:1px solid rgba(0,0,0,.14)">16:15</span>
+</div>
+<div style="padding:18px 20px 0;font:400 13px/1.55 Geist,sans-serif;color:rgba(0,0,0,.55)">Your treatment and add-ons are kept. Picking a time holds it again for five minutes.</div>
+<div style="margin-top:auto;border-top:1px solid rgba(0,0,0,.1);padding:12px 20px 24px"><div style="border:1px solid rgba(0,0,0,.16);border-radius:11px;padding:13px;text-align:center;font:500 14px Geist,sans-serif">See other days</div></div>
+</div>
+<div style="font:400 12px/1.65 Geist,sans-serif;color:rgba(0,0,0,.6)">The one case where the notice does not belong on the checkout screen: there is no hold left, so nothing on that page is true any more. It becomes the time picker with the expiry as the headline and the basket preserved. 11:45 is offered again because it was only released, not taken.</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="font:500 11.5px Geist,sans-serif;letter-spacing:.06em;color:rgba(0,0,0,.45)">PAYMENT=PROCESSING · DO NOT PAY TWICE</div>
+<div style="width:390px;height:800px;background:#fff;border:1px solid rgba(0,0,0,.14);border-radius:30px;overflow:hidden;display:flex;flex-direction:column">
+<div style="display:flex;align-items:center;justify-content:center;padding:12px 20px 0"><div style="display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.06);border-radius:999px;padding:6px 12px;font:500 11.5px Geist,sans-serif;color:rgba(0,0,0,.65)"><span style="width:8px;height:9px;border:1.5px solid currentColor;border-radius:2px 2px 1px 1px;opacity:.6"></span>ceaute.com</div></div>
+<div style="display:flex;align-items:center;height:52px;padding:0 20px"><span style="font:600 16px Geist,sans-serif;letter-spacing:-.03em">Ceaute</span></div>
+<div style="padding:18px 20px 0">
+<div style="font:600 27px/1.14 Geist,sans-serif;letter-spacing:-.04em">A payment is already going through.</div>
+<div style="margin-top:10px;font:400 14px/1.6 Geist,sans-serif;color:rgba(0,0,0,.65)">An earlier attempt for this booking is still finishing. Give it a few seconds rather than paying again — a second payment would be a second charge.</div>
+</div>
+<div style="margin:24px 20px 0;padding:14px 0;border-top:1px solid rgba(0,0,0,.08);border-bottom:1px solid rgba(0,0,0,.08);display:flex;gap:11px;align-items:flex-start"><span style="width:8px;height:8px;border-radius:50%;background:#c98a1a;flex:none;margin-top:5px"></span><div><div style="font:500 13.5px Geist,sans-serif">Waiting on Stripe</div><div style="margin-top:2px;font:400 12.5px/1.55 Geist,sans-serif;color:rgba(0,0,0,.65)">Your slot stays held until 10:14 while this resolves.</div></div></div>
+<div style="margin:22px 20px 0;border:1px solid rgba(0,0,0,.12);border-radius:14px;padding:13px 14px"><div style="font:500 14px Geist,sans-serif">Infills + Chrome</div><div style="font:400 12.5px Geist,sans-serif;color:rgba(0,0,0,.5);margin-top:2px">Eluxe UK · Wed 23 Sep, 11:45 · £10.00 deposit</div></div>
+<div style="padding:20px 20px 0;font:400 13.5px/1.6 Geist,sans-serif;color:rgba(0,0,0,.65)">If it went through, the booking appears in Bookings and the confirmation arrives by email. If it did not, this page lets you pay again.</div>
+<div style="margin-top:auto;border-top:1px solid rgba(0,0,0,.1);padding:12px 20px 24px"><div style="background:#8c2b52;color:#fff;border-radius:11px;padding:14px;text-align:center;font:500 14.5px Geist,sans-serif">Check again</div><div style="margin-top:12px;text-align:center;font:500 14px Geist,sans-serif;color:rgba(0,0,0,.55);padding:6px">Go to my bookings</div></div>
+</div>
+<div style="font:400 12px/1.65 Geist,sans-serif;color:rgba(0,0,0,.6)">The dangerous one — a second payment is a second charge — so Pay is removed entirely and replaced with Check again, which is the reload the code's copy asks for in words. Amber, not red: nothing has gone wrong yet.</div>
+</div>
+
+</div>
+
+<div style="margin-top:44px;font:500 11.5px Geist,sans-serif;letter-spacing:.06em;color:rgba(0,0,0,.45)">DEAD ENDS · /AUTH/ERROR, NOT-FOUND, ERROR</div>
+<div style="margin-top:6px;font:400 12px/1.6 Geist,sans-serif;color:rgba(0,0,0,.55);max-width:820px">All three exist in the repo as small card pages. These are restyled from the real files, so each keeps the actions the route can genuinely perform — nothing invented. Where the code's copy has drifted (auth/error still talks about a link; error.tsx still links to /help) it is flagged under the frame rather than silently corrected.</div>
+<div style="margin-top:14px;display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start">
+
+<div style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="font:500 11.5px Geist,sans-serif;letter-spacing:.06em;color:rgba(0,0,0,.45)">/auth/error · STATIC, ONE WAY OUT</div>
+<div style="width:390px;height:800px;background:#fff;border:1px solid rgba(0,0,0,.14);border-radius:30px;overflow:hidden;display:flex;flex-direction:column">
+<div style="display:flex;align-items:center;justify-content:center;padding:12px 20px 0"><div style="display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.06);border-radius:999px;padding:6px 12px;font:500 11.5px Geist,sans-serif;color:rgba(0,0,0,.65)"><span style="width:8px;height:9px;border:1.5px solid currentColor;border-radius:2px 2px 1px 1px;opacity:.6"></span>ceaute.com/auth/error</div></div>
+<div style="display:flex;align-items:center;height:52px;padding:0 20px"><span style="font:600 16px Geist,sans-serif;letter-spacing:-.03em">Ceaute</span></div>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:0 24px">
+<div style="font:600 29px/1.14 Geist,sans-serif;letter-spacing:-.04em">That sign-in didn't work.</div>
+<div style="margin-top:12px;font:400 14.5px/1.6 Geist,sans-serif;color:rgba(0,0,0,.65)">The code may have expired or already been used. Your account has not been changed.</div>
+<div style="margin-top:26px;background:#8c2b52;color:#fff;border-radius:11px;padding:14px;text-align:center;font:500 14.5px Geist,sans-serif">Return to sign in</div>
+</div>
+<div style="padding:0 24px 26px;font:400 12px/1.5 Geist,sans-serif;color:rgba(0,0,0,.45);text-align:center">Anything you were booking is still there if the hold has not run out.</div>
+</div>
+<div style="font:400 12px/1.65 Geist,sans-serif;color:rgba(0,0,0,.6)">The route is a static page with a single link to <span style="font-size:11.5px">/sign-in</span> — no form, no state, no resend, so this frame has none either. My earlier draft put an email field here; the page cannot fill it, because the pending-auth cookie is deleted on success and this route is reached on paths that may not carry it. <strong>Copy drift to fix in code:</strong> the file still says "That link did not work" and "Request a fresh sign-in email" from the magic-link era. It is a code now.</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="font:500 11.5px Geist,sans-serif;letter-spacing:.06em;color:rgba(0,0,0,.45)">not-found.tsx · ROOT BOUNDARY, NO PARAMS</div>
+<div style="width:390px;height:800px;background:#fff;border:1px solid rgba(0,0,0,.14);border-radius:30px;overflow:hidden;display:flex;flex-direction:column">
+<div style="display:flex;align-items:center;justify-content:center;padding:12px 20px 0"><div style="display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.06);border-radius:999px;padding:6px 12px;font:500 11.5px Geist,sans-serif;color:rgba(0,0,0,.65)"><span style="width:8px;height:9px;border:1.5px solid currentColor;border-radius:2px 2px 1px 1px;opacity:.6"></span>ceaute.com/@lashesbyk</div></div>
+<div style="display:flex;align-items:center;justify-content:space-between;height:52px;padding:0 20px;border-bottom:1px solid rgba(0,0,0,.08)"><span style="font:600 16px Geist,sans-serif;letter-spacing:-.03em">Ceaute</span><span style="font:500 13px Geist,sans-serif;color:#8c2b52">Log in</span></div>
+<div style="padding:26px 24px 0">
+<div style="font:600 29px/1.14 Geist,sans-serif;letter-spacing:-.04em">That page isn't here.</div>
+<div style="margin-top:12px;font:400 14.5px/1.6 Geist,sans-serif;color:rgba(0,0,0,.65)">The link may be out of date, or the provider page may not be published yet. Nothing was lost if you had a booking — it is still in Bookings.</div>
+</div>
+<div style="margin:26px 24px 0;padding-top:20px;border-top:1px solid rgba(0,0,0,.09);font:600 16px Geist,sans-serif;letter-spacing:-.02em">Booking now on Ceaute</div>
+<div style="margin:12px 24px 0;display:flex;flex-direction:column;gap:10px">
+<div style="border-radius:16px;overflow:hidden;border:1px solid rgba(0,0,0,.1)"><div style="height:126px;background:url('uploads/766636403_17942067738271305_7344682223522227764_n.jpg') center 30%/cover"></div><div style="padding:11px 14px 12px;display:flex;justify-content:space-between;align-items:flex-start"><div><div style="font:600 16px Geist,sans-serif;letter-spacing:-.025em">Byuwauk</div><div style="margin-top:3px;font:500 13px Geist,sans-serif">★ 5.0 · 12 reviews</div><div style="font:400 12.5px Geist,sans-serif;color:rgba(0,0,0,.5);margin-top:2px">Lashes · Manchester</div></div><div style="text-align:right"><div style="font:500 14.5px Geist,sans-serif">£11</div><div style="font:400 11.5px Geist,sans-serif;color:rgba(0,0,0,.45)">from</div></div></div></div>
+</div>
+<div style="margin-top:auto;border-top:1px solid rgba(0,0,0,.1);padding:12px 24px 24px"><div style="background:#8c2b52;color:#fff;border-radius:11px;padding:14px;text-align:center;font:500 14.5px Geist,sans-serif">Discover providers</div></div>
+</div>
+<div style="font:400 12px/1.65 Geist,sans-serif;color:rgba(0,0,0,.6)">Headline and body follow the file; the CTA keeps its label. It does <strong>not</strong> echo the handle: <span style="font-size:11.5px">[username]/page.jsx</span> calls <span style="font-size:11.5px">notFound()</span> and there is no not-found file in that segment, so the root boundary catches it and has no params. The provider row is generic for the same reason — a root boundary cannot know which city was being browsed. <strong>Worth building:</strong> a <span style="font-size:11.5px">[username]/not-found.tsx</span> would let this name the handle and suggest techs in the right area, which matters because the commonest 404 is a stale Instagram-bio link.</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="font:500 11.5px Geist,sans-serif;letter-spacing:.06em;color:rgba(0,0,0,.45)">error.tsx · RESET + DIGEST, BOTH REAL</div>
+<div style="width:390px;height:800px;background:#fff;border:1px solid rgba(0,0,0,.14);border-radius:30px;overflow:hidden;display:flex;flex-direction:column">
+<div style="display:flex;align-items:center;justify-content:center;padding:12px 20px 0"><div style="display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.06);border-radius:999px;padding:6px 12px;font:500 11.5px Geist,sans-serif;color:rgba(0,0,0,.65)"><span style="width:8px;height:9px;border:1.5px solid currentColor;border-radius:2px 2px 1px 1px;opacity:.6"></span>ceaute.com</div></div>
+<div style="display:flex;align-items:center;height:52px;padding:0 20px"><span style="font:600 16px Geist,sans-serif;letter-spacing:-.03em">Ceaute</span></div>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:0 24px">
+<div style="font:500 11.5px Geist,sans-serif;letter-spacing:.06em;color:#8c2b52">SOMETHING WENT WRONG</div>
+<div style="margin-top:12px;font:600 29px/1.14 Geist,sans-serif;letter-spacing:-.04em">That did not work.</div>
+<div style="margin-top:12px;font:400 14.5px/1.6 Geist,sans-serif;color:rgba(0,0,0,.65)">Ceaute could not finish what you asked. Trying again usually works.</div>
+<div style="margin-top:22px;padding:14px 0;border-top:1px solid rgba(0,0,0,.08);border-bottom:1px solid rgba(0,0,0,.08);font:400 13.5px/1.6 Geist,sans-serif;color:rgba(0,0,0,.65)">If you were paying, no charge was taken unless you saw a confirmation. Check Bookings before trying again.</div>
+<div style="margin-top:22px;background:#8c2b52;color:#fff;border-radius:11px;padding:14px;text-align:center;font:500 14.5px Geist,sans-serif">Try again</div>
+<div style="margin-top:10px;border:1px solid rgba(0,0,0,.16);border-radius:11px;padding:13px;text-align:center;font:500 14px Geist,sans-serif">Check my bookings</div>
+</div>
+<div style="padding:0 24px 26px;text-align:center;font:400 12px Geist,sans-serif;color:rgba(0,0,0,.4)">Reference: 8f3a1c</div>
+</div>
+<div style="font:400 12px/1.65 Geist,sans-serif;color:rgba(0,0,0,.6)">Everything here is in the file already: the fixed "That did not work" title, a heading and message from <span style="font-size:11.5px">describeRouteError</span>, a conditional reference line, <span style="font-size:11.5px">reset()</span> behind Try again, and a Check my bookings link. Two changes: the money sentence is new and earns its place, because a crash mid-checkout makes people fear a double charge; and the third link, Get help, has to go since /help is being deleted. The eyebrow stands in for the dynamic heading — it varies by error kind.</div>
+</div>
+
+</div>
+
+<div style="margin-top:44px;font:500 11.5px Geist,sans-serif;letter-spacing:.06em;color:rgba(0,0,0,.45)">LEGAL · /TERMS, /PRIVACY</div>
+<div style="margin-top:6px;font:400 12px/1.6 Geist,sans-serif;color:rgba(0,0,0,.55);max-width:820px">Every heading verbatim from the code. The draft notice and Owner TODO callouts stay — they are a deliberate gate, and hiding them would present the pages as final. These callouts are the only place on Ceaute where amber and a dashed border are allowed. /help is being deleted, so the footer links are Privacy and Terms only.</div>
+<div style="margin-top:14px;display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start">
+
+<div style="display:flex;flex-direction:column;gap:10px;width:720px">
+<div style="font:500 11.5px Geist,sans-serif;letter-spacing:.06em;color:rgba(0,0,0,.45)">/terms · DESKTOP, 720PX</div>
+<div style="width:720px;background:#fff;border:1px solid rgba(0,0,0,.14);border-radius:18px;overflow:hidden">
+<div style="display:flex;align-items:center;justify-content:space-between;height:56px;padding:0 28px;border-bottom:1px solid rgba(0,0,0,.08)"><span style="font:600 17px Geist,sans-serif;letter-spacing:-.03em">Ceaute</span><span style="display:flex;gap:20px;font:500 13.5px Geist,sans-serif;color:rgba(0,0,0,.55)"><span>Privacy</span><span style="color:#0b0b0b">Terms</span></span></div>
+<div style="padding:34px 28px 30px">
+<div style="font:600 34px Geist,sans-serif;letter-spacing:-.04em">Terms</div>
+<div style="margin-top:6px;font:400 14px Geist,sans-serif;color:rgba(0,0,0,.6)">The terms for using Ceaute as a customer or provider.</div>
+<div style="margin-top:4px;font:400 12.5px Geist,sans-serif;color:rgba(0,0,0,.45)">Last updated 18 September 2026</div>
+<div style="margin-top:24px;border:1px dashed rgba(140,43,82,.45);border-radius:12px;padding:16px 18px"><div style="font:600 13.5px Geist,sans-serif;color:#8c2b52">Draft for owner review</div><div style="margin-top:5px;font:400 13px/1.6 Geist,sans-serif;color:rgba(0,0,0,.7)">This page describes how Ceaute actually operates today. It has not yet been approved as final by Ceaute's owner or reviewed by a lawyer. Anything marked "Owner TODO" below is an open question, not a term you can rely on.</div></div>
+<div style="margin-top:32px;display:flex;flex-direction:column;gap:26px;max-width:600px">
+<div><div style="font:600 17px Geist,sans-serif;letter-spacing:-.02em">What Ceaute is</div><div style="margin-top:7px;font:400 14.5px/1.65 Geist,sans-serif;color:rgba(0,0,0,.8)">Ceaute is a booking platform that connects independent beauty providers with customers. Ceaute is not a beauty business itself and does not perform, supervise, or guarantee any treatment.</div></div>
+<div><div style="font:600 17px Geist,sans-serif;letter-spacing:-.02em">Providers and customers</div><div style="margin-top:7px;font:400 14.5px/1.65 Geist,sans-serif;color:rgba(0,0,0,.8)">Each provider on Ceaute is an independent business responsible for the treatments they list, the prices they set, and the standard of the appointment itself. The contract for a treatment is between you and the provider, not Ceaute. Ceaute is responsible for the booking, payment, and cancellation systems described below.</div></div>
+<div><div style="font:600 17px Geist,sans-serif;letter-spacing:-.02em">Your account</div><div style="margin-top:7px;font:400 14.5px/1.65 Geist,sans-serif;color:rgba(0,0,0,.8)">You need an account to book a treatment or to publish a provider page. One account covers both — creating a provider page does not create a second account. We sign you in with a one-time code sent to your email address; there is no password to protect. You must give us a real, accessible email address and are responsible for anything done from your account.</div></div>
+<div><div style="font:600 17px Geist,sans-serif;letter-spacing:-.02em">Cancellation deadlines and charges</div><div style="margin-top:7px;font:400 14.5px/1.65 Geist,sans-serif;color:rgba(0,0,0,.8)">Each provider sets a cancellation window of 12, 24, or 48 hours, and may add their own written cancellation policy. Both are shown to you before you pay. If you cancel before the deadline, the amount you paid online is refunded in full. If you cancel after the deadline, the provider keeps up to the deposit or full payment amount shown at booking, and any remainder is refunded. Ceaute does not currently support rescheduling a booking; changing a booking means cancelling it, subject to these charges, and booking again.</div></div>
+<div><div style="font:600 17px Geist,sans-serif;letter-spacing:-.02em">If a provider cancels</div><div style="margin-top:7px;font:400 14.5px/1.65 Geist,sans-serif;color:rgba(0,0,0,.8)">If a provider cancels a confirmed booking, the full amount you paid online is refunded. Refunds are returned to your original payment method through Stripe; they can take a few business days to appear and, rarely, may be delayed while Ceaute retries a refund after a payment processor outage — the cancellation itself still takes effect immediately.</div>
+<div style="margin-top:12px;border:1px dashed rgba(201,138,26,.55);border-radius:10px;padding:12px 14px;font:400 12.5px/1.6 Geist,sans-serif;color:#7a5410"><span style="font-weight:600">Owner TODO — </span>Whether Ceaute owes a customer anything beyond the refund itself when a provider cancels (for example, goodwill credit) is not decided or implemented, and this page does not promise it.</div></div>
+<div><div style="font:600 17px Geist,sans-serif;letter-spacing:-.02em">About these terms</div>
+<div style="margin-top:10px;border:1px dashed rgba(201,138,26,.55);border-radius:10px;padding:12px 14px;font:400 12.5px/1.6 Geist,sans-serif;color:#7a5410"><span style="font-weight:600">Owner TODO — </span>The legal entity operating Ceaute, its company number and registered address, the law governing these terms, and a contact address for questions about them are not yet set — none of this exists in the product today and none is invented here.</div>
+<div style="margin-top:12px;font:400 14.5px/1.65 Geist,sans-serif;color:rgba(0,0,0,.8)">Ceaute may update these terms as the product changes. Continuing to use Ceaute after an update means you accept the new terms.</div></div>
+</div>
+<div style="margin-top:34px;font:600 13.5px Geist,sans-serif;color:#8c2b52">Back to Ceaute</div>
+</div>
+</div>
+<div style="font:400 12px/1.65 Geist,sans-serif;color:rgba(0,0,0,.6)">Eleven sections in the code; six shown. Body copy is 14.5/1.65 in a 600px measure — longer than the app's 13.5 because this is reading, not scanning. Each Owner TODO sits under the section it qualifies, never collected at the bottom.</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="font:500 11.5px Geist,sans-serif;letter-spacing:.06em;color:rgba(0,0,0,.45)">/privacy · MOBILE</div>
+<div style="width:390px;height:800px;background:#fff;border:1px solid rgba(0,0,0,.14);border-radius:30px;overflow:hidden;display:flex;flex-direction:column">
+<div style="display:flex;align-items:center;justify-content:center;padding:12px 20px 0"><div style="display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.06);border-radius:999px;padding:6px 12px;font:500 11.5px Geist,sans-serif;color:rgba(0,0,0,.65)"><span style="width:8px;height:9px;border:1.5px solid currentColor;border-radius:2px 2px 1px 1px;opacity:.6"></span>ceaute.com/privacy</div></div>
+<div style="display:flex;align-items:center;justify-content:space-between;height:52px;padding:0 20px;border-bottom:1px solid rgba(0,0,0,.08)"><span style="font:600 16px Geist,sans-serif;letter-spacing:-.03em">Ceaute</span><span style="font:500 13px Geist,sans-serif;color:#8c2b52">Log in</span></div>
+<div style="flex:1;overflow:hidden;padding:20px 20px 0">
+<div style="font:600 27px Geist,sans-serif;letter-spacing:-.04em">Privacy</div>
+<div style="margin-top:5px;font:400 13.5px Geist,sans-serif;color:rgba(0,0,0,.6)">How Ceaute handles personal information.</div>
+<div style="margin-top:3px;font:400 12px Geist,sans-serif;color:rgba(0,0,0,.45)">Last updated 18 September 2026</div>
+<div style="margin-top:18px;border:1px dashed rgba(140,43,82,.45);border-radius:12px;padding:13px 14px"><div style="font:600 13px Geist,sans-serif;color:#8c2b52">Draft for owner review</div><div style="margin-top:4px;font:400 12.5px/1.55 Geist,sans-serif;color:rgba(0,0,0,.7)">Not yet approved as final or reviewed by a lawyer. Anything marked "Owner TODO" is an open question.</div></div>
+<div style="margin-top:22px;display:flex;flex-direction:column;gap:14px">
+<div><div style="font:600 16px Geist,sans-serif;letter-spacing:-.02em">Who controls your data</div><div style="margin-top:6px;font:400 13.5px/1.6 Geist,sans-serif;color:rgba(0,0,0,.8)">Ceaute operates this booking platform and decides how the personal information described in this notice is used.</div><div style="margin-top:10px;border:1px dashed rgba(201,138,26,.55);border-radius:10px;padding:11px 13px;font:400 12px/1.55 Geist,sans-serif;color:#7a5410"><span style="font-weight:600">Owner TODO — </span>The registered legal entity name, company number, and registered address that should appear here as the data controller are not yet set.</div></div>
+<div><div style="font:600 16px Geist,sans-serif;letter-spacing:-.02em">Information we collect</div>
+<div style="margin-top:8px;display:flex;flex-direction:column;gap:9px">
+<div style="display:flex;gap:10px"><span style="width:5px;height:5px;border-radius:50%;background:rgba(0,0,0,.3);flex:none;margin-top:8px"></span><div style="font:400 13.5px/1.6 Geist,sans-serif;color:rgba(0,0,0,.8)"><span style="font-weight:500;color:#0b0b0b">Account:</span> your email address, used to sign you in with a one-time code.</div></div>
+<div style="display:flex;gap:10px"><span style="width:5px;height:5px;border-radius:50%;background:rgba(0,0,0,.3);flex:none;margin-top:8px"></span><div style="font:400 13.5px/1.6 Geist,sans-serif;color:rgba(0,0,0,.8)"><span style="font-weight:500;color:#0b0b0b">Profile:</span> your name and phone number, if you add them.</div></div>
+<div style="display:flex;gap:10px"><span style="width:5px;height:5px;border-radius:50%;background:rgba(0,0,0,.3);flex:none;margin-top:8px"></span><div style="font:400 13.5px/1.6 Geist,sans-serif;color:rgba(0,0,0,.8)"><span style="font-weight:500;color:#0b0b0b">Bookings:</span> your contact details, the treatment, price and time, and — once you have paid — the provider's exact address.</div></div>
+</div></div>
+</div>
+</div>
+<div style="border-top:1px solid rgba(0,0,0,.1);padding:14px 20px 22px;display:flex;gap:18px;font:500 12.5px Geist,sans-serif;color:rgba(0,0,0,.5)"><span>Privacy</span><span>Terms</span></div>
+</div>
+<div style="font:400 12px/1.65 Geist,sans-serif;color:rgba(0,0,0,.6)">Same shell at 390px: 13.5/1.6 body, bullets as dotted rows rather than a browser list. Footer links replace the desktop header nav; signed-out shows "Log in" instead of the avatar.</div>
+</div>
+
+</div>
+
+<div style="margin-top:44px;font:500 11.5px Geist,sans-serif;letter-spacing:.06em;color:rgba(0,0,0,.45)">THE ROOT ROUTE · CEAUTE.COM/</div>
+<div style="margin-top:14px;width:820px;background:#fff;border:1px solid rgba(0,0,0,.12);border-radius:18px;padding:24px 26px">
+<div style="font:600 17px Geist,sans-serif;letter-spacing:-.025em">Redirect, but not unconditionally</div>
+<div style="margin-top:10px;font:400 13.5px/1.7 Geist,sans-serif;color:rgba(0,0,0,.75)">Right now page.tsx renders an empty main, so the root is a blank page — the worst of the options. Redirecting to Discover is right for a signed-out visitor: there is nothing a landing page would say that Discover does not say better with real providers on it, and an MVP with twelve providers cannot afford a marketing page nobody maintains.</div>
+<div style="margin-top:16px;font:500 11.5px Geist,sans-serif;letter-spacing:.06em;color:rgba(0,0,0,.45)">WHAT / SHOULD DO, BY WHO ARRIVES</div>
+<div style="margin-top:10px">
+<div style="display:flex;gap:14px;align-items:flex-start;padding:12px 0;border-top:1px solid rgba(0,0,0,.08)"><span style="width:200px;flex:none;font:500 13.5px Geist,sans-serif">Signed out</span><div style="flex:1"><div style="font:500 13.5px Geist,sans-serif;color:#8c2b52">→ /discover</div><div style="margin-top:3px;font:400 13px/1.55 Geist,sans-serif;color:rgba(0,0,0,.6)">The providers are the product. Category chips and the search box are a better first screen than a pitch.</div></div></div>
+<div style="display:flex;gap:14px;align-items:flex-start;padding:12px 0;border-top:1px solid rgba(0,0,0,.08)"><span style="width:200px;flex:none;font:500 13.5px Geist,sans-serif">Signed in, customer</span><div style="flex:1"><div style="font:500 13.5px Geist,sans-serif;color:#8c2b52">→ /discover</div><div style="margin-top:3px;font:400 13px/1.55 Geist,sans-serif;color:rgba(0,0,0,.6)">Same place, with the avatar menu available. Once the booking-led home from Reframes 05 exists this becomes /account — not for launch.</div></div></div>
+<div style="display:flex;gap:14px;align-items:flex-start;padding:12px 0;border-top:1px solid rgba(0,0,0,.08)"><span style="width:200px;flex:none;font:500 13.5px Geist,sans-serif">Signed in, has a page</span><div style="flex:1"><div style="font:500 13.5px Geist,sans-serif;color:#8c2b52">→ /dashboard</div><div style="margin-top:3px;font:400 13px/1.55 Geist,sans-serif;color:rgba(0,0,0,.6)">A provider typing the bare domain is going to work, not shopping. Discover is still one tap away in the nav.</div></div></div>
+<div style="display:flex;gap:14px;align-items:flex-start;padding:12px 0;border-top:1px solid rgba(0,0,0,.08);border-bottom:1px solid rgba(0,0,0,.08)"><span style="width:200px;flex:none;font:500 13.5px Geist,sans-serif">Mid-booking, hold live</span><div style="flex:1"><div style="font:500 13.5px Geist,sans-serif;color:#8c2b52">→ back to the held booking</div><div style="margin-top:3px;font:400 13px/1.55 Geist,sans-serif;color:rgba(0,0,0,.6)">Losing a slot because someone tapped the logo mid-flow is the one genuinely costly case.</div></div></div>
+</div>
+<div style="margin-top:18px;font:400 13px/1.7 Geist,sans-serif;color:rgba(0,0,0,.6)">Two implementation notes. Make it a server-side redirect so there is never a blank frame, and keep it temporary rather than permanent — a marketing page will eventually live at the root, and a permanent redirect stays cached in browsers for a long time. Second, the wordmark in the top bar should link to /discover for customers and /dashboard for providers rather than to the root, so the redirect is a fallback for typed URLs rather than something users hit constantly.</div>
+</div>
+</div>
+</x-dc>
+</body>
+</html>
