@@ -170,6 +170,15 @@ appear on the public provider page. A database function lets the trusted
 backend hide or show a review, but no application or administration screen
 calls it yet, and nobody can delete a review.
 
+A customer can dispute a payment with their bank. Ceaute records every
+`charge.dispute.*` event in `booking_dispute`, joined to the booking through
+its PaymentIntent, and emails the operator when a dispute opens, has funds
+withdrawn or reinstated, or closes. `GET /api/operator/disputes` lists open
+disputes for whoever holds the operator secret. Nothing is automatic beyond
+that: no transfer is reversed, no provider is debited, no evidence is
+submitted, and providers are not told. Responding happens by hand in Stripe —
+see [the dispute runbook](dispute-response.md).
+
 Transactional confirmation and cancellation email is written to a database
 outbox and delivered by a protected scheduled route through Resend. Delivery is
 claim-and-retry based. Appointment reminders, SMS, provider replies, distance

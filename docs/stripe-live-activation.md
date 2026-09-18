@@ -27,14 +27,18 @@ deliberately. Ceaute refuses to make a Stripe call when `STRIPE_MODE` and
       goes negative on any partial refund above ~37%. A provider agreement can
       allocate the liability but cannot create a way to collect it: there is no
       set-off against future payouts.
-- [ ] **Subscribe to and handle dispute events.** Neither endpoint listens for
-      `charge.dispute.created`, nothing reverses the transfer and nobody is
-      notified. Modelled: a disputed £10.00 deposit costs Ceaute **£24.80** —
-      the deposit, Stripe's £15.00 dispute fee and the original processing fee
-      — while the provider keeps £9.45. Even a perfect manual clawback leaves
-      £15.35 with Ceaute, because Stripe's Connect terms forbid passing a
-      dispute fee to a connected account. This is the most urgent item on the
-      list before real payments start.
+- [x] **Handle dispute events.** Done, at the minimum useful level: all five
+      `charge.dispute.*` events are recorded idempotently, the operator is
+      emailed on every material moment, and `GET /api/operator/disputes` lists
+      affected bookings. See [the dispute runbook](dispute-response.md).
+      Still requires the five events to be added to the Live webhook endpoint
+      below, and `CEAUTE_OPERATOR_EMAIL` and `CEAUTE_OPERATOR_SECRET` to be set.
+- [ ] **Decide what Ceaute does about the money in a dispute.** Recording it
+      does not recover it. A disputed £10.00 deposit costs Ceaute **£24.80**
+      with no clawback and still **£15.35** after a perfect manual transfer
+      reversal, because Stripe's Connect terms forbid passing the £15.00
+      dispute fee to a connected account. Nothing reverses a transfer
+      automatically and there is no set-off against future payouts.
 - [ ] **Decide what happens to existing Test-mode data.** Stored `acct_*` and
       `pi_*` identifiers are UNIQUE with no mode column. After the switch every
       one of them refers to a non-existent Live object: provider accounts will
@@ -61,7 +65,10 @@ deliberately. Ceaute refuses to make a Stripe call when `STRIPE_MODE` and
       secrets — they differ from the Test secrets:
       - `https://ceaute.com/api/stripe/payments` — `checkout.session.completed`,
         `checkout.session.expired`, `payment_intent.payment_failed`,
-        `payment_intent.canceled`, `refund.updated`, `refund.failed`
+        `payment_intent.canceled`, `refund.updated`, `refund.failed`,
+        `charge.dispute.created`, `charge.dispute.updated`,
+        `charge.dispute.closed`, `charge.dispute.funds_withdrawn`,
+        `charge.dispute.funds_reinstated`
       - `https://ceaute.com/api/stripe/connect` (v2 event destination) —
         `v2.core.account.created`, `v2.core.account.updated`,
         `v2.core.account[configuration.recipient].updated`,
@@ -80,6 +87,9 @@ wrong mode.
 - [ ] `STRIPE_SECRET_KEY` → the `sk_live_…` key
 - [ ] `STRIPE_PAYMENT_WEBHOOK_SECRET` → the Live payments endpoint secret
 - [ ] `STRIPE_CONNECT_WEBHOOK_SECRET` → the Live Connect destination secret
+- [ ] `CEAUTE_OPERATOR_EMAIL` → a mailbox somebody actually reads; dispute
+      alerts go here
+- [ ] `CEAUTE_OPERATOR_SECRET` → a fresh random token for the dispute listing
 
 Leave Preview and Development on Test. See `.env.example` for the full set.
 
