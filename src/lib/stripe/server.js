@@ -1,6 +1,16 @@
 import Stripe from "stripe";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
+import { assertStripeKeyMatchesMode, resolveStripeMode } from "@/lib/stripe/mode";
 
+// Deliberately a preview version, not the SDK default. Two things in this
+// integration need it and will break on a stable version:
+//   * the Accounts v2 surface (retrieveStripeAccount below, and the account /
+//     account-link calls in dashboard/settings/payments/actions.js);
+//   * `allowed_payment_method_types` on the Checkout Session payload built in
+//     migration 202609130006, which the SDK's own types do not describe.
+// Preview versions are outside Stripe's API-version stability guarantee, so
+// before going live confirm the live account has the same preview access.
+// Do not bump this without checking both.
 const STRIPE_API_VERSION = "2026-08-26.preview";
 const STRIPE_ACCOUNT_INCLUDE = [
   "configuration.recipient",
@@ -14,6 +24,11 @@ export function getStripe() {
   if (!secretKey) {
     throw new Error("Stripe is not configured.");
   }
+
+  // Fails closed when the declared mode and the key disagree, so a test key in
+  // Live — or a live key anywhere it does not belong — stops here rather than
+  // at the first real charge.
+  assertStripeKeyMatchesMode(secretKey, resolveStripeMode());
 
   return new Stripe(secretKey, {
     apiVersion: STRIPE_API_VERSION,

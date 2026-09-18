@@ -1,4 +1,8 @@
 import { LegalPage } from "../_components/legal-page";
+import {
+  legalIdentity,
+  needsSeparateAddressForService,
+} from "@/lib/legal/identity";
 
 export const metadata = {
   title: "Terms · Ceaute",
@@ -10,23 +14,41 @@ export default function TermsPage() {
       title="Terms"
       summary="The terms for using Ceaute as a customer or a provider."
       updated="18 September 2026"
-      draft
     >
       <section>
         <h2>Who operates Ceaute</h2>
         <p>
-          Ceaute is a booking platform at ceaute.com, operated by Harrison as a
-          sole trader under the trading name Ceaute. Ceaute is not a limited
+          Ceaute is a booking platform at {legalIdentity.siteDomain}, operated
+          by {legalIdentity.operatorName} as a {legalIdentity.structure} under
+          the trading name {legalIdentity.tradingName}. Ceaute is not a limited
           company, so it has no company registration number and no registered
           office. You are contracting with an individual trading under a
           business name.
         </p>
-        <p>
-          Contact Ceaute at{" "}
-          <a href="mailto:ndu.harry02@gmail.com">ndu.harry02@gmail.com</a>. A
-          business address is not yet arranged, so these terms do not publish
-          one.
-        </p>
+        <ul>
+          <li>
+            <strong>Trading name:</strong> {legalIdentity.tradingName}
+          </li>
+          <li>
+            <strong>Trader:</strong> {legalIdentity.operatorName}, a{" "}
+            {legalIdentity.structure}
+          </li>
+          <li>
+            <strong>Business address:</strong> {legalIdentity.businessAddress}
+          </li>
+          {needsSeparateAddressForService() ? (
+            <li>
+              <strong>Address for service:</strong>{" "}
+              {legalIdentity.addressForService}
+            </li>
+          ) : null}
+          <li>
+            <strong>Email:</strong>{" "}
+            <a href={`mailto:${legalIdentity.contactEmail}`}>
+              {legalIdentity.contactEmail}
+            </a>
+          </li>
+        </ul>
       </section>
 
       <section>
@@ -252,8 +274,11 @@ export default function TermsPage() {
         <p>
           If something goes wrong with how Ceaute itself worked — a payment, a
           refund, a booking that did not appear — email{" "}
-          <a href="mailto:ndu.harry02@gmail.com">ndu.harry02@gmail.com</a> and
-          we will look into it.
+          <a href={`mailto:${legalIdentity.contactEmail}`}>
+            {legalIdentity.contactEmail}
+          </a>{" "}
+          and we will look into it. You can also write to Ceaute at{" "}
+          {legalIdentity.businessAddress}.
         </p>
         <p>
           A complaint about the treatment itself, or about how a provider

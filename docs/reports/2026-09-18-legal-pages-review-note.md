@@ -7,14 +7,51 @@ that facts Ceaute has not established stay here, in a dated report, instead of
 appearing on the public site as confident legal text. Read it before changing
 either page.
 
-**Status: neither page is final.** The operator and the contact email were
-settled on 18 September 2026 (see below) and both pages now state them. What
-still blocks finality is the **address disclosure**: a business trading online
-under a name that is not the owner's surname must publish a geographic address
-and give an address for service, and Ceaute has neither. Both pages therefore
-keep the `draft` notice on `LegalPage`, retargeted at that gap, and neither
-should be described to a user, an investor or a provider as an approved policy
-until it can be removed honestly.
+**Status: neither page is legally approved.** The operator, contact email,
+structure and governing law are settled. Three facts are not, and they now
+appear on the site as the literal placeholders `[FULL LEGAL NAME]`,
+`[BUSINESS ADDRESS]` and `[ADDRESS FOR SERVICE]`.
+
+Read that carefully: **a placeholder is a field that has been implemented, not
+a fact that has been established.** The layout, links, footer, checkout
+disclosure and email footer are all in place and will be correct the moment
+real values replace the brackets — but until then nobody should describe these
+documents as approved, and no lawyer has reviewed them. Filling in the last
+three fields removes the publication block; it does not by itself make the
+pages legally signed off, and the three substantive questions at the end of
+this note are untouched by it.
+
+The `draft` banner that used to sit on both pages is gone, replaced by
+something stricter than a banner: a build gate that refuses a Production
+publication outright while any placeholder remains.
+
+## How the operator details are implemented (Stage 2)
+
+- **One source of truth.** `src/lib/legal/identity.js` holds every operator
+  detail. `/terms`, `/privacy`, the site footer, the checkout disclosure and
+  the transactional email footer all read from it, so filling in a placeholder
+  updates the whole site in one edit. There are no hardcoded copies left.
+- **The build gate.** `scripts/assert-legal-identity.mjs` runs as the first
+  step of `npm run build`. It exits 0 for local development and Vercel Preview
+  builds, printing a warning, and exits 1 when `VERCEL_ENV=production` — so a
+  Production deployment cannot ship while a placeholder remains. Set
+  `CEAUTE_REQUIRE_LEGAL_IDENTITY=1` to exercise the failing path locally, or
+  run `npm run check:legal`.
+- **Where the details now appear.** The site footer on every page (Electronic
+  Commerce Regulations 2002 reg 6 wants them "easily, directly and permanently
+  accessible", which a link on one screen does not achieve); both checkout
+  steps before the customer is bound (CCR 2013 Schedule 2 (b) and (c)); the
+  booking confirmation and cancellation emails, in both the HTML and the
+  plain-text alternative, which is the durable medium under reg 16; and the
+  identity blocks on `/terms` and `/privacy`.
+- **The address for service is rendered only when it differs** from the
+  business address, because s.1202 only needs it stated separately in that
+  case.
+- **Tests.** `tests/legal-identity.test.js` covers placeholder detection, the
+  gate's error message, and the conditional address-for-service rule. One test
+  asserts the shipped identity is *still* unresolved; it is meant to fail the
+  day the real values land, which is the signal to delete it.
+
 
 ## Confirmed operator decisions (18 September 2026)
 
@@ -251,7 +288,10 @@ anywhere on the public pages:
    it should be moved to a specific one.
 3. **Whether Vercel's DPA applies to Ceaute's plan.** Vercel's DPA language
    references Enterprise and Pro. `/privacy` describes Vercel as acting on our
-   instructions, which is only true if the DPA is in force. Confirm the plan.
+   instructions, which is only true if the DPA is in force. `.vercel/project.json`
+   shows the project linked under a team scope (`orgId` beginning `team_`),
+   which is consistent with a paid plan but is not proof of one — Vercel uses
+   the same identifier shape for personal accounts. Still a dashboard check.
 
 ## Material legal assumptions
 
@@ -358,22 +398,23 @@ a legal-text problem, so none was changed in this branch.
 
 ## Unresolved owner decisions
 
-The first two block calling either page final. Items 1 and 2 of the previous
-revision — the operating entity and a contact address — are **resolved**; see
-[Confirmed operator decisions](#confirmed-operator-decisions-18-september-2026).
+Items 1 and 2 block Production publication and are enforced by the build gate.
+Items 4 to 6 are substantive legal questions that **filling in the placeholders
+does not answer** — they remain open whatever the identity fields say.
 
-1. **A UK business address.** Not arranged (owner confirmed). This is now the
-   only thing keeping both pages in draft. A geographic address is required on
-   the site by E-Commerce Regulations 2002 reg 6(1)(b) and before the consumer
-   is bound by CCR 2013 Schedule 2(c); an address for service is separately
-   required by Companies Act 2006 s.1202 because "Ceaute" is not the owner's
-   surname. The two are distinct — see the address analysis above. Neither may
-   be invented, and the owner's home address must not be published.
-2. **The operator's full legal name.** Only "Harrison" was confirmed, and it
-   must not be inferred from the git author name or the email address. Needed
-   for the s.1202 name disclosure and for the trader identity under CCR 2013
-   Schedule 2(b). Both pages currently say "Harrison" and nothing more, which
-   is honest but incomplete.
+1. **A UK business address** — `[BUSINESS ADDRESS]` and, if it differs,
+   `[ADDRESS FOR SERVICE]`. Not arranged (owner confirmed). A geographic
+   address is required on the site by E-Commerce Regulations 2002 reg 6(1)(b)
+   and before the consumer is bound by CCR 2013 Schedule 2(c); an address for
+   service is separately required by Companies Act 2006 s.1202 because
+   "Ceaute" is not the owner's surname. The two are distinct — see the address
+   analysis above. Neither may be invented, and the owner's home address must
+   not be published. Recommended: one UK business-address service with mail
+   forwarding, used for both.
+2. **The operator's full legal name** — `[FULL LEGAL NAME]`. Only "Harrison"
+   was ever confirmed, and a surname must not be inferred from the git author
+   name or the email address. Needed for the s.1202 name disclosure and for
+   the trader identity under CCR 2013 Schedule 2(b).
 3. **ICO data protection fee.** Ceaute must pay the annual fee under the Data
    Protection (Charges and Information) Regulations 2018 — running a booking
    marketplace matches no exemption, and sole traders are within scope. Tier 1
@@ -385,7 +426,10 @@ revision — the operating entity and a contact address — are **resolved**; se
    destination charges, Stripe debits the platform's balance, not the
    provider's. Ceaute has no provider agreement giving it a right to reverse a
    transfer or set off against a future payout. The Terms do not claim one.
-   This is a commercial exposure, not a drafting problem.
+   This is a commercial exposure, not a drafting problem, and it becomes real
+   money the day Stripe Live is activated — see
+   [the Stripe Live activation checklist](../stripe-live-activation.md), which
+   carries the same decision alongside the platform fee.
 5. **Whether to implement the stated retention.** Six years is now written on
    `/privacy`. There is no job that deletes anything and no account-closure
    flow. Either build them or accept that retention is manual and

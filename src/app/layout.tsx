@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Inter } from "next/font/google";
 import AppHeader from "@/components/app-header/app-header";
+import { SiteFooter } from "@/components/site-footer";
 
 import "./globals.css";
 
@@ -32,6 +33,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
       <body className="min-h-full flex flex-col">
         <AppHeader />
         {children}
+        <SiteFooter />
       </body>
     </html>
   );

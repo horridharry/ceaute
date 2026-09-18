@@ -41,6 +41,7 @@ it rather than repeating it.
 | [Product behaviour](docs/product.md) | What Ceaute does today and the rules a product change must preserve | Observable behaviour changes |
 | [Domain model](docs/domain.md) | The vocabulary used in code, routes, and database names | A concept is added or renamed |
 | [Architecture](docs/architecture.md) | Where behaviour lives, which boundary is authoritative, where a change belongs | A boundary, integration, or slice changes |
+| [Stripe Live activation](docs/stripe-live-activation.md) | What the owner must do to switch Stripe from Test to Live | An activation step is completed or a new one is found |
 | [Decisions](docs/decisions/) | Why the few non-obvious choices were made and what reversing them costs | A one-way-door decision is made or revisited |
 | [Reports](docs/reports/) | Dated evidence: audits, experiments, readiness reviews | Never edited after the date; write a new one |
 | [AGENTS.md](AGENTS.md) | Entry point and guardrails for AI coding agents | Guardrails change |
