@@ -49,8 +49,13 @@ export function PublishingChecklist({ checklist, publishAction }) {
             href={item.href}
             className="flex items-center justify-between gap-3 rounded-row border border-black/12 px-3.5 py-[13px] transition duration-150 ease-out hover:border-black/25"
           >
-            <span className="text-[14px] font-medium text-ink">
-              {item.title}
+            <span className="flex min-w-0 flex-col gap-0.5">
+              <span className="text-[14px] font-medium text-ink">
+                {item.title}
+              </span>
+              {item.hint ? (
+                <span className="text-[12.5px] text-black/60">{item.hint}</span>
+              ) : null}
             </span>
             <span aria-hidden="true" className="shrink-0 text-[15px] text-black/45">
               →

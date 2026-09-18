@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { StatusDot } from "@/components/ui/status";
 import { CatalogueTabs } from "../../_components/catalogue-tabs";
 
 const currencyFormatter = new Intl.NumberFormat("en-GB", {
@@ -23,13 +24,10 @@ function formatDurationMinutes(minutes) {
 
 function AddOnState({ isActive }) {
   return (
-    <span
-      className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-        isActive ? "bg-ok/10 text-ok" : "bg-black/5 text-black/50"
-      }`}
-    >
-      {isActive ? "Active" : "Archived"}
-    </span>
+    <StatusDot
+      tone={isActive ? "ok" : "muted"}
+      label={isActive ? "Active" : "Archived"}
+    />
   );
 }
 

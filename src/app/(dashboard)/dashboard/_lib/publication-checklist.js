@@ -6,10 +6,32 @@
 // output, not a second copy of the rules. The database is still the authority:
 // publishing is checked by `publish_provider_page`, not by this list.
 export const PUBLICATION_CHECKLIST = [
-  { label: "Business name", title: "Business name", href: "/dashboard/profile" },
-  { label: "Username", title: "Username", href: "/dashboard/profile" },
-  { label: "Provider category", title: "Category", href: "/dashboard/profile" },
-  { label: "Biography", title: "Bio", href: "/dashboard/profile" },
+  {
+    label: "Business name",
+    title: "Business name",
+    hint: "On your Page, under Identity.",
+    href: "/dashboard/profile",
+  },
+  {
+    label: "Username",
+    title: "Username",
+    hint: "On your Page, under Identity.",
+    href: "/dashboard/profile",
+  },
+  {
+    // Category is set on the Page tab and nowhere else — onboarding
+    // deliberately does not ask for it — so the row says where to go.
+    label: "Provider category",
+    title: "Discovery category",
+    hint: "On your Page, under Identity. It is how customers find you in Discover.",
+    href: "/dashboard/profile",
+  },
+  {
+    label: "Biography",
+    title: "Bio",
+    hint: "On your Page, under Identity.",
+    href: "/dashboard/profile",
+  },
   {
     label: "Active location with public area and private address",
     title: "Location, public area and private address",

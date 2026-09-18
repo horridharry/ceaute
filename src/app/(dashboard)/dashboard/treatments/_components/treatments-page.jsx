@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { StatusDot } from "@/components/ui/status";
 import { CatalogueTabs } from "../../_components/catalogue-tabs";
 import { formatDurationMinutes } from "../../_lib/provider-data";
 
@@ -19,13 +20,10 @@ const NoTreatments = () => (
 );
 
 const TreatmentStatus = ({ isActive }) => (
-  <span
-    className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-      isActive ? "bg-ok/10 text-ok" : "bg-black/5 text-black/50"
-    }`}
-  >
-    {isActive ? "Active" : "Archived"}
-  </span>
+  <StatusDot
+    tone={isActive ? "ok" : "muted"}
+    label={isActive ? "Active" : "Archived"}
+  />
 );
 
 const TreatmentItem = ({ treatment }) => (
