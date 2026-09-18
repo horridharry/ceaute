@@ -309,6 +309,13 @@ export function ComponentGallery() {
             area="Salford"
             fromPriceLabel="£22"
           />
+          <ProviderCard
+            href="/design-system"
+            name="Set by Nia"
+            category="Nails"
+            area="Salford"
+            fromPriceLabel="£38"
+          />
           <BookingCard
             href="/design-system"
             weekdayLabel="Wed"

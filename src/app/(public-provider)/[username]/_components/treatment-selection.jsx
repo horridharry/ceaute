@@ -1,7 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { AddOnList, AddOnRow } from "@/components/ui/add-on-row";
+import { Button } from "@/components/ui/button";
+import { Modal } from "@/components/ui/modal";
+import { TreatmentRow } from "@/components/ui/treatment-row";
+import { ListGroup } from "@/components/templates/list-template";
 import {
   formatDurationMinutes,
   formatPricePence,
@@ -12,51 +17,19 @@ import {
 } from "../_lib/treatment-selection";
 
 // The approved customer interaction (docs/product.md "Booking and
-// availability"): tapping a treatment always opens its details bottom
-// sheet; tapping Select goes straight to availability when the treatment
-// has no add-ons, or opens the same sheet when it does, so a description
-// alone never forces an extra step. The sheet itself only ever navigates to
-// the existing `/book/[treatmentId]/time?add_on=...` URL, which is what the
-// add-ons page (`book/[treatmentId]/page.jsx`) and the time page's "Change
-// add-ons" link already produce and revalidate server-side, so nothing
-// downstream of that link needs to know a sheet exists.
-function TreatmentRow({ treatment, onOpenDetails, onSelect }) {
-  return (
-    <article className="rounded-xl border p-4">
-      <button
-        type="button"
-        onClick={() => onOpenDetails(treatment)}
-        className="flex w-full items-start justify-between gap-4 text-left"
-      >
-        <div>
-          <h3 className="font-medium">{treatment.name}</h3>
-          {treatment.description ? (
-            <p className="mt-1 text-sm text-black/60">
-              {treatment.description}
-            </p>
-          ) : null}
-        </div>
-        <div className="shrink-0 text-right text-sm font-medium">
-          <p>{formatPricePence(treatment.price_pence)}</p>
-          <p className="text-black/60">
-            {formatDurationMinutes(treatment.duration_minutes)}
-          </p>
-        </div>
-      </button>
-      <div className="mt-3 flex justify-end">
-        <button
-          type="button"
-          onClick={() => onSelect(treatment)}
-          className="rounded-lg bg-plum px-4 py-2 text-sm font-semibold text-white duration-200 hover:bg-plum-hover"
-        >
-          Select
-        </button>
-      </div>
-    </article>
-  );
-}
+// availability"): tapping a treatment row always opens its details; tapping
+// Select goes straight to availability when the treatment has no add-ons, or
+// opens the same details when it does, so a description alone never forces an
+// extra step. Selections persist per treatment while the page stays open.
+//
+// A1: the details are now a centred modal rather than a bottom sheet. One
+// modal pattern in the product, not two. Nothing about the interaction or the
+// link it produces changed — it still navigates to the existing
+// `/@username/book/[treatmentId]/time?add_on=...` URL, which the add-ons page
+// and the time page's "Change add-ons" link already produce and revalidate
+// server-side.
 
-function TreatmentDetailsSheet({
+function TreatmentDetails({
   treatment,
   selectedAddOnIds,
   onToggleAddOn,
@@ -74,114 +47,88 @@ function TreatmentDetailsSheet({
     selectedAddOns,
   });
 
-  useEffect(() => {
-    function handleKeyDown(event) {
-      if (event.key === "Escape") {
-        onClose();
-      }
-    }
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [onClose]);
-
-  useEffect(() => {
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
-  }, []);
-
   return (
-    <div
-      role="presentation"
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40"
-      onClick={onClose}
-    >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="treatment-sheet-heading"
-        className="max-h-[85vh] w-full max-w-md overflow-y-auto rounded-t-2xl bg-white p-5"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-black/10" />
-        <div className="flex items-start justify-between gap-4">
-          <h2 id="treatment-sheet-heading" className="text-xl font-semibold">
-            {treatment.name}
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-            className="shrink-0 rounded-full p-1 text-black/50 hover:bg-black/5 hover:text-black"
-          >
-            ✕
-          </button>
-        </div>
-        {treatment.description ? (
-          <p className="mt-2 text-sm text-black/60">{treatment.description}</p>
-        ) : null}
-        <p className="mt-3 text-sm font-medium">
-          {formatPricePence(treatment.price_pence)} ·{" "}
-          {formatDurationMinutes(treatment.duration_minutes)}
-        </p>
-
-        {hasAddOns ? (
-          <div className="mt-5 border-t pt-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-black/50">
-              Add-ons
-            </p>
-            <ul className="mt-3 flex flex-col gap-3">
-              {treatment.add_ons.map((addOn) => (
-                <li key={addOn.id}>
-                  <label
-                    htmlFor={`sheet_add_on_${addOn.id}`}
-                    className="flex items-center gap-3 text-sm"
-                  >
-                    <input
-                      id={`sheet_add_on_${addOn.id}`}
-                      type="checkbox"
-                      checked={selectedAddOnIds.has(addOn.id)}
-                      onChange={() => onToggleAddOn(addOn.id)}
-                      className="h-4 w-4"
-                    />
-                    <span className="flex-1">{addOn.name}</span>
-                    <span className="text-black/60">
-                      +{formatPricePence(addOn.additional_price_pence)} · +
-                      {formatDurationMinutes(addOn.additional_duration_minutes)}
-                    </span>
-                  </label>
-                </li>
-              ))}
-            </ul>
-            <p className="mt-4 text-sm font-semibold">
-              Total: {formatPricePence(totalPricePence)} ·{" "}
+    <Modal
+      open
+      onClose={onClose}
+      title={treatment.name}
+      footer={
+        <div className="flex items-center gap-4">
+          <div className="flex min-w-0 flex-col">
+            <span className="text-[14px] font-medium tabular-nums text-ink">
+              {formatPricePence(totalPricePence)} ·{" "}
               {formatDurationMinutes(totalDurationMinutes)}
-            </p>
+            </span>
+            {selectedAddOns.length ? (
+              <span className="truncate text-[11.5px] text-black/60">
+                {treatment.name} + {selectedAddOns.length}{" "}
+                {selectedAddOns.length === 1 ? "add-on" : "add-ons"}
+              </span>
+            ) : null}
           </div>
-        ) : null}
+          <Button
+            block={false}
+            onClick={onContinue}
+            disabled={isNavigating}
+            className="ml-auto shrink-0 px-6"
+          >
+            Pick a time
+          </Button>
+        </div>
+      }
+    >
+      <p className="text-[12.5px] text-black/50">
+        {formatDurationMinutes(treatment.duration_minutes)} ·{" "}
+        {formatPricePence(treatment.price_pence)}
+      </p>
 
-        <button
-          type="button"
-          onClick={onContinue}
-          disabled={isNavigating}
-          className="mt-6 w-full rounded-lg bg-plum p-3 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-plum-hover disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {isNavigating ? "Continuing..." : hasAddOns ? "Choose a time" : "Select"}
-        </button>
-      </div>
-    </div>
+      {/* The one place a provider's long explainer finally has room. */}
+      {treatment.description ? (
+        <p className="mt-3 whitespace-pre-line text-body text-black/80">
+          {treatment.description}
+        </p>
+      ) : null}
+
+      {hasAddOns ? (
+        <div className="mt-5 flex flex-col gap-2">
+          <p className="text-label uppercase text-black/45">
+            Add-ons · optional
+          </p>
+          <AddOnList>
+            {treatment.add_ons.map((addOn) => (
+              <AddOnRow
+                key={addOn.id}
+                name={addOn.name}
+                value={addOn.id}
+                checked={selectedAddOnIds.has(addOn.id)}
+                onChange={() => onToggleAddOn(addOn.id)}
+                delta={[
+                  `+ ${formatPricePence(addOn.additional_price_pence)}`,
+                  addOn.additional_duration_minutes
+                    ? `+ ${formatDurationMinutes(addOn.additional_duration_minutes)}`
+                    : "",
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
+              />
+            ))}
+          </AddOnList>
+        </div>
+      ) : null}
+    </Modal>
   );
 }
 
-export function TreatmentSelectionList({ sections, username }) {
+// `limit` shows the first N treatments with no group labels — the provider
+// page, where the full list would sit between the portfolio and the reviews.
+// Without it the sections render in full under sticky group labels, which is
+// the dedicated /@username/treatments page.
+export function TreatmentSelectionList({ sections, username, limit = null }) {
   const router = useRouter();
   const [isNavigating, startTransition] = useTransition();
   const [openTreatmentId, setOpenTreatmentId] = useState(null);
   // Remembers what was checked for each treatment for as long as the page
-  // stays open, so closing the sheet without continuing and reopening the
+  // stays open, so closing the modal without continuing and reopening the
   // same treatment does not lose the selection.
   const [selectionsByTreatmentId, setSelectionsByTreatmentId] = useState({});
 
@@ -240,27 +187,42 @@ export function TreatmentSelectionList({ sections, username }) {
     goToTime(openTreatment, [...selectedAddOnIds]);
   }
 
+  function renderRow(treatment) {
+    return (
+      <TreatmentRow
+        key={treatment.id}
+        name={treatment.name}
+        meta={`${formatDurationMinutes(treatment.duration_minutes)} · ${formatPricePence(treatment.price_pence)}`}
+        onOpenDetails={() => handleOpenDetails(treatment)}
+        onSelect={() => handleSelect(treatment)}
+      />
+    );
+  }
+
+  const limited = limit
+    ? sections.flatMap((section) => section.treatments).slice(0, limit)
+    : null;
+
   return (
     <>
-      <div className="flex flex-col gap-6">
-        {sections.map((section) => (
-          <section key={section.name ?? "ungrouped"} className="flex flex-col gap-3">
-            {section.name ? (
-              <h2 className="text-lg font-semibold">{section.name}</h2>
-            ) : null}
-            {section.treatments.map((treatment) => (
-              <TreatmentRow
-                key={treatment.id}
-                treatment={treatment}
-                onOpenDetails={handleOpenDetails}
-                onSelect={handleSelect}
-              />
-            ))}
-          </section>
-        ))}
-      </div>
+      {limited ? (
+        <div className="flex flex-col gap-2">{limited.map(renderRow)}</div>
+      ) : (
+        <div className="flex flex-col gap-6">
+          {sections.map((section) => (
+            <ListGroup
+              key={section.name ?? "ungrouped"}
+              label={section.name ?? undefined}
+              sticky={Boolean(section.name)}
+            >
+              {section.treatments.map(renderRow)}
+            </ListGroup>
+          ))}
+        </div>
+      )}
+
       {openTreatment ? (
-        <TreatmentDetailsSheet
+        <TreatmentDetails
           treatment={openTreatment}
           selectedAddOnIds={selectedAddOnIds}
           onToggleAddOn={handleToggleAddOn}

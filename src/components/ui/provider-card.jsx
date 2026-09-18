@@ -6,19 +6,26 @@ import { LinkPendingHint } from "@/components/link-pending-hint";
 // The rating leads the meta line because trust is the whole problem on a
 // marketplace of strangers. A provider with no reviews says so plainly rather
 // than showing an empty star.
+//
+// Three states, not two. `reviewCount` of 0 means we know there are none and
+// say so; omitting `reviewCount` means the caller has not loaded ratings at
+// all, and the line is left out rather than claiming a provider is new. The
+// discover search does not return ratings, and "New · no reviews yet" under a
+// provider with thirty-four of them would be a lie.
 export function ProviderCard({
   href,
   name,
   imageUrl,
   imageAlt = "",
   rating,
-  reviewCount = 0,
+  reviewCount,
   category,
   area,
   fromPriceLabel,
   className = "",
 }) {
-  const hasReviews = Number(reviewCount) > 0 && rating != null;
+  const ratingKnown = reviewCount != null;
+  const hasReviews = ratingKnown && Number(reviewCount) > 0 && rating != null;
 
   return (
     <Link
@@ -42,11 +49,13 @@ export function ProviderCard({
             {name}
             <LinkPendingHint />
           </span>
-          <span className="text-[13px] font-medium text-ink">
-            {hasReviews
-              ? `★ ${rating} · ${reviewCount} ${reviewCount === 1 ? "review" : "reviews"}`
-              : "New · no reviews yet"}
-          </span>
+          {ratingKnown ? (
+            <span className="text-[13px] font-medium text-ink">
+              {hasReviews
+                ? `★ ${rating} · ${reviewCount} ${Number(reviewCount) === 1 ? "review" : "reviews"}`
+                : "New · no reviews yet"}
+            </span>
+          ) : null}
           <span className="truncate text-[12.5px] text-black/50">
             {[category, area].filter(Boolean).join(" · ")}
           </span>

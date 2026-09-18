@@ -16,20 +16,23 @@ export function formatPricePence(pricePence) {
   }).format(Number(pricePence ?? 0) / 100);
 }
 
+// Durations read the way a provider says them — `2h 15m`, not `2 hr 15 min`
+// (06-copy-deck.md, "Voice"). This is the public booking journey's formatter;
+// booking summaries have their own in src/lib/bookings/booking-display.js.
 export function formatDurationMinutes(durationMinutes) {
   const minutes = Number(durationMinutes ?? 0);
   const hours = Math.floor(minutes / 60);
   const remainingMinutes = minutes % 60;
 
   if (hours && remainingMinutes) {
-    return `${hours} hr ${remainingMinutes} min`;
+    return `${hours}h ${remainingMinutes}m`;
   }
 
   if (hours) {
-    return `${hours} hr`;
+    return `${hours}h`;
   }
 
-  return `${remainingMinutes} min`;
+  return `${remainingMinutes}m`;
 }
 
 export function formatDateLabel(date) {

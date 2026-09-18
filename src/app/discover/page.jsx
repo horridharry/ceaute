@@ -1,136 +1,87 @@
-import Link from "next/link";
-import AppHeader from "@/components/app-header/app-header";
 import Form from "next/form";
-import { PendingButton } from "@/components/pending-button";
-import {
-  getDiscoveryCategories,
-  searchPublicProviders,
-} from "./actions";
+import AppHeader from "@/components/app-header/app-header";
+import { ListGroup, ListTemplate } from "@/components/templates/list-template";
+import { Chip, ChipRow } from "@/components/ui/chip";
+import { EmptyState } from "@/components/ui/empty-state";
+import { SearchInput } from "@/components/ui/field";
+import { ProblemNotice } from "@/components/ui/notice";
+import { ProviderCard } from "@/components/ui/provider-card";
+import { getDiscoveryCategories, searchPublicProviders } from "./actions";
 import { formatPricePence } from "../(public-provider)/[username]/_lib/public-provider-format";
 
-const treatmentSummary = (treatments) =>
-  treatments
-    .map((treatment) => {
-      const name = treatment?.name ?? "Treatment";
-      const price = Number.isInteger(Number(treatment?.price_pence))
-        ? formatPricePence(treatment.price_pence)
-        : "Price unavailable";
+// T1 · List. Discover is the launch home for everyone, so the providers are
+// the product: with no query it is a masthead over the published list rather
+// than a prompt to search. The query that fills it is the one this route
+// already ran — the page simply stopped hiding its results.
+//
+// Search keeps both dimensions the route already had, a free-text `area` and a
+// `category` slug, with the designed controls: the one filled input in the
+// product, and a chip row. The dedicated area picker is deferred; while areas
+// fit a text field this is the same search.
 
-      return `${name} (${price})`;
-    })
-    .join(", ");
+// The lowest price among the treatments this search matched. Derived from rows
+// the query already returns, so it costs no extra read.
+function fromPriceLabel(treatments) {
+  const prices = (treatments ?? [])
+    .map((treatment) => Number(treatment?.price_pence))
+    .filter((price) => Number.isFinite(price) && price > 0);
 
-function SearchForm({ categories, search }) {
+  return prices.length ? formatPricePence(Math.min(...prices)) : "";
+}
+
+function categoryHref({ slug = "", area = "" } = {}) {
+  const params = new URLSearchParams();
+  if (slug) params.set("category", slug);
+  if (area) params.set("area", area);
+  const query = params.toString();
+
+  return query ? `/discover?${query}` : "/discover";
+}
+
+function discoverTitle({ search, categories }) {
+  const category = categories.find(
+    (entry) => entry.slug === search.category,
+  )?.name;
+
+  if (category && search.area) return `${category} in ${search.area}`;
+  if (category) return category;
+  if (search.area) return `Providers in ${search.area}`;
+
+  return "Nails, lashes, hair, brows.";
+}
+
+function DiscoverFilters({ categories, search }) {
   return (
-    <Form action="/discover" className="mt-8 flex flex-col gap-4">
-      <div>
-        <label htmlFor="area" className="label">
-          Public area
-        </label>
-        <input
-          id="area"
+    <>
+      {/* next/form keeps this a plain GET, so a search stays a shareable URL
+          and the back button behaves. The category travels as a hidden field
+          so typing an area does not silently drop the chip. */}
+      <Form action="/discover">
+        <input type="hidden" name="category" value={search.category} />
+        <SearchInput
           name="area"
-          type="search"
-          maxLength={120}
           defaultValue={search.area}
-          placeholder="Shoreditch, London"
-          className="field mt-1 w-full"
+          placeholder="Treatment or place — or neither"
+          aria-label="Search by area"
         />
-      </div>
+      </Form>
 
-      <div>
-        <label htmlFor="category" className="label">
-          Treatment category
-        </label>
-        <select
-          id="category"
-          name="category"
-          defaultValue={search.category}
-          className="field mt-1 w-full cursor-pointer"
-        >
-          <option value="">All categories</option>
-          {categories.map((category) => (
-            <option key={category.slug} value={category.slug}>
-              {category.name}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <PendingButton
-        pendingLabel="Searching..."
-        className="w-max rounded-lg bg-plum p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-plum-hover disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        Search
-      </PendingButton>
-    </Form>
-  );
-}
-
-function ProviderImage({ provider }) {
-  if (!provider.portfolio_image_url) {
-    return (
-      <div className="flex aspect-[4/3] w-full rounded-lg border bg-black/5">
-        <p className="m-auto text-sm text-black/50">No image yet</p>
-      </div>
-    );
-  }
-
-  return (
-    // eslint-disable-next-line @next/next/no-img-element -- Supabase signed URLs are short-lived and not suitable for a static next/image host allowlist.
-    <img
-      src={provider.portfolio_image_url}
-      alt=""
-      className="aspect-[4/3] w-full rounded-lg object-cover"
-    />
-  );
-}
-
-function SearchResults({ results, searched }) {
-  if (!searched) {
-    return (
-      <p className="mt-10 rounded-xl border p-4 text-sm text-black/60">
-        Search by area, treatment category or both.
-      </p>
-    );
-  }
-
-  if (results.length === 0) {
-    return (
-      <p className="mt-10 rounded-xl border p-4 text-sm text-black/60">
-        No published providers matched that search.
-      </p>
-    );
-  }
-
-  return (
-    <ul className="mt-10 flex flex-col gap-4">
-      {results.map((provider) => (
-        <li key={provider.username}>
-          <article className="rounded-xl border p-3">
-            <ProviderImage provider={provider} />
-            <div className="mt-3">
-              <h2 className="text-lg font-semibold">{provider.display_name}</h2>
-              <p className="text-sm text-black/60">@{provider.username}</p>
-              <p className="mt-2 text-sm">{provider.provider_category}</p>
-              {provider.public_area ? (
-                <p className="text-sm text-black/60">{provider.public_area}</p>
-              ) : null}
-              <p className="mt-3 text-sm">
-                {treatmentSummary(provider.matching_treatments) ||
-                  "Treatments unavailable"}
-              </p>
-              <Link
-                href={`/@${provider.username}`}
-                className="mt-4 block w-max rounded-lg border border-black/10 p-2 px-4 text-sm font-semibold text-plum duration-200 hover:border-black/20"
-              >
-                View page
-              </Link>
-            </div>
-          </article>
-        </li>
-      ))}
-    </ul>
+      <ChipRow>
+        <Chip
+          label="All"
+          href={categoryHref({ area: search.area })}
+          selected={!search.category}
+        />
+        {categories.map((category) => (
+          <Chip
+            key={category.slug}
+            label={category.name}
+            href={categoryHref({ slug: category.slug, area: search.area })}
+            selected={category.slug === search.category}
+          />
+        ))}
+      </ChipRow>
+    </>
   );
 }
 
@@ -140,31 +91,53 @@ export default async function DiscoverPage({ searchParams }) {
     getDiscoveryCategories(),
     searchPublicProviders(resolvedSearchParams),
   ]);
-  const searched = Boolean(
-    searchResult.search.area || searchResult.search.category,
-  );
+
+  const { search, results } = searchResult;
+  const searched = Boolean(search.area || search.category);
+  const noun = results.length === 1 ? "provider" : "providers";
 
   return (
     <>
       <AppHeader />
-      <main className="container max-w-md p-5 bg-white">
-      <div className="mt-6 flex flex-col">
-        <h1 className="text-3xl font-bold tracking-tighter">Discover</h1>
-        <p className="mt-1 text-sm">
-          Find published providers by public area and treatment category.
-        </p>
-
-        <SearchForm categories={categories} search={searchResult.search} />
-
-        {searchResult.search.error ? (
-          <p className="mt-6 rounded-xl border border-bad/35 p-4 text-sm text-bad">
-            {searchResult.search.error}
-          </p>
+      <ListTemplate
+        title={discoverTitle({ search, categories })}
+        meta={
+          searched
+            ? `${results.length} ${noun}`
+            : `${results.length} independent ${
+                results.length === 1 ? "tech" : "techs"
+              } booking on Ceaute.`
+        }
+        filters={<DiscoverFilters categories={categories} search={search} />}
+      >
+        {search.error ? (
+          <ProblemNotice title="That search could not run">
+            {search.error}
+          </ProblemNotice>
+        ) : results.length === 0 ? (
+          <EmptyState
+            title="Nothing matches that yet"
+            actionHref="/discover"
+            actionLabel="See everyone"
+          >
+            Try a wider area, or browse by category.
+          </EmptyState>
         ) : (
-          <SearchResults results={searchResult.results} searched={searched} />
+          <ListGroup>
+            {results.map((provider) => (
+              <ProviderCard
+                key={provider.username}
+                href={`/@${provider.username}`}
+                name={provider.display_name}
+                imageUrl={provider.portfolio_image_url}
+                category={provider.provider_category}
+                area={provider.public_area}
+                fromPriceLabel={fromPriceLabel(provider.matching_treatments)}
+              />
+            ))}
+          </ListGroup>
         )}
-        </div>
-      </main>
+      </ListTemplate>
     </>
   );
 }
