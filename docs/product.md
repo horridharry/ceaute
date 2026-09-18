@@ -170,13 +170,26 @@ appear on the public provider page. A database function lets the trusted
 backend hide or show a review, but no application or administration screen
 calls it yet, and nobody can delete a review.
 
+A provider must accept the current provider agreement before their page can
+take paid bookings, and an acceptance is recorded immutably against its version
+string. A provider carrying an outstanding liability is also blocked from new
+paid bookings until it is settled; existing confirmed bookings are unaffected.
+Both gates are evaluated where the Stripe-readiness gate already is, at the
+point Checkout would be created, and the customer sees the same neutral
+"cannot take online payments right now" notice either way.
+
 A customer can dispute a payment with their bank. Ceaute records every
 `charge.dispute.*` event in `booking_dispute`, joined to the booking through
 its PaymentIntent, and emails the operator when a dispute opens, has funds
 withdrawn or reinstated, or closes. `GET /api/operator/disputes` lists open
 disputes for whoever holds the operator secret. Nothing is automatic beyond
 that: no transfer is reversed, no provider is debited, no evidence is
-submitted, and providers are not told. Responding happens by hand in Stripe —
+submitted, and providers are not told. When an operator decides a lost dispute
+was the provider's responsibility, the reversed amount is recorded in
+`provider_liability`; an operator can then reverse the transfer for whatever
+the connected account can still cover, and whatever Stripe cannot reach stays
+recorded as outstanding debt. Stripe's dispute fee is never recorded as
+provider debt. Responding happens by hand in Stripe —
 see [the dispute runbook](dispute-response.md).
 
 Transactional confirmation and cancellation email is written to a database

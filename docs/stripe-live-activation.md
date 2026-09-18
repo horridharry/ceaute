@@ -33,6 +33,16 @@ deliberately. Ceaute refuses to make a Stripe call when `STRIPE_MODE` and
       affected bookings. See [the dispute runbook](dispute-response.md).
       Still requires the five events to be added to the Live webhook endpoint
       below, and `CEAUTE_OPERATOR_EMAIL` and `CEAUTE_OPERATOR_SECRET` to be set.
+- [x] **Provider liability and recovery.** Done. A lost, provider-responsible
+      dispute records the reversed amount as provider debt; an operator can
+      recover what the connected account still covers and the rest stays
+      outstanding; a provider with outstanding debt cannot take new paid
+      bookings. Stripe's dispute fee is excluded, because Stripe's Connect
+      terms forbid passing it on. See
+      [the provider agreement draft](provider-agreement-draft.md).
+- [ ] **Have the provider agreement reviewed.** Providers accept version
+      2026-09-18 in the product before taking paid bookings, and no solicitor
+      has read it.
 - [ ] **Decide what Ceaute does about the money in a dispute.** Recording it
       does not recover it. A disputed £10.00 deposit costs Ceaute **£24.80**
       with no clawback and still **£15.35** after a perfect manual transfer
