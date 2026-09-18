@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getSignedInProvider } from "../../_lib/provider-data";
+import { resolveRequestOrigin } from "@/lib/app/origin";
 import {
   classifyStripePaymentAccount,
   describeStripeError,
@@ -164,12 +165,11 @@ export async function startOrResumeOnboarding() {
     next: PAYMENTS_PATH,
   });
   const stripe = getStripe();
+  // Stripe persists refresh_url and return_url on the Account Link, so they
+  // must not come from a request header a caller controls. In Production this
+  // is the canonical origin; in Preview it is the deployment under test.
   const requestHeaders = await headers();
-  const origin = requestHeaders.get("origin");
-
-  if (!origin) {
-    throw new Error("Could not start Stripe onboarding.");
-  }
+  const origin = resolveRequestOrigin(requestHeaders);
 
   const { data: existingAccount, error } = await supabase
     .schema("ceaute")

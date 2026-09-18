@@ -1,7 +1,12 @@
+import { resolveApplicationOrigin } from "@/lib/app/origin";
+
 export function getBookingEmailConfiguration(environment) {
   const apiKey = environment.RESEND_API_KEY;
   const from = environment.CEAUTE_EMAIL_FROM;
-  const appUrl = environment.CEAUTE_APP_URL;
+  // Preview deployments resolve to their own deployment URL so a test email
+  // links back to the deployment under test; Production and local development
+  // use the configured CEAUTE_APP_URL.
+  const appUrl = resolveApplicationOrigin(environment);
 
   if (!apiKey || !from || !appUrl) {
     return {
