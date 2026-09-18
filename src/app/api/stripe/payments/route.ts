@@ -6,6 +6,11 @@ import {
   recordBookingRefundState,
 } from '@/lib/payments/refunds';
 import { createServiceRoleClient } from '@/lib/supabase/service-role';
+import {
+  DISPUTE_EVENT_TYPES,
+  describeDisputeEvent,
+  isDisputeEventType,
+} from '@/lib/payments/disputes';
 import { eventMatchesStripeMode, resolveStripeMode } from '@/lib/stripe/mode';
 import { getStripe } from '@/lib/stripe/server';
 
@@ -16,6 +21,7 @@ const PAYMENT_EVENT_TYPES = new Set([
   'payment_intent.canceled',
   'refund.updated',
   'refund.failed',
+  ...DISPUTE_EVENT_TYPES,
 ]);
 
 function getAttemptIdFromEvent(event: Stripe.Event) {
@@ -38,6 +44,10 @@ function getPaymentIntentIdFromEvent(event: Stripe.Event) {
 
   if (event.type.startsWith('refund.')) {
     return getStripeObjectId((object as Stripe.Refund).payment_intent);
+  }
+
+  if (isDisputeEventType(event.type)) {
+    return getStripeObjectId((object as Stripe.Dispute).payment_intent);
   }
 
   return null;
@@ -188,6 +198,19 @@ async function processFailureEvent(event: Stripe.Event) {
   );
 }
 
+// Records the dispute and, for the moments that matter, enqueues one operator
+// email. It does not touch the payment attempt: a disputed payment still
+// succeeded, and marking it failed would corrupt the booking's own history.
+async function processDisputeEvent(event: Stripe.Event) {
+  const { parameters } = describeDisputeEvent(event);
+
+  await checkedRpc(
+    'record_stripe_dispute',
+    parameters,
+    'Could not record the Stripe dispute.',
+  );
+}
+
 async function processEvent(event: Stripe.Event) {
   if (event.type === 'checkout.session.completed') {
     await processCompletedCheckout(event.data.object as Stripe.Checkout.Session);
@@ -196,6 +219,13 @@ async function processEvent(event: Stripe.Event) {
 
   if (event.type === 'refund.updated' || event.type === 'refund.failed') {
     await processRefundEvent(event.data.object as Stripe.Refund, event.created);
+    return;
+  }
+
+  // Before the failure fallthrough below, which would otherwise mark a disputed
+  // — and therefore successful — payment as failed.
+  if (isDisputeEventType(event.type)) {
+    await processDisputeEvent(event);
     return;
   }
 

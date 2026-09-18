@@ -4,6 +4,7 @@ import {
 } from "@/lib/bookings/booking-display";
 import { renderEmailLayout } from "./email-layout";
 import { legalContactLine } from "@/lib/legal/identity";
+import { hoursUntilEvidenceDue } from "@/lib/payments/disputes";
 
 const FALLBACK_SUBJECT = "Ceaute booking update";
 
@@ -14,6 +15,10 @@ const EVENT_TITLES = {
   customer_cancelled_provider: "A customer cancelled a booking",
   provider_cancelled_customer: "Your provider cancelled a booking",
   provider_cancelled_provider: "You cancelled a booking",
+  dispute_opened_operator: "Action needed: a payment was disputed",
+  dispute_funds_withdrawn_operator: "Disputed funds were withdrawn",
+  dispute_funds_reinstated_operator: "Disputed funds were reinstated",
+  dispute_closed_operator: "A payment dispute closed",
 };
 
 // HTML-only opening sentence; the plain-text alternative stays a list of facts.
@@ -30,6 +35,14 @@ const EVENT_INTROS = {
     "Your provider cancelled this booking. Your refund details are below.",
   provider_cancelled_provider:
     "You cancelled this booking. The customer's refund details are below.",
+  dispute_opened_operator:
+    "A customer has disputed a payment. Respond in the Stripe Dashboard before the deadline below \u2014 an unanswered dispute is lost by default.",
+  dispute_funds_withdrawn_operator:
+    "Stripe has taken the disputed amount and its dispute fee from Ceaute's balance.",
+  dispute_funds_reinstated_operator:
+    "The dispute was resolved in Ceaute's favour and the funds have been returned.",
+  dispute_closed_operator:
+    "This dispute is now closed. The final status is below.",
 };
 
 export function bookingEmailSubject(email) {
@@ -117,7 +130,54 @@ function section(heading, rows, { highlight = false } = {}) {
 
 // One structured description of the email. The text and HTML renderers both
 // read it, so a booking fact cannot appear in one alternative and not the other.
+// Operator dispute alerts share the outbox and its delivery machinery but not
+// its content: they are about a payment, not an appointment, and they must
+// never carry the provider's private address the way a confirmation does.
+function buildDisputeEmailContent(email, appUrl) {
+  const payload = email.payload ?? {};
+  const hoursLeft = hoursUntilEvidenceDue(payload.evidence_due_at);
+  const respondBy =
+    hoursLeft === null
+      ? "Not set by Stripe"
+      : `${formatSingleDateTime(payload.evidence_due_at)} (${hoursLeft} hours)`;
+
+  return {
+    title: bookingEmailSubject(email),
+    intro: EVENT_INTROS[email.event_type] ?? "",
+    badge: "Payment dispute",
+    tone: "neutral",
+    sections: [
+      section(
+        "Dispute",
+        [
+          row("Status", payload.dispute_status),
+          row("Reason", payload.dispute_reason || "Not given"),
+          row("Amount", formatMoneyFromPence(payload.dispute_amount_pence)),
+          row("Respond by", respondBy),
+          row("Stripe dispute", payload.stripe_dispute_id),
+          row("Stripe payment", payload.stripe_payment_intent_id),
+        ],
+        { highlight: true },
+      ),
+      section("Booking", [
+        row("Provider", payload.provider_name),
+        row("Treatment", payload.treatment_name),
+        row("Appointment", formatSingleDateTime(payload.start_at)),
+        row("Booking", payload.booking_id),
+      ]),
+    ],
+    bookingUrl: safeBookingUrl(
+      payload.booking_id ? `/dashboard/bookings/${payload.booking_id}` : "",
+      appUrl,
+    ),
+  };
+}
+
 export function buildBookingEmailContent(email, appUrl) {
+  if (String(email.event_type ?? "").startsWith("dispute_")) {
+    return buildDisputeEmailContent(email, appUrl);
+  }
+
   const payload = email.payload ?? {};
   const isCancellation = String(email.event_type ?? "").includes("cancelled");
   const isProvider = email.recipient_role === "provider";
