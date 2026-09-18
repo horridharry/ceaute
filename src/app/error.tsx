@@ -46,9 +46,6 @@ export default function RouteError({ error, reset }: RouteErrorProps) {
           >
             Check my bookings
           </Link>
-          <Link href="/help" className="text-sm font-semibold text-pink-600 hover:text-pink-700">
-            Get help
-          </Link>
         </div>
       </section>
     </main>

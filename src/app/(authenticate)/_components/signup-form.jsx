@@ -76,12 +76,6 @@ export function SignupForm({
         </p>
         <div className="mt-8 flex gap-5">
           <Link
-            href="/help"
-            className="text-xs font-medium text-black/50 hover:underline"
-          >
-            Help
-          </Link>
-          <Link
             href="/privacy"
             className="text-xs font-medium text-black/50 hover:underline"
           >
