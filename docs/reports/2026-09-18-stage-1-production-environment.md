@@ -120,12 +120,60 @@ schema'` did not clear it.
 **Blast radius: all Production data access, not just cron.** `ceaute.com` serves
 pages (HTTP 200) because Production has no content to render, which masks it.
 
-**This blocks Stage 1 completion and must be fixed before launch.** The fix is
-to force the platform to re-write the setting — toggling *Exposed schemas* in
-Dashboard → Settings → API so it includes `ceaute`, which restarts PostgREST
-with the correct config. Re-test with the `Accept-Profile: ceaute` request
-above; it should return HTTP 200 and the cron jobs should stop returning 500 on
-their next tick.
+**Resolved.** The owner updated *Exposed schemas* in Dashboard → Settings → API,
+which forced the platform to re-write the setting and restart PostgREST. See §9.
+
+## 9. Post-fix verification
+
+**Data API.** The same request that returned 406 now succeeds:
+
+```
+GET .../rest/v1/booking            (Accept-Profile: ceaute) → 200 []
+GET .../rest/v1/discovery_category (Accept-Profile: ceaute) → 200 [ ...rows ]
+```
+
+`booking` is legitimately empty; `discovery_category` returns the seeded
+reference list, so this is a real read, not an empty-schema artefact.
+
+**Application.** `https://ceaute.com/discover` now renders the full treatment
+category list (Acrylic nails, Gel nails, BIAB nails, … Makeup) drawn from
+`ceaute.discovery_category`. Before the fix the same page returned HTTP 200 but
+rendered only site chrome, which is how the defect stayed hidden.
+
+**Scheduled jobs.** All three now return HTTP 200 instead of 500:
+
+| Job | Response |
+| --- | --- |
+| `complete-bookings` | `{"completed":0}` |
+| `send-booking-emails` | `{"claimed":0,"sent":0,"failed":0,"skipped":0,"configured":true}` |
+| `recover-booking-refunds` | `{"listed":0,"outcomes":{},"failed":0}` |
+
+The two ten-minute jobs were observed on their own 12:10 UTC tick, unprompted.
+The hourly job was invoked through `ceaute.invoke_cron_endpoint`, the same
+function `pg_cron` calls, rather than waiting for 13:00; Production holds zero
+bookings, so it was a no-op. `"configured":true` additionally confirms
+`RESEND_API_KEY`, `CEAUTE_EMAIL_FROM` and `CEAUTE_APP_URL` are correctly set in
+Vercel Production.
+
+**Isolation re-checked** after the schema change, with same-project controls so
+a rejected key is distinguishable from a permission denial:
+
+| Credential | Target | Result |
+| --- | --- | --- |
+| `ceaute-prod` service_role | `ceaute-prod` | HTTP 200 (control) |
+| `ceaute-dev` service_role | `ceaute-dev` | HTTP 200 (control) |
+| `ceaute-dev` service_role | `ceaute-prod` | HTTP 401 |
+| `ceaute-prod` service_role | `ceaute-dev` | HTTP 401 |
+
+Vercel still resolves Production → `agpnrsrotofnmfzzbcpw` and Preview →
+`fgnusdbpuvndilryvudc`.
+
+**Auth.** A further OTP request against `ceaute-prod` returned HTTP 200 and
+updated `confirmation_sent_at` to 12:09:37 UTC. Inbox receipt still needs the
+recipient's confirmation.
+
+The technical portion of Stage 1 is complete. No application code changed in
+this verification pass.
 
 ## 6. Environment isolation verified
 
