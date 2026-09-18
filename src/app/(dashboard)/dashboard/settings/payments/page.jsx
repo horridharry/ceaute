@@ -1,9 +1,12 @@
 import Link from "next/link";
 import {
+  acceptProviderAgreement,
   getPaymentSettings,
   refreshPaymentStatus,
   startOrResumeOnboarding,
 } from "./actions";
+import { PendingButton } from "@/components/pending-button";
+import { describeRestrictionForProvider } from "@/lib/payments/provider-liability";
 import { PaymentActions } from "./_components/payment-actions";
 import { calculateBookingFeeSplit } from "@/lib/payments/booking-payments";
 
@@ -90,7 +93,15 @@ function ProviderPricing() {
 }
 
 export default async function DashboardPaymentSettingsPage() {
-  const { configured, paymentAccount, state } = await getPaymentSettings();
+  const {
+    configured,
+    paymentAccount,
+    state,
+    agreementVersion,
+    agreementAcceptedAt,
+    restriction,
+  } = await getPaymentSettings();
+  const restrictionMessage = describeRestrictionForProvider(restriction);
   const hasAccount = Boolean(paymentAccount?.stripe_account_id);
   const currentlyDue = paymentAccount?.requirements_currently_due ?? [];
   const pastDue = paymentAccount?.requirements_past_due ?? [];
@@ -111,6 +122,47 @@ export default async function DashboardPaymentSettingsPage() {
         <p className="mt-1 text-sm text-black/60">
           Connect Stripe Express so Ceaute can route customer payments to you.
         </p>
+
+        {restrictionMessage ? (
+          <p
+            role="status"
+            className="mt-8 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900"
+          >
+            <strong className="font-semibold">Bookings paused. </strong>
+            {restrictionMessage}
+          </p>
+        ) : null}
+
+        <section className="mt-8 rounded-xl border p-4 text-sm">
+          <h2 className="text-lg font-semibold">Provider agreement</h2>
+          {agreementAcceptedAt ? (
+            <p className="mt-2 text-black/60">
+              You accepted version {agreementVersion} on{" "}
+              {new Intl.DateTimeFormat("en-GB", {
+                dateStyle: "long",
+              }).format(new Date(agreementAcceptedAt))}
+              .
+            </p>
+          ) : (
+            <>
+              <p className="mt-2 text-black/60">
+                Before you can take paid bookings you need to accept the
+                provider agreement, which sets out what you are paid, what
+                happens when a booking is refunded, and who carries the cost if
+                a customer disputes a payment. It is version {agreementVersion}
+                .
+              </p>
+              <form action={acceptProviderAgreement} className="mt-4">
+                <PendingButton
+                  pendingLabel="Recording..."
+                  className="w-max rounded-lg bg-pink-700 p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-pink-800 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  Accept the provider agreement
+                </PendingButton>
+              </form>
+            </>
+          )}
+        </section>
 
         {!configured ? (
           <p className="mt-8 rounded-xl border border-red-200 p-4 text-sm text-red-700">

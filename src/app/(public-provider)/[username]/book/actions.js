@@ -3,6 +3,10 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { calculateBookingPaymentAmounts } from "@/lib/payments/booking-payments";
+import {
+  PROVIDER_AGREEMENT_VERSION,
+  describeProviderRestriction,
+} from "@/lib/payments/provider-liability";
 import { parsePersonalDetails } from "@/lib/profile/personal-details";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
@@ -414,6 +418,33 @@ export async function startStripeCheckoutForBooking(formData) {
   const paymentState = classifyStripePaymentAccount(paymentAccount);
 
   if (paymentState.state !== "ready") {
+    redirect(`${returnPath}&payment=unavailable`);
+  }
+
+  // A provider who already owes Ceaute money, or who has not accepted the
+  // current agreement, must not be able to create more financial exposure.
+  // This sits beside the Stripe-readiness gate above because it answers the
+  // same question — may this provider take a paid booking — and the customer
+  // gets the same neutral "cannot take online payments right now" notice
+  // either way. The provider's financial state is not the customer's business.
+  const { data: standingRows, error: standingError } = await supabase
+    .schema("ceaute")
+    .rpc("get_provider_financial_standing", {
+      target_provider_page_id: booking.provider_page_id,
+      required_agreement_version: PROVIDER_AGREEMENT_VERSION,
+    });
+
+  if (standingError) {
+    throw new Error("Could not prepare checkout.");
+  }
+
+  const standing = standingRows?.[0];
+  const restriction = describeProviderRestriction({
+    outstandingPence: standing?.out_outstanding_pence ?? 0,
+    acceptedAgreementVersion: standing?.out_accepted_agreement_version ?? null,
+  });
+
+  if (restriction.restricted) {
     redirect(`${returnPath}&payment=unavailable`);
   }
 

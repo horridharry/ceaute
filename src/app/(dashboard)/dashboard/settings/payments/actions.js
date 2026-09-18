@@ -13,6 +13,11 @@ import {
   syncProviderPaymentAccount,
 } from "@/lib/stripe/server";
 import { buildRecipientAccountParams } from "@/lib/stripe/recipient-account";
+import { createServiceRoleClient } from "@/lib/supabase/service-role";
+import {
+  PROVIDER_AGREEMENT_VERSION,
+  describeProviderRestriction,
+} from "@/lib/payments/provider-liability";
 
 const PAYMENTS_PATH = "/dashboard/settings/payments";
 
@@ -42,11 +47,63 @@ export async function getPaymentSettings() {
     throw new Error("Could not load payment settings.");
   }
 
+  // The liability ledger is operator-only, so the amount owed is read with the
+  // trusted client. The provider sees that a balance exists and is asked to
+  // contact Ceaute; they do not get a self-service view of a debt an operator
+  // is still deciding.
+  const serviceRole = createServiceRoleClient();
+  const { data: standingRows, error: standingError } = await serviceRole
+    .schema("ceaute")
+    .rpc("get_provider_financial_standing", {
+      target_provider_page_id: providerPage.id,
+      required_agreement_version: PROVIDER_AGREEMENT_VERSION,
+    });
+
+  if (standingError) {
+    throw new Error("Could not load payment settings.");
+  }
+
+  const standing = standingRows?.[0];
+
   return {
     configured: Boolean(process.env.STRIPE_SECRET_KEY),
     paymentAccount,
     state: classifyStripePaymentAccount(paymentAccount),
+    agreementVersion: PROVIDER_AGREEMENT_VERSION,
+    agreementAcceptedAt: standing?.out_agreement_accepted_at ?? null,
+    restriction: describeProviderRestriction({
+      outstandingPence: standing?.out_outstanding_pence ?? 0,
+      acceptedAgreementVersion: standing?.out_accepted_agreement_version ?? null,
+    }),
   };
+}
+
+// Records acceptance of the current agreement version. Insert-only: there is
+// no update or delete policy on the table, so an acceptance cannot be altered
+// afterwards, and accepting a new version adds a row rather than replacing
+// one. Re-accepting the same version is a no-op.
+export async function acceptProviderAgreement() {
+  const { supabase, providerPage, user } = await getSignedInProvider({
+    next: PAYMENTS_PATH,
+  });
+
+  const { error } = await supabase
+    .schema("ceaute")
+    .from("provider_agreement_acceptance")
+    .insert({
+      provider_page_id: providerPage.id,
+      agreement_version: PROVIDER_AGREEMENT_VERSION,
+      accepted_by_profile_id: user.id,
+    });
+
+  // 23505 is the unique violation: this version is already accepted, which is
+  // the desired end state rather than an error to show anybody.
+  if (error && error.code !== "23505") {
+    throw new Error("Could not record agreement acceptance.");
+  }
+
+  revalidatePath(PAYMENTS_PATH);
+  return success("Provider agreement accepted.");
 }
 
 // Stripe is an external dependency that can legitimately be unavailable or
