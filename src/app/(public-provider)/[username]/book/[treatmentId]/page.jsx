@@ -1,7 +1,10 @@
 import { notFound } from "next/navigation";
 import Form from "next/form";
-import { PendingButton } from "@/components/pending-button";
-import { BookingTreatmentSummary } from "../_components/booking-treatment-summary";
+import { FormTemplate } from "@/components/templates/form-template";
+import { AddOnList, AddOnRow } from "@/components/ui/add-on-row";
+import { CommitBar } from "@/components/ui/commit-bar";
+import { SubmitButton } from "@/components/ui/submit-button";
+import { StackedTopBar } from "@/components/ui/top-bar";
 import { getPublicBookingPage } from "../../_lib/public-provider-data";
 import {
   formatDurationMinutes,
@@ -17,6 +20,11 @@ function normalizeAddOnSearch(searchParams) {
   return addOnIds.filter(Boolean).map((addOnId) => String(addOnId));
 }
 
+// The add-ons step as its own route. Most customers meet add-ons in the
+// treatment modal on the provider page; this is where "Change add-ons" from
+// the time picker lands, and it is the no-JavaScript path to the same URL.
+// It stays a plain GET form, so the selection travels in the query string
+// exactly as the modal's link does.
 export default async function TreatmentBookingPage({ params, searchParams }) {
   const { username, treatmentId } = await params;
   const resolvedSearchParams = await searchParams;
@@ -28,69 +36,73 @@ export default async function TreatmentBookingPage({ params, searchParams }) {
   const decodedUsername = normalizePublicUsername(username);
   const selectedAddOnIds = normalizeAddOnSearch(resolvedSearchParams);
   const { providerPage, treatment, compatibleAddOns, selectedAddOns } =
-    await getPublicBookingPage(
-      decodedUsername,
-      treatmentId,
-      selectedAddOnIds,
-    );
+    await getPublicBookingPage(decodedUsername, treatmentId, selectedAddOnIds);
   const selectedAddOnIdSet = new Set(selectedAddOns.map((addOn) => addOn.id));
 
   return (
-    <main className="container max-w-md p-5">
-      <div className="mt-6 flex flex-col">
-        <h1 className="text-3xl font-bold tracking-tighter">
-          Choose add-ons
-        </h1>
-        <p className="mt-1 text-sm">{`Booking with @${providerPage.username}`}</p>
-
-        <div className="mt-8">
-          <BookingTreatmentSummary treatment={treatment} />
-        </div>
-
-        <Form
-          action={`/@${providerPage.username}/book/${treatment.id}/time`}
-          className="mt-8 rounded-lg border p-4"
+    <FormTemplate
+      as={Form}
+      action={`/@${providerPage.username}/book/${treatment.id}/time`}
+      nav={
+        <StackedTopBar
+          backHref={`/@${providerPage.username}/treatments`}
+          backLabel="Treatments"
+        />
+      }
+      commitBar={
+        <CommitBar
+          contextLabel={formatPricePence(treatment.price_pence)}
+          contextDetail={formatDurationMinutes(treatment.duration_minutes)}
         >
-          <h2 className="text-sm font-semibold">Add-ons</h2>
-          {compatibleAddOns.length ? (
-            <div className="mt-3 flex flex-col gap-3">
-              {compatibleAddOns.map((addOn) => (
-                <label
-                  key={addOn.id}
-                  className="flex items-center gap-3 text-sm"
-                  htmlFor={`add_on_${addOn.id}`}
-                >
-                  <input
-                    id={`add_on_${addOn.id}`}
-                    type="checkbox"
-                    name="add_on"
-                    value={addOn.id}
-                    defaultChecked={selectedAddOnIdSet.has(addOn.id)}
-                    className="h-4 w-4"
-                  />
-                  <span className="flex-1">{addOn.name}</span>
-                  <span className="text-black/60">
-                    +{formatPricePence(addOn.additional_price_pence)} · +
-                    {formatDurationMinutes(addOn.additional_duration_minutes)}
-                  </span>
-                </label>
-              ))}
-            </div>
-          ) : (
-            <p className="mt-3 text-sm text-black/60">
-              No add-ons are available for this treatment.
-            </p>
-          )}
-          <div className="mt-6 flex justify-end">
-            <PendingButton
-              pendingLabel="Continuing..."
-              className="w-max rounded-lg bg-plum p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-plum-hover disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              Continue
-            </PendingButton>
-          </div>
-        </Form>
-      </div>
-    </main>
+          <SubmitButton
+            block={false}
+            pendingLabel="Continuing"
+            className="px-6"
+          >
+            Pick a time
+          </SubmitButton>
+        </CommitBar>
+      }
+    >
+      <header className="flex flex-col gap-1">
+        <h1 className="text-display text-pretty text-ink">{treatment.name}</h1>
+        <p className="text-meta text-black/50">
+          {formatDurationMinutes(treatment.duration_minutes)} ·{" "}
+          {formatPricePence(treatment.price_pence)}
+        </p>
+      </header>
+
+      {treatment.description ? (
+        <p className="whitespace-pre-line text-body text-black/80">
+          {treatment.description}
+        </p>
+      ) : null}
+
+      {compatibleAddOns.length ? (
+        <div className="flex flex-col gap-2">
+          <p className="text-label uppercase text-black/45">
+            Add-ons · optional
+          </p>
+          <AddOnList>
+            {compatibleAddOns.map((addOn) => (
+              <AddOnRow
+                key={addOn.id}
+                name={addOn.name}
+                value={addOn.id}
+                defaultChecked={selectedAddOnIdSet.has(addOn.id)}
+                delta={[
+                  `+ ${formatPricePence(addOn.additional_price_pence)}`,
+                  addOn.additional_duration_minutes
+                    ? `+ ${formatDurationMinutes(addOn.additional_duration_minutes)}`
+                    : "",
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
+              />
+            ))}
+          </AddOnList>
+        </div>
+      ) : null}
+    </FormTemplate>
   );
 }

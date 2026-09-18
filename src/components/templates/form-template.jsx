@@ -19,12 +19,13 @@ export function FormTemplate({
   nav,
   notice,
   commitBar,
+  as: Element = "form",
   className = "",
   children,
   ...formProps
 }) {
   return (
-    <form {...formProps} className={`flex min-h-screen flex-col ${className}`.trim()}>
+    <Element {...formProps} className={`flex min-h-screen flex-col ${className}`.trim()}>
       {nav ? <div className={PAGE_COLUMN}>{nav}</div> : null}
 
       <main className={`${PAGE_COLUMN} flex-1 pb-8 pt-4`}>
@@ -37,6 +38,6 @@ export function FormTemplate({
       </main>
 
       {commitBar}
-    </form>
+    </Element>
   );
 }
