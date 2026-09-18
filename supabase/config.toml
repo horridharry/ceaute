@@ -154,7 +154,8 @@ max_indexes = 5
 [auth]
 enabled = true
 # The base URL of your website. Used as an allow-list for redirects and for constructing URLs used
-# in emails.
+# in emails. This is the Development project's URL; the `[remotes.production]` block below overrides
+# it with the canonical https://ceaute.com for the ceaute-prod project.
 site_url = "https://ceaute.vercel.app"
 # The public URL that Auth serves on. Defaults to the API external URL with `/auth/v1` appended.
 # external_url = ""
@@ -250,9 +251,14 @@ otp_expiry = 900
 # admin_email = "admin@email.com"
 # sender_name = "Admin"
 
-# Sign-up and sign-in emails carry a six-digit code instead of a link. These
-# files configure the local stack only; the hosted project's templates are
-# pasted into the Supabase Dashboard by hand.
+# Sign-up and sign-in emails carry a six-digit code instead of a link. `supabase
+# config push` can apply these to a hosted project's Auth settings, but the
+# Management API refuses template changes on a free-tier project that still
+# uses Supabase's default email provider ("Email template modification is not
+# available for free tier projects using the default email provider."). Until
+# the project is upgraded or given a custom SMTP provider (`[auth.email.smtp]`
+# below), push this file with these two tables commented out and paste the
+# templates into the Dashboard by hand instead.
 [auth.email.template.confirmation]
 subject = "Your Ceaute verification code"
 content_path = "./supabase/templates/confirmation.html"
@@ -430,3 +436,34 @@ enabled = true
 # declarative_schema_path = "./schemas"
 # JSON string passed through to pg-delta SQL formatting.
 # format_options = "{\"keywordCase\":\"upper\",\"indent\":2,\"maxWidth\":80,\"commaStyle\":\"trailing\"}"
+
+# Overrides applied on top of the base config above when linked to or pushed
+# against the ceaute-prod project (`supabase config push --project-ref
+# agpnrsrotofnmfzzbcpw`, or `supabase link --project-ref agpnrsrotofnmfzzbcpw`
+# first). Every other declared setting (schemas, otp length/expiry, email
+# template subjects and content, pooler sizing, etc.) is shared with
+# Development and applies unchanged.
+[remotes.production]
+project_id = "agpnrsrotofnmfzzbcpw"
+
+[remotes.production.auth]
+site_url = "https://ceaute.com"
+additional_redirect_urls = [
+  "https://ceaute.com",
+  "https://ceaute.com/auth/confirm",
+]
+
+# Supabase's Management API refuses to change email templates on a free-tier
+# project still using its own default email provider (see the comment above
+# [auth.email.template.confirmation]). Routing Auth email through the same
+# Resend account the app already uses for booking email removes that
+# restriction and gets the customised, code-only templates onto production
+# without a paid Supabase plan.
+[remotes.production.auth.email.smtp]
+enabled = true
+host = "smtp.resend.com"
+port = 587
+user = "resend"
+pass = "env(RESEND_API_KEY)"
+admin_email = "bookings@ceaute.com"
+sender_name = "Ceaute"
