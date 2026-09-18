@@ -60,6 +60,31 @@ function ProviderPricing() {
         never passes through Ceaute and is never charged for. There is no
         subscription and no monthly fee.
       </p>
+
+      <h3 className="mt-6 font-semibold">If a booking is refunded</h3>
+      <ul className="mt-2 flex list-disc flex-col gap-2 pl-5 text-black/60">
+        <li>
+          <strong className="text-black">
+            A customer cancels inside your cancellation window
+          </strong>{" "}
+          &mdash; they are refunded in full. You receive nothing and you pay
+          nothing: Ceaute returns its platform fee and covers Stripe&rsquo;s
+          charge. It costs you {money.format(0)}.
+        </li>
+        <li>
+          <strong className="text-black">A customer cancels late</strong>{" "}
+          &mdash; your policy decides what you keep, and the 2% is charged on
+          what you actually keep rather than on the original payment. Anything
+          collected above that is returned to you. Stripe does not return its
+          charge on the original payment, so that stays your cost.
+        </li>
+        <li>
+          <strong className="text-black">You cancel</strong> &mdash; the
+          customer is refunded in full and Ceaute returns its platform fee.
+          Because the cancellation was yours, Stripe&rsquo;s charge on the
+          original payment is your cost.
+        </li>
+      </ul>
     </section>
   );
 }
