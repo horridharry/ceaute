@@ -83,8 +83,8 @@ export function ProviderPageForm({ providerPage, updateProviderPage }) {
             <p
               className={
                 businessNameError
-                  ? "text-sm text-red-600 opacity-100 transition-opacity duration-500 ease-in"
-                  : "text-sm text-red-600 opacity-0 transition-opacity duration-500 ease-in"
+                  ? "text-sm text-bad opacity-100 transition-opacity duration-500 ease-in"
+                  : "text-sm text-bad opacity-0 transition-opacity duration-500 ease-in"
               }
             >
               {businessNameError || "Business name is valid"}
@@ -105,8 +105,8 @@ export function ProviderPageForm({ providerPage, updateProviderPage }) {
             <p
               className={
                 usernameError
-                  ? "text-sm text-red-600 opacity-100 transition-opacity duration-500 ease-in"
-                  : "text-sm text-red-600 opacity-0 transition-opacity duration-500 ease-in"
+                  ? "text-sm text-bad opacity-100 transition-opacity duration-500 ease-in"
+                  : "text-sm text-bad opacity-0 transition-opacity duration-500 ease-in"
               }
             >
               {usernameError || "Username is valid"}
@@ -150,8 +150,8 @@ export function ProviderPageForm({ providerPage, updateProviderPage }) {
             <p
               className={
                 biographyError
-                  ? "text-sm text-red-600 opacity-100 transition-opacity duration-500 ease-in"
-                  : "text-sm text-red-600 opacity-0 transition-opacity duration-500 ease-in"
+                  ? "text-sm text-bad opacity-100 transition-opacity duration-500 ease-in"
+                  : "text-sm text-bad opacity-0 transition-opacity duration-500 ease-in"
               }
             >
               {biographyError || "Biography is valid"}
@@ -167,7 +167,7 @@ export function ProviderPageForm({ providerPage, updateProviderPage }) {
             />
           </span>
 
-          <p className="mt-4 text-sm text-red-600">{stateMessage}</p>
+          <p className="mt-4 text-sm text-bad">{stateMessage}</p>
           {username ? (
             <p className="text-sm text-black/60">
               Future public URL: /@{username}

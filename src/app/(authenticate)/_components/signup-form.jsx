@@ -62,7 +62,7 @@ export function SignupForm({
           <p className="mt-1 text-xs text-black/50">
             We will email you a six-digit code to finish creating your account.
           </p>
-          <p className="text-sm text-red-600">{state?.message}</p>
+          <p className="text-sm text-bad">{state?.message}</p>
           <SubmitButton pending={pending} />
         </form>
         <p className="mt-6 text-sm">

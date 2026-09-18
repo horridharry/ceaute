@@ -76,7 +76,7 @@ export function BookingSettingsForm({ settings, updateBookingSettings }) {
                 ? "Deposit amount"
                 : "Commitment amount"}
             </label>
-            <p className="text-sm text-red-600">{moneyError}</p>
+            <p className="text-sm text-bad">{moneyError}</p>
             <div className="relative flex items-center rounded-lg">
               <span className="absolute z-40 ml-3 text-sm opacity-80">£</span>
               <input
@@ -123,7 +123,7 @@ export function BookingSettingsForm({ settings, updateBookingSettings }) {
             />
           </span>
 
-          <p className="mt-4 text-sm text-red-600">{stateMessage}</p>
+          <p className="mt-4 text-sm text-bad">{stateMessage}</p>
 
           <div className="mt-8 flex items-center justify-end gap-2">
             <Link

@@ -124,13 +124,13 @@ export default function BookingScheduler({
                   onClick={() => handleSlotSelection(slot)}
                   disabled={busy}
                   aria-busy={pendingSlot === slot.start_at ? true : undefined}
-                  className="w-full rounded-lg border border-gray-200 p-4 text-sm font-medium duration-200 hover:border-black/30 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 aria-busy:border-plum aria-busy:opacity-100"
+                  className="w-full rounded-lg border border-black/12 p-4 text-sm font-medium duration-200 hover:border-black/30 hover:bg-surface disabled:cursor-not-allowed disabled:opacity-50 aria-busy:border-plum aria-busy:opacity-100"
                 >
                   {pendingSlot === slot.start_at ? "Choosing..." : slot.local_time}
                 </button>
               ))}
               {slots.length === 0 ? (
-                <p className="rounded-lg border border-gray-200 p-4 text-center text-xs text-black/40">
+                <p className="rounded-lg border border-black/12 p-4 text-center text-xs text-black/40">
                   No times
                 </p>
               ) : null}

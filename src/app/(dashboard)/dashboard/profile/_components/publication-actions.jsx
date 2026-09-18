@@ -57,7 +57,7 @@ export function PublicationActions({
       {state.message ? (
         <p
           role="status"
-          className={`text-sm ${state.error ? "text-red-600" : "text-black/60"}`}
+          className={`text-sm ${state.error ? "text-bad" : "text-black/60"}`}
         >
           {state.message}
         </p>

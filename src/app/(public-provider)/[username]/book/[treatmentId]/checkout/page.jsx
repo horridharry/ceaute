@@ -312,7 +312,7 @@ export default async function BookingCheckoutPage({ params, searchParams }) {
           {paymentNotice ? (
             <div
               role="status"
-              className="mt-8 rounded-xl border border-red-200 p-4 text-sm text-red-700"
+              className="mt-8 rounded-xl border border-bad/35 p-4 text-sm text-bad"
             >
               <p className="font-semibold">{paymentNotice.heading}</p>
               <p className="mt-1">{paymentNotice.message}</p>

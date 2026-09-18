@@ -58,8 +58,8 @@ export function ProviderOnboardingForm({ action, providerPage }) {
         <p
           className={
             usernameError
-              ? "text-sm transition-opacity ease-in opacity-100 duration-500 text-red-600"
-              : "text-sm transition-opacity ease-in opacity-0 duration-500 text-red-600"
+              ? "text-sm transition-opacity ease-in opacity-100 duration-500 text-bad"
+              : "text-sm transition-opacity ease-in opacity-0 duration-500 text-bad"
           }
         >
           {usernameError || "Username is valid"}
@@ -95,7 +95,7 @@ export function ProviderOnboardingForm({ action, providerPage }) {
         />
       </span>
 
-      <p className="text-sm text-red-600">{stateMessage}</p>
+      <p className="text-sm text-bad">{stateMessage}</p>
 
       <div className="mt-4 flex items-center justify-end gap-2">
         <Link

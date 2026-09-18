@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useActionState, useMemo, useState } from "react";
 
 function ErrorMessage({ message }) {
-  return message ? <p className="text-sm text-red-600">{message}</p> : null;
+  return message ? <p className="text-sm text-bad">{message}</p> : null;
 }
 
 function SubmitButton({ pending, mode, hasClientError, formId }) {
@@ -50,7 +50,7 @@ function ArchiveButton({ treatment, archiveAction, restoreAction, pending }) {
             : "Archive"}
       </button>
       {archiveMessage ? (
-        <p className="mt-2 text-sm text-red-600">{archiveMessage}</p>
+        <p className="mt-2 text-sm text-bad">{archiveMessage}</p>
       ) : null}
     </form>
   );
@@ -219,7 +219,7 @@ export function TreatmentForm({
           </span>
 
           {stateMessage ? (
-            <p className="mt-4 text-sm text-red-600">{stateMessage}</p>
+            <p className="mt-4 text-sm text-bad">{stateMessage}</p>
           ) : null}
         </form>
         <div className="mt-8 flex items-center gap-2">

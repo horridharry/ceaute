@@ -154,7 +154,7 @@ export default async function DiscoverPage({ searchParams }) {
         <SearchForm categories={categories} search={searchResult.search} />
 
         {searchResult.search.error ? (
-          <p className="mt-6 rounded-xl border border-red-200 p-4 text-sm text-red-700">
+          <p className="mt-6 rounded-xl border border-bad/35 p-4 text-sm text-bad">
             {searchResult.search.error}
           </p>
         ) : (

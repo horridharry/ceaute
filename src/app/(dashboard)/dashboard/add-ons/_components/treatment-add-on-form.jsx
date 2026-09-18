@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useActionState, useMemo, useState } from "react";
 
 function ErrorMessage({ message }) {
-  return message ? <p className="text-sm text-red-600">{message}</p> : null;
+  return message ? <p className="text-sm text-bad">{message}</p> : null;
 }
 
 function SubmitButton({ pending, mode, hasClientError, formId }) {
@@ -49,7 +49,7 @@ function ArchiveButton({ addOn, archiveAction, restoreAction, pending }) {
             ? "Restore"
             : "Archive"}
       </button>
-      {message ? <p className="mt-2 text-sm text-red-600">{message}</p> : null}
+      {message ? <p className="mt-2 text-sm text-bad">{message}</p> : null}
     </form>
   );
 }
@@ -191,7 +191,7 @@ export function TreatmentAddOnForm({
 
           <ErrorMessage message={needsIncreaseError} />
           {stateMessage ? (
-            <p className="mt-4 text-sm text-red-600">{stateMessage}</p>
+            <p className="mt-4 text-sm text-bad">{stateMessage}</p>
           ) : null}
         </form>
 

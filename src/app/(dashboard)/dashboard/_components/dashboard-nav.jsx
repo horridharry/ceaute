@@ -91,7 +91,7 @@ export function DashboardNav() {
           <form action={logoutUser}>
             <PendingButton
               pendingLabel="Signing out..."
-              className="mt-4 w-full border-b p-2 text-left text-sm font-medium text-red-600 hover:border-red-300 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
+              className="mt-4 w-full border-b p-2 text-left text-sm font-medium text-bad hover:border-bad/60 hover:bg-bad/5 disabled:cursor-not-allowed disabled:opacity-60"
             >
               Sign out
             </PendingButton>

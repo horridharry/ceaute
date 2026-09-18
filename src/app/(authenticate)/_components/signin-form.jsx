@@ -48,7 +48,7 @@ export function SigninForm({
             className="appearance-none rounded-xl border border-black/20 p-3 outline-none ring-2 ring-transparent duration-200 hover:border-black/30 focus:border-plum focus:ring-plum/20"
           />
 
-          <p className="text-sm text-red-600">{state?.message}</p>
+          <p className="text-sm text-bad">{state?.message}</p>
           <SubmitButton pending={pending} />
         </form>
 

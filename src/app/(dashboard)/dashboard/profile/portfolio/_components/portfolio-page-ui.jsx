@@ -51,7 +51,7 @@ function UploadForm({ uploadPortfolioImage }) {
         <label className="label" htmlFor="image">
           Image
         </label>
-        <p className="text-sm text-red-600">{fileError}</p>
+        <p className="text-sm text-bad">{fileError}</p>
         <input
           id="image"
           name="image"
@@ -66,7 +66,7 @@ function UploadForm({ uploadPortfolioImage }) {
         <label className="label" htmlFor="caption">
           Caption
         </label>
-        <p className="text-sm text-red-600">{captionError}</p>
+        <p className="text-sm text-bad">{captionError}</p>
         <input
           id="caption"
           name="caption"
@@ -76,7 +76,7 @@ function UploadForm({ uploadPortfolioImage }) {
         />
       </span>
 
-      <p className="text-sm text-red-600">{stateMessage}</p>
+      <p className="text-sm text-bad">{stateMessage}</p>
 
       <div className="flex justify-end">
         <button
@@ -105,7 +105,7 @@ function CaptionForm({ image, updatePortfolioImageCaption }) {
       <label className="label" htmlFor={`caption-${image.id}`}>
         Caption
       </label>
-      <p className="text-sm text-red-600">{captionError || stateMessage}</p>
+      <p className="text-sm text-bad">{captionError || stateMessage}</p>
       <input
         id={`caption-${image.id}`}
         name="caption"

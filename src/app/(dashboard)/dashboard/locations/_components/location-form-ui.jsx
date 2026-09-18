@@ -45,7 +45,7 @@ export function LocationFormUI({ location, updateLocation }) {
             <label className="label" htmlFor="public_area">
               Public area
             </label>
-            <p className="text-sm text-red-600">
+            <p className="text-sm text-bad">
               {errors.public_area ?? ""}
             </p>
             <input
@@ -67,7 +67,7 @@ export function LocationFormUI({ location, updateLocation }) {
             <label className="label" htmlFor="address_line_1">
               Address line 1
             </label>
-            <p className="text-sm text-red-600">
+            <p className="text-sm text-bad">
               {errors.address_line_1 ?? ""}
             </p>
             <input
@@ -88,7 +88,7 @@ export function LocationFormUI({ location, updateLocation }) {
             <label className="label" htmlFor="address_line_2">
               Address line 2
             </label>
-            <p className="text-sm text-red-600">
+            <p className="text-sm text-bad">
               {errors.address_line_2 ?? ""}
             </p>
             <input
@@ -109,7 +109,7 @@ export function LocationFormUI({ location, updateLocation }) {
             <label className="label" htmlFor="city">
               City
             </label>
-            <p className="text-sm text-red-600">{errors.city ?? ""}</p>
+            <p className="text-sm text-bad">{errors.city ?? ""}</p>
             <input
               id="city"
               name="city"
@@ -128,7 +128,7 @@ export function LocationFormUI({ location, updateLocation }) {
             <label className="label" htmlFor="postcode">
               Postcode
             </label>
-            <p className="text-sm text-red-600">{errors.postcode ?? ""}</p>
+            <p className="text-sm text-bad">{errors.postcode ?? ""}</p>
             <input
               id="postcode"
               name="postcode"
@@ -156,7 +156,7 @@ export function LocationFormUI({ location, updateLocation }) {
             />
           </span>
 
-          <p className="mt-4 text-sm text-red-600">{stateMessage}</p>
+          <p className="mt-4 text-sm text-bad">{stateMessage}</p>
 
           <div className="mt-8 flex items-center justify-end gap-2">
             <Link

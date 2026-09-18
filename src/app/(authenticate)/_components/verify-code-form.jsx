@@ -69,7 +69,7 @@ export function VerifyCodeForm({
             className="w-full min-w-0 appearance-none rounded-xl border border-black/20 p-3 text-center text-2xl font-semibold tracking-[0.4em] outline-none ring-2 ring-transparent duration-200 hover:border-black/30 focus:border-plum focus:ring-plum/20"
           />
 
-          <p className="text-sm text-red-600" role="alert">
+          <p className="text-sm text-bad" role="alert">
             {state?.message}
           </p>
           <p className="text-sm text-black/60" role="status">

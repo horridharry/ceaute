@@ -63,7 +63,7 @@ export function PaymentActions({
           role="status"
           className={
             outcome.error
-              ? "rounded-lg border border-red-200 p-3 text-sm text-red-700"
+              ? "rounded-lg border border-bad/35 p-3 text-sm text-bad"
               : "text-sm text-black/60"
           }
         >

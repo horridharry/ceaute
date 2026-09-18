@@ -56,7 +56,7 @@ function CancellationPanel({ booking }) {
           <p className="mt-2 text-black/60">{booking.refund_status_label}</p>
         ) : null}
         {booking.payment_status === "refund_failed" ? (
-          <p className="mt-2 text-red-600">
+          <p className="mt-2 text-bad">
             Automatic refund failed. Support will need to review this payment.
           </p>
         ) : null}

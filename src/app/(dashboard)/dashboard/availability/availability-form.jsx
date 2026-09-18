@@ -220,8 +220,8 @@ export function AvailabilityForm({
                   <p
                     className={
                       errors[day.dayOfWeek]
-                        ? "mt-2 text-sm text-red-600 opacity-100 transition-opacity duration-500 ease-in"
-                        : "mt-2 text-sm text-red-600 opacity-0 transition-opacity duration-500 ease-in"
+                        ? "mt-2 text-sm text-bad opacity-100 transition-opacity duration-500 ease-in"
+                        : "mt-2 text-sm text-bad opacity-0 transition-opacity duration-500 ease-in"
                     }
                   >
                     {errors[day.dayOfWeek] || "Times are valid"}
@@ -234,7 +234,7 @@ export function AvailabilityForm({
           ))}
 
           {stateMessage ? (
-            <p className="mt-4 text-sm text-red-600">{stateMessage}</p>
+            <p className="mt-4 text-sm text-bad">{stateMessage}</p>
           ) : null}
 
           <div className="mt-8 flex items-center justify-end gap-4">
@@ -290,7 +290,7 @@ export function AvailabilityForm({
           </form>
 
           {blockDateMessage ? (
-            <p className="text-sm text-red-600">{blockDateMessage}</p>
+            <p className="text-sm text-bad">{blockDateMessage}</p>
           ) : null}
 
           {blockedDates.length ? (

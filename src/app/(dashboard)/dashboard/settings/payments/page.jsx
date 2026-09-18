@@ -30,7 +30,7 @@ export default async function DashboardPaymentSettingsPage() {
         </p>
 
         {!configured ? (
-          <p className="mt-8 rounded-xl border border-red-200 p-4 text-sm text-red-700">
+          <p className="mt-8 rounded-xl border border-bad/35 p-4 text-sm text-bad">
             Stripe is not configured on this environment.
           </p>
         ) : null}
