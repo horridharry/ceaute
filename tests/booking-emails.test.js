@@ -175,15 +175,15 @@ test("a provider confirmation email carries the customer contact details but not
   await deliverPendingBookingEmails({ supabase, fetchImpl, environment });
 
   const { text, html } = requests[0].body;
-  assert.match(text, /Customer email: customer@example.test/);
-  assert.match(text, /Customer phone: \+447700900123/);
+  assert.match(text, /customer@example\.test/);
+  assert.match(text, /\+447700900123/);
   // B4: she does not need to be told her own street.
-  assert.doesNotMatch(text, /Address: 12 Private Street/);
-  assert.doesNotMatch(text, /Access instructions: Ring the top bell/);
+  assert.doesNotMatch(text, /12 Private Street/);
+  assert.doesNotMatch(text, /Ring the top bell/);
   assert.doesNotMatch(html, /12 Private Street/);
-  assert.match(text, /Paid to your Stripe: /);
-  assert.match(text, /Collect on the day: /);
-  assert.match(text, /View booking: https:\/\/ceaute.example.test\/dashboard\/bookings\/booking-1/);
+  // Her money lines read from her side of the booking.
+  assert.match(text, /is in your Stripe\. Collect /);
+  assert.match(text, /Open booking: https:\/\/ceaute.example.test\/dashboard\/bookings\/booking-1/);
 });
 
 test("a customer confirmation email links to the customer booking and omits the customer contact lines", async () => {
@@ -193,9 +193,9 @@ test("a customer confirmation email links to the customer booking and omits the 
   await deliverPendingBookingEmails({ supabase, fetchImpl, environment });
 
   const { text } = requests[0].body;
-  assert.doesNotMatch(text, /Customer email:/);
-  assert.doesNotMatch(text, /Customer phone:/);
-  assert.match(text, /Address: 12 Private Street, London, E1 6AN/);
+  assert.doesNotMatch(text, /customer@example\.test/);
+  assert.doesNotMatch(text, /\+447700900123/);
+  assert.match(text, /12 Private Street, London, E1 6AN/);
   assert.match(text, /View booking: https:\/\/ceaute.example.test\/account\/bookings\/booking-1/);
 });
 
@@ -220,11 +220,10 @@ test("cancellation emails show refund details and never include the private addr
 
   const { text, html, subject } = requests[0].body;
   assert.equal(subject, "A customer cancelled a booking");
-  assert.match(text, /Refund amount: £40\.00/);
-  assert.match(text, /Retained amount: £10\.00/);
-  assert.match(text, /Refund status: Refund pending/);
-  assert.doesNotMatch(text, /Address:/);
-  assert.doesNotMatch(text, /Access instructions:/);
+  assert.match(text, /£40\.00/);
+  assert.match(text, /£10\.00/);
+  assert.match(text, /Refund processing with Stripe/);
+  assert.doesNotMatch(text, /Ring the top bell/);
   assert.doesNotMatch(text, /12 Private Street/);
   assert.doesNotMatch(html, /12 Private Street/);
   assert.doesNotMatch(html, /E1 6AN/);
@@ -249,7 +248,7 @@ test("email content is HTML-escaped so a customer-supplied name cannot inject ma
 // The link is built from the payload path and the validated app URL. A
 // payload without a path must produce no link at all rather than a URL that
 // ends in "/undefined", which the previous implementation could emit.
-test("an email whose payload has no booking path shows the link as unavailable rather than a broken URL", async () => {
+test("an email whose payload has no booking path carries no link rather than a broken URL", async () => {
   const supabase = fakeSupabase([
     outboxEmail({
       payload: { ...outboxEmail().payload, customer_booking_path: undefined },
@@ -260,7 +259,9 @@ test("an email whose payload has no booking path shows the link as unavailable r
   await deliverPendingBookingEmails({ supabase, fetchImpl, environment });
 
   const { text, html } = requests[0].body;
-  assert.match(text, /View booking: Unavailable/);
+  // An action with no safe URL is dropped rather than rendered as a dead label.
+  assert.doesNotMatch(text, /View booking:/);
   assert.doesNotMatch(text, /undefined/);
   assert.doesNotMatch(html, /undefined/);
+  assert.doesNotMatch(html, /href="\/?"/);
 });

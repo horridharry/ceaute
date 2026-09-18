@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   bookingEmailSubject,
+  buildBookingEmailContent,
   renderBookingEmailHtml,
   renderBookingEmailText,
 } from "../src/lib/emails/booking-email-content.js";
@@ -9,11 +10,13 @@ import {
 const APP_URL = "https://ceaute.example.test";
 const CUSTOMER_URL = "https://ceaute.example.test/account/bookings/booking-1";
 const PROVIDER_URL = "https://ceaute.example.test/dashboard/bookings/booking-1";
+const DIARY_URL = "https://ceaute.example.test/dashboard/bookings";
 
 const basePayload = {
   booking_id: "booking-1",
   customer_booking_path: "/account/bookings/booking-1",
   provider_name: "Glow Studio",
+  provider_username: "glowstudio",
   customer_name: "Casey Customer",
   customer_email: "customer@example.test",
   customer_phone: "+447700900123",
@@ -34,6 +37,7 @@ const basePayload = {
 const cancellationPayload = {
   ...basePayload,
   cancelled_by: "customer",
+  cancelled_at: "2026-10-12T09:00:00.000Z",
   refund_amount_pence: 4000,
   retained_amount_pence: 1000,
   refund_status: "refund_required",
@@ -66,6 +70,7 @@ function visibleText(html) {
     .replace(/<style[\s\S]*?<\/style>/g, " ")
     .replace(/<[^>]+>/g, " ")
     .replaceAll("&nbsp;", " ")
+    .replaceAll("&#8203;", "")
     .replaceAll("&lt;", "<")
     .replaceAll("&gt;", ">")
     .replaceAll("&quot;", '"')
@@ -78,40 +83,30 @@ function hrefs(html) {
   return [...html.matchAll(/href="([^"]*)"/g)].map((match) => match[1]);
 }
 
+function ceauteHrefs(html) {
+  return hrefs(html).filter((href) => href.startsWith(APP_URL));
+}
+
+// The action lines are the only text lines whose value is a URL; every other
+// line must appear verbatim in the rendered HTML.
+function factLines(text) {
+  return text
+    .split("\n")
+    .slice(2)
+    .filter((line) => line && !/^[^:]+: https?:\/\//.test(line));
+}
+
 for (const event of EVENTS) {
-  test(`${event.eventType}: subject, heading and shared booking details appear in both alternatives`, () => {
+  test(`${event.eventType}: the subject is fixed and every text fact is in the HTML`, () => {
     const email = emailFor(event);
     const text = renderBookingEmailText(email, APP_URL);
-    const html = renderBookingEmailHtml(email, APP_URL);
-    const visible = visibleText(html);
+    const visible = visibleText(renderBookingEmailHtml(email, APP_URL));
 
     assert.equal(bookingEmailSubject(email), event.title);
     assert.equal(text.split("\n")[0], event.title);
-    assert.match(html, new RegExp(`<h1[^>]*>${event.title}</h1>`));
 
-    for (const expected of [
-      "Glow Studio",
-      "Casey Customer",
-      "Full set",
-      "Nail art, Gel top coat",
-      "£50.00",
-      "£25.00",
-    ]) {
-      assert.ok(text.includes(expected), `text is missing ${expected}`);
-      assert.ok(visible.includes(expected), `html is missing ${expected}`);
-    }
-
-    // Every "Label: value" fact in the text alternative is also in the HTML.
-    for (const entry of text.split("\n").slice(2)) {
-      const [label, ...rest] = entry.split(": ");
-      const value = rest.join(": ");
-
-      if (label === "View booking" || label === "Find another time") {
-        continue;
-      }
-
-      assert.ok(visible.includes(label), `html is missing the label ${label}`);
-      assert.ok(visible.includes(value), `html is missing the value ${value}`);
+    for (const line of factLines(text)) {
+      assert.ok(visible.includes(line), `html is missing the line: ${line}`);
     }
   });
 
@@ -123,110 +118,174 @@ for (const event of EVENTS) {
     const otherUrl = event.role === "provider" ? CUSTOMER_URL : PROVIDER_URL;
 
     if (event.role === "provider") {
-      assert.match(text, /Customer email: customer@example\.test/);
-      assert.match(text, /Customer phone: \+447700900123/);
-      assert.match(html, /customer@example\.test/);
-      assert.match(html, /\+447700900123/);
+      // Every provider email carries the customer's phone. Only the
+      // confirmation carries her email address: the cancellation templates
+      // deliberately reduce it to a name and a number.
+      assert.match(text, /\+447700900123/);
+
+      if (!event.cancellation) {
+        assert.match(text, /customer@example\.test/);
+        assert.match(html, /customer@example\.test/);
+      }
     } else {
-      assert.doesNotMatch(text, /Customer email|Customer phone/);
-      assert.doesNotMatch(html, /Customer email|Customer phone/);
+      assert.doesNotMatch(text, /customer@example\.test/);
+      assert.doesNotMatch(text, /\+447700900123/);
       assert.doesNotMatch(html, /customer@example\.test/);
       assert.doesNotMatch(html, /\+447700900123/);
     }
 
-    // B5: a customer whose provider cancelled is offered a way forward.
-    const expectedLabel =
-      event.eventType === "provider_cancelled_customer"
-        ? "Find another time"
-        : "View booking";
+    // The booking link always points at the recipient's own view of it, and the
+    // other role's URL never appears.
+    assert.ok(!html.includes(otherUrl), `linked the other role's booking view`);
 
-    assert.ok(text.endsWith(`${expectedLabel}: ${expectedUrl}`));
-    assert.ok(hrefs(html).length > 0);
-    assert.deepEqual([...new Set(hrefs(html))], [expectedUrl]);
-    assert.ok(!html.includes(otherUrl));
+    // provider_cancelled_customer is the one email that leads elsewhere: a
+    // customer whose provider cancelled needs a way forward, not a way back.
+    if (event.eventType === "provider_cancelled_customer") {
+      assert.ok(hrefs(html).includes(`${APP_URL}/discover`));
+      assert.match(text, /^Find another time: /m);
+    }
+
+    if (event.role === "provider") {
+      assert.ok(hrefs(html).includes(DIARY_URL), "provider emails link to the diary");
+    } else {
+      assert.ok(!hrefs(html).includes(DIARY_URL), "customer emails never link to the diary");
+    }
+
+    assert.ok(ceauteHrefs(html).includes(expectedUrl));
   });
 
-  test(`${event.eventType}: ${event.cancellation ? "shows refund details and hides the private address" : "shows the address, access instructions and cancellation deadline"}`, () => {
+  test(`${event.eventType}: ${event.cancellation ? "carries refund facts and no private address" : "carries the money lines and the deadline"}`, () => {
     const email = emailFor(event);
     const text = renderBookingEmailText(email, APP_URL);
     const html = renderBookingEmailHtml(email, APP_URL);
     const visible = visibleText(html);
 
     if (event.cancellation) {
-      assert.match(text, /Cancelled by: customer/);
-      assert.match(text, /Refund amount: £40\.00/);
-      assert.match(text, /Retained amount: £10\.00/);
-      assert.match(text, /Refund status: Refund pending/);
-      assert.match(visible, /Booking cancelled/);
-      assert.match(visible, /Refund amount\s+£40\.00/);
-      assert.match(visible, /Retained amount\s+£10\.00/);
-      assert.match(visible, /Refund status\s+Refund pending/);
-
+      // The private address is deliberately absent from every cancellation.
       for (const alternative of [text, html]) {
         assert.doesNotMatch(alternative, /12 Private Street|Flat 3|E1 6AN/);
         assert.doesNotMatch(alternative, /Ring the top bell/);
-        assert.doesNotMatch(alternative, /Access instructions|Cancellation deadline/);
-        assert.doesNotMatch(alternative, /Booking confirmed/);
       }
+      assert.doesNotMatch(html, /maps\.google|google\.com\/maps/);
+      // Amounts, never percentages.
+      assert.doesNotMatch(visible, /\d\s?%/);
+      assert.match(visible, /£/);
     } else {
-      assert.match(text, /Cancellation deadline: .*19 Oct/);
-      assert.match(visible, /Booking confirmed/);
-      assert.match(visible, /Cancellation deadline\s+\S.*19 Oct/);
+      assert.match(visible, /Full set with Nail art, Gel top coat\./);
+      assert.match(text, /19 Oct/);
 
       if (event.role === "provider") {
-        // B4: the provider is not told her own street, and her payment rows
-        // read from her side.
+        // B4: she is not told her own street; her money reads from her side.
         for (const alternative of [text, visible]) {
           assert.doesNotMatch(alternative, /12 Private Street|Flat 3|E1 6AN/);
           assert.doesNotMatch(alternative, /Ring the top bell/);
         }
-        assert.match(text, /Paid to your Stripe: £50\.00/);
-        assert.match(text, /Collect on the day: £25\.00/);
+        assert.match(text, /£50\.00 is in your Stripe\. Collect £25\.00 on the day\./);
+        assert.doesNotMatch(html, /google\.com\/maps/);
       } else {
-        assert.match(text, /Address: 12 Private Street, Flat 3, London, E1 6AN/);
-        assert.match(text, /Access instructions: Ring the top bell/);
-        assert.match(visible, /Address\s+12 Private Street, Flat 3, London, E1 6AN/);
-        assert.match(visible, /Access instructions\s+Ring the top bell/);
-        assert.match(text, /Amount paid: £50\.00/);
-      }
-
-      for (const alternative of [text, html]) {
-        assert.doesNotMatch(alternative, /Refund|Retained|Cancelled by/);
+        assert.match(text, /12 Private Street, Flat 3, London, E1 6AN/);
+        assert.match(text, /Ring the top bell/);
+        assert.match(text, /£50\.00 paid\. £25\.00 due on the day\./);
+        assert.ok(
+          hrefs(html).some((href) => href.startsWith("https://www.google.com/maps/search/")),
+          "the customer confirmation offers directions",
+        );
       }
     }
   });
 }
 
-test("confirmations and cancellations share one layout but use different accents", () => {
-  const confirmation = renderBookingEmailHtml(emailFor(EVENTS[0]), APP_URL);
-  const cancellation = renderBookingEmailHtml(emailFor(EVENTS[2]), APP_URL);
+test("every email is built on the approved shell: light only, 600px, one breakpoint, no scripts", () => {
+  for (const event of EVENTS) {
+    const html = renderBookingEmailHtml(emailFor(event), APP_URL);
 
-  for (const html of [confirmation, cancellation]) {
     assert.match(html, /^<!DOCTYPE html>/);
-    assert.match(html, /<meta name="viewport" content="width=device-width, initial-scale=1" \/>/);
-    assert.match(html, /max-width:600px/);
+    assert.match(html, /<meta name="color-scheme" content="light only">/);
+    assert.match(html, /<meta name="supported-color-schemes" content="light only">/);
+    assert.match(html, /width="600"/);
+    assert.match(html, /@media \(max-width:620px\)/);
     assert.match(html, />ceaute</);
-    assert.doesNotMatch(html, /<script|<link|class="[^"]*\b(flex|grid)\b/);
+    assert.match(html, /background:#f0eee9/);
+    assert.match(html, /You are receiving this email because of a booking made through Ceaute\./);
+    assert.doesNotMatch(html, /<script|<link rel="stylesheet"/);
+    // The old pink palette is gone.
+    assert.doesNotMatch(html, /#9d174d|#fdf2f8|#fbcfe8|#f7edf1/i);
   }
-
-  assert.match(confirmation, /bgcolor="#9d174d"/);
-  assert.doesNotMatch(confirmation, /bgcolor="#334155"/);
-  assert.match(cancellation, /bgcolor="#334155"/);
 });
 
-test("each refund status is labelled for the reader", () => {
-  const labels = {
-    refunded: "Refund recorded",
-    refund_failed: "Refund failed",
-    refund_required: "Refund pending",
-    something_else: "Refund status unavailable",
-  };
+test("headlines follow the approved copy for each event", () => {
+  const headlineOf = (event, overrides) =>
+    buildBookingEmailContent(emailFor(event, overrides), APP_URL).blocks[0].text;
 
-  for (const [status, label] of Object.entries(labels)) {
-    const email = emailFor(EVENTS[2], { refund_status: status });
+  assert.equal(headlineOf(EVENTS[0]), "Casey, you’re booked with Glow Studio.");
+  assert.equal(headlineOf(EVENTS[1]), "Casey booked Full set for Tuesday at 11:00 am.");
+  assert.equal(headlineOf(EVENTS[4]), "Glow Studio cancelled your Tuesday appointment.");
+  assert.equal(headlineOf(EVENTS[5]), "You cancelled Tuesday with Casey.");
+});
 
-    assert.match(renderBookingEmailText(email, APP_URL), new RegExp(`Refund status: ${label}`));
-    assert.ok(visibleText(renderBookingEmailHtml(email, APP_URL)).includes(label));
+test("a customer cancellation reads differently when the provider retains something", () => {
+  const fullRefund = emailFor(EVENTS[2], {
+    refund_amount_pence: 5000,
+    retained_amount_pence: 0,
+  });
+  const retained = emailFor(EVENTS[2], {
+    refund_amount_pence: 4000,
+    retained_amount_pence: 1000,
+  });
+
+  assert.match(
+    renderBookingEmailText(fullRefund, APP_URL),
+    /Your £50\.00 is on its way back to your card\./,
+  );
+  assert.match(
+    renderBookingEmailText(retained, APP_URL),
+    /Glow Studio keeps £10\.00 of your £50\.00\./,
+  );
+
+  // Neither states a percentage.
+  for (const email of [fullRefund, retained]) {
+    assert.doesNotMatch(visibleText(renderBookingEmailHtml(email, APP_URL)), /\d\s?%/);
+  }
+});
+
+test("the provider's view of a customer cancellation matches what was actually kept", () => {
+  const keptEverything = renderBookingEmailText(
+    emailFor(EVENTS[3], { refund_amount_pence: 0, retained_amount_pence: 5000 }),
+    APP_URL,
+  );
+  const keptSome = renderBookingEmailText(
+    emailFor(EVENTS[3], { refund_amount_pence: 4000, retained_amount_pence: 1000 }),
+    APP_URL,
+  );
+  const keptNothing = renderBookingEmailText(
+    emailFor(EVENTS[3], { refund_amount_pence: 5000, retained_amount_pence: 0 }),
+    APP_URL,
+  );
+
+  assert.match(keptEverything, /You keep the £50\.00\./);
+  assert.match(keptEverything, /nothing is refunded/);
+  assert.match(keptSome, /£10\.00 stays with you and £40\.00 goes back/);
+  assert.match(keptNothing, /Casey cancelled Tuesday\./);
+  assert.match(keptNothing, /£50\.00 goes back to their card/);
+});
+
+test("the refund status block has a dot and a word for each state", () => {
+  const states = [
+    [{ refund_amount_pence: 4000, refund_status: "refund_required" }, "#c98a1a", "Refund processing with Stripe"],
+    [{ refund_amount_pence: 4000, refund_status: "refund_failed" }, "#b3261e", "The first refund attempt failed. Ceaute is retrying it."],
+    [{ refund_amount_pence: 4000, refund_status: "refunded" }, "#2f6f4f", "Refund settled"],
+    [{ refund_amount_pence: 0, retained_amount_pence: 5000, refund_status: "refunded" }, "#2f6f4f", "Settled — no refund due"],
+  ];
+
+  for (const [overrides, dot, title] of states) {
+    const email = emailFor(EVENTS[2], overrides);
+    const html = renderBookingEmailHtml(email, APP_URL);
+
+    assert.ok(html.includes(`background:${dot}`), `${title} is missing its ${dot} dot`);
+    assert.ok(visibleText(html).includes(title), `${title} is missing from the HTML`);
+    assert.ok(renderBookingEmailText(email, APP_URL).includes(title), `${title} is missing from the text`);
+    // A dot and a word, never a filled or tinted status box.
+    assert.doesNotMatch(html, new RegExp(`background-color:${dot}`, "i"));
   }
 });
 
@@ -240,11 +299,13 @@ test("missing optional details fall back to readable placeholders", () => {
     postcode: null,
   });
   const text = renderBookingEmailText(email, APP_URL);
+  const html = renderBookingEmailHtml(email, APP_URL);
 
-  assert.match(text, /Add-ons: None/);
-  assert.match(text, /Address: Unavailable/);
-  assert.match(text, /Access instructions: Unavailable/);
-  assert.doesNotMatch(renderBookingEmailHtml(email, APP_URL), /undefined|null/);
+  assert.match(text, /^Full set\.$/m);
+  assert.match(text, /^Unavailable$/m);
+  assert.doesNotMatch(html, /undefined|null/);
+  // With no address there is nothing to give directions to.
+  assert.ok(!hrefs(html).some((href) => href.includes("google.com/maps")));
 });
 
 test("every dynamic field is HTML-escaped", () => {
@@ -253,8 +314,6 @@ test("every dynamic field is HTML-escaped", () => {
   const fields = [
     "provider_name",
     "customer_name",
-    "customer_email",
-    "customer_phone",
     "treatment_name",
     "address_line_1",
     "address_line_2",
@@ -264,15 +323,16 @@ test("every dynamic field is HTML-escaped", () => {
   ];
 
   for (const field of fields) {
-    // EVENTS[0] is the customer confirmation, the one email that carries every
-    // field in this list — a provider confirmation has no address panel.
-    const event = ["customer_email", "customer_phone"].includes(field)
-      ? EVENTS[1]
-      : EVENTS[0];
-    const html = renderBookingEmailHtml(emailFor(event, { [field]: attack }), APP_URL);
+    const html = renderBookingEmailHtml(emailFor(EVENTS[0], { [field]: attack }), APP_URL);
 
     assert.doesNotMatch(html, /<script/, `${field} injected markup`);
     assert.ok(html.includes(escaped), `${field} was not escaped`);
+  }
+
+  // The contact details only exist on a provider email.
+  for (const field of ["customer_email", "customer_phone"]) {
+    const html = renderBookingEmailHtml(emailFor(EVENTS[1], { [field]: attack }), APP_URL);
+    assert.doesNotMatch(html, /<script/, `${field} injected markup`);
   }
 
   const addOnHtml = renderBookingEmailHtml(
@@ -281,13 +341,6 @@ test("every dynamic field is HTML-escaped", () => {
   );
   assert.doesNotMatch(addOnHtml, /<script/);
   assert.ok(addOnHtml.includes(escaped));
-
-  const cancelledByHtml = renderBookingEmailHtml(
-    emailFor(EVENTS[3], { cancelled_by: attack }),
-    APP_URL,
-  );
-  assert.doesNotMatch(cancelledByHtml, /<script/);
-  assert.ok(cancelledByHtml.includes(escaped));
 });
 
 test("line breaks in access instructions survive as <br /> without allowing markup", () => {
@@ -316,33 +369,49 @@ test("a booking path that leaves the Ceaute origin or the web produces no link",
     const text = renderBookingEmailText(email, APP_URL);
     const html = renderBookingEmailHtml(email, APP_URL);
 
-    assert.ok(text.endsWith("View booking: Unavailable"), `text linked ${String(path)}`);
-    assert.deepEqual(hrefs(html), [], `html linked ${String(path)}`);
-    assert.doesNotMatch(html, /evil\.example|javascript:|View booking|undefined/);
+    assert.doesNotMatch(text, /^View booking: /m, `text linked ${String(path)}`);
+    assert.deepEqual(ceauteHrefs(html), [], `html linked ${String(path)}`);
+    assert.doesNotMatch(html, /evil\.example|javascript:|undefined/);
   }
 });
 
 test("a provider email without a booking id has no link rather than one ending in /undefined", () => {
   const email = emailFor(EVENTS[1], { booking_id: undefined });
+  const html = renderBookingEmailHtml(email, APP_URL);
 
-  assert.ok(renderBookingEmailText(email, APP_URL).endsWith("View booking: Unavailable"));
-  assert.deepEqual(hrefs(renderBookingEmailHtml(email, APP_URL)), []);
+  assert.doesNotMatch(renderBookingEmailText(email, APP_URL), /^Open booking: /m);
+  assert.ok(!html.includes(`${APP_URL}/dashboard/bookings/`));
+  assert.doesNotMatch(html, /undefined/);
 });
 
 test("a booking id cannot climb out of the dashboard path or break the href attribute", () => {
   const email = emailFor(EVENTS[1], { booking_id: '../../admin"><img src=x>' });
   const html = renderBookingEmailHtml(email, APP_URL);
-  const links = [...new Set(hrefs(html))];
+  // The button and the footer both point at the booking, so dedupe first.
+  const bookingLinks = [
+    ...new Set(ceauteHrefs(html).filter((href) => href.includes("/dashboard/bookings/"))),
+  ];
 
-  assert.equal(links.length, 1);
-  assert.ok(links[0].startsWith("https://ceaute.example.test/dashboard/bookings/"));
-  assert.doesNotMatch(links[0], /\.\.\/|admin"/);
+  assert.equal(bookingLinks.length, 1);
+  assert.ok(bookingLinks[0].startsWith(`${APP_URL}/dashboard/bookings/`));
+  assert.doesNotMatch(bookingLinks[0], /\.\.\/|admin"/);
   assert.doesNotMatch(html, /<img/);
+});
+
+test("a provider username cannot break out of the profile link", () => {
+  const email = emailFor(EVENTS[2], { provider_username: '../admin"><img src=x>' });
+  const html = renderBookingEmailHtml(email, APP_URL);
+
+  assert.doesNotMatch(html, /<img/);
+  for (const href of ceauteHrefs(html)) {
+    assert.doesNotMatch(href, /\.\.\/|admin"/);
+  }
 });
 
 test("an unknown event type still renders with the generic subject", () => {
   const email = emailFor({ eventType: "something_new", role: "customer", cancellation: false });
+  const html = renderBookingEmailHtml(email, APP_URL);
 
   assert.equal(bookingEmailSubject(email), "Ceaute booking update");
-  assert.match(renderBookingEmailHtml(email, APP_URL), /<h1[^>]*>Ceaute booking update<\/h1>/);
+  assert.ok(visibleText(html).includes("Ceaute booking update"));
 });

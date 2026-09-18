@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="x-apple-disable-message-reformatting">
+<meta name="color-scheme" content="light only">
+<meta name="supported-color-schemes" content="light only">
+<title>Ceaute</title>
+<!--[if mso]><style>body,table,td{font-family:Arial,Helvetica,sans-serif !important}</style><![endif]-->
+<style>
+  @media (max-width:620px){
+    .card{padding:24px !important}
+    .h1{font-size:25px !important}
+    .time{font-size:38px !important}
+    .code{font-size:42px !important}
+    .btn{display:block !important;width:100% !important;box-sizing:border-box}
+    .btn-cell{display:block !important;width:100% !important;padding:0 0 8px 0 !important}
+  }
+</style>
+</head>
+<body style="margin:0;padding:0;background:#f0eee9;-webkit-text-size-adjust:100%">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent">{{appointment_day_short}} at {{start_time}} with {{provider_name}}. Address and what is due inside.&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f0eee9">
+<tr><td align="center" style="padding:24px 12px 40px">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:100%">
+
+<tr><td style="padding:0 8px 14px;font:600 12px -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:#8c2b52">ceaute</td></tr>
+
+<tr><td>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#ffffff;border:1px solid #e4e2df;border-radius:14px">
+<tr><td class="card" style="padding:36px">
+<div class="h1" style="font:600 30px/1.14 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;letter-spacing:-.8px;color:#0b0b0b;max-width:440px">{{customer_first_name}}, you’re booked with {{provider_name}}.</div>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:26px">
+<tr>
+<td valign="bottom" style="padding:0">
+<div style="font:500 15px -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#5c5c5c">{{appointment_day_long}}</div>
+<div class="time" style="padding-top:2px;font:600 46px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;letter-spacing:-1.6px;color:#0b0b0b">{{start_time}}</div>
+</td>
+<td valign="bottom" style="padding:0 0 6px 20px;font:400 14px -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#6e6e6e;white-space:nowrap">until {{end_time}} · {{duration}}</td>
+</tr></table>
+<div style="height:1px;line-height:1px;font-size:0;background:#e4e2df;margin:22px 0 0">&nbsp;</div><div style="padding-top:22px;font:400 15px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#0b0b0b">{{treatment_name}}{{#add_ons}} with {{add_ons_list}}{{/add_ons}}.</div><div style="height:1px;line-height:1px;font-size:0;background:#e4e2df;margin:22px 0 22px">&nbsp;</div><div style="font:400 15px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#0b0b0b">{{address_single_line}}</div><div style="padding-top:4px;font:400 14px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#5c5c5c">{{access_instructions}}</div>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:18px"><tr>
+<td class="btn-cell" style="padding:0 10px 0 0">
+<a class="btn" href="https://www.google.com/maps/search/?api=1&query={{address_urlencoded}}" style="display:inline-block;background:#8c2b52;color:#ffffff;border-radius:10px;padding:13px 24px;font:600 15px -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;text-decoration:none;text-align:center">Directions</a>
+</td>
+<td class="btn-cell" style="padding:0">
+<a class="btn" href="{{booking_url}}" style="display:inline-block;border:1px solid #d0cecb;color:#0b0b0b;border-radius:10px;padding:12px 24px;font:600 15px -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;text-decoration:none;text-align:center">View booking</a>
+</td>
+</tr></table>
+<div style="height:1px;line-height:1px;font-size:0;background:#e4e2df;margin:26px 0 20px">&nbsp;</div>
+<div style="font:400 14px/1.7 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#5c5c5c"><span style="color:#0b0b0b;font-weight:500">{{amount_paid}} paid. {{amount_due}} due on the day.</span><br>Free cancellation until {{cancellation_deadline_long}}.</div>
+</td></tr>
+</table>
+</td></tr>
+
+<tr><td style="padding:18px 8px 2px;font:400 12px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#6e6e6e"><a href="{{booking_url}}" style="color:#6e6e6e;text-decoration:none">{{booking_url_display}}</a><br>You are receiving this email because of a booking made through Ceaute.</td></tr>
+
+</table>
+</td></tr></table>
+</body></html>

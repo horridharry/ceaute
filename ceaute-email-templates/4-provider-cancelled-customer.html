@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="x-apple-disable-message-reformatting">
+<meta name="color-scheme" content="light only">
+<meta name="supported-color-schemes" content="light only">
+<title>Ceaute</title>
+<!--[if mso]><style>body,table,td{font-family:Arial,Helvetica,sans-serif !important}</style><![endif]-->
+<style>
+  @media (max-width:620px){
+    .card{padding:24px !important}
+    .h1{font-size:25px !important}
+    .time{font-size:38px !important}
+    .code{font-size:42px !important}
+    .btn{display:block !important;width:100% !important;box-sizing:border-box}
+    .btn-cell{display:block !important;width:100% !important;padding:0 0 8px 0 !important}
+  }
+</style>
+</head>
+<body style="margin:0;padding:0;background:#f0eee9;-webkit-text-size-adjust:100%">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent">{{provider_name}} cancelled your {{appointment_weekday}} appointment. Full refund on its way.&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f0eee9">
+<tr><td align="center" style="padding:24px 12px 40px">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:100%">
+
+<tr><td style="padding:0 8px 14px;font:600 12px -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:#8c2b52">ceaute</td></tr>
+
+<tr><td>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#ffffff;border:1px solid #e4e2df;border-radius:14px">
+<tr><td class="card" style="padding:36px">
+<div class="h1" style="font:600 30px/1.14 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;letter-spacing:-.8px;color:#0b0b0b;max-width:440px">{{provider_name}} cancelled your {{appointment_weekday}} appointment.</div><div style="padding-top:14px;font:400 15px/1.65 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#5c5c5c">{{treatment_name}} on {{appointment_date}} at {{start_time}} is off, and your full {{refund_amount}} is being refunded — a provider cancellation never keeps anything.</div>
+<div style="height:1px;line-height:1px;font-size:0;background:#e4e2df;margin:26px 0 20px">&nbsp;</div>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
+<td width="20" valign="top" style="padding:6px 11px 0 0"><div style="width:9px;height:9px;line-height:9px;font-size:0;border-radius:50%;background:#b3261e">&nbsp;</div></td>
+<td valign="top">
+<div style="font:500 15px -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#0b0b0b">The first refund attempt failed. Ceaute is retrying it.</div>
+<div style="padding-top:3px;font:400 14px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#5c5c5c">Nothing is needed from you. The retry runs automatically and support is alerted if it fails again.</div>
+</td></tr></table><div style="height:1px;line-height:1px;font-size:0;background:#e4e2df;margin:24px 0 20px">&nbsp;</div><div style="font:400 15px/1.65 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#0b0b0b">{{alternatives_sentence}}</div>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:18px"><tr>
+<td class="btn-cell" style="padding:0 10px 0 0">
+<a class="btn" href="{{discover_url}}" style="display:inline-block;background:#8c2b52;color:#ffffff;border-radius:10px;padding:13px 24px;font:600 15px -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;text-decoration:none;text-align:center">Find another time</a>
+</td>
+<td class="btn-cell" style="padding:0">
+<a class="btn" href="{{booking_url}}" style="display:inline-block;border:1px solid #d0cecb;color:#0b0b0b;border-radius:10px;padding:12px 24px;font:600 15px -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;text-decoration:none;text-align:center">View booking</a>
+</td>
+</tr></table>
+</td></tr>
+</table>
+</td></tr>
+
+<tr><td style="padding:18px 8px 2px;font:400 12px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#6e6e6e"><a href="{{booking_url}}" style="color:#6e6e6e;text-decoration:none">{{booking_url_display}}</a><br>You are receiving this email because of a booking made through Ceaute.</td></tr>
+
+</table>
+</td></tr></table>
+</body></html>
