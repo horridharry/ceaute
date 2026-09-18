@@ -162,7 +162,7 @@ test("nothing is claimed when email delivery is not configured", async () => {
   assert.equal(requests.length, 0);
 });
 
-test("a provider confirmation email carries the customer contact details and the exact address", async () => {
+test("a provider confirmation email carries the customer contact details but not her own address", async () => {
   const supabase = fakeSupabase([
     outboxEmail({
       recipient_role: "provider",
@@ -177,10 +177,13 @@ test("a provider confirmation email carries the customer contact details and the
   const { text, html } = requests[0].body;
   assert.match(text, /Customer email: customer@example.test/);
   assert.match(text, /Customer phone: \+447700900123/);
-  assert.match(text, /Address: 12 Private Street, London, E1 6AN/);
-  assert.match(text, /Access instructions: Ring the top bell/);
+  // B4: she does not need to be told her own street.
+  assert.doesNotMatch(text, /Address: 12 Private Street/);
+  assert.doesNotMatch(text, /Access instructions: Ring the top bell/);
+  assert.doesNotMatch(html, /12 Private Street/);
+  assert.match(text, /Paid to your Stripe: /);
+  assert.match(text, /Collect on the day: /);
   assert.match(text, /View booking: https:\/\/ceaute.example.test\/dashboard\/bookings\/booking-1/);
-  assert.match(html, /12 Private Street/);
 });
 
 test("a customer confirmation email links to the customer booking and omits the customer contact lines", async () => {

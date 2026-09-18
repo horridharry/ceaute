@@ -106,7 +106,7 @@ for (const event of EVENTS) {
       const [label, ...rest] = entry.split(": ");
       const value = rest.join(": ");
 
-      if (label === "View booking") {
+      if (label === "View booking" || label === "Find another time") {
         continue;
       }
 
@@ -134,7 +134,13 @@ for (const event of EVENTS) {
       assert.doesNotMatch(html, /\+447700900123/);
     }
 
-    assert.ok(text.endsWith(`View booking: ${expectedUrl}`));
+    // B5: a customer whose provider cancelled is offered a way forward.
+    const expectedLabel =
+      event.eventType === "provider_cancelled_customer"
+        ? "Find another time"
+        : "View booking";
+
+    assert.ok(text.endsWith(`${expectedLabel}: ${expectedUrl}`));
     assert.ok(hrefs(html).length > 0);
     assert.deepEqual([...new Set(hrefs(html))], [expectedUrl]);
     assert.ok(!html.includes(otherUrl));
@@ -163,13 +169,26 @@ for (const event of EVENTS) {
         assert.doesNotMatch(alternative, /Booking confirmed/);
       }
     } else {
-      assert.match(text, /Address: 12 Private Street, Flat 3, London, E1 6AN/);
-      assert.match(text, /Access instructions: Ring the top bell/);
       assert.match(text, /Cancellation deadline: .*19 Oct/);
       assert.match(visible, /Booking confirmed/);
-      assert.match(visible, /Address\s+12 Private Street, Flat 3, London, E1 6AN/);
-      assert.match(visible, /Access instructions\s+Ring the top bell/);
       assert.match(visible, /Cancellation deadline\s+\S.*19 Oct/);
+
+      if (event.role === "provider") {
+        // B4: the provider is not told her own street, and her payment rows
+        // read from her side.
+        for (const alternative of [text, visible]) {
+          assert.doesNotMatch(alternative, /12 Private Street|Flat 3|E1 6AN/);
+          assert.doesNotMatch(alternative, /Ring the top bell/);
+        }
+        assert.match(text, /Paid to your Stripe: £50\.00/);
+        assert.match(text, /Collect on the day: £25\.00/);
+      } else {
+        assert.match(text, /Address: 12 Private Street, Flat 3, London, E1 6AN/);
+        assert.match(text, /Access instructions: Ring the top bell/);
+        assert.match(visible, /Address\s+12 Private Street, Flat 3, London, E1 6AN/);
+        assert.match(visible, /Access instructions\s+Ring the top bell/);
+        assert.match(text, /Amount paid: £50\.00/);
+      }
 
       for (const alternative of [text, html]) {
         assert.doesNotMatch(alternative, /Refund|Retained|Cancelled by/);
@@ -245,7 +264,12 @@ test("every dynamic field is HTML-escaped", () => {
   ];
 
   for (const field of fields) {
-    const html = renderBookingEmailHtml(emailFor(EVENTS[1], { [field]: attack }), APP_URL);
+    // EVENTS[0] is the customer confirmation, the one email that carries every
+    // field in this list — a provider confirmation has no address panel.
+    const event = ["customer_email", "customer_phone"].includes(field)
+      ? EVENTS[1]
+      : EVENTS[0];
+    const html = renderBookingEmailHtml(emailFor(event, { [field]: attack }), APP_URL);
 
     assert.doesNotMatch(html, /<script/, `${field} injected markup`);
     assert.ok(html.includes(escaped), `${field} was not escaped`);

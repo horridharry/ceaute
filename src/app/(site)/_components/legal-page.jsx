@@ -44,12 +44,26 @@ export function LegalPage({ title, summary, updated, draft = false, children }) 
 
         <div className="legal-prose mt-8 flex flex-col gap-8">{children}</div>
 
-        <Link
-          href="/"
-          className="mt-10 w-max text-sm font-semibold text-plum duration-200 hover:text-plum-hover"
-        >
-          Back to Ceaute
-        </Link>
+        <div className="mt-10 flex items-center gap-5 border-t border-black/8 pt-6">
+          <Link
+            href="/privacy"
+            className="text-[12.5px] font-medium text-black/45 transition duration-150 ease-out hover:text-ink"
+          >
+            Privacy
+          </Link>
+          <Link
+            href="/terms"
+            className="text-[12.5px] font-medium text-black/45 transition duration-150 ease-out hover:text-ink"
+          >
+            Terms
+          </Link>
+          <Link
+            href="/discover"
+            className="text-[12.5px] font-medium text-plum transition duration-150 ease-out hover:text-plum-hover"
+          >
+            Back to Ceaute
+          </Link>
+        </div>
         </div>
       </main>
     </>

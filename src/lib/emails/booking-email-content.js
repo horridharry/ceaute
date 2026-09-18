@@ -16,6 +16,15 @@ const EVENT_TITLES = {
 };
 
 // HTML-only opening sentence; the plain-text alternative stays a list of facts.
+// The link label per event. Every email but one says "View booking"; a
+// customer whose provider cancelled needs a way forward, not a way back to a
+// booking that is not happening. There is no "three others are free" line: it
+// would need an availability query across providers that does not exist.
+const EVENT_ACTION_LABELS = {
+  provider_cancelled_customer: "Find another time",
+};
+const DEFAULT_ACTION_LABEL = "View booking";
+
 const EVENT_INTROS = {
   booking_confirmed_customer:
     "You're all booked in. Here is everything you need for your appointment.",
@@ -26,7 +35,7 @@ const EVENT_INTROS = {
   customer_cancelled_provider:
     "The customer cancelled this booking. The refund details are below.",
   provider_cancelled_customer:
-    "Your provider cancelled this booking. Your refund details are below.",
+    "Your provider cancelled this booking. Your full payment is being refunded — a provider cancellation never retains anything.",
   provider_cancelled_provider:
     "You cancelled this booking. The customer's refund details are below.",
 };
@@ -138,25 +147,44 @@ export function buildBookingEmailContent(email, appUrl) {
   if (!isCancellation) {
     sections.push(
       section("Payment", [
-        row("Amount paid", formatMoneyFromPence(payload.amount_paid_pence)),
-        row("Due at appointment", formatMoneyFromPence(payload.amount_due_later_pence)),
+        row(
+          isProvider ? "Paid to your Stripe" : "Amount paid",
+          formatMoneyFromPence(payload.amount_paid_pence),
+        ),
+        row(
+          isProvider ? "Collect on the day" : "Due at appointment",
+          formatMoneyFromPence(payload.amount_due_later_pence),
+        ),
         row("Cancellation deadline", formatSingleDateTime(payload.cancellation_deadline_at)),
       ]),
-      section(
-        "Where",
-        [
-          row("Address", address.join(", ")),
-          row("Access instructions", payload.access_instructions),
-        ],
-        { highlight: true },
-      ),
     );
+
+    // B4: the provider does not need to be told her own street. The address
+    // panel is for the customer only.
+    if (!isProvider) {
+      sections.push(
+        section(
+          "Where",
+          [
+            row("Address", address.join(", ")),
+            row("Access instructions", payload.access_instructions),
+          ],
+          { highlight: true },
+        ),
+      );
+    }
   } else {
     // The private address is deliberately absent from cancellation emails.
     sections.push(
       section("Payment", [
-        row("Amount paid", formatMoneyFromPence(payload.amount_paid_pence)),
-        row("Due at appointment", formatMoneyFromPence(payload.amount_due_later_pence)),
+        row(
+          isProvider ? "Paid to your Stripe" : "Amount paid",
+          formatMoneyFromPence(payload.amount_paid_pence),
+        ),
+        row(
+          isProvider ? "Collect on the day" : "Due at appointment",
+          formatMoneyFromPence(payload.amount_due_later_pence),
+        ),
       ]),
       section(
         "Cancellation and refund",
@@ -177,6 +205,8 @@ export function buildBookingEmailContent(email, appUrl) {
     badge: isCancellation ? "Booking cancelled" : "Booking confirmed",
     tone: isCancellation ? "neutral" : "positive",
     sections,
+    actionLabel:
+      EVENT_ACTION_LABELS[email.event_type] ?? DEFAULT_ACTION_LABEL,
     bookingUrl: safeBookingUrl(bookingPath(payload, isProvider), appUrl),
   };
 }
@@ -190,7 +220,7 @@ export function renderBookingEmailText(email, appUrl) {
     ...content.sections.flatMap((entry) =>
       entry.rows.map(({ label, value }) => `${label}: ${value}`),
     ),
-    `View booking: ${content.bookingUrl || "Unavailable"}`,
+    `${content.actionLabel}: ${content.bookingUrl || "Unavailable"}`,
   ].join("\n");
 }
 
@@ -205,7 +235,7 @@ export function renderBookingEmailHtml(email, appUrl) {
     intro: content.intro,
     sections: content.sections,
     action: content.bookingUrl
-      ? { label: "View booking", url: content.bookingUrl }
+      ? { label: content.actionLabel, url: content.bookingUrl }
       : null,
     footerNote:
       "You are receiving this email because of a booking made through Ceaute.",

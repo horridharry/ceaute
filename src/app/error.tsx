@@ -45,6 +45,10 @@ export default function RouteError({ error, reset }: RouteErrorProps) {
           That did not work
         </h1>
         <p className="mt-2 text-sm text-black/60">{copy.message}</p>
+        <p className="mt-4 border-y border-black/8 py-3 text-[12.5px]/[1.55] text-black/60">
+          If you were paying, no charge was taken unless you saw a confirmation.
+          Check Bookings before trying again.
+        </p>
         {copy.reference ? (
           <p className="mt-2 text-xs text-black/50">Reference: {copy.reference}</p>
         ) : null}
