@@ -45,6 +45,7 @@ export async function getPaymentSettings() {
     .maybeSingle();
 
   if (error) {
+    console.error("Failed to load provider payment account:", error);
     throw new Error("Could not load payment settings.");
   }
 
@@ -61,6 +62,7 @@ export async function getPaymentSettings() {
     });
 
   if (standingError) {
+    console.error("Failed to load provider financial standing:", standingError);
     throw new Error("Could not load payment settings.");
   }
 
@@ -74,7 +76,8 @@ export async function getPaymentSettings() {
     agreementAcceptedAt: standing?.out_agreement_accepted_at ?? null,
     restriction: describeProviderRestriction({
       outstandingPence: standing?.out_outstanding_pence ?? 0,
-      acceptedAgreementVersion: standing?.out_accepted_agreement_version ?? null,
+      acceptedAgreementVersion:
+        standing?.out_accepted_agreement_version ?? null,
     }),
   };
 }
@@ -134,7 +137,10 @@ export async function refreshPaymentStatus() {
   let account;
 
   try {
-    account = await retrieveStripeAccount(stripe, paymentAccount.stripe_account_id);
+    account = await retrieveStripeAccount(
+      stripe,
+      paymentAccount.stripe_account_id,
+    );
   } catch (stripeError) {
     if (!isStripeError(stripeError)) {
       throw stripeError;
