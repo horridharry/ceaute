@@ -2,6 +2,7 @@
 
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { resolveRequestOrigin } from "@/lib/app/origin";
 import { calculateBookingPaymentAmounts } from "@/lib/payments/booking-payments";
 import {
   PROVIDER_AGREEMENT_VERSION,
@@ -231,37 +232,6 @@ export async function getBookingHoldSummary(bookingId) {
   };
 }
 
-function getRequestOrigin(headerStore) {
-  // In Production, pin to the canonical origin. Stripe bakes success_url and
-  // cancel_url into the Session and they are persisted with the payment
-  // attempt, so a paying customer must not be returned to whatever host
-  // happened to serve the request. CEAUTE_APP_URL is already the canonical
-  // origin for booking emails.
-  //
-  // Preview and local deployments keep using the request origin, because there
-  // the whole point is to land back on the deployment under test.
-  const configuredOrigin = process.env.CEAUTE_APP_URL?.trim();
-
-  if (process.env.VERCEL_ENV === "production" && configuredOrigin) {
-    return configuredOrigin.replace(/\/+$/, "");
-  }
-
-  const origin = headerStore.get("origin");
-
-  if (origin) {
-    return origin;
-  }
-
-  const host = headerStore.get("host");
-  const protocol = headerStore.get("x-forwarded-proto") ?? "http";
-
-  if (!host) {
-    throw new Error("Could not determine checkout origin.");
-  }
-
-  return `${protocol}://${host}`;
-}
-
 function isDefinitiveStripeCheckoutCreationError(error) {
   const stripeErrorType = error?.type ?? error?.rawType;
 
@@ -455,7 +425,7 @@ export async function startStripeCheckoutForBooking(formData) {
   }
 
   const headerStore = await headers();
-  const origin = getRequestOrigin(headerStore);
+  const origin = resolveRequestOrigin(headerStore);
   const successUrl = `${origin}${returnPath}&checkout=success&session_id={CHECKOUT_SESSION_ID}`;
   const cancelUrl = `${origin}${returnPath}&checkout=cancelled`;
 

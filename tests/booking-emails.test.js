@@ -261,3 +261,28 @@ test("an email whose payload has no booking path shows the link as unavailable r
   assert.doesNotMatch(text, /undefined/);
   assert.doesNotMatch(html, /undefined/);
 });
+
+test("a booking email sent from a Preview deployment links back to that deployment", async () => {
+  const supabase = fakeSupabase([outboxEmail()]);
+  const { requests, fetchImpl } = fakeFetch(() => okResponse({ id: "m" }));
+
+  await deliverPendingBookingEmails({
+    supabase,
+    fetchImpl,
+    environment: {
+      ...environment,
+      CEAUTE_APP_URL: "https://ceaute.com",
+      VERCEL_ENV: "preview",
+      VERCEL_URL: "ceaute-git-feature-branch.vercel.app",
+    },
+  });
+
+  const { text, html } = requests[0].body;
+  assert.match(
+    text,
+    /View booking: https:\/\/ceaute-git-feature-branch\.vercel\.app\/account\/bookings\/booking-1/,
+  );
+  assert.match(html, /https:\/\/ceaute-git-feature-branch\.vercel\.app\/account\/bookings\/booking-1/);
+  assert.doesNotMatch(text, /https:\/\/ceaute\.com/);
+  assert.doesNotMatch(html, /https:\/\/ceaute\.com/);
+});
