@@ -1,6 +1,5 @@
 "use server";
 import { revalidatePath } from "next/cache";
-import { captureServerEvent } from "@/lib/posthog-server";
 import {
   getSignedInProvider,
   providerPageToFormValues,
@@ -120,7 +119,7 @@ export const updateProviderPage = async (_currentState, formData) => {
 // the outcome; PostgreSQL's publish_provider_page re-checks every requirement
 // and its rejection reason is what the provider needs to see.
 export const publishPage = async () => {
-  const { supabase, providerPage, user } = await getSignedInProvider({
+  const { supabase, providerPage } = await getSignedInProvider({
     next: "/dashboard/profile",
   });
 
@@ -150,15 +149,6 @@ export const publishPage = async () => {
   if (error) {
     return publicationFailure(error, "publish");
   }
-
-  await captureServerEvent({
-    distinctId: user.id,
-    event: "provider_page_published",
-    properties: {
-      provider_page_id: providerPage.id,
-      provider_category: providerPage.provider_category,
-    },
-  });
 
   revalidatePath("/", "layout");
   revalidatePath("/dashboard/profile");

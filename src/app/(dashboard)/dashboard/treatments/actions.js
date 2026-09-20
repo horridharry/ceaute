@@ -7,7 +7,6 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { captureServerEvent } from "@/lib/posthog-server";
 import { getOptionalId, getString } from "../_lib/form-values";
 import {
   durationToMinutes,
@@ -174,7 +173,7 @@ export async function getTreatmentFormOptions({
 }
 
 export async function createTreatment(_currentState, formData) {
-  const { supabase, providerPage, user } = await getSignedInProvider({
+  const { supabase, providerPage } = await getSignedInProvider({
     next: "/dashboard/treatments/new",
   });
   const result = await validateTreatmentForm({ formData, supabase, providerPage });
@@ -194,18 +193,6 @@ export async function createTreatment(_currentState, formData) {
   if (error) {
     return "Could not create the treatment.";
   }
-
-  await captureServerEvent({
-    distinctId: user.id,
-    event: "treatment_created",
-    properties: {
-      provider_page_id: providerPage.id,
-      discovery_category_id: result.values.discovery_category_id,
-      has_treatment_group: Boolean(result.values.treatment_group_id),
-      price_pence: result.values.price_pence,
-      duration_minutes: result.values.duration_minutes,
-    },
-  });
 
   refreshTreatmentPages();
   redirect("/dashboard/treatments");

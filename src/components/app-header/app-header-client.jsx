@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import posthog from "posthog-js";
 import { logoutUser } from "@/app/(authenticate)/actions";
 import { LinkPendingHint } from "@/components/link-pending-hint";
 import { PendingButton } from "@/components/pending-button";
@@ -50,7 +49,6 @@ function AccountMenu({ user, providerPage }) {
   const hasProviderPage = Boolean(providerPage);
   const closeMenu = () => setOpen(false);
   const logout = async () => {
-    posthog.reset();
     await logoutUser();
   };
 
@@ -147,16 +145,6 @@ export default function AppHeaderClient({ user, providerPage = null }) {
       providerPage &&
       (pathname.startsWith("/dashboard") || pathname === "/account/settings"),
   );
-
-  useEffect(() => {
-    if (user) {
-      posthog.identify(user.id, {
-        email: user.email,
-        name: user.name,
-        has_provider_page: Boolean(providerPage),
-      });
-    }
-  }, [providerPage, user]);
 
   if (hiddenHeaderPrefixes.some((prefix) => pathname.startsWith(prefix))) {
     return null;
