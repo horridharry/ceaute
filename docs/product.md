@@ -112,8 +112,9 @@ staleness is an accepted MVP trade-off, not a bug to design around.
 The public journey starts on the provider page. Selecting a treatment goes
 directly into its booking flow; there is no separate public `/services`
 catalogue or detail route. Compatible add-ons can be selected, then the customer
-chooses a time, signs in if necessary, supplies a name and UK phone number,
-reviews the terms, and continues to Stripe Checkout.
+chooses a time, signs in if necessary, supplies a name and UK phone number, and
+lands on the held booking, where they review the terms, optionally attach
+inspiration images, and continue to Stripe Checkout.
 
 Availability is derived rather than stored as slot rows. Each provider has at
 most one continuous working period per weekday plus whole blocked dates. A slot
@@ -135,6 +136,35 @@ hold. Starting Stripe Checkout durably records the request and extends the hold
 to the Checkout expiry, currently about 31 minutes. Expired holds no longer
 block the diary. PostgreSQL's exclusion constraint is the final protection
 against overlapping active bookings even when two requests race.
+
+## Inspiration images
+
+A customer may attach private reference pictures to their own booking, to show
+the provider the result they are after. The step sits on the held-booking
+checkout screen between the summary and the payment button, and it is optional
+in the strongest sense: nothing about payment depends on it, and the payment
+button is there whether or not an image has been added.
+
+A booking carries at most five images, each a JPEG, PNG or WebP of no more than
+10 MB. The screen says so before an upload starts, but the limits that decide
+are the Storage bucket's own and the table's own, so a request that skips the
+screen is refused just the same. The five numbered places per booking are why a
+sixth image cannot be added even by two uploads racing each other.
+
+The images belong to the customer. While the appointment is still ahead of them
+they may add, view and remove; once it is completed or cancelled the images
+become read-only and stay with the historical booking. The provider sees the
+images for an appointment they were actually engaged for, and only sees them —
+they cannot add, remove or replace a customer's pictures. Nobody else sees them
+at all. The bucket is private and reached through short-lived signed URLs, so
+there is no permanent public address for an image.
+
+Images attached to a booking that is never paid for are temporary. When the hold
+runs out or the booking is cancelled before it was ever confirmed, the scheduled
+booking-lifecycle route deletes both the files and their records, so entering
+the booking flow and walking away leaves nothing behind. Images on a booking
+that was paid for are kept with it; Ceaute has no retention or deletion policy
+for those yet, and that is deliberately deferred.
 
 ## Payments and booking history
 

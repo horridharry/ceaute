@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { BookingInspirationImages } from "@/components/booking-inspiration-images";
 import { PendingButton } from "@/components/pending-button";
 import { cancelProviderBooking, getProviderBooking } from "../actions";
 
@@ -153,6 +154,13 @@ export default async function BookingDetailPage({ params }) {
           </div>
 
           <ExactLocation booking={booking} />
+
+          <BookingInspirationImages
+            images={booking.inspiration_images}
+            allowance={null}
+            canManage={false}
+            description="The customer's reference pictures for this appointment. Only they can change them."
+          />
 
           <div className="mt-4 border-t pt-4">
             <p className="font-semibold">Cancellation terms</p>

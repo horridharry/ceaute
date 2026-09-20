@@ -1,6 +1,18 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  experimental: {
+    serverActions: {
+      // Images reach the server as Server Action form data, and Next's default
+      // ceiling for that is 1 MB — below the 10 MB an inspiration image and the
+      // 5 MB a portfolio image are each allowed to be, so without this the
+      // limits the product states could never actually be used. The headroom
+      // over 10 MB is multipart overhead and the few small fields beside the
+      // file. The real per-image limits stay where they are enforced: on the
+      // Storage buckets and in the database.
+      bodySizeLimit: "11mb",
+    },
+  },
   async redirects() {
     return [
       {

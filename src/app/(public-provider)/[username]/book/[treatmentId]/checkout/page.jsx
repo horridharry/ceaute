@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
+import { BookingInspirationImages } from "@/components/booking-inspiration-images";
 import { PendingButton } from "@/components/pending-button";
 import { calculateBookingPaymentAmounts } from "@/lib/payments/booking-payments";
 import { createClient } from "@/lib/supabase/server";
@@ -9,6 +10,11 @@ import {
   getBookingHoldSummary,
   startStripeCheckoutForBooking,
 } from "../../actions";
+import {
+  addBookingImagesDuringCheckout,
+  getBookingInspirationImages,
+  removeBookingImageDuringCheckout,
+} from "../../inspiration-actions";
 import { describeCheckoutPaymentNotice } from "../../_lib/checkout-payment-notice";
 import { getPublicBookingDetailsPage } from "../../../_lib/public-provider-data";
 import {
@@ -306,6 +312,7 @@ export default async function BookingCheckoutPage({ params, searchParams }) {
 
     const paymentAmounts = calculateBookingPaymentAmounts(serviceSnapshot);
     const displayState = getBookingDisplayState(holdSummary);
+    const inspiration = await getBookingInspirationImages(holdSummary.id);
     const paymentNotice = describeCheckoutPaymentNotice(
       firstSearchValue(resolvedSearchParams?.payment),
     );
@@ -445,6 +452,27 @@ export default async function BookingCheckoutPage({ params, searchParams }) {
                 </p>
               ) : null}
             </div>
+          </section>
+
+          <section className="mt-8 rounded-xl border p-4">
+            <BookingInspirationImages
+              images={inspiration.images}
+              allowance={inspiration.allowance}
+              canManage={displayState.canPay && !inspiration.unavailable}
+              addAction={addBookingImagesDuringCheckout}
+              removeAction={removeBookingImageDuringCheckout}
+              hiddenFields={{
+                booking_id: holdSummary.id,
+                return_path: returnPath,
+              }}
+              description={
+                inspiration.unavailable
+                  ? "Inspiration images cannot be shown right now. This does not affect your booking or your payment, and you can add images later from your booking details."
+                  : displayState.canPay
+                    ? "Optional. If you have a picture of the result you want, add it for your provider. You can go straight to payment without one, and add or change images later."
+                    : "Images attached to this booking."
+              }
+            />
           </section>
 
           {displayState.canPay ? (

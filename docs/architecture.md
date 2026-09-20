@@ -47,7 +47,8 @@ trade-offs behind this shape are in
 | Payment disputes | `POST /api/stripe/payments`, `GET /api/operator/disputes` | `src/lib/payments/disputes.js` (event mapping), `refund-settlement.js` (economics, off the live path) | `record_stripe_dispute`, `list_booking_disputes` |
 | Booking views | `/account/bookings`, `/dashboard/bookings` | each route's `actions.js`, `src/lib/bookings/booking-display.js`, `booking-payment-attempts.js` | `get_customer_booking_summaries`, `get_provider_booking_summaries` (redaction) |
 | Cancellation and refund | same booking routes, `GET /api/cron/recover-booking-refunds` | `src/lib/bookings/cancel-booking.js`, `src/lib/payments/refunds.js`, `refund-request.js`, `refund-recovery.js` | `prepare_booking_cancellation`, `claim_booking_refund_operation`, `record_booking_refund_state`, `list_retryable_booking_refund_operations` |
-| Completion and reviews | `GET /api/cron/complete-bookings`, `/account/bookings/[bookingId]` | `api/cron/*`, `account/bookings/actions.js` | `complete_elapsed_bookings`, `create_booking_review` |
+| Inspiration images | `/@[username]/book/[treatmentId]/checkout`, `/account/bookings/[bookingId]`, `/dashboard/bookings/[bookingId]` | `book/inspiration-actions.js`, `account/bookings/actions.js`, `src/lib/bookings/booking-inspiration-images.js` | `booking_inspiration_image` RLS, `can_manage_booking_inspiration_images`, `can_view_booking_inspiration_images`, `add_booking_inspiration_image`, private storage bucket |
+| Completion and abandoned-image cleanup, reviews | `GET /api/cron/complete-bookings`, `/account/bookings/[bookingId]` | `api/cron/*`, `src/lib/bookings/discard-inspiration-images.js`, `account/bookings/actions.js` | `complete_elapsed_bookings`, `list_discardable_booking_inspiration_images`, `discard_booking_inspiration_images`, `create_booking_review` |
 | Transactional email | `GET /api/cron/send-booking-emails` | `src/lib/emails/booking-emails.js` (delivery), `booking-email-content.js` (text and HTML content), `email-layout.js` (shared HTML layout) | outbox rows enqueued by booking transitions; `claim_pending_booking_emails` |
 | Scheduling | Supabase Cron | migration `202609150001` | `invoke_cron_endpoint` via `pg_cron` and `pg_net` |
 
@@ -172,6 +173,14 @@ feedback comes from route-level `loading.js` files plus `LinkPendingHint`
 inside navigation links for the slow-network case. Expected external failures,
 such as Stripe being unavailable during Connect onboarding, are returned to the
 screen as messages; unexpected errors still throw.
+
+Images reach the server as Server Action form data, and Next's default ceiling
+for a Server Action body is 1 MB — under both the 5 MB a portfolio image and the
+10 MB an inspiration image are allowed to be. `next.config.ts` therefore raises
+`experimental.serverActions.bodySizeLimit` to `11mb`. That is a ceiling for
+every action, not a per-image limit: the limits that decide are the ones on the
+Storage buckets and in the database, and they are what a request bypassing the
+screen meets.
 
 Cross-route workflows live under `src/lib`: booking cancellation coordinates a
 database cancellation with refund processing; payment modules calculate and

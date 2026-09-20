@@ -1,9 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { BookingInspirationImages } from "@/components/booking-inspiration-images";
 import { PendingButton } from "@/components/pending-button";
 import {
+  addBookingInspirationImages,
   cancelCustomerBooking,
   getCustomerBooking,
+  removeBookingInspirationImageAction,
   submitBookingReview,
 } from "../actions";
 
@@ -222,6 +225,20 @@ export default async function CustomerBookingPage({ params }) {
           ) : null}
 
           <ExactLocation booking={booking} />
+
+          <BookingInspirationImages
+            images={booking.inspiration_images}
+            allowance={booking.inspiration_allowance}
+            canManage={booking.can_manage_inspiration_images}
+            addAction={addBookingInspirationImages}
+            removeAction={removeBookingInspirationImageAction}
+            hiddenFields={{ booking_id: booking.booking_id }}
+            description={
+              booking.can_manage_inspiration_images
+                ? "Optional pictures of the result you want, shared only with your provider."
+                : "The pictures shared with your provider for this appointment. They cannot be changed now."
+            }
+          />
 
           <div className="mt-4 border-t pt-4">
             <p className="font-semibold">Cancellation terms</p>

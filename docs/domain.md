@@ -83,6 +83,11 @@ from one payment attempt. It has stable identity and can move through requested,
 processing, pending, succeeded, failed, or manual-review states without losing
 the booking's cancellation decision.
 
+An **inspiration image** is a private reference picture the customer attaches to
+their own booking to show the provider the result they want. It belongs to the
+booking, not to either person's profile, and it is never public. A booking can
+carry up to five. They are optional: a booking with none is an ordinary booking.
+
 A **review** is one rating and optional comment from the booking's customer for
 a completed appointment. A booking has at most one review. Review visibility is
 moderated separately from its existence so trust history is not deleted.
@@ -98,6 +103,7 @@ User ── 1 Profile ── 0..1 Provider Page
           │                 └── Stripe recipient account
           │
           └── customer on Bookings ── Payment Attempts ── Refund Operations
+                              ├── 0..5 Inspiration Images
                               └── 0..1 Review
 ```
 

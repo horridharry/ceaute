@@ -1,6 +1,7 @@
 "use server";
 import { getSignedInProvider } from "../_lib/provider-data";
 import { cancelBookingWithRefund } from "@/lib/bookings/cancel-booking";
+import { listBookingInspirationImages } from "@/lib/bookings/booking-inspiration-images";
 import {
   bookingToDisplayBooking,
   groupBookingsByTiming,
@@ -52,11 +53,17 @@ export const getProviderBooking = async (bookingId) => {
     return null;
   }
 
-  const latestPaymentAttempts = await getLatestPaymentAttemptsForBookings([
-    booking.id,
+  const [latestPaymentAttempts, inspirationImages] = await Promise.all([
+    getLatestPaymentAttemptsForBookings([booking.id]),
+    // Read only, and only for an appointment this provider was engaged for.
+    // ceaute.can_view_booking_inspiration_images decides that, not this call.
+    listBookingInspirationImages({ supabase, bookingId: booking.id }),
   ]);
 
-  return bookingToDisplayBooking(booking, latestPaymentAttempts.get(booking.id));
+  return {
+    ...bookingToDisplayBooking(booking, latestPaymentAttempts.get(booking.id)),
+    inspiration_images: inspirationImages,
+  };
 };
 
 export const cancelProviderBooking = async (formData) => {

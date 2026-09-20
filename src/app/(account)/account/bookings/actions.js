@@ -3,6 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { cancelBookingWithRefund } from "@/lib/bookings/cancel-booking";
+import {
+  addBookingInspirationImagesFromFiles,
+  describeInspirationImageAllowance,
+  listBookingInspirationImages,
+  removeBookingInspirationImage,
+} from "@/lib/bookings/booking-inspiration-images";
 import { createClient } from "@/lib/supabase/server";
 import {
   bookingToDisplayBooking,
@@ -83,10 +89,76 @@ export async function getCustomerBooking(bookingId) {
     throw new Error("Could not load review details.");
   }
 
+  const inspirationImages = await listBookingInspirationImages({
+    supabase,
+    bookingId: booking.id,
+  });
+  const displayBooking = bookingToDisplayBooking(
+    booking,
+    latestPaymentAttempts.get(booking.id),
+  );
+
   return {
-    ...bookingToDisplayBooking(booking, latestPaymentAttempts.get(booking.id)),
+    ...displayBooking,
     review: reviewResult.data ?? null,
+    inspiration_images: inspirationImages,
+    inspiration_allowance: describeInspirationImageAllowance(
+      inspirationImages.length,
+    ),
+    // Read-only once the appointment is history, and read-only for a hold: a
+    // hold is managed on the checkout screen, which knows whether it has run
+    // out. This screen has no expiry to check, and offering a control the
+    // database would refuse is worse than not offering it.
+    can_manage_inspiration_images: displayBooking.status === "confirmed",
   };
+}
+
+export async function addBookingInspirationImages(_currentState, formData) {
+  const bookingId = String(formData.get("booking_id") ?? "").trim();
+
+  if (!bookingId) {
+    return "Could not add images to this booking.";
+  }
+
+  const { supabase } = await getSignedInCustomer(
+    `/account/bookings/${bookingId}`,
+  );
+  const message = await addBookingInspirationImagesFromFiles({
+    supabase,
+    bookingId,
+    files: formData.getAll("image"),
+  });
+
+  revalidatePath(`/account/bookings/${bookingId}`);
+  return message;
+}
+
+export async function removeBookingInspirationImageAction(
+  _currentState,
+  formData,
+) {
+  const bookingId = String(formData.get("booking_id") ?? "").trim();
+  const imageId = String(formData.get("image_id") ?? "").trim();
+
+  if (!bookingId || !imageId) {
+    return "Could not remove that image.";
+  }
+
+  const { supabase } = await getSignedInCustomer(
+    `/account/bookings/${bookingId}`,
+  );
+  const result = await removeBookingInspirationImage({
+    supabase,
+    bookingId,
+    imageId,
+  });
+
+  if (result.error) {
+    return result.error;
+  }
+
+  revalidatePath(`/account/bookings/${bookingId}`);
+  return "Image removed.";
 }
 
 export async function cancelCustomerBooking(formData) {
