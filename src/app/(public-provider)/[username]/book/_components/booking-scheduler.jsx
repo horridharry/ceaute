@@ -77,7 +77,7 @@ export default function BookingScheduler({
         <div className="flex items-center gap-1">
           <button
             type="button"
-            className="rounded-full p-1.5 px-3 text-sm font-medium text-pink-700 duration-200 hover:bg-pink-100 active:underline"
+            className="rounded-full p-1.5 px-3 text-sm font-medium text-accent-700 duration-200 hover:bg-accent-100 active:underline"
             onClick={() =>
               setCalendarStartIndex((currentIndex) =>
                 Math.max(0, currentIndex - CALENDAR_DAY_COUNT),
@@ -90,7 +90,7 @@ export default function BookingScheduler({
 
           <button
             type="button"
-            className="rounded-full p-1.5 px-3 text-sm font-medium text-pink-700 duration-200 hover:bg-pink-100 active:underline"
+            className="rounded-full p-1.5 px-3 text-sm font-medium text-accent-700 duration-200 hover:bg-accent-100 active:underline"
             onClick={() =>
               setCalendarStartIndex((currentIndex) =>
                 Math.min(
@@ -124,7 +124,7 @@ export default function BookingScheduler({
                   onClick={() => handleSlotSelection(slot)}
                   disabled={busy}
                   aria-busy={pendingSlot === slot.start_at ? true : undefined}
-                  className="w-full rounded-lg border border-gray-200 p-4 text-sm font-medium duration-200 hover:border-black/30 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 aria-busy:border-pink-600 aria-busy:opacity-100"
+                  className="w-full rounded-lg border border-gray-200 p-4 text-sm font-medium duration-200 hover:border-black/30 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 aria-busy:border-accent-600 aria-busy:opacity-100"
                 >
                   {pendingSlot === slot.start_at ? "Choosing..." : slot.local_time}
                 </button>

@@ -66,7 +66,7 @@ export function VerifyCodeForm({
             maxLength={EMAIL_OTP_LENGTH + 4}
             required
             autoFocus
-            className="w-full min-w-0 appearance-none rounded-lg border border-black/10 p-3 text-center text-2xl font-semibold tracking-[0.4em] outline-none ring-2 ring-transparent duration-200 hover:border-black/20 focus:border-pink-500 focus:ring-pink-100"
+            className="w-full min-w-0 appearance-none rounded-lg border border-black/10 p-3 text-center text-2xl font-semibold tracking-[0.4em] outline-none ring-2 ring-transparent duration-200 hover:border-black/20 focus:border-accent-600 focus:ring-accent-100"
           />
 
           {state?.message ? (
@@ -81,7 +81,7 @@ export function VerifyCodeForm({
           ) : null}
           <button
             type="submit"
-            className="mt-4 cursor-pointer rounded-lg bg-pink-800 p-3 text-sm font-semibold text-white duration-200 hover:bg-pink-900 disabled:cursor-not-allowed disabled:opacity-30 aria-disabled:cursor-not-allowed aria-disabled:opacity-30
+            className="mt-4 cursor-pointer rounded-lg bg-accent-700 p-3 text-sm font-semibold text-white duration-200 hover:bg-accent-700 disabled:cursor-not-allowed disabled:opacity-30 aria-disabled:cursor-not-allowed aria-disabled:opacity-30
       active:opacity-60"
             aria-disabled={pending}
             disabled={pending}
@@ -97,7 +97,7 @@ export function VerifyCodeForm({
               value="resend"
               formNoValidate
               disabled={!canResend}
-              className="cursor-pointer text-pink-600 duration-200 hover:text-pink-700 disabled:cursor-not-allowed disabled:text-black/40"
+              className="cursor-pointer text-accent-600 duration-200 hover:text-accent-700 disabled:cursor-not-allowed disabled:text-black/40"
             >
               {secondsLeft ? `Resend in ${secondsLeft}s` : "Resend code"}
             </button>
@@ -106,7 +106,7 @@ export function VerifyCodeForm({
         <p className="mt-3 text-sm">
           <Link
             href={changeEmailHref}
-            className="text-pink-600 duration-200 hover:text-pink-700"
+            className="text-accent-600 duration-200 hover:text-accent-700"
           >
             Use a different email
           </Link>

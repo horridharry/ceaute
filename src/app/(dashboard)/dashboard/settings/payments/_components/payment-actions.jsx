@@ -35,7 +35,7 @@ export function PaymentActions({
               type="submit"
               disabled={!configured || busy}
               aria-disabled={!configured || busy}
-              className="rounded-lg border border-black/10 p-3 px-4 text-sm font-semibold text-pink-600 duration-200 hover:border-black/20 disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-lg border border-black/10 p-3 px-4 text-sm font-semibold text-accent-600 duration-200 hover:border-black/20 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {refreshPending ? "Refreshing..." : "Refresh status"}
             </button>
@@ -47,7 +47,7 @@ export function PaymentActions({
               type="submit"
               disabled={!configured || busy}
               aria-disabled={!configured || busy}
-              className="rounded-lg bg-pink-700 p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-pink-800 disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-lg bg-accent-700 p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-accent-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {onboardingPending
                 ? "Connecting..."

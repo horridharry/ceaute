@@ -486,7 +486,7 @@ export default async function BookingCheckoutPage({ params, searchParams }) {
                 <input type="hidden" name="return_path" value={returnPath} />
                 <PendingButton
                   pendingLabel="Opening Stripe..."
-                  className="w-max rounded-lg bg-pink-700 p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-pink-800 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="w-max rounded-lg bg-accent-700 p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-accent-700 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   Pay with Stripe
                 </PendingButton>
@@ -688,7 +688,7 @@ const SubmitButton = () => {
     <PendingButton
       form="booking_details"
       pendingLabel="Continuing..."
-      className="w-max rounded-lg bg-pink-700 p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-pink-800 disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+      className="w-max rounded-lg bg-accent-700 p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-accent-700 disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
     >
       Continue
     </PendingButton>

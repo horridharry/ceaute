@@ -37,7 +37,7 @@ export function CatalogueSectionNav() {
         <h1 className="text-3xl font-bold tracking-tighter">Catalogue</h1>
         <Link
           href={activeSection.newHref}
-          className="shrink-0 rounded-full px-3 py-2 text-sm font-semibold text-pink-600 hover:bg-pink-50"
+          className="shrink-0 rounded-full px-3 py-2 text-sm font-semibold text-accent-600 hover:bg-accent-50"
         >
           + New
           <LinkPendingHint />

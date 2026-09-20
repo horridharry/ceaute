@@ -86,7 +86,7 @@ export function BookingSettingsForm({ settings, updateBookingSettings }) {
                 inputMode="decimal"
                 value={commitmentAmount}
                 onChange={updateCommitmentAmount}
-                className="relative w-full appearance-none rounded-lg border border-black/10 p-2.5 pl-8 outline-none ring-2 ring-transparent duration-200 hover:border-black/20 focus:border-pink-500 focus:ring-pink-100"
+                className="relative w-full appearance-none rounded-lg border border-black/10 p-2.5 pl-8 outline-none ring-2 ring-transparent duration-200 hover:border-black/20 focus:border-accent-600 focus:ring-accent-100"
               />
             </div>
           </span>
@@ -132,7 +132,7 @@ export function BookingSettingsForm({ settings, updateBookingSettings }) {
               type="submit"
               disabled={pending || Boolean(moneyError)}
               aria-disabled={pending || Boolean(moneyError)}
-              className="w-max rounded-lg bg-pink-700 p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-pink-800 disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+              className="w-max rounded-lg bg-accent-700 p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-accent-700 disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
             >
               {pending ? "Saving..." : "Save"}
             </button>

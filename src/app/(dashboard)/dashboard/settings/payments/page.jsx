@@ -128,7 +128,7 @@ export default async function DashboardPaymentSettingsPage() {
               <form action={acceptProviderAgreement} className="mt-4">
                 <PendingButton
                   pendingLabel="Recording..."
-                  className="w-max rounded-lg bg-pink-700 p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-pink-800 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="w-max rounded-lg bg-accent-700 p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-accent-700 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   Accept the provider agreement
                 </PendingButton>

@@ -1,5 +1,5 @@
 const tones = {
-  active: "bg-pink-50 text-pink-700",
+  active: "bg-accent-50 text-accent-700",
   neutral: "bg-black/5 text-black/50",
   quiet: "bg-black/5 text-black/55",
 };

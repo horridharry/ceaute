@@ -158,7 +158,7 @@ export function StorefrontPage({ viewModel, backHref, showBackLink = true }) {
           {backHref && showBackLink ? (
             <a
               href={backHref}
-              className="mb-8 inline-flex text-sm font-semibold text-pink-600"
+              className="mb-8 inline-flex text-sm font-semibold text-accent-600"
             >
               Back to page settings
             </a>

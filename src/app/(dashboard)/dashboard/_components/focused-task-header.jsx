@@ -27,7 +27,7 @@ export function FocusedTaskHeader({
         form={formId}
         disabled={pending || disabled}
         aria-disabled={pending || disabled}
-        className="ml-auto w-max text-sm font-semibold text-pink-700 disabled:cursor-not-allowed disabled:opacity-50"
+        className="ml-auto w-max text-sm font-semibold text-accent-700 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {pending ? pendingLabel : submitLabel}
       </button>

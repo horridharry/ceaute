@@ -4,7 +4,7 @@ export default function AuthErrorPage() {
   return (
     <main className="container mx-auto flex min-h-screen max-w-sm items-center px-5 py-12">
       <section className="flex w-full flex-col">
-        <p className="text-xs font-bold uppercase tracking-widest text-pink-600">
+        <p className="text-xs font-bold uppercase tracking-widest text-accent-600">
           That link did not work
         </p>
         <h1 className="mt-4 text-2xl font-bold tracking-tight text-black/90">
@@ -16,7 +16,7 @@ export default function AuthErrorPage() {
         </p>
         <Link
           href="/sign-in"
-          className="mt-8 w-max rounded-lg bg-pink-800 p-2.5 px-4 text-sm font-medium text-white shadow-sm duration-200 hover:opacity-80"
+          className="mt-8 w-max rounded-lg bg-accent-700 p-2.5 px-4 text-sm font-medium text-white shadow-sm duration-200 hover:opacity-80"
         >
           Return to sign in
         </Link>

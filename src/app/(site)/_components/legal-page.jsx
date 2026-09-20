@@ -18,7 +18,7 @@ export function LegalPage({ title, summary, updated, children }) {
 
         <Link
           href="/"
-          className="mt-10 w-max text-sm font-semibold text-pink-600 duration-200 hover:text-pink-700"
+          className="mt-10 w-max text-sm font-semibold text-accent-600 duration-200 hover:text-accent-700"
         >
           Back to Ceaute
         </Link>

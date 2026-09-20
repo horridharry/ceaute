@@ -14,7 +14,7 @@ function SubmitButton({ pending, mode, hasClientError, formId }) {
       form={formId}
       disabled={pending || hasClientError}
       aria-disabled={pending || hasClientError}
-      className="w-max rounded-lg bg-pink-700 p-3 px-4 text-sm font-semibold text-white"
+      className="w-max rounded-lg bg-accent-700 p-3 px-4 text-sm font-semibold text-white"
     >
       {pending ? pendingLabel : idleLabel}
     </button>
@@ -216,7 +216,7 @@ export function TreatmentForm({
           ) : null}
           <Link
             href="/dashboard/treatments"
-            className="w-max rounded-lg border border-black/10 p-3 px-6 text-sm font-semibold text-pink-600 duration-200 hover:border-black/20 active:border-transparent active:bg-pink-500/10 active:text-pink-500 disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+            className="w-max rounded-lg border border-black/10 p-3 px-6 text-sm font-semibold text-accent-600 duration-200 hover:border-black/20 active:border-transparent active:bg-accent-600/10 active:text-accent-600 disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
           >
             Back
           </Link>

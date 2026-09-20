@@ -31,7 +31,7 @@ function MakePrimaryForm({ location, makePrimaryAction }) {
         type="submit"
         disabled={pending}
         aria-disabled={pending}
-        className="w-max rounded-lg border border-black/10 p-3 px-4 text-sm font-semibold text-pink-600 duration-200 hover:border-black/20 disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
+        className="w-max rounded-lg border border-black/10 p-3 px-4 text-sm font-semibold text-accent-600 duration-200 hover:border-black/20 disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
       >
         {pending ? "Moving..." : "Work from here"}
       </button>
@@ -66,7 +66,7 @@ function LocationCard({ location, makePrimaryAction, deleteAction }) {
     <li
       className={`list-none rounded-xl border p-3 ${
         location.is_primary
-          ? "border-pink-200 bg-pink-50/40"
+          ? "border-accent-100 bg-accent-50/40"
           : "border-black/10"
       }`}
     >
@@ -79,14 +79,14 @@ function LocationCard({ location, makePrimaryAction, deleteAction }) {
             {address || "No address yet"}
           </p>
           {location.is_primary ? (
-            <p className="mt-2 text-xs font-semibold tracking-wide text-pink-700 uppercase">
+            <p className="mt-2 text-xs font-semibold tracking-wide text-accent-700 uppercase">
               Working here now
             </p>
           ) : null}
         </div>
         <Link
           href={`/dashboard/locations/${location.id}/edit`}
-          className="w-max rounded-lg border border-black/10 p-3 px-4 text-sm font-semibold text-pink-600 duration-200 hover:border-black/20"
+          className="w-max rounded-lg border border-black/10 p-3 px-4 text-sm font-semibold text-accent-600 duration-200 hover:border-black/20"
         >
           Edit
         </Link>
@@ -121,7 +121,7 @@ export function LocationsPage({ locations, makePrimaryAction, deleteAction }) {
           <div className="flex items-center gap-2">
             <Link
               href="/dashboard/locations/new"
-              className="flex w-max items-center rounded-3xl bg-white p-1.5 px-3 text-sm font-semibold text-pink-600 duration-300 hover:bg-pink-500/10"
+              className="flex w-max items-center rounded-3xl bg-white p-1.5 px-3 text-sm font-semibold text-accent-600 duration-300 hover:bg-accent-600/10"
             >
               Add
             </Link>

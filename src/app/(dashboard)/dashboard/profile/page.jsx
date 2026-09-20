@@ -32,7 +32,7 @@ export default async function DashboardProfilePage() {
             {providerPage.status === "published" && providerPage.username ? (
               <Link
                 href={`/@${providerPage.username}`}
-                className="text-sm font-semibold text-pink-600"
+                className="text-sm font-semibold text-accent-600"
               >
                 View live page
               </Link>

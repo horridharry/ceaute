@@ -1,8 +1,21 @@
 @import "tailwindcss";
 
+@theme {
+  --color-accent-50:  #fdf6f9;
+  --color-accent-100: #f7edf1;
+  --color-accent-600: #8c2b52;
+  --color-accent-700: #6f2141;
+
+  --color-ink:      #0b0b0b;
+  --color-surface:  #f4f3f1;
+  --color-good:     #2f6f4f;
+  --color-warn:     #c98a1a;
+  --color-bad:      #b3261e;
+}
+
 @layer components {
   .field {
-    @apply block rounded-lg border border-black/10 bg-white p-2.5 text-black outline-none ring-2 ring-transparent duration-200 hover:border-black/20 focus:border-pink-500 focus:ring-pink-100;
+    @apply block rounded-lg border border-black/10 bg-white p-2.5 text-black outline-none ring-2 ring-transparent duration-200 hover:border-black/20 focus:border-accent-600 focus:ring-accent-100;
   }
 
   .label {
@@ -30,7 +43,7 @@
   }
 
   .legal-prose section a {
-    @apply font-semibold text-pink-600 underline underline-offset-2 duration-200 hover:text-pink-700;
+    @apply font-semibold text-accent-600 underline underline-offset-2 duration-200 hover:text-accent-700;
   }
 
   .legal-prose section + section {

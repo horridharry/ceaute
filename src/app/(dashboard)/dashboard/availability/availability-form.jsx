@@ -156,7 +156,7 @@ export function AvailabilityForm({
                   value={day.dayOfWeek}
                   checked={day.enabled}
                   onChange={() => toggleDay(day.dayOfWeek)}
-                  className="h-5 w-5 cursor-pointer appearance-none rounded border border-black/15 bg-white outline-none ring-2 ring-transparent duration-200 checked:border-transparent checked:bg-pink-600 hover:border-black/25 focus:ring-pink-100"
+                  className="h-5 w-5 cursor-pointer appearance-none rounded border border-black/15 bg-white outline-none ring-2 ring-transparent duration-200 checked:border-transparent checked:bg-accent-600 hover:border-black/25 focus:ring-accent-100"
                 />
               </div>
 
@@ -245,7 +245,7 @@ export function AvailabilityForm({
               type="submit"
               disabled={pending || hasErrors}
               aria-disabled={pending || hasErrors}
-              className="w-max rounded-lg bg-pink-700 p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-pink-800 disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+              className="w-max rounded-lg bg-accent-700 p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-accent-700 disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
             >
               {pending ? "Saving..." : "Save hours"}
             </button>
@@ -278,7 +278,7 @@ export function AvailabilityForm({
               type="submit"
               disabled={blockDatePending}
               aria-disabled={blockDatePending}
-              className="w-max rounded-lg bg-pink-700 p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-pink-800 disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+              className="w-max rounded-lg bg-accent-700 p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-accent-700 disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
             >
               {blockDatePending ? "Blocking..." : "Block date"}
             </button>
@@ -306,7 +306,7 @@ export function AvailabilityForm({
                     />
                     <PendingButton
                       pendingLabel="Removing..."
-                      className="rounded-lg border border-black/10 p-2 px-3 text-sm font-semibold text-pink-600 duration-200 hover:border-black/20 active:border-transparent active:bg-pink-500/10 active:text-pink-500 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="rounded-lg border border-black/10 p-2 px-3 text-sm font-semibold text-accent-600 duration-200 hover:border-black/20 active:border-transparent active:bg-accent-600/10 active:text-accent-600 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       Remove
                     </PendingButton>

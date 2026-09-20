@@ -60,7 +60,7 @@ function AccountMenu({ user, providerPage }) {
         aria-expanded={open}
         aria-haspopup="menu"
         onClick={() => setOpen((currentOpen) => !currentOpen)}
-        className="grid h-10 w-10 place-items-center rounded-full bg-pink-100 text-xs font-semibold text-pink-700 transition hover:bg-pink-200"
+        className="grid h-10 w-10 place-items-center rounded-full bg-accent-100 text-xs font-semibold text-accent-700 transition hover:bg-accent-100"
       >
         {user.name.slice(0, 1).toUpperCase()}
       </button>

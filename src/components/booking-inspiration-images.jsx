@@ -87,7 +87,7 @@ function AddImagesForm({ addAction, remaining, hiddenFields }) {
           type="submit"
           disabled={pending || Boolean(fileError)}
           aria-disabled={pending || Boolean(fileError)}
-          className="w-max rounded-lg border border-black/10 p-3 px-4 text-sm font-semibold text-pink-600 duration-200 hover:border-black/20 disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
+          className="w-max rounded-lg border border-black/10 p-3 px-4 text-sm font-semibold text-accent-600 duration-200 hover:border-black/20 disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
         >
           {pending ? "Uploading..." : "Upload"}
         </button>

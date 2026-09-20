@@ -15,7 +15,7 @@ export function SectionTabs({ ariaLabel, items, showPendingHint = true }) {
               aria-current={item.active ? "page" : undefined}
               className={`block whitespace-nowrap border-b-2 pb-3 text-sm font-medium ${
                 item.active
-                  ? "border-pink-600 text-black"
+                  ? "border-accent-600 text-black"
                   : "border-transparent text-black/55 hover:text-black"
               }`}
             >

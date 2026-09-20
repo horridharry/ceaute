@@ -159,7 +159,7 @@ function ReviewPanel({ booking }) {
         />
         <PendingButton
           pendingLabel="Submitting..."
-          className="w-max rounded-lg bg-pink-700 p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-pink-800 disabled:cursor-not-allowed disabled:opacity-60"
+          className="w-max rounded-lg bg-accent-700 p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-accent-700 disabled:cursor-not-allowed disabled:opacity-60"
         >
           Submit review
         </PendingButton>
@@ -185,7 +185,7 @@ export default async function CustomerBookingPage({ params }) {
           </h1>
           <Link
             href="/account/bookings"
-            className="text-sm font-semibold text-pink-600"
+            className="text-sm font-semibold text-accent-600"
           >
             Back
           </Link>

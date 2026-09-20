@@ -64,7 +64,7 @@ function GroupList({
                 </div>
                 <Link
                   href={`/dashboard/treatment-groups/${group.id}/edit`}
-                  className="w-max rounded-lg px-3 py-2 text-sm font-semibold text-pink-600 duration-200 hover:bg-pink-50"
+                  className="w-max rounded-lg px-3 py-2 text-sm font-semibold text-accent-600 duration-200 hover:bg-accent-50"
                 >
                   Edit
                 </Link>

@@ -67,7 +67,7 @@ export function ProviderNavigation({ mobile = false }) {
                 mobile
                   ? `relative block whitespace-nowrap border-b-2 px-3 py-3 text-sm font-medium ${
                       active
-                        ? "border-pink-600 text-black"
+                        ? "border-accent-600 text-black"
                         : "border-transparent text-black/55"
                     }`
                   : `relative rounded-full px-3 py-1.5 text-sm font-medium transition hover:bg-black/[0.04] hover:text-black ${
