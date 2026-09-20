@@ -25,12 +25,9 @@ export default async function AccountSettingsPage() {
   return (
     <main className="container max-w-lg p-5 bg-white mx-auto">
       <div className="flex flex-col">
-        <h1 className="text-3xl font-bold tracking-tighter">Settings</h1>
-        <p className="mt-1 opacity-70">
-          The name and phone number providers see on your bookings.
-        </p>
+        <h1 className="text-3xl font-bold tracking-tighter">Account</h1>
 
-        <div className="mt-12">
+        <div className="mt-8">
           <h2 className="text-2xl font-semibold tracking-tighter">
             Personal details
           </h2>

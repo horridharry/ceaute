@@ -558,9 +558,6 @@ export default async function BookingCheckoutPage({ params, searchParams }) {
         <h1 className="text-3xl font-bold tracking-tighter">
           Review details
         </h1>
-        <p className="mt-1 text-sm">
-          Confirm your contact details before the final booking step.
-        </p>
 
         <section className="mt-8 rounded-xl border p-4">
           <h2 className="text-lg font-semibold tracking-tighter">

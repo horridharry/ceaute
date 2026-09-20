@@ -65,7 +65,7 @@ export function ProviderPageForm({ providerPage, updateProviderPage }) {
   return (
     <main className="container max-w-md p-5">
       <div className="mt-6 flex flex-col">
-        <h1 className="text-3xl font-bold tracking-tighter">Page identity</h1>
+        <h2 className="text-2xl font-semibold tracking-tighter">Profile</h2>
 
         <form
           id="update_details"
@@ -166,25 +166,7 @@ export function ProviderPageForm({ providerPage, updateProviderPage }) {
           </span>
 
           <p className="mt-4 text-sm text-red-600">{stateMessage}</p>
-          {username ? (
-            <p className="text-sm text-black/60">
-              Future public URL: /@{username}
-            </p>
-          ) : null}
-
           <div className="mt-8 flex items-center justify-end">
-            <Link
-              href="/dashboard/locations"
-              className="mr-auto w-max rounded-lg border border-black/10 p-3 px-6 text-sm font-semibold text-pink-600 duration-200 hover:border-black/20 active:border-transparent active:bg-pink-500/10 active:text-pink-500"
-            >
-              Location
-            </Link>
-            <Link
-              href="/dashboard/profile/portfolio"
-              className="mr-2 w-max rounded-lg border border-black/10 p-3 px-6 text-sm font-semibold text-pink-600 duration-200 hover:border-black/20 active:border-transparent active:bg-pink-500/10 active:text-pink-500"
-            >
-              Portfolio
-            </Link>
             <Link
               href="/dashboard/profile/preview"
               className="mr-2 w-max rounded-lg border border-black/10 p-3 px-6 text-sm font-semibold text-pink-600 duration-200 hover:border-black/20 active:border-transparent active:bg-pink-500/10 active:text-pink-500"

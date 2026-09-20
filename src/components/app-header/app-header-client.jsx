@@ -1,4 +1,5 @@
 "use client";
+
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
@@ -7,13 +8,51 @@ import { logoutUser } from "@/app/(authenticate)/actions";
 import { LinkPendingHint } from "@/components/link-pending-hint";
 import { PendingButton } from "@/components/pending-button";
 
-const HomeLogo = () => (
-  <Link href="/" className="text-xl font-semibold tracking-tighter">
-    Ceaute
-  </Link>
-);
-
 const hiddenHeaderPrefixes = ["/sign-in", "/sign-up", "/verify", "/auth"];
+
+const providerRoutes = [
+  { name: "Today", href: "/dashboard", paths: ["/dashboard"] },
+  {
+    name: "Bookings",
+    href: "/dashboard/bookings",
+    paths: ["/dashboard/bookings"],
+  },
+  {
+    name: "Treatments",
+    href: "/dashboard/treatments",
+    paths: [
+      "/dashboard/treatments",
+      "/dashboard/treatment-groups",
+      "/dashboard/add-ons",
+    ],
+  },
+  {
+    name: "Page",
+    href: "/dashboard/profile",
+    paths: ["/dashboard/profile", "/dashboard/availability"],
+  },
+  {
+    name: "Settings",
+    href: "/dashboard/settings",
+    paths: ["/dashboard/settings", "/dashboard/locations"],
+  },
+];
+
+function routeIsActive(pathname, route) {
+  return route.paths.some((path) =>
+    path === "/dashboard"
+      ? pathname === path
+      : pathname === path || pathname.startsWith(`${path}/`),
+  );
+}
+
+function HomeLogo() {
+  return (
+    <Link href="/" className="text-xl font-semibold tracking-tighter">
+      Ceaute
+    </Link>
+  );
+}
 
 function HeaderLink({ href, children, exact = false }) {
   const pathname = usePathname();
@@ -26,7 +65,7 @@ function HeaderLink({ href, children, exact = false }) {
       href={href}
       aria-current={isActive ? "page" : undefined}
       className={`relative rounded-full px-3 py-1.5 text-sm font-medium transition hover:bg-black/[0.04] hover:text-black ${
-        isActive ? "text-black" : "text-black/70"
+        isActive ? "text-black" : "text-black/60"
       }`}
     >
       {children}
@@ -35,76 +74,199 @@ function HeaderLink({ href, children, exact = false }) {
   );
 }
 
-function AccountMenu({ user, hasProviderPage }) {
+function ProviderNavigation({ mobile = false, onNavigate }) {
+  const pathname = usePathname();
+
+  return (
+    <ul className={mobile ? "flex flex-col py-2" : "flex items-center gap-1"}>
+      {providerRoutes.map((route) => {
+        const active = routeIsActive(pathname, route);
+
+        return (
+          <li key={route.href}>
+            <Link
+              href={route.href}
+              onClick={onNavigate}
+              aria-current={active ? "page" : undefined}
+              className={
+                mobile
+                  ? `block px-4 py-2.5 text-sm font-medium hover:bg-black/[0.04] ${
+                      active ? "text-black" : "text-black/60"
+                    }`
+                  : `relative rounded-full px-3 py-1.5 text-sm font-medium transition hover:bg-black/[0.04] hover:text-black ${
+                      active ? "text-black" : "text-black/60"
+                    }`
+              }
+            >
+              {route.name}
+              <LinkPendingHint />
+            </Link>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+function MobileProviderNavigation() {
   const [open, setOpen] = useState(false);
-  const dashboardHref = hasProviderPage ? "/dashboard" : "/dashboard/onboarding";
+
+  return (
+    <div className="relative md:hidden">
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls="provider-navigation"
+        onClick={() => setOpen((current) => !current)}
+        className="rounded-full px-3 py-2 text-sm font-medium text-black/70 hover:bg-black/[0.04]"
+      >
+        Menu
+      </button>
+      {open ? (
+        <nav
+          id="provider-navigation"
+          aria-label="Provider"
+          className="absolute right-0 top-12 z-50 w-56 rounded-xl border border-black/10 bg-white shadow-lg"
+        >
+          <ProviderNavigation mobile onNavigate={() => setOpen(false)} />
+        </nav>
+      ) : null}
+    </div>
+  );
+}
+
+function MobileCustomerNavigation() {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="relative sm:hidden">
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls="customer-navigation"
+        onClick={() => setOpen((current) => !current)}
+        className="rounded-full px-3 py-2 text-sm font-medium text-black/70 hover:bg-black/[0.04]"
+      >
+        Menu
+      </button>
+      {open ? (
+        <nav
+          id="customer-navigation"
+          aria-label="Customer"
+          className="absolute right-0 top-12 z-50 w-56 rounded-xl border border-black/10 bg-white p-2 shadow-lg"
+        >
+          {[
+            ["Discover", "/discover"],
+            ["Bookings", "/account/bookings"],
+            ["Account", "/account"],
+          ].map(([name, href]) => (
+            <Link
+              key={href}
+              href={href}
+              onClick={() => setOpen(false)}
+              className="block rounded-lg px-3 py-2.5 text-sm font-medium text-black/60 hover:bg-black/[0.04] hover:text-black"
+            >
+              {name}
+              <LinkPendingHint />
+            </Link>
+          ))}
+        </nav>
+      ) : null}
+    </div>
+  );
+}
+
+function AccountMenu({ user, providerPage }) {
+  const [open, setOpen] = useState(false);
+  const hasProviderPage = Boolean(providerPage);
   const closeMenu = () => setOpen(false);
   const logout = async () => {
     posthog.reset();
     await logoutUser();
   };
+  const pageStatus =
+    providerPage?.status === "published"
+      ? "Live"
+      : providerPage?.status === "suspended"
+        ? "Suspended"
+        : "Draft";
 
   return (
-    <div className="">
+    <div className="relative">
       <button
         type="button"
+        aria-label="Open account menu"
         aria-expanded={open}
         aria-haspopup="menu"
         onClick={() => setOpen((currentOpen) => !currentOpen)}
-        className="flex max-w-44 items-center gap-2 rounded-full border border-transparent bg-white text-sm font-medium text-black/75  transition hover:border-black/20 hover:bg-black/[0.03]"
+        className="grid h-10 w-10 place-items-center rounded-full bg-pink-100 text-xs font-semibold text-pink-700 transition hover:bg-pink-200"
       >
-        <span className="grid h-10 w-10 place-items-center rounded-full bg-pink-100 text-xs font-semibold text-pink-700">
-          {user.name.slice(0, 1).toUpperCase()}
-        </span>
+        {user.name.slice(0, 1).toUpperCase()}
       </button>
 
       {open ? (
         <div
           role="menu"
-          className="absolute right-0 top-14.5 z-50 h-screen w-full overflow-hidden    bg-white p-2"
+          className="absolute right-0 top-12 z-50 w-72 rounded-xl border border-black/10 bg-white p-2 shadow-lg"
         >
-          <div className="mt-12" />
-          <Link
-            href="/discover"
-            role="menuitem"
-            onClick={closeMenu}
-            className="block px-4 py-2 text-xl font-medium text-black/60 hover:text-black"
-          >
-            Go to Ceaute
-          </Link>
-          <Link
-            href="/account/bookings"
-            role="menuitem"
-            onClick={closeMenu}
-            className="block px-4 py-2 text-xl font-medium text-black/60 hover:text-black/80"
-          >
-            My bookings
-          </Link>
-          <Link
-            href="/account"
-            role="menuitem"
-            onClick={closeMenu}
-            className="block px-4 py-2 text-xl font-medium text-black/60 hover:text-black/80"
-          >
-            My account
-          </Link>
+          {hasProviderPage ? (
+            <>
+              {providerPage.username ? (
+                <Link
+                  href={`/@${providerPage.username}`}
+                  role="menuitem"
+                  onClick={closeMenu}
+                  className="block rounded-lg px-3 py-2.5 hover:bg-black/[0.04]"
+                >
+                  <span className="flex items-center justify-between gap-4 text-sm font-medium">
+                    <span>Your page</span>
+                    <span className="text-xs text-black/50">{pageStatus}</span>
+                  </span>
+                  <span className="mt-0.5 block truncate text-xs text-black/50">
+                    ceaute.com/@{providerPage.username}
+                  </span>
+                </Link>
+              ) : null}
+              <Link
+                href="/dashboard"
+                role="menuitem"
+                onClick={closeMenu}
+                className="block rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-black/[0.04]"
+              >
+                Dashboard
+                <LinkPendingHint />
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link
+                href="/account/bookings"
+                role="menuitem"
+                onClick={closeMenu}
+                className="block rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-black/[0.04]"
+              >
+                Bookings
+                <LinkPendingHint />
+              </Link>
+              <Link
+                href="/account"
+                role="menuitem"
+                onClick={closeMenu}
+                className="block rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-black/[0.04]"
+              >
+                Account
+                <LinkPendingHint />
+              </Link>
+            </>
+          )}
 
-          <div className="mt-auto" />
-          <Link
-            href={dashboardHref}
-            role="menuitem"
-            onClick={closeMenu}
-            className="block px-4 py-2 text-2xl font-semibold text-black/60 hover:text-black/80"
-          >
-            {hasProviderPage ? "Provider workspace" : "Become a provider"}
-          </Link>
-          <form action={logout} className="mt-12">
+          <form action={logout} className="mt-2 border-t border-black/10 pt-2">
             <PendingButton
               role="menuitem"
-              pendingLabel="Signing out..."
-              className="cursor-pointer rounded-full border border-black/40 w-full p-2.5 text-sm font-medium text-black  hover:opacity-80 duration-200 disabled:cursor-not-allowed disabled:opacity-60"
+              pendingLabel="Logging out..."
+              className="w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium hover:bg-black/[0.04] disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Sign out
+              Log out
             </PendingButton>
           </form>
         </div>
@@ -113,51 +275,59 @@ function AccountMenu({ user, hasProviderPage }) {
   );
 }
 
-export default function AppHeaderClient({ user, hasProviderPage = false }) {
+export default function AppHeaderClient({ user, providerPage = null }) {
   const pathname = usePathname();
+  const isProviderWorkspace = Boolean(user && pathname.startsWith("/dashboard"));
 
   useEffect(() => {
     if (user) {
       posthog.identify(user.id, {
         email: user.email,
         name: user.name,
-        has_provider_page: hasProviderPage,
+        has_provider_page: Boolean(providerPage),
       });
     }
-  }, [hasProviderPage, user?.email, user?.id, user?.name]);
+  }, [providerPage, user]);
 
   if (hiddenHeaderPrefixes.some((prefix) => pathname.startsWith(prefix))) {
     return null;
   }
 
   return (
-    <header className="sticky top-0 z-40 border-b border-black/10 bg-white/90 backdrop-blur">
-      <nav className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
+    <header className="sticky top-0 z-40 border-b border-black/10 bg-white/95 backdrop-blur">
+      <nav className="relative mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
         <HomeLogo />
-        <div className="flex items-center gap-1.5">
+
+        {isProviderWorkspace ? (
+          <div className="absolute left-1/2 hidden -translate-x-1/2 md:block">
+            <ProviderNavigation />
+          </div>
+        ) : user ? (
+          <div className="hidden items-center gap-1 sm:flex">
+            <HeaderLink href="/discover">Discover</HeaderLink>
+            <HeaderLink href="/account/bookings">Bookings</HeaderLink>
+            <HeaderLink href="/account" exact>
+              Account
+            </HeaderLink>
+          </div>
+        ) : null}
+
+        <div className="ml-auto flex items-center gap-1.5">
           {user ? (
             <>
-              <div className="hidden items-center gap-1.5 sm:flex">
-                <HeaderLink href="/discover">Discover</HeaderLink>
-                <HeaderLink href="/account/bookings">Bookings</HeaderLink>
-                <HeaderLink href="/account" exact>
-                  Account
-                </HeaderLink>
-              </div>
-              <AccountMenu user={user} hasProviderPage={hasProviderPage} />
+              {isProviderWorkspace ? <MobileProviderNavigation /> : null}
+              {!isProviderWorkspace && providerPage ? (
+                <MobileCustomerNavigation />
+              ) : null}
+              {!isProviderWorkspace && !providerPage ? (
+                <div className="sm:hidden">
+                  <HeaderLink href="/discover">Discover</HeaderLink>
+                </div>
+              ) : null}
+              <AccountMenu user={user} providerPage={providerPage} />
             </>
           ) : (
-            <>
-              <HeaderLink href="/discover">Discover</HeaderLink>
-              <HeaderLink href="/sign-in">Sign in</HeaderLink>
-              <Link
-                href="/sign-up"
-                className="rounded-full bg-pink-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-pink-700"
-              >
-                Sign up
-                <LinkPendingHint />
-              </Link>
-            </>
+            <HeaderLink href="/sign-in">Log in</HeaderLink>
           )}
         </div>
       </nav>

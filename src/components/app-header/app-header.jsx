@@ -8,22 +8,22 @@ export default async function AppHeader() {
   const { claims } = await getRequestSession();
   const userId = claims?.sub;
 
-  let hasProviderPage = false;
+  let providerPage = null;
 
   if (userId) {
     try {
       // Shares the page's own lookup on a full page load. The header only
       // decides which menu label to show, so a failed lookup must not take the
       // whole layout down.
-      hasProviderPage = Boolean(await getOwnedProviderPage(userId));
+      providerPage = await getOwnedProviderPage(userId);
     } catch {
-      hasProviderPage = false;
+      providerPage = null;
     }
   }
 
   return (
     <AppHeaderClient
-      hasProviderPage={hasProviderPage}
+      providerPage={providerPage}
       user={
         userId
           ? {

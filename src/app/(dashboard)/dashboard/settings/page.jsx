@@ -8,16 +8,28 @@ export default async function DashboardSettingsPage() {
     <main className="container max-w-md p-5">
       <div className="mt-6 flex flex-col">
         <h1 className="text-3xl font-bold tracking-tighter">Settings</h1>
-        <div className="mt-12 flex flex-col gap-3">
+        <div className="mt-8 divide-y divide-black/10 border-y border-black/10">
+          <Link
+            href="/account/settings"
+            className="block py-4 text-sm font-medium hover:text-pink-600"
+          >
+            Account
+          </Link>
+          <Link
+            href="/dashboard/locations"
+            className="block py-4 text-sm font-medium hover:text-pink-600"
+          >
+            Locations
+          </Link>
           <Link
             href="/dashboard/settings/booking"
-            className="block rounded-xl border p-3 text-sm font-semibold duration-200 hover:border-black/20 hover:bg-black/5"
+            className="block py-4 text-sm font-medium hover:text-pink-600"
           >
             Booking settings
           </Link>
           <Link
             href="/dashboard/settings/payments"
-            className="block rounded-xl border p-3 text-sm font-semibold duration-200 hover:border-black/20 hover:bg-black/5"
+            className="block py-4 text-sm font-medium hover:text-pink-600"
           >
             Payments
           </Link>
@@ -26,4 +38,3 @@ export default async function DashboardSettingsPage() {
     </main>
   );
 }
-

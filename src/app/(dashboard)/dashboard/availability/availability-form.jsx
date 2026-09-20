@@ -121,8 +121,7 @@ export function AvailabilityForm({
       <div className="mt-6 flex flex-col">
         <h1 className="text-3xl font-bold tracking-tighter">Availability</h1>
         <p className="mt-1 text-sm text-black/60">
-          Set one continuous working period for each open day. Times are saved as
-          Europe/London local times.
+          Set your regular hours in Europe/London time.
         </p>
 
         <form
@@ -239,7 +238,7 @@ export function AvailabilityForm({
 
           <div className="mt-8 flex items-center justify-end gap-4">
             <Link
-              href="/dashboard"
+              href="/dashboard/profile"
               className="w-max rounded-lg border border-black/10 p-3 px-6 text-sm font-semibold text-pink-600 duration-200 hover:border-black/20 active:border-transparent active:bg-pink-500/10 active:text-pink-500"
             >
               Back
@@ -262,8 +261,7 @@ export function AvailabilityForm({
               Blocked dates
             </h2>
             <p className="mt-1 text-sm text-black/60">
-              Block a whole day for time off. This affects future availability
-              and does not cancel existing bookings.
+              Existing bookings are not cancelled.
             </p>
           </div>
 

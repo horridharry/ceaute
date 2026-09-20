@@ -114,7 +114,7 @@ export function LocationsPage({ locations, makePrimaryAction, deleteAction }) {
           <h1 className="text-3xl font-bold tracking-tighter">Locations</h1>
           <div className="flex items-center gap-2">
             <Link
-              href="/dashboard/profile"
+              href="/dashboard/settings"
               className="w-max rounded-lg border border-black/10 p-3 px-4 text-sm font-semibold text-pink-600 duration-200 hover:border-black/20"
             >
               Back
@@ -129,9 +129,7 @@ export function LocationsPage({ locations, makePrimaryAction, deleteAction }) {
         </div>
 
         <p className="mt-3 text-sm text-black/60">
-          Save every place you work from and mark the one you are working from
-          now. Your page, search and new bookings all use that one. Customers
-          never choose between your saved locations.
+          Your current location is used for your page and new bookings.
         </p>
 
         {locations.length === 0 ? (
@@ -154,15 +152,12 @@ export function LocationsPage({ locations, makePrimaryAction, deleteAction }) {
 
         {hasOnlyCurrentLocation ? (
           <p className="mt-6 text-sm text-black/60">
-            The location you are working from cannot be deleted. Add another one
-            and start working from it first.
+            Add another location before replacing this one.
           </p>
         ) : null}
 
         <p className="mt-6 text-sm text-black/60">
-          Changing where you work from does not move bookings that are already
-          confirmed. Those stay at the address the customer agreed to, and you
-          keep or cancel them as usual.
+          Confirmed bookings keep their original address.
         </p>
       </div>
     </main>

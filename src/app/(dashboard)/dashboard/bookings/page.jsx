@@ -91,8 +91,7 @@ export default async function DashboardBookingsPage() {
     <main className="container max-w-md p-5">
       <div className="mt-6 flex flex-col">
         <h1 className="text-3xl font-bold tracking-tighter">Bookings</h1>
-        <p className="text-sm mt-1">Manage your bookings with clients</p>
-        <div className="mt-12">
+        <div className="mt-8">
           {failed ? <BookingsLoadFailed /> : null}
           {!failed && !hasBookings ? <NoBookings /> : null}
           {hasBookings ? (

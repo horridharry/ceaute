@@ -62,11 +62,8 @@ export default async function CustomerBookingsPage() {
     <main className="container max-w-md p-5 bg-white">
       <div className="mt-6 flex flex-col">
         <h1 className="text-3xl font-bold tracking-tighter">Bookings</h1>
-        <p className="mt-1 text-sm">
-          View your upcoming, previous and cancelled bookings.
-        </p>
 
-        <div className="mt-12">
+        <div className="mt-8">
           {!hasBookings ? <NoBookings /> : null}
           {hasBookings ? (
             <>
@@ -83,4 +80,3 @@ export default async function CustomerBookingsPage() {
     </main>
   );
 }
-

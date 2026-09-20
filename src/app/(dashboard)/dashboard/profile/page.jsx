@@ -14,15 +14,42 @@ export default async function DashboardProfilePage() {
   return (
     <>
       <main className="container max-w-md p-5">
-        <section className="mt-6 rounded-xl border p-4 text-sm">
+        <div className="mt-6">
+          <h1 className="text-3xl font-bold tracking-tighter">Page</h1>
+          <nav
+            aria-label="Page settings"
+            className="mt-6 flex flex-wrap gap-x-5 gap-y-2 border-b border-black/10 pb-4 text-sm font-medium"
+          >
+            <Link href="/dashboard/profile" className="text-pink-600">
+              Profile
+            </Link>
+            <Link
+              href="/dashboard/profile/portfolio"
+              className="hover:text-pink-600"
+            >
+              Portfolio
+            </Link>
+            <Link href="/dashboard/availability" className="hover:text-pink-600">
+              Availability
+            </Link>
+            <Link
+              href="/dashboard/profile/preview"
+              className="hover:text-pink-600"
+            >
+              Preview
+            </Link>
+          </nav>
+        </div>
+
+        <section className="mt-8 rounded-xl border p-4 text-sm">
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-black/50">
                 Page status
               </p>
-              <h1 className="mt-1 text-2xl font-bold tracking-tighter capitalize">
+              <h2 className="mt-1 text-2xl font-bold tracking-tighter capitalize">
                 {providerPage.status}
-              </h1>
+              </h2>
             </div>
             {providerPage.status === "published" && providerPage.username ? (
               <Link
@@ -34,11 +61,7 @@ export default async function DashboardProfilePage() {
             ) : null}
           </div>
 
-          {publication.ready ? (
-            <p className="mt-4 text-black/60">
-              Your page has everything needed for publication.
-            </p>
-          ) : (
+          {publication.ready ? null : (
             <div className="mt-4 text-black/60">
               <p className="font-semibold text-black">
                 Missing publication requirements
