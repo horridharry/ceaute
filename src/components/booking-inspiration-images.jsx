@@ -129,6 +129,10 @@ export function BookingInspirationImages({
   description,
   // Short qualifier shown beside the label, e.g. "Optional" at checkout.
   meta = "",
+  // Fades the grid once the images are kept with a finished booking rather
+  // than still being part of a decision. Off by default: checkout and the
+  // hold states show them at full strength.
+  dimImages = false,
   // What each screen's actions need in order to know which booking this is and
   // where to send the customer back to.
   hiddenFields = {},
@@ -149,7 +153,9 @@ export function BookingInspirationImages({
       {images.length === 0 ? (
         <p className="mt-3 text-sm text-black/60">No images added.</p>
       ) : (
-        <ul className="mt-3 grid grid-cols-2 gap-3">
+        <ul
+          className={`mt-3 grid grid-cols-2 gap-3 ${dimImages ? "opacity-55" : ""}`}
+        >
           {images.map((image) => (
             <li key={image.id} className="list-none">
               <div

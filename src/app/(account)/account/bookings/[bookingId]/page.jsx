@@ -2,6 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BookingInspirationImages } from "@/components/booking-inspiration-images";
 import { PendingButton } from "@/components/pending-button";
+import { StatusBadge } from "@/app/(dashboard)/dashboard/_components/status-badge";
+import { BOOKING_FALLBACK_LABEL } from "@/lib/bookings/booking-display";
 import {
   addBookingInspirationImages,
   cancelCustomerBooking,
@@ -14,9 +16,39 @@ const canShowExactAddress = (booking) =>
   Boolean(booking.confirmed_at) &&
   (booking.status === "confirmed" || booking.status === "completed");
 
-function ExactLocation({ booking }) {
+// The appointment is over, or never happened. Used for the read-only
+// inspiration treatment, which is about the booking being history rather than
+// about any one status.
+const isBookingHistory = (booking, now = Date.now()) =>
+  booking.status === "completed" ||
+  booking.status === "cancelled" ||
+  booking.status === "expired" ||
+  new Date(booking.end_at).getTime() < now;
+
+// The snapshot stops returning the address once a booking is cancelled, so the
+// screen says the address is gone rather than leaving a silent gap where it
+// used to be.
+function WhereWithoutAddress({ booking }) {
+  const reason =
+    booking.status === "cancelled" || booking.status === "expired"
+      ? "exact address no longer shown"
+      : "exact address appears once the booking is confirmed";
+
+  return (
+    <div className="mt-4 border-t border-black/8 pt-4">
+      <p className="text-xs font-semibold uppercase tracking-wide text-black/50">
+        Where
+      </p>
+      <p className="mt-2 text-black/60">
+        {booking.public_area} · {reason}
+      </p>
+    </div>
+  );
+}
+
+function ExactLocation({ booking, framed = false }) {
   if (!canShowExactAddress(booking)) {
-    return <p className="mt-3 text-black/60">Area: {booking.public_area}</p>;
+    return <WhereWithoutAddress booking={booking} />;
   }
 
   const addressLines = [
@@ -26,43 +58,91 @@ function ExactLocation({ booking }) {
     booking.postcode,
   ].filter(Boolean);
 
+  // On the confirmed screen the address is the thing the customer came for, so
+  // it gets a panel of its own instead of another row in the summary.
+  const shell = framed
+    ? "mt-6 rounded-xl border border-black/12 p-4"
+    : "mt-4 border-t border-black/8 pt-4";
+
   return (
-    <div className="mt-4 border-t pt-4">
-      <p className="font-semibold">Location</p>
-      <p className="mt-2 text-black/60">Area: {booking.public_area}</p>
+    <div className={shell}>
+      <p className="text-xs font-semibold uppercase tracking-wide text-black/50">
+        Where
+      </p>
       {addressLines.length ? (
-        <p className="mt-2 whitespace-pre-line">{addressLines.join("\n")}</p>
+        <p className="mt-2 font-medium">{addressLines.join(", ")}</p>
       ) : (
-        <p className="mt-2 text-black/60">Exact address unavailable.</p>
+        <p className="mt-2 text-black/60">
+          {booking.public_area} · exact address unavailable
+        </p>
       )}
       {booking.access_instructions ? (
-        <p className="mt-2 text-black/60">
-          Access: {booking.access_instructions}
+        <p className="mt-1 text-sm text-black/60">
+          {booking.access_instructions}
         </p>
       ) : null}
     </div>
   );
 }
 
+// warn while the refund is still moving, good once it has settled, bad when it
+// failed. The reassurance line only appears on `refund_required`, because that
+// is the only one the scheduled recovery pass actually retries:
+// list_retryable_booking_refund_operations takes `requested`, `pending` and
+// `processing` and excludes terminal ones, and `refund_failed` is terminal.
+const REFUND_STATE = {
+  refund_required: {
+    tone: "warn",
+    note: "The refund is retried automatically. Nothing is needed from you.",
+  },
+  refunded: { tone: "good", note: "" },
+  refund_failed: {
+    tone: "bad",
+    note: "Support will review this payment. Nothing is needed from you yet.",
+  },
+};
+
+function RefundState({ booking }) {
+  const state = REFUND_STATE[booking.payment_status];
+
+  if (!state || !booking.refund_status_label) {
+    return null;
+  }
+
+  return (
+    <>
+      <StatusBadge tone={state.tone} className="mt-3">
+        {booking.refund_status_label}
+      </StatusBadge>
+      {state.note ? (
+        <p className="mt-1.5 text-black/60">{state.note}</p>
+      ) : null}
+    </>
+  );
+}
+
 function CancellationPanel({ booking }) {
   if (booking.status === "cancelled") {
     return (
-      <div className="mt-4 border-t pt-4">
-        <p className="font-semibold">Cancellation</p>
+      <div className="mt-4 border-t border-black/8 pt-4">
+        <p className="text-xs font-semibold uppercase tracking-wide text-black/50">
+          Refund
+        </p>
         <p className="mt-2 text-black/60">
           Cancelled by {booking.cancelled_by_label} on{" "}
           {booking.cancelled_at_label}.
         </p>
-        <p className="mt-2">Refunded: {booking.refund_amount_label}</p>
-        <p className="text-black/60">Retained: {booking.retained_amount_label}</p>
-        {booking.refund_status_label ? (
-          <p className="mt-2 text-black/60">{booking.refund_status_label}</p>
-        ) : null}
-        {booking.payment_status === "refund_failed" ? (
-          <p className="mt-2 text-red-600">
-            Automatic refund failed. Support will need to review this payment.
-          </p>
-        ) : null}
+        <p className="mt-2 flex justify-between">
+          <span>Refunded</span>
+          <span className="font-semibold tabular-nums">
+            {booking.refund_amount_label}
+          </span>
+        </p>
+        <p className="flex justify-between text-black/60">
+          <span>Retained</span>
+          <span className="tabular-nums">{booking.retained_amount_label}</span>
+        </p>
+        <RefundState booking={booking} />
       </div>
     );
   }
@@ -168,6 +248,43 @@ function ReviewPanel({ booking }) {
   );
 }
 
+// The one screen with a voice: second person, her name, and the appointment
+// stated as a sentence rather than a row of labelled fields.
+function ConfirmedHeader({ booking }) {
+  const firstName =
+    booking.customer_name && booking.customer_name !== BOOKING_FALLBACK_LABEL
+      ? booking.customer_name.split(" ")[0]
+      : "";
+  const opening = firstName ? `${firstName}, you are booked` : "You are booked";
+  const money = Number.isInteger(booking.amount_paid_online_pence)
+    ? booking.amount_due_at_appointment_pence > 0
+      ? ` ${booking.amount_paid_online_label} paid, ${booking.amount_due_at_appointment_label} on the day.`
+      : ` ${booking.amount_paid_online_label} paid in full.`
+    : "";
+
+  // The day name is enough in the sentence; the exact date is in the summary
+  // below it.
+  const when =
+    !booking.weekday_label || booking.weekday_label === BOOKING_FALLBACK_LABEL
+      ? booking.date_label
+      : booking.weekday_label;
+
+  return (
+    <header>
+      <p className="text-xs font-semibold uppercase tracking-wide text-accent-600">
+        Confirmed
+      </p>
+      <h1 className="mt-2 text-2xl font-bold tracking-tight">
+        {opening} with {booking.provider_name} on {when} at{" "}
+        {booking.start_time_label}.
+      </h1>
+      <p className="mt-2 text-sm text-black/60">
+        {booking.treatment_name}.{money}
+      </p>
+    </header>
+  );
+}
+
 export default async function CustomerBookingPage({ params }) {
   const { bookingId } = await params;
   const booking = await getCustomerBooking(bookingId);
@@ -176,23 +293,37 @@ export default async function CustomerBookingPage({ params }) {
     notFound();
   }
 
+  const isConfirmed = booking.status === "confirmed";
+  const keptNotEditable =
+    !booking.can_manage_inspiration_images && isBookingHistory(booking);
+
   return (
     <main className="container mx-auto max-w-md p-5">
       <div className="mt-12 flex flex-col">
-        <div className="flex items-end justify-between gap-4">
-          <h1 className="text-2xl font-bold tracking-tight text-black/80">
-            Booking details
-          </h1>
-          <Link
-            href="/account/bookings"
-            className="text-sm font-semibold text-accent-600"
-          >
-            Back
-          </Link>
-        </div>
+        {isConfirmed ? (
+          <ConfirmedHeader booking={booking} />
+        ) : (
+          // Nothing in the top right is a confirmed-screen rule, so the other
+          // states keep the exit where it has always been.
+          <div className="flex items-end justify-between gap-4">
+            <h1 className="text-2xl font-bold tracking-tight text-black/80">
+              Booking details
+            </h1>
+            <Link
+              href="/account/bookings"
+              className="text-sm font-semibold text-accent-600"
+            >
+              Back
+            </Link>
+          </div>
+        )}
+
+        {isConfirmed ? <ExactLocation booking={booking} framed /> : null}
 
         <section className="mt-6 rounded-xl border p-4 text-sm">
-          <h2 className="text-lg font-semibold">{booking.provider_name}</h2>
+          {isConfirmed ? null : (
+            <h2 className="text-lg font-semibold">{booking.provider_name}</h2>
+          )}
           <p className="mt-3 font-medium">{booking.treatment_name}</p>
           <p className="mt-3">
             <span className="font-semibold">{booking.date_label}</span>
@@ -224,7 +355,7 @@ export default async function CustomerBookingPage({ params }) {
             </div>
           ) : null}
 
-          <ExactLocation booking={booking} />
+          {isConfirmed ? null : <ExactLocation booking={booking} />}
 
           <BookingInspirationImages
             images={booking.inspiration_images}
@@ -233,10 +364,13 @@ export default async function CustomerBookingPage({ params }) {
             addAction={addBookingInspirationImages}
             removeAction={removeBookingInspirationImageAction}
             hiddenFields={{ booking_id: booking.booking_id }}
+            dimImages={keptNotEditable}
             description={
               booking.can_manage_inspiration_images
                 ? "Optional pictures of the result you want, shared only with your provider."
-                : "The pictures shared with your provider for this appointment. They cannot be changed now."
+                : keptNotEditable
+                  ? "Kept with the booking. No longer editable."
+                  : "The pictures shared with your provider for this appointment."
             }
           />
 
@@ -253,6 +387,15 @@ export default async function CustomerBookingPage({ params }) {
           <CancellationPanel booking={booking} />
           <ReviewPanel booking={booking} />
         </section>
+
+        {isConfirmed ? (
+          <Link
+            href="/account/bookings"
+            className="mt-8 rounded-[11px] border border-black/16 py-3 text-center text-sm font-medium"
+          >
+            Go to my bookings
+          </Link>
+        ) : null}
       </div>
     </main>
   );

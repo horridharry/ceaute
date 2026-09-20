@@ -217,6 +217,16 @@ export function bookingToDisplayBooking(booking, paymentAttempt = null) {
       service.treatment_description ?? BOOKING_FALLBACK_LABEL,
     date_label: dateTime.date,
     time_label: dateTime.time,
+    // The start on its own, for prose that reads "... at 11:45 am".
+    start_time_label: dateTime.time.split(" - ")[0],
+    // Just the day name, for the same prose. The exact date stays in
+    // date_label, which every screen showing this also renders.
+    weekday_label: Number.isNaN(startAt.getTime())
+      ? BOOKING_FALLBACK_LABEL
+      : new Intl.DateTimeFormat("en-GB", {
+          weekday: "long",
+          timeZone: "Europe/London",
+        }).format(startAt),
     duration_label: formatDurationMinutes(service.duration_minutes),
     total_price_label: formatMoneyFromPence(service.total_price_pence),
     amount_paid_online_label: formatMoneyFromPence(
