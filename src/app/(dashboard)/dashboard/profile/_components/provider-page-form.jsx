@@ -2,16 +2,9 @@
 
 import { useActionState, useState } from "react";
 import Link from "next/link";
+import { keepFormValuesOnSubmit } from "@/lib/forms/keep-form-values";
 import { normalizeUsername, validateUsername } from "../../_lib/username";
-
-const PROVIDER_CATEGORIES = [
-  "Nails",
-  "Lashes",
-  "Hair",
-  "Brows",
-  "Skincare",
-  "Makeup",
-];
+import { PROVIDER_CATEGORIES } from "../_lib/provider-page-form-values";
 
 export function ProviderPageForm({ providerPage, updateProviderPage }) {
   const [stateMessage, updateProviderPageAction, pending] = useActionState(
@@ -22,6 +15,9 @@ export function ProviderPageForm({ providerPage, updateProviderPage }) {
   const [username, setUsername] = useState(providerPage.username || "");
   const [usernameWasEdited, setUsernameWasEdited] = useState(
     Boolean(providerPage.username),
+  );
+  const [providerCategory, setProviderCategory] = useState(
+    providerPage.providerCategory || "",
   );
   // Controlled so a failed save keeps the edited biography instead of
   // resetting the textarea to the last saved value.
@@ -75,6 +71,7 @@ export function ProviderPageForm({ providerPage, updateProviderPage }) {
           id="update_details"
           className="mt-12 flex flex-col gap-4"
           action={updateProviderPageAction}
+          onSubmit={keepFormValuesOnSubmit(updateProviderPageAction)}
         >
           <span className="field-set">
             <label className="label" htmlFor="business_name">
@@ -131,7 +128,8 @@ export function ProviderPageForm({ providerPage, updateProviderPage }) {
             <select
               id="provider_category"
               name="provider_category"
-              defaultValue={providerPage.providerCategory || ""}
+              value={providerCategory}
+              onChange={(event) => setProviderCategory(event.target.value)}
               className="field cursor-pointer"
             >
               <option value="">Select a category</option>

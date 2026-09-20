@@ -252,8 +252,8 @@ export async function POST(request: NextRequest) {
 
   // A correctly signed event carrying the other mode's data means the endpoint
   // is wired to the wrong Stripe mode. Rejecting is safer than processing it:
-  // 400 is not retried into a loop, and the mismatch surfaces in Stripe's own
-  // webhook log rather than silently mutating bookings.
+  // the mismatch stays visible in Stripe's delivery log rather than silently
+  // mutating bookings.
   if (!eventMatchesStripeMode(event, resolveStripeMode())) {
     return NextResponse.json({ error: 'Stripe mode mismatch.' }, { status: 400 });
   }

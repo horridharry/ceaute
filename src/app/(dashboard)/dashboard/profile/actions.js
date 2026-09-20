@@ -2,21 +2,15 @@
 import { revalidatePath } from "next/cache";
 import {
   getSignedInProvider,
-  normalizeUsername,
   providerPageToFormValues,
 } from "../_lib/provider-data";
 import { usernameRequiredError } from "../_lib/username";
+import {
+  isProviderCategory,
+  providerPageValuesFromFormData,
+} from "./_lib/provider-page-form-values";
 import { getProviderPagePublicationReadiness } from "./publication-readiness";
 import { publicationFailure, publicationSuccess } from "./publication-outcome";
-
-const PROVIDER_CATEGORIES = new Set([
-  "Nails",
-  "Lashes",
-  "Hair",
-  "Brows",
-  "Skincare",
-  "Makeup",
-]);
 
 export const getProviderPage = async () => {
   const { supabase, providerPage } = await getSignedInProvider({
@@ -38,19 +32,13 @@ export const updateProviderPage = async (_currentState, formData) => {
     next: "/dashboard/profile",
   });
 
-  const displayName = String(formData.get("business_name") ?? "").trim();
-  const username = normalizeUsername(formData.get("username"));
-  const providerCategory = String(
-    formData.get("provider_category") ?? "",
-  ).trim();
-  const biography = String(formData.get("biography") ?? "").trim();
-
-  const providerPageValues = {
-    username: username || null,
-    display_name: displayName || null,
-    provider_category: providerCategory || null,
-    biography: biography || null,
-  };
+  const {
+    displayName,
+    username,
+    providerCategory,
+    biography,
+    providerPageValues,
+  } = providerPageValuesFromFormData(formData);
 
   if (displayName && displayName.length < 2) {
     return "Business name must be at least 2 characters long.";
@@ -69,7 +57,7 @@ export const updateProviderPage = async (_currentState, formData) => {
     return usernameError;
   }
 
-  if (providerCategory && !PROVIDER_CATEGORIES.has(providerCategory)) {
+  if (providerCategory && !isProviderCategory(providerCategory)) {
     return "Choose one of the available provider categories.";
   }
 
