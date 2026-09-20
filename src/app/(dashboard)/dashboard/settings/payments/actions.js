@@ -3,10 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { after } from "next/server";
 import { getSignedInProvider } from "../../_lib/provider-data";
 import { resolveRequestOrigin } from "@/lib/app/origin";
-import { captureServerEvent } from "@/lib/posthog-server";
 import { buildRecipientOnboardingAccountLink } from "@/lib/stripe/account-link";
 import {
   classifyStripePaymentAccount,
@@ -108,16 +106,6 @@ export async function acceptProviderAgreement() {
   if (error && error.code !== "23505") {
     throw new Error("Could not record agreement acceptance.");
   }
-
-  await captureServerEvent({
-    distinctId: user.id,
-    event: "provider_agreement_accepted",
-    properties: {
-      provider_page_id: providerPage.id,
-      agreement_version: PROVIDER_AGREEMENT_VERSION,
-      already_accepted: error?.code === "23505",
-    },
-  });
 
   revalidatePath(PAYMENTS_PATH);
   return success("Provider agreement accepted.");
@@ -298,19 +286,6 @@ export async function startOrResumeOnboarding() {
       "Stripe could not start onboarding right now. Try again in a few minutes.",
     );
   }
-
-  // Analytics is not part of creating the Stripe link. Deliver it after the
-  // redirect response so PostHog latency cannot keep the button spinning.
-  after(() =>
-    captureServerEvent({
-      distinctId: user.id,
-      event: "stripe_onboarding_started",
-      properties: {
-        provider_page_id: providerPage.id,
-        resumed_existing_account: Boolean(existingAccount?.stripe_account_id),
-      },
-    }),
-  );
 
   redirect(accountLink.url);
 }

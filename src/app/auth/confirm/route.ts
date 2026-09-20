@@ -1,10 +1,6 @@
 import type { EmailOtpType } from '@supabase/supabase-js';
 import { NextResponse, type NextRequest } from 'next/server';
 import { validatedNextPath } from '@/lib/auth/redirect';
-import {
-  captureServerEvent,
-  identifyServerUser,
-} from '@/lib/posthog-server';
 import { createClient } from '@/lib/supabase/server';
 
 export async function GET(request: NextRequest) {
@@ -26,25 +22,11 @@ export async function GET(request: NextRequest) {
   }
 
   const { data } = await supabase.auth.getClaims();
-  const claims = data?.claims;
-  const userId = claims?.sub;
+  const userId = data?.claims?.sub;
 
   if (!userId) {
     return NextResponse.redirect(new URL('/auth/error', request.url));
   }
-
-  await identifyServerUser(userId, {
-    email: claims.email,
-    name: claims.user_metadata?.full_name ?? claims.user_metadata?.name,
-  });
-  await captureServerEvent({
-    distinctId: userId,
-    event: 'authentication_completed',
-    properties: {
-      authentication_method: code ? 'authorization_code' : type ?? 'email_otp',
-      has_return_path: Boolean(next),
-    },
-  });
 
   if (next) {
     return NextResponse.redirect(new URL(next, request.url));

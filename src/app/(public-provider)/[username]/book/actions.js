@@ -8,7 +8,6 @@ import {
   PROVIDER_AGREEMENT_VERSION,
   describeProviderRestriction,
 } from "@/lib/payments/provider-liability";
-import { captureServerEvent } from "@/lib/posthog-server";
 import { parsePersonalDetails } from "@/lib/profile/personal-details";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
@@ -163,17 +162,6 @@ export async function createBookingHoldFromDetails(formData) {
 
     throw new Error("Could not hold that booking time.");
   }
-
-  await captureServerEvent({
-    distinctId: profileId,
-    event: "booking_hold_created",
-    properties: {
-      booking_id: holdId,
-      provider_page_id: providerPage.id,
-      treatment_id: treatment.id,
-      add_on_count: selectedAddOns.length,
-    },
-  });
 
   redirect(
     buildCheckoutUrl({
@@ -579,19 +567,6 @@ export async function startStripeCheckoutForBooking(formData) {
     });
     throw new Error("Could not persist Stripe checkout.");
   }
-
-  await captureServerEvent({
-    distinctId: profileId,
-    event: "booking_checkout_started",
-    properties: {
-      booking_id: booking.id,
-      provider_page_id: booking.provider_page_id,
-      payment_attempt_id: checkoutClaim.payment_attempt_id,
-      amount_charged_pence: paymentAmounts.amountChargedPence,
-      total_booking_value_pence: paymentAmounts.totalBookingValuePence,
-      currency: paymentAmounts.currency,
-    },
-  });
 
   redirect(checkoutSession.url);
 }

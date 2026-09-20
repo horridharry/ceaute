@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { useEffect } from 'react';
-import posthog from 'posthog-js';
 import { describeRouteError } from '@/lib/errors/route-error';
 
 type RouteErrorProps = {
@@ -15,7 +14,6 @@ type RouteErrorProps = {
 // digest is the only detail shown.
 export default function RouteError({ error, reset }: RouteErrorProps) {
   useEffect(() => {
-    posthog.captureException(error);
     console.error(error);
   }, [error]);
 

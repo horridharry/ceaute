@@ -2,7 +2,6 @@
 
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { captureServerEvent } from '@/lib/posthog-server';
 import { providerWorkspacePath } from '@/lib/providers/onboarding-path';
 import { createClient } from '@/lib/supabase/server';
 import {
@@ -94,15 +93,6 @@ export async function startProviderOnboarding(
 
     return 'Could not save provider onboarding.';
   }
-
-  await captureServerEvent({
-    distinctId: userId,
-    event: 'provider_onboarding_completed',
-    properties: {
-      onboarding_action: existingProviderPage ? 'updated' : 'created',
-      has_biography: Boolean(biography),
-    },
-  });
 
   revalidatePath('/', 'layout');
   redirect(providerWorkspacePath(nextValue) ?? '/dashboard');
