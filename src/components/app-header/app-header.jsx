@@ -27,6 +27,7 @@ export default async function AppHeader() {
       user={
         userId
           ? {
+              id: userId,
               email: claims.email ?? "",
               name:
                 claims.user_metadata?.full_name ??

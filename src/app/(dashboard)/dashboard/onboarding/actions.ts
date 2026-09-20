@@ -2,6 +2,8 @@
 
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { captureServerEvent } from '@/lib/posthog-server';
+import { providerWorkspacePath } from '@/lib/providers/onboarding-path';
 import { createClient } from '@/lib/supabase/server';
 import {
   USERNAME_MAX_LENGTH,
@@ -9,7 +11,11 @@ import {
   normalizeUsername,
 } from '../_lib/username';
 
-export async function startProviderOnboarding(_currentState: string, formData: FormData) {
+export async function startProviderOnboarding(
+  nextValue: string | null,
+  _currentState: string,
+  formData: FormData,
+) {
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
   const userId = data?.claims?.sub;
@@ -89,6 +95,15 @@ export async function startProviderOnboarding(_currentState: string, formData: F
     return 'Could not save provider onboarding.';
   }
 
+  await captureServerEvent({
+    distinctId: userId,
+    event: 'provider_onboarding_completed',
+    properties: {
+      onboarding_action: existingProviderPage ? 'updated' : 'created',
+      has_biography: Boolean(biography),
+    },
+  });
+
   revalidatePath('/', 'layout');
-  redirect('/dashboard');
+  redirect(providerWorkspacePath(nextValue) ?? '/dashboard');
 }

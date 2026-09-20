@@ -1,8 +1,11 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import {
+  PROVIDER_ONBOARDING_PATH,
+  providerOnboardingPath,
+} from '@/lib/providers/onboarding-path';
 
 const protectedCustomerPaths = ['/account'];
-const dashboardOnboardingPath = '/dashboard/onboarding';
 
 function isProtectedCustomerPath(pathname: string) {
   return protectedCustomerPaths.some(
@@ -13,7 +16,7 @@ function isProtectedCustomerPath(pathname: string) {
 function isDashboardWorkspacePath(pathname: string) {
   return (
     (pathname === '/dashboard' || pathname.startsWith('/dashboard/')) &&
-    pathname !== dashboardOnboardingPath
+    pathname !== PROVIDER_ONBOARDING_PATH
   );
 }
 
@@ -74,7 +77,10 @@ export async function refreshSession(request: NextRequest) {
     }
 
     if (!providerPage) {
-      return NextResponse.redirect(new URL(dashboardOnboardingPath, request.url));
+      const requestedWorkspacePath = `${pathname}${request.nextUrl.search}`;
+      return NextResponse.redirect(
+        new URL(providerOnboardingPath(requestedWorkspacePath), request.url),
+      );
     }
   }
 

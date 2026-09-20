@@ -15,6 +15,7 @@ function signInHref(next) {
 
 export function SignupForm({
   createUser,
+  initialEmail = "",
   initialState = { message: "" },
   next = null,
 }) {
@@ -56,6 +57,7 @@ export function SignupForm({
             name="email"
             type="email"
             required
+            defaultValue={initialEmail}
             className="appearance-none rounded-xl border border-black/20 p-3 outline-none ring-2 ring-transparent duration-200 hover:border-black/30 focus:border-pink-600 focus:ring-pink-200"
           />
 

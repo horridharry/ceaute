@@ -15,6 +15,7 @@ import {
   groupBookingsByTiming,
 } from "@/lib/bookings/booking-display";
 import { getLatestPaymentAttemptsForBookings } from "@/lib/bookings/booking-payment-attempts";
+import { captureServerEvent } from "@/lib/posthog-server";
 
 function buildReturnPath(path) {
   return `/sign-in?next=${encodeURIComponent(path)}`;
@@ -168,7 +169,7 @@ export async function cancelCustomerBooking(formData) {
     throw new Error("Could not cancel booking.");
   }
 
-  const { supabase } = await getSignedInCustomer(
+  const { supabase, userId } = await getSignedInCustomer(
     `/account/bookings/${bookingId}`,
   );
 
@@ -177,6 +178,14 @@ export async function cancelCustomerBooking(formData) {
     bookingId,
     actor: "customer",
     revalidatePaths: ["/account/bookings", `/account/bookings/${bookingId}`],
+  });
+  await captureServerEvent({
+    distinctId: userId,
+    event: "booking_cancelled",
+    properties: {
+      booking_id: bookingId,
+      actor: "customer",
+    },
   });
 }
 
@@ -189,7 +198,9 @@ export async function submitBookingReview(formData) {
     throw new Error("Choose a review rating.");
   }
 
-  const { supabase } = await getSignedInCustomer(`/account/bookings/${bookingId}`);
+  const { supabase, userId } = await getSignedInCustomer(
+    `/account/bookings/${bookingId}`,
+  );
   const { error } = await supabase.schema("ceaute").rpc("create_booking_review", {
     target_booking_id: bookingId,
     review_rating: rating,
@@ -199,6 +210,16 @@ export async function submitBookingReview(formData) {
   if (error) {
     throw new Error(error.message || "Could not save review.");
   }
+
+  await captureServerEvent({
+    distinctId: userId,
+    event: "booking_review_submitted",
+    properties: {
+      booking_id: bookingId,
+      rating,
+      has_comment: Boolean(comment.trim()),
+    },
+  });
 
   revalidatePath(`/account/bookings/${bookingId}`);
 }

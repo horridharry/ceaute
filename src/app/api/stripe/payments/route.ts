@@ -5,6 +5,10 @@ import {
   processBookingRefund,
   recordBookingRefundState,
 } from '@/lib/payments/refunds';
+import {
+  captureServerEvent,
+  captureServerException,
+} from '@/lib/posthog-server';
 import { createServiceRoleClient } from '@/lib/supabase/service-role';
 import {
   DISPUTE_EVENT_TYPES,
@@ -141,6 +145,18 @@ async function processCompletedCheckout(session: Stripe.Checkout.Session) {
       throw new Error('The required Stripe refund is still being processed.');
     }
   }
+
+  await captureServerEvent({
+    distinctId: session.metadata?.customer_profile_id ?? paymentAttemptId,
+    event: 'booking_payment_completed',
+    properties: {
+      payment_attempt_id: paymentAttemptId,
+      payment_status: session.payment_status,
+      amount_total_pence: session.amount_total,
+      currency: session.currency,
+      refund_required: Boolean(result.refund_operation_id),
+    },
+  });
 }
 
 async function processRefundEvent(refund: Stripe.Refund, eventCreatedAt: number) {
@@ -196,6 +212,18 @@ async function processFailureEvent(event: Stripe.Event) {
     },
     'Could not record Stripe payment failure.',
   );
+
+  await captureServerEvent({
+    distinctId:
+      ('metadata' in object && object.metadata?.customer_profile_id) ||
+      paymentAttemptId,
+    event: 'booking_payment_failed',
+    properties: {
+      payment_attempt_id: paymentAttemptId,
+      failure_type: event.type,
+      expired: isExpired,
+    },
+  });
 }
 
 // Records the dispute and, for the moments that matter, enqueues one operator
@@ -280,6 +308,8 @@ export async function POST(request: NextRequest) {
     await completeEvent(event.id);
     return NextResponse.json({ received: true });
   } catch (error) {
+    await captureServerException(error, event.id);
+
     try {
       await failEvent(event.id, error);
     } catch {

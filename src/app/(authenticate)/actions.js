@@ -15,22 +15,11 @@ import {
   serializePendingAuth,
   verifyEmailCode,
 } from "@/lib/auth/email-otp";
+import { authenticationFormPath } from "@/lib/auth/form-path";
 import { validatedNextPath } from "@/lib/auth/redirect";
 import { createClient } from "@/lib/supabase/server";
 
 const VERIFY_PATH = "/verify";
-
-function authenticatePath(path, statusName, statusValue, nextValue) {
-  const params = new URLSearchParams({
-    [statusName]: statusValue,
-  });
-
-  if (nextValue) {
-    params.set("next", nextValue);
-  }
-
-  return `${path}?${params.toString()}`;
-}
 
 // The email being verified travels between the two screens in an httpOnly
 // cookie rather than the URL, so it survives a reload (phones often reload the
@@ -58,11 +47,19 @@ async function sendEmailCode(flow, path, nextValue, formData) {
   const fullName = typeof fullNameValue === "string" ? fullNameValue.trim() : "";
 
   if (!email) {
-    redirect(authenticatePath(path, "error", "invalid-email", next));
+    redirect(
+      authenticationFormPath(path, { error: "invalid-email", next }),
+    );
   }
 
   if (flow === "sign-up" && fullName.length < 2) {
-    redirect(authenticatePath(path, "error", "invalid-name", next));
+    redirect(
+      authenticationFormPath(path, {
+        error: "invalid-name",
+        next,
+        email,
+      }),
+    );
   }
 
   // A second request replaces the code in the first email and counts against
@@ -84,7 +81,13 @@ async function sendEmailCode(flow, path, nextValue, formData) {
   const result = await requestEmailCode({ supabase, email, flow, fullName });
 
   if (!result.ok) {
-    redirect(authenticatePath(path, "error", result.outcome, next));
+    redirect(
+      authenticationFormPath(path, {
+        error: result.outcome,
+        next,
+        email,
+      }),
+    );
   }
 
   await writePendingAuth({ email, flow, next, sentAt: Date.now() });

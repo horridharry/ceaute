@@ -1,13 +1,14 @@
 import { SignupForm } from "../_components/signup-form";
 import { createUser } from "../actions";
 import { redirect } from "next/navigation";
-import { otpRequestMessage } from "@/lib/auth/email-otp";
+import { normalizeEmail, otpRequestMessage } from "@/lib/auth/email-otp";
 import { validatedNextPath } from "@/lib/auth/redirect";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function SignupPage({ searchParams }) {
   const params = await searchParams;
   const next = validatedNextPath(params?.next ?? null);
+  const initialEmail = normalizeEmail(params?.email);
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
 
@@ -35,6 +36,7 @@ export default async function SignupPage({ searchParams }) {
   return (
     <SignupForm
       createUser={createUser.bind(null, next)}
+      initialEmail={initialEmail}
       initialState={{ message }}
       next={next}
     />

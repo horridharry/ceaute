@@ -3,8 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import { getSignedInProvider } from "../../_lib/provider-data";
 import { resolveRequestOrigin } from "@/lib/app/origin";
+import { captureServerEvent } from "@/lib/posthog-server";
+import { buildRecipientOnboardingAccountLink } from "@/lib/stripe/account-link";
 import {
   classifyStripePaymentAccount,
   describeStripeError,
@@ -106,6 +109,16 @@ export async function acceptProviderAgreement() {
     throw new Error("Could not record agreement acceptance.");
   }
 
+  await captureServerEvent({
+    distinctId: user.id,
+    event: "provider_agreement_accepted",
+    properties: {
+      provider_page_id: providerPage.id,
+      agreement_version: PROVIDER_AGREEMENT_VERSION,
+      already_accepted: error?.code === "23505",
+    },
+  });
+
   revalidatePath(PAYMENTS_PATH);
   return success("Provider agreement accepted.");
 }
@@ -167,9 +180,22 @@ export async function refreshPaymentStatus() {
 }
 
 export async function startOrResumeOnboarding() {
-  const { supabase, providerPage, user } = await getSignedInProvider({
-    next: PAYMENTS_PATH,
-  });
+  const actionStartedAt = performance.now();
+  const timingsMs = {};
+  const time = async (name, operation) => {
+    const startedAt = performance.now();
+
+    try {
+      return await operation();
+    } finally {
+      timingsMs[name] = Math.round(performance.now() - startedAt);
+    }
+  };
+
+  const { supabase, providerPage, user } = await time(
+    "authenticate_and_load_provider",
+    () => getSignedInProvider({ next: PAYMENTS_PATH }),
+  );
   const stripe = getStripe();
   // Stripe persists refresh_url and return_url on the Account Link, so they
   // must use the environment's configured canonical origin rather than a
@@ -177,12 +203,16 @@ export async function startOrResumeOnboarding() {
   const requestHeaders = await headers();
   const origin = resolveRequestOrigin(requestHeaders);
 
-  const { data: existingAccount, error } = await supabase
-    .schema("ceaute")
-    .from("provider_payment_account")
-    .select("stripe_account_id")
-    .eq("provider_page_id", providerPage.id)
-    .maybeSingle();
+  const { data: existingAccount, error } = await time(
+    "load_payment_account",
+    () =>
+      supabase
+        .schema("ceaute")
+        .from("provider_payment_account")
+        .select("stripe_account_id")
+        .eq("provider_page_id", providerPage.id)
+        .maybeSingle(),
+  );
 
   if (error) {
     throw new Error("Could not load Stripe account.");
@@ -193,24 +223,32 @@ export async function startOrResumeOnboarding() {
 
   try {
     if (!accountId) {
-      const account = await stripe.v2.core.accounts.create(
-        buildRecipientAccountParams({
-          providerPage,
-          contactEmail: user.email,
-        }),
+      const account = await time("create_stripe_account", () =>
+        stripe.v2.core.accounts.create(
+          buildRecipientAccountParams({
+            providerPage,
+            contactEmail: user.email,
+          }),
+        ),
       );
 
       accountId = account.id;
-      await syncProviderPaymentAccount({
-        providerPageId: providerPage.id,
-        account,
-      });
+      await time("sync_payment_account", () =>
+        syncProviderPaymentAccount({
+          providerPageId: providerPage.id,
+          account,
+        }),
+      );
     } else {
-      const account = await retrieveStripeAccount(stripe, accountId);
-      const values = await syncProviderPaymentAccount({
-        providerPageId: providerPage.id,
-        account,
-      });
+      const account = await time("retrieve_stripe_account", () =>
+        retrieveStripeAccount(stripe, accountId),
+      );
+      const values = await time("sync_payment_account", () =>
+        syncProviderPaymentAccount({
+          providerPageId: providerPage.id,
+          account,
+        }),
+      );
       const state = classifyStripePaymentAccount(values);
 
       if (!state.canCreateOnboardingLink) {
@@ -221,16 +259,21 @@ export async function startOrResumeOnboarding() {
       }
     }
 
-    accountLink = await stripe.v2.core.accountLinks.create({
-      account: accountId,
-      use_case: {
-        type: "account_onboarding",
-        account_onboarding: {
-          configurations: ["recipient"],
-          refresh_url: `${origin}${PAYMENTS_PATH}`,
-          return_url: `${origin}${PAYMENTS_PATH}?returned=1`,
-        },
-      },
+    const accountLinkParams = buildRecipientOnboardingAccountLink({
+      accountId,
+      origin,
+    });
+    accountLink = await time("create_account_link", () =>
+      stripe.v2.core.accountLinks.create(accountLinkParams),
+    );
+
+    console.info("Stripe onboarding link prepared", {
+      flow: existingAccount?.stripe_account_id ? "resume" : "new",
+      refreshUrl:
+        accountLinkParams.use_case.account_onboarding.refresh_url,
+      returnUrl: accountLinkParams.use_case.account_onboarding.return_url,
+      timingsMs,
+      totalBeforeRedirectMs: Math.round(performance.now() - actionStartedAt),
     });
   } catch (stripeError) {
     if (!isStripeError(stripeError)) {
@@ -247,6 +290,19 @@ export async function startOrResumeOnboarding() {
       "Stripe could not start onboarding right now. Try again in a few minutes.",
     );
   }
+
+  // Analytics is not part of creating the Stripe link. Deliver it after the
+  // redirect response so PostHog latency cannot keep the button spinning.
+  after(() =>
+    captureServerEvent({
+      distinctId: user.id,
+      event: "stripe_onboarding_started",
+      properties: {
+        provider_page_id: providerPage.id,
+        resumed_existing_account: Boolean(existingAccount?.stripe_account_id),
+      },
+    }),
+  );
 
   redirect(accountLink.url);
 }

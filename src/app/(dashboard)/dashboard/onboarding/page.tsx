@@ -4,10 +4,17 @@ import {
   getOwnedProviderPage,
   getRequestSession,
 } from '@/lib/auth/request-session';
+import { providerWorkspacePath } from '@/lib/providers/onboarding-path';
 import { startProviderOnboarding } from './actions';
 import { ProviderOnboardingForm } from './_components/provider-onboarding-form';
 
-export default async function DashboardOnboardingPage() {
+export default async function DashboardOnboardingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string | string[] }>;
+}) {
+  const params = await searchParams;
+  const next = providerWorkspacePath(params?.next);
   const { claims } = await getRequestSession();
   const userId = claims?.sub;
 
@@ -54,7 +61,7 @@ export default async function DashboardOnboardingPage() {
         </div>
 
         <ProviderOnboardingForm
-          action={startProviderOnboarding}
+          action={startProviderOnboarding.bind(null, next)}
           providerPage={{
             businessName: providerPage?.display_name ?? '',
             username: providerPage?.username ?? '',

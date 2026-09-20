@@ -1,7 +1,8 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import posthog from "posthog-js";
 import { logoutUser } from "@/app/(authenticate)/actions";
 import { LinkPendingHint } from "@/components/link-pending-hint";
 import { PendingButton } from "@/components/pending-button";
@@ -38,6 +39,10 @@ function AccountMenu({ user, hasProviderPage }) {
   const [open, setOpen] = useState(false);
   const dashboardHref = hasProviderPage ? "/dashboard" : "/dashboard/onboarding";
   const closeMenu = () => setOpen(false);
+  const logout = async () => {
+    posthog.reset();
+    await logoutUser();
+  };
 
   return (
     <div className="">
@@ -93,7 +98,7 @@ function AccountMenu({ user, hasProviderPage }) {
           >
             {hasProviderPage ? "Provider workspace" : "Become a provider"}
           </Link>
-          <form action={logoutUser} className="mt-12">
+          <form action={logout} className="mt-12">
             <PendingButton
               role="menuitem"
               pendingLabel="Signing out..."
@@ -110,6 +115,16 @@ function AccountMenu({ user, hasProviderPage }) {
 
 export default function AppHeaderClient({ user, hasProviderPage = false }) {
   const pathname = usePathname();
+
+  useEffect(() => {
+    if (user) {
+      posthog.identify(user.id, {
+        email: user.email,
+        name: user.name,
+        has_provider_page: hasProviderPage,
+      });
+    }
+  }, [hasProviderPage, user?.email, user?.id, user?.name]);
 
   if (hiddenHeaderPrefixes.some((prefix) => pathname.startsWith(prefix))) {
     return null;

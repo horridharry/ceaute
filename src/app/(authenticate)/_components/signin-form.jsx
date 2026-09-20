@@ -1,20 +1,11 @@
 "use client";
 import Link from "next/link";
 import { useActionState } from "react";
-
-function signUpHref(next) {
-  const params = new URLSearchParams();
-
-  if (next) {
-    params.set("next", next);
-  }
-
-  const query = params.toString();
-  return query ? `/sign-up?${query}` : "/sign-up";
-}
+import { authenticationFormPath } from "@/lib/auth/form-path";
 
 export function SigninForm({
   authenticateUser,
+  initialEmail = "",
   initialState = { message: "" },
   next = null,
 }) {
@@ -45,6 +36,7 @@ export function SigninForm({
             type="email"
             required
             autoFocus
+            defaultValue={initialEmail}
             className="appearance-none rounded-xl border border-black/20 p-3 outline-none ring-2 ring-transparent duration-200 hover:border-black/30 focus:border-pink-600 focus:ring-pink-200"
           />
 
@@ -55,7 +47,10 @@ export function SigninForm({
         <p className="mt-6 text-sm">
           New to Ceaute?{" "}
           <Link
-            href={signUpHref(next)}
+            href={authenticationFormPath("/sign-up", {
+              next,
+              email: initialEmail,
+            })}
             className="mt-4 text-pink-600 duration-200 hover:text-pink-700"
           >
             Get started.
