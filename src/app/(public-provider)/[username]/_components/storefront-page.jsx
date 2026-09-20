@@ -69,25 +69,16 @@ function TreatmentAddOns({ addOns }) {
   );
 }
 
+// The preview shows the row the customer sees, so the description is off it
+// here too; it reappears in the customer's add-on sheet.
 function TreatmentCard({ treatment }) {
   return (
-    <article className="rounded-xl border p-4">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h3 className="font-medium">{treatment.name}</h3>
-          {treatment.description ? (
-            <p className="mt-1 text-sm text-black/60">
-              {treatment.description}
-            </p>
-          ) : null}
-        </div>
-        <div className="shrink-0 text-right text-sm font-medium">
-          <p>{formatPricePence(treatment.price_pence)}</p>
-          <p className="text-black/60">
-            {formatDurationMinutes(treatment.duration_minutes)}
-          </p>
-        </div>
-      </div>
+    <article className="border-b border-black/8 py-3 last:border-b-0">
+      <h3 className="font-medium">{treatment.name}</h3>
+      <p className="mt-0.5 text-xs tabular-nums text-black/50">
+        {formatDurationMinutes(treatment.duration_minutes)} ·{" "}
+        {formatPricePence(treatment.price_pence)}
+      </p>
       <TreatmentAddOns addOns={treatment.add_ons} />
     </article>
   );
@@ -105,9 +96,9 @@ function TreatmentSections({ sections, username, bookingEnabled }) {
   return (
     <div className="flex flex-col gap-6">
       {sections.map((section) => (
-        <section key={section.name ?? "ungrouped"} className="flex flex-col gap-3">
+        <section key={section.name ?? "ungrouped"} className="flex flex-col">
           {section.name ? (
-            <h2 className="text-lg font-semibold">{section.name}</h2>
+            <h2 className="mb-1 text-lg font-semibold">{section.name}</h2>
           ) : null}
           {section.treatments.map((treatment) => (
             <TreatmentCard key={treatment.id} treatment={treatment} />

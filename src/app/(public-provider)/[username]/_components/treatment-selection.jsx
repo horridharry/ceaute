@@ -20,38 +20,32 @@ import {
 // add-ons page (`book/[treatmentId]/page.jsx`) and the time page's "Change
 // add-ons" link already produce and revalidate server-side, so nothing
 // downstream of that link needs to know a sheet exists.
+
+// One line of meta under the name, one button on the right. The description
+// is not here: a two-line clamp on a list row is unreadable, and the full text
+// is what the customer needs at the point of choosing add-ons, so it lives in
+// the sheet instead.
 function TreatmentRow({ treatment, onOpenDetails, onSelect }) {
   return (
-    <article className="rounded-xl border p-4">
+    <article className="flex items-center justify-between gap-3 border-b border-black/8 py-3 last:border-b-0">
       <button
         type="button"
         onClick={() => onOpenDetails(treatment)}
-        className="flex w-full items-start justify-between gap-4 text-left"
+        className="min-w-0 flex-1 text-left"
       >
-        <div>
-          <h3 className="font-medium">{treatment.name}</h3>
-          {treatment.description ? (
-            <p className="mt-1 text-sm text-black/60">
-              {treatment.description}
-            </p>
-          ) : null}
-        </div>
-        <div className="shrink-0 text-right text-sm font-medium">
-          <p>{formatPricePence(treatment.price_pence)}</p>
-          <p className="text-black/60">
-            {formatDurationMinutes(treatment.duration_minutes)}
-          </p>
-        </div>
+        <h3 className="truncate font-medium">{treatment.name}</h3>
+        <p className="mt-0.5 text-xs tabular-nums text-black/50">
+          {formatDurationMinutes(treatment.duration_minutes)} ·{" "}
+          {formatPricePence(treatment.price_pence)}
+        </p>
       </button>
-      <div className="mt-3 flex justify-end">
-        <button
-          type="button"
-          onClick={() => onSelect(treatment)}
-          className="rounded-lg bg-accent-700 px-4 py-2 text-sm font-semibold text-white duration-200 hover:bg-accent-700"
-        >
-          Select
-        </button>
-      </div>
+      <button
+        type="button"
+        onClick={() => onSelect(treatment)}
+        className="shrink-0 rounded-[10px] bg-ink px-4 py-2 text-sm font-medium text-white"
+      >
+        Select
+      </button>
     </article>
   );
 }
@@ -244,9 +238,9 @@ export function TreatmentSelectionList({ sections, username }) {
     <>
       <div className="flex flex-col gap-6">
         {sections.map((section) => (
-          <section key={section.name ?? "ungrouped"} className="flex flex-col gap-3">
+          <section key={section.name ?? "ungrouped"} className="flex flex-col">
             {section.name ? (
-              <h2 className="text-lg font-semibold">{section.name}</h2>
+              <h2 className="mb-1 text-lg font-semibold">{section.name}</h2>
             ) : null}
             {section.treatments.map((treatment) => (
               <TreatmentRow

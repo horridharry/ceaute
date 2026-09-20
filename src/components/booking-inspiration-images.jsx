@@ -127,6 +127,8 @@ export function BookingInspirationImages({
   addAction,
   removeAction,
   description,
+  // Short qualifier shown beside the label, e.g. "Optional" at checkout.
+  meta = "",
   // What each screen's actions need in order to know which booking this is and
   // where to send the customer back to.
   hiddenFields = {},
@@ -136,7 +138,12 @@ export function BookingInspirationImages({
 
   return (
     <section className="mt-4 border-t pt-4">
-      <p className="font-semibold">Inspiration images</p>
+      <div className="flex items-baseline justify-between gap-3">
+        <p className="text-xs font-semibold uppercase tracking-wide text-black/50">
+          Inspiration images
+        </p>
+        {meta ? <p className="text-xs text-black/45">{meta}</p> : null}
+      </div>
       <p className="mt-2 text-sm text-black/60">{description}</p>
 
       {images.length === 0 ? (

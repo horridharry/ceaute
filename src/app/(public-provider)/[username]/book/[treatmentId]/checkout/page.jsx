@@ -27,6 +27,34 @@ import {
   normalizePublicUsername,
 } from "../../../_lib/public-provider-format";
 
+function formatShortWeekday(date) {
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/London",
+    weekday: "short",
+  }).format(date);
+}
+
+// The whole of the money-and-cancellation story in one sentence, as the frame
+// states it: what is still owed on the day, and the moment free cancellation
+// stops. The amount retained after that moment and the provider's own written
+// policy stay on the page, in the block under the summary.
+function describeBookingTerms({
+  amountDueLaterPence,
+  freeCancellationUntil,
+  now = Date.now(),
+}) {
+  const onTheDay =
+    amountDueLaterPence > 0
+      ? `${formatPricePence(amountDueLaterPence)} on the day`
+      : "Paid in full today";
+  const cancellation =
+    freeCancellationUntil.getTime() > now
+      ? `free cancellation to ${formatShortWeekday(freeCancellationUntil)} ${formatTimeLabel(freeCancellationUntil)}`
+      : "the free cancellation window has passed";
+
+  return `${onTheDay} · ${cancellation}`;
+}
+
 function normalizeAddOnSearch(searchParams) {
   const addOns = searchParams?.add_on;
   const addOnIds = Array.isArray(addOns) ? addOns : [addOns];
@@ -316,6 +344,16 @@ export default async function BookingCheckoutPage({ params, searchParams }) {
     }
 
     const paymentAmounts = calculateBookingPaymentAmounts(serviceSnapshot);
+    const cancellationWindowHours = Number(
+      serviceSnapshot.cancellation_window_hours ?? 24,
+    );
+    const termsLine = describeBookingTerms({
+      amountDueLaterPence: paymentAmounts.amountDueLaterPence,
+      freeCancellationUntil: addMinutes(
+        holdStartAt,
+        -cancellationWindowHours * 60,
+      ),
+    });
     const displayState = getBookingDisplayState(holdSummary);
     const inspiration = await getBookingInspirationImages(holdSummary.id);
     const paymentNotice = describeCheckoutPaymentNotice(
@@ -342,10 +380,10 @@ export default async function BookingCheckoutPage({ params, searchParams }) {
           {paymentNotice ? (
             <div
               role="status"
-              className="mt-8 rounded-xl border border-red-200 p-4 text-sm text-red-700"
+              className="mt-8 rounded-xl bg-surface p-4 text-sm"
             >
               <p className="font-semibold">{paymentNotice.heading}</p>
-              <p className="mt-1">{paymentNotice.message}</p>
+              <p className="mt-1 text-black/60">{paymentNotice.message}</p>
             </div>
           ) : null}
 
@@ -410,23 +448,8 @@ export default async function BookingCheckoutPage({ params, searchParams }) {
                   </span>
                 </p>
               </div>
-              <div className="border-t pt-3 text-black/60">
-                <p>
-                  Cancellation window:{" "}
-                  {serviceSnapshot.cancellation_window_hours ?? 24} hours.
-                </p>
-                <p>
-                  {describeLateCancellationOutcome({
-                    commitmentAmountPence:
-                      serviceSnapshot.commitment_amount_pence,
-                    amountDueNowPence: paymentAmounts.amountChargedPence,
-                  })}
-                </p>
-                {serviceSnapshot.written_policy ? (
-                  <p className="mt-2 whitespace-pre-wrap">
-                    {serviceSnapshot.written_policy}
-                  </p>
-                ) : null}
+              <div className="border-t border-black/8 pt-3">
+                <p className="text-black/60">{termsLine}</p>
               </div>
               {isConfirmed ? (
                 <div className="border-t pt-3">
@@ -458,6 +481,20 @@ export default async function BookingCheckoutPage({ params, searchParams }) {
             </div>
           </section>
 
+          <div className="mt-4 rounded-xl bg-surface p-4 text-xs leading-relaxed text-black/60">
+            <p>
+              {describeLateCancellationOutcome({
+                commitmentAmountPence: serviceSnapshot.commitment_amount_pence,
+                amountDueNowPence: paymentAmounts.amountChargedPence,
+              })}
+            </p>
+            {serviceSnapshot.written_policy ? (
+              <p className="mt-2 whitespace-pre-wrap">
+                {serviceSnapshot.written_policy}
+              </p>
+            ) : null}
+          </div>
+
           <section className="mt-8 rounded-xl border border-black/10 p-4">
             <BookingInspirationImages
               images={inspiration.images}
@@ -465,15 +502,16 @@ export default async function BookingCheckoutPage({ params, searchParams }) {
               canManage={displayState.canPay && !inspiration.unavailable}
               addAction={addBookingImagesDuringCheckout}
               removeAction={removeBookingImageDuringCheckout}
+              meta={displayState.canPay ? "Optional" : ""}
               hiddenFields={{
                 booking_id: holdSummary.id,
                 return_path: returnPath,
               }}
               description={
                 inspiration.unavailable
-                  ? "Inspiration images cannot be shown right now. You can add them later from your booking."
+                  ? "These cannot be shown right now. You can still pay, and add them later from your booking."
                   : displayState.canPay
-                    ? "Optional. Add an inspiration image for your provider. You can update it later from your booking."
+                    ? `Show ${serviceSnapshot.provider_display_name} what you have in mind. Never needed to pay — you can add or change these any time before the day.`
                     : "Images attached to this booking."
               }
             />
