@@ -1,8 +1,14 @@
-import { getLocation, updateLocation } from "./actions";
-import { LocationFormUI } from "./_components/location-form-ui";
+import { LocationsPage } from "./_components/locations-page";
+import { deleteLocation, getLocations, makeLocationPrimary } from "./actions";
 
 export default async function DashboardLocationsPage() {
-  const location = await getLocation();
+  const locations = await getLocations();
 
-  return <LocationFormUI location={location} updateLocation={updateLocation} />;
+  return (
+    <LocationsPage
+      locations={locations}
+      makePrimaryAction={makeLocationPrimary}
+      deleteAction={deleteLocation}
+    />
+  );
 }

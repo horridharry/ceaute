@@ -28,6 +28,9 @@ export async function getProviderPagePublicationReadiness({
       .select("public_area, address_line_1, city, postcode, is_active")
       .eq("provider_page_id", providerPage.id)
       .eq("is_active", true)
+      // The provider may have several saved locations; publication asks about
+      // the one they are working from, which is what the database checks too.
+      .eq("is_primary", true)
       .maybeSingle(),
     supabase
       .schema("ceaute")
@@ -101,7 +104,7 @@ export async function getProviderPagePublicationReadiness({
       hasText(location.address_line_1) &&
       hasText(location.city) &&
       hasText(location.postcode),
-    "Active location with public area and private address",
+    "Current location with public area and private address",
   );
   addMissing(
     missing,

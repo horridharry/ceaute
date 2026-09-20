@@ -122,6 +122,10 @@ export async function buildStorefrontViewModel({ supabase, providerPage }) {
       .from("provider_location")
       .select("public_area")
       .eq("provider_page_id", providerPage.id)
+      // A provider can save several locations. The page shows the one they are
+      // working from now, which is the same row get_public_provider_location
+      // returns to the public booking journey.
+      .eq("is_primary", true)
       .maybeSingle(),
     supabase
       .schema("ceaute")

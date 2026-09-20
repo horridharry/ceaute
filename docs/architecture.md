@@ -35,7 +35,7 @@ trade-offs behind this shape are in
 | Create provider page | `/dashboard/onboarding` | `onboarding/actions.ts` | `create_provider_page_draft` |
 | Identity, publish, unpublish | `/dashboard/profile` | `profile/actions.js`, `profile/publication-readiness.js` (screen hints only) | `publish_provider_page`, `unpublish_provider_page` |
 | Portfolio images | `/dashboard/profile/portfolio` | `portfolio/actions.js`, `src/lib/supabase/signed-urls.js` | `portfolio_image` RLS, private storage bucket |
-| Location and private address | `/dashboard/locations` | `locations/actions.js` | `provider_location` RLS and constraints |
+| Saved locations, the current one, private address | `/dashboard/locations` | `locations/actions.js` | `provider_location` RLS and constraints; `set_primary_provider_location` |
 | Working hours and blocked dates | `/dashboard/availability` | `availability/actions.js`, `src/lib/bookings/appointment-grid.js` | `replace_provider_availability_rules`, 15-minute grid checks |
 | Treatments, groups, add-ons | `/dashboard/treatments`, `/dashboard/treatment-groups`, `/dashboard/add-ons` | each route's `actions.js`, `_lib/form-values.js` | table RLS; `create_add_on_with_compatibility`, `update_add_on_with_compatibility` |
 | Booking terms | `/dashboard/settings/booking` | `settings/booking/actions.js`, `src/lib/payments/booking-payments.js` | `provider_booking_setting` constraints (positive deposit) |

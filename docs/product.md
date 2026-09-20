@@ -18,7 +18,7 @@ when customer-facing copy uses more natural language.
 
 Provider onboarding creates a draft page. Publishing is a PostgreSQL operation,
 not merely a UI state change. It requires a display name, username, category and
-biography; a complete active location; working hours; at least one active,
+biography; a complete current location; working hours; at least one active,
 categorised treatment; booking and cancellation settings; a visible portfolio
 image; and a Stripe recipient account able to receive transfers and payouts.
 A published page keeps its username: the owner must unpublish before clearing
@@ -68,6 +68,44 @@ Discovery at `/discover` filters published providers by public-area text and/or
 an active Ceaute discovery category. It is a simple category and area search,
 not distance search, ranking, recommendations, or a standalone treatment
 catalogue.
+
+## Where a provider works
+
+A provider saves a list of locations at `/dashboard/locations` and marks exactly
+one of them as the one they are working from now. The public page, discovery and
+every new booking use that one. A customer never chooses between a provider's
+saved locations; they do not see that there is more than one.
+
+Moving is a deliberate act. PostgreSQL moves the flag and, in the same
+transaction, retires any unpaid hold that was taken against the location being
+left, so a customer cannot end up with an appointment at an address the provider
+has just left. A hold retired this way behaves exactly like one that ran out of
+time: the checkout screen says the booking is no longer payable, and a payment
+that lands anyway becomes a full refund entitlement instead of a booking.
+
+One window stays open, deliberately. A customer who already had Stripe Checkout
+in front of them when the provider moved can still pay, for as long as that
+Session lives. They are charged and then fully refunded through the existing
+late-payment path; they never get a booking at the old address. Closing the
+window would mean expiring Stripe Sessions from the locations screen, which
+would make a provider's own dashboard depend on Stripe being reachable. Charging
+and refunding in that narrow case is the accepted trade-off.
+
+Bookings already confirmed are untouched. A confirmed booking keeps the address
+the customer agreed to, and the provider honours it or cancels it through the
+existing cancellation path. Ceaute does not notify customers that a provider has
+moved, does not cancel their bookings for them, and does not stop a provider
+moving because future bookings exist.
+
+The location a provider is currently working from cannot be deleted; a provider
+makes another saved location current first. Any other saved location can be
+deleted outright, and nothing is archived. Historical bookings survive that
+deletion because each booking snapshotted its own address when the hold was
+taken.
+
+Search results can lag a move, because discovery reads are cached like every
+other page. Opening the provider's page shows where they are working now. That
+staleness is an accepted MVP trade-off, not a bug to design around.
 
 ## Booking and availability
 

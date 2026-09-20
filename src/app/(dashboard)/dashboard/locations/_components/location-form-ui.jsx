@@ -11,12 +11,10 @@ const validateLength = (value, maxLength, label) => {
   return null;
 };
 
-export function LocationFormUI({ location, updateLocation }) {
-  const [stateMessage, updateLocationAction, pending] = useActionState(
-    updateLocation,
-    "",
-  );
+export function LocationFormUI({ action, location = null }) {
+  const [stateMessage, formAction, pending] = useActionState(action, "");
   const [errors, setErrors] = useState({});
+  const editing = Boolean(location);
 
   const updateFieldError = (field, error) => {
     setErrors((currentErrors) => ({
@@ -30,28 +28,31 @@ export function LocationFormUI({ location, updateLocation }) {
   return (
     <main className="container max-w-md p-5">
       <div className="mt-6 flex flex-col">
-        <h1 className="text-3xl font-bold tracking-tighter">Location</h1>
+        <h1 className="text-3xl font-bold tracking-tighter">
+          {editing ? "Edit location" : "Add location"}
+        </h1>
         <p className="mt-2 text-sm text-black/60">
-          Public area appears on your page. The exact address and access
-          instructions stay private until booking confirmation.
+          The public area appears on your page. The exact address and access
+          instructions stay private until a booking is confirmed.
         </p>
 
         <form
-          id="update_location"
+          id="save_location"
           className="mt-12 flex flex-col gap-4"
-          action={updateLocationAction}
+          action={formAction}
         >
+          {editing ? (
+            <input type="hidden" name="location_id" value={location.id} />
+          ) : null}
           <span className="field-set">
             <label className="label" htmlFor="public_area">
               Public area
             </label>
-            <p className="text-sm text-red-600">
-              {errors.public_area ?? ""}
-            </p>
+            <p className="text-sm text-red-600">{errors.public_area ?? ""}</p>
             <input
               id="public_area"
               name="public_area"
-              defaultValue={location.public_area}
+              defaultValue={location?.public_area ?? ""}
               onChange={(event) =>
                 updateFieldError(
                   "public_area",
@@ -73,7 +74,7 @@ export function LocationFormUI({ location, updateLocation }) {
             <input
               id="address_line_1"
               name="address_line_1"
-              defaultValue={location.address_line_1}
+              defaultValue={location?.address_line_1 ?? ""}
               onChange={(event) =>
                 updateFieldError(
                   "address_line_1",
@@ -94,7 +95,7 @@ export function LocationFormUI({ location, updateLocation }) {
             <input
               id="address_line_2"
               name="address_line_2"
-              defaultValue={location.address_line_2}
+              defaultValue={location?.address_line_2 ?? ""}
               onChange={(event) =>
                 updateFieldError(
                   "address_line_2",
@@ -113,7 +114,7 @@ export function LocationFormUI({ location, updateLocation }) {
             <input
               id="city"
               name="city"
-              defaultValue={location.city}
+              defaultValue={location?.city ?? ""}
               onChange={(event) =>
                 updateFieldError(
                   "city",
@@ -132,7 +133,7 @@ export function LocationFormUI({ location, updateLocation }) {
             <input
               id="postcode"
               name="postcode"
-              defaultValue={location.postcode}
+              defaultValue={location?.postcode ?? ""}
               onChange={(event) =>
                 updateFieldError(
                   "postcode",
@@ -151,7 +152,7 @@ export function LocationFormUI({ location, updateLocation }) {
               id="access_instructions"
               name="access_instructions"
               rows={5}
-              defaultValue={location.access_instructions}
+              defaultValue={location?.access_instructions ?? ""}
               className="field resize-none"
             />
           </span>
@@ -160,19 +161,19 @@ export function LocationFormUI({ location, updateLocation }) {
 
           <div className="mt-8 flex items-center justify-end gap-2">
             <Link
-              href="/dashboard/profile"
+              href="/dashboard/locations"
               className="w-max rounded-lg border border-black/10 p-3 px-6 text-sm font-semibold text-pink-600 duration-200 hover:border-black/20 active:border-transparent active:bg-pink-500/10 active:text-pink-500"
             >
               Back
             </Link>
             <button
-              form="update_location"
+              form="save_location"
               type="submit"
               disabled={pending || hasClientError}
               aria-disabled={pending || hasClientError}
               className="w-max rounded-lg bg-pink-700 p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-pink-800 disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
             >
-              {pending ? "Saving..." : "Save"}
+              {pending ? "Saving..." : editing ? "Save" : "Add location"}
             </button>
           </div>
         </form>

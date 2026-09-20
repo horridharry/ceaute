@@ -43,8 +43,14 @@ treatments without crossing provider ownership.
 
 A **location** contains two views of the appointment place. The public area is
 safe for discovery and the storefront. The street address, postcode, and access
-instructions are private appointment information. The current model permits one
-location record per provider page and marks it active for use.
+instructions are private appointment information.
+
+A provider page may save several locations, and exactly one of them is the
+**current** location: where that provider is working from now. The storefront,
+discovery, and every new booking use the current one. A customer never chooses
+between a provider's saved locations and never sees that there is more than
+one. Changing which location is current is how a provider says they have moved;
+it is a deliberate act, not a side effect of editing a form.
 
 **Availability** combines one weekly working period per weekday with whole
 blocked dates. There is no slot entity. Candidate starts are calculated from
@@ -61,7 +67,8 @@ cancelled holds stop occupying the interval.
 
 The booking is also the historical contract. Its customer snapshot preserves
 the customer's contact details. Its service snapshot preserves the provider and
-treatment names, selected add-ons, duration, price, public and private location,
+treatment names, selected add-ons, duration, price, the public and private
+location the provider was working from when the hold was taken,
 payment mode, commitment amount, cancellation window, and written policy. Those
 values remain meaningful after the current provider page or treatment changes.
 
@@ -87,7 +94,7 @@ User ── 1 Profile ── 0..1 Provider Page
           │                 ├── Treatments ── Discovery Category
           │                 │       ├── optional Treatment Group
           │                 │       └── compatible Add-ons
-          │                 ├── Location, availability, portfolio, terms
+          │                 ├── Locations (one current), availability, portfolio, terms
           │                 └── Stripe recipient account
           │
           └── customer on Bookings ── Payment Attempts ── Refund Operations

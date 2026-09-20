@@ -177,6 +177,9 @@ export const getPublicLocationForProvider = cache(async (providerPageId) => {
     throw new Error("Could not load provider location.");
   }
 
+  // The RPC returns the current location's public area and nothing else, so
+  // the single row here is the provider's answer to "where do you work?", not
+  // an arbitrary pick from the locations they have saved.
   return location?.[0] ?? { public_area: "" };
 });
 
