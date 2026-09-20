@@ -1,27 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { useActionState, useMemo, useState } from "react";
+import { FocusedTaskHeader } from "../../_components/focused-task-header";
 
 function ErrorMessage({ message }) {
   return message ? <p className="text-sm text-red-600">{message}</p> : null;
-}
-
-function SubmitButton({ pending, mode, hasClientError, formId }) {
-  const idleLabel = mode === "create" ? "Create add-on" : "Save add-on";
-  const pendingLabel = mode === "create" ? "Creating..." : "Saving...";
-
-  return (
-    <button
-      type="submit"
-      form={formId}
-      disabled={pending || hasClientError}
-      aria-disabled={pending || hasClientError}
-      className="w-max rounded-lg bg-pink-700 p-3 px-4 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
-    >
-      {pending ? pendingLabel : idleLabel}
-    </button>
-  );
 }
 
 function ArchiveButton({ addOn, archiveAction, restoreAction, pending }) {
@@ -93,17 +76,25 @@ export function TreatmentAddOnForm({
   const hasClientError = Boolean(
     nameError || priceError || durationError || needsIncreaseError,
   );
-  const heading = mode === "create" ? "Create add-on" : "Edit add-on";
+  const heading = mode === "create" ? "New add-on" : "Edit add-on";
 
   return (
     <main className="container max-w-md p-5">
       <div className="mt-6 flex flex-col">
-        <h1 className="text-3xl font-bold tracking-tighter">{heading}</h1>
+        <FocusedTaskHeader
+          backHref="/dashboard/add-ons"
+          title={heading}
+          formId="treatment_add_on_form"
+          submitLabel={mode === "create" ? "Create" : "Save"}
+          pendingLabel={mode === "create" ? "Creating..." : "Saving..."}
+          pending={pending}
+          disabled={hasClientError}
+        />
 
         <form
           id="treatment_add_on_form"
           action={formAction}
-          className="mt-12 flex flex-col gap-4"
+          className="mt-8 flex flex-col gap-4"
         >
           {addOn ? (
             <input type="hidden" name="addOnId" value={addOn.addOnId} />
@@ -195,28 +186,16 @@ export function TreatmentAddOnForm({
           ) : null}
         </form>
 
-        <div className="mt-8 flex items-center gap-2">
-          {mode === "edit" ? (
+        {mode === "edit" ? (
+          <div className="mt-8 flex items-center">
             <ArchiveButton
               addOn={addOn}
               archiveAction={archiveAction}
               restoreAction={restoreAction}
               pending={pending}
             />
-          ) : null}
-          <Link
-            href="/dashboard/add-ons"
-            className="w-max rounded-lg border border-black/10 p-3 px-6 text-sm font-semibold text-pink-600 duration-200 hover:border-black/20 active:border-transparent active:bg-pink-500/10 active:text-pink-500 disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
-          >
-            Back
-          </Link>
-          <SubmitButton
-            formId="treatment_add_on_form"
-            pending={pending}
-            mode={mode}
-            hasClientError={hasClientError}
-          />
-        </div>
+          </div>
+        ) : null}
       </div>
     </main>
   );

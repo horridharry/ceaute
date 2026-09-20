@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { formatDurationMinutes } from "../../_lib/provider-data";
+import { CatalogueSectionNav } from "../../_components/catalogue-section-nav";
 
 const NoTreatments = () => (
   <div className="flex h-40 rounded-xl border border-black/10 p-4">
@@ -58,30 +59,7 @@ export function TreatmentsUI({ treatments }) {
   return (
     <main className="container w-full max-w-md min-w-0 p-5">
       <div className="mt-6 min-w-0">
-        <div className="flex items-center justify-between gap-4">
-          <h1 className="text-3xl font-bold tracking-tighter">Treatments</h1>
-          <Link
-            href="/dashboard/treatments/new"
-            className="shrink-0 rounded-full px-3 py-2 text-sm font-semibold text-pink-600 hover:bg-pink-50"
-          >
-            + New
-          </Link>
-        </div>
-
-        <nav className="mt-5 flex gap-5 border-b border-black/10 pb-3 text-sm font-medium">
-          <Link
-            href="/dashboard/treatment-groups"
-            className="text-black/55 hover:text-black"
-          >
-            Groups
-          </Link>
-          <Link
-            href="/dashboard/add-ons"
-            className="text-black/55 hover:text-black"
-          >
-            Add-ons
-          </Link>
-        </nav>
+        <CatalogueSectionNav />
 
         <ul className="mt-8 flex min-w-0 flex-col gap-4">
           {treatments.map((treatment) => (

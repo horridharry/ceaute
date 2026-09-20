@@ -32,7 +32,7 @@ test("auth form links reject an unsafe return path while preserving the email", 
   );
 });
 
-test("the sign-in failure and both forms wire the carried email through", async () => {
+test("a missing-account sign-in hands off to editable prefilled signup", async () => {
   const [actions, signInForm, signUpForm] = await Promise.all([
     readFile(
       new URL("../src/app/(authenticate)/actions.js", import.meta.url),
@@ -54,6 +54,10 @@ test("the sign-in failure and both forms wire the carried email through", async 
     ),
   ]);
 
+  assert.match(
+    actions,
+    /flow === "sign-in" && result\.outcome === "no-account"[\s\S]*authenticationFormPath\("\/sign-up", \{ next, email \}\)/,
+  );
   assert.match(actions, /error: result\.outcome,[\s\S]*next,[\s\S]*email,/);
   assert.match(signInForm, /defaultValue=\{initialEmail\}/);
   assert.match(signInForm, /authenticationFormPath\("\/sign-up", \{[\s\S]*email: initialEmail/);

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
-import { SettingsSectionNav } from "../../_components/settings-section-nav";
+import { PageSectionNav } from "../../_components/page-section-nav";
 
 function ActionMessage({ message }) {
   return message ? (
@@ -113,7 +113,7 @@ export function LocationsPage({ locations, makePrimaryAction, deleteAction }) {
   return (
     <main className="container max-w-md p-5">
       <div className="mt-6 flex flex-col">
-        <SettingsSectionNav />
+        <PageSectionNav />
         <div className="flex items-end justify-between gap-4">
           <h2 className="mt-8 text-2xl font-semibold tracking-tighter">
             Locations

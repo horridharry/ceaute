@@ -8,6 +8,7 @@ const links = [
   { label: "Profile", href: "/dashboard/profile", exact: true },
   { label: "Portfolio", href: "/dashboard/profile/portfolio" },
   { label: "Availability", href: "/dashboard/availability" },
+  { label: "Locations", href: "/dashboard/locations" },
   { label: "Preview", href: "/dashboard/profile/preview" },
 ];
 

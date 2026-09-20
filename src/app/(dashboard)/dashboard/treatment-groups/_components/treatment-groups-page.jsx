@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
+import { CatalogueSectionNav } from "../../_components/catalogue-section-nav";
 
 function ActionMessage({ message }) {
   return message ? <p className="mt-2 text-sm text-black/60">{message}</p> : null;
@@ -48,7 +49,10 @@ function GroupList({
       ) : (
         <ul className="mt-4 flex flex-col gap-4">
           {groups.map((group) => (
-            <li key={group.id} className="list-none rounded-xl border p-3">
+            <li
+              key={group.id}
+              className="list-none rounded-xl border border-black/10 p-3"
+            >
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <h3 className="font-medium">{group.name}</h3>
@@ -60,7 +64,7 @@ function GroupList({
                 </div>
                 <Link
                   href={`/dashboard/treatment-groups/${group.id}/edit`}
-                  className="w-max rounded-lg border border-black/10 p-3 px-4 text-sm font-semibold text-pink-600 duration-200 hover:border-black/20"
+                  className="w-max rounded-lg px-3 py-2 text-sm font-semibold text-pink-600 duration-200 hover:bg-pink-50"
                 >
                   Edit
                 </Link>
@@ -91,25 +95,7 @@ export function TreatmentGroupsPage({
   return (
     <main className="container max-w-md p-5">
       <div className="mt-6 flex flex-col">
-        <div className="flex items-end justify-between gap-4">
-          <h1 className="text-3xl font-bold tracking-tighter">
-            Treatment groups
-          </h1>
-          <div className="flex items-center gap-2">
-            <Link
-              href="/dashboard/treatments"
-              className="w-max rounded-lg border border-black/10 p-3 px-4 text-sm font-semibold text-pink-600 duration-200 hover:border-black/20"
-            >
-              Back
-            </Link>
-            <Link
-              href="/dashboard/treatment-groups/new"
-              className="flex w-max items-center rounded-3xl bg-white p-1.5 px-3 text-sm font-semibold text-pink-600 duration-300 hover:bg-pink-500/10"
-            >
-              Create
-            </Link>
-          </div>
-        </div>
+        <CatalogueSectionNav />
 
         <GroupList
           title="Active groups"

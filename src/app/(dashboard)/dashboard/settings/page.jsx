@@ -11,27 +11,24 @@ export default async function DashboardSettingsPage() {
         <div className="mt-8 divide-y divide-black/10 border-y border-black/10">
           <Link
             href="/account/settings"
-            className="block py-4 text-sm font-medium hover:text-pink-600"
+            className="flex items-center justify-between gap-4 py-4 text-sm font-medium hover:text-pink-600"
           >
-            Account
-          </Link>
-          <Link
-            href="/dashboard/locations"
-            className="block py-4 text-sm font-medium hover:text-pink-600"
-          >
-            Locations
+            <span>Account</span>
+            <span aria-hidden="true" className="text-black/35">›</span>
           </Link>
           <Link
             href="/dashboard/settings/booking"
-            className="block py-4 text-sm font-medium hover:text-pink-600"
+            className="flex items-center justify-between gap-4 py-4 text-sm font-medium hover:text-pink-600"
           >
-            Booking settings
+            <span>Booking settings</span>
+            <span aria-hidden="true" className="text-black/35">›</span>
           </Link>
           <Link
             href="/dashboard/settings/payments"
-            className="block py-4 text-sm font-medium hover:text-pink-600"
+            className="flex items-center justify-between gap-4 py-4 text-sm font-medium hover:text-pink-600"
           >
-            Payments
+            <span>Payments</span>
+            <span aria-hidden="true" className="text-black/35">›</span>
           </Link>
         </div>
       </div>

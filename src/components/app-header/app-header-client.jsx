@@ -29,17 +29,27 @@ const providerRoutes = [
   {
     name: "Page",
     href: "/dashboard/profile",
-    paths: ["/dashboard/profile", "/dashboard/availability"],
+    paths: [
+      "/dashboard/profile",
+      "/dashboard/availability",
+      "/dashboard/locations",
+    ],
   },
   {
     name: "Settings",
     href: "/dashboard/settings",
     paths: [
       "/dashboard/settings",
-      "/dashboard/locations",
       "/account/settings",
     ],
   },
+];
+
+const focusedProviderRoutePatterns = [
+  /^\/dashboard\/treatments\/(?:new|[^/]+\/edit)$/,
+  /^\/dashboard\/treatment-groups\/(?:new|[^/]+\/edit)$/,
+  /^\/dashboard\/add-ons\/(?:new|[^/]+\/edit)$/,
+  /^\/dashboard\/locations\/(?:new|[^/]+\/edit)$/,
 ];
 
 function routeIsActive(pathname, route) {
@@ -119,7 +129,7 @@ function ProviderNavigation({ mobile = false }) {
   );
 }
 
-function AccountMenu({ user, providerPage, isProviderWorkspace }) {
+function AccountMenu({ user, providerPage }) {
   const [open, setOpen] = useState(false);
   const hasProviderPage = Boolean(providerPage);
   const closeMenu = () => setOpen(false);
@@ -127,12 +137,6 @@ function AccountMenu({ user, providerPage, isProviderWorkspace }) {
     posthog.reset();
     await logoutUser();
   };
-  const pageStatus =
-    providerPage?.status === "published"
-      ? "Live"
-      : providerPage?.status === "suspended"
-        ? "Suspended"
-        : "Draft";
 
   return (
     <div className="relative">
@@ -150,43 +154,37 @@ function AccountMenu({ user, providerPage, isProviderWorkspace }) {
       {open ? (
         <div
           role="menu"
-          className="absolute right-0 top-12 z-50 w-72 rounded-xl border border-black/10 bg-white p-2 shadow-lg"
+          className="absolute right-0 top-12 z-50 w-56 rounded-xl border border-black/10 bg-white p-2 shadow-lg"
         >
           {hasProviderPage ? (
             <>
-              {providerPage.username ? (
-                <div className="px-3 py-2.5">
-                  <span className="flex items-center justify-between gap-4 text-sm font-medium">
-                    <span>Your page</span>
-                    <span className="text-xs text-black/50">{pageStatus}</span>
-                  </span>
-                  <span className="mt-0.5 block truncate text-xs text-black/50">
-                    ceaute.com/@{providerPage.username}
-                  </span>
-                </div>
-              ) : null}
-              {providerPage.username ? (
-                <Link
-                  href={`/@${providerPage.username}`}
-                  role="menuitem"
-                  onClick={closeMenu}
-                  className="block rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-black/[0.04]"
-                >
-                  View page
-                  <LinkPendingHint />
-                </Link>
-              ) : null}
-              {!isProviderWorkspace ? (
-                <Link
-                  href="/dashboard"
-                  role="menuitem"
-                  onClick={closeMenu}
-                  className="block rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-black/[0.04]"
-                >
-                  Dashboard
-                  <LinkPendingHint />
-                </Link>
-              ) : null}
+              <Link
+                href="/dashboard"
+                role="menuitem"
+                onClick={closeMenu}
+                className="block rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-black/[0.04]"
+              >
+                Dashboard
+                <LinkPendingHint />
+              </Link>
+              <Link
+                href="/account/bookings"
+                role="menuitem"
+                onClick={closeMenu}
+                className="block rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-black/[0.04]"
+              >
+                Bookings
+                <LinkPendingHint />
+              </Link>
+              <Link
+                href="/account"
+                role="menuitem"
+                onClick={closeMenu}
+                className="block rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-black/[0.04]"
+              >
+                Account
+                <LinkPendingHint />
+              </Link>
             </>
           ) : (
             <>
@@ -248,6 +246,10 @@ export default function AppHeaderClient({ user, providerPage = null }) {
     return null;
   }
 
+  if (focusedProviderRoutePatterns.some((pattern) => pattern.test(pathname))) {
+    return null;
+  }
+
   return (
     <header className="sticky top-0 z-40 border-b border-black/10 bg-white/95 backdrop-blur">
       <nav className="relative mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
@@ -272,7 +274,6 @@ export default function AppHeaderClient({ user, providerPage = null }) {
             <AccountMenu
               user={user}
               providerPage={providerPage}
-              isProviderWorkspace={isProviderWorkspace}
             />
           ) : (
             <HeaderLink href="/sign-in">Log in</HeaderLink>

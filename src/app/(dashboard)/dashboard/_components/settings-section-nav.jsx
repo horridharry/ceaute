@@ -6,7 +6,6 @@ import { LinkPendingHint } from "@/components/link-pending-hint";
 
 const links = [
   { label: "Account", href: "/account/settings" },
-  { label: "Locations", href: "/dashboard/locations" },
   { label: "Booking settings", href: "/dashboard/settings/booking" },
   { label: "Payments", href: "/dashboard/settings/payments" },
 ];
