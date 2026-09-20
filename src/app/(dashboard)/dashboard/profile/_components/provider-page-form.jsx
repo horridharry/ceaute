@@ -116,7 +116,7 @@ export function ProviderPageForm({ providerPage, updateProviderPage }) {
                 autoComplete="username"
                 value={username}
                 onChange={updateUsername}
-                className="relative w-full appearance-none rounded-lg border p-2.5 pl-10 outline-none ring-1 ring-transparent duration-200 hover:border-black/25 focus:border-pink-600 focus:ring-pink-600"
+                className="relative w-full appearance-none rounded-lg border border-black/10 p-2.5 pl-10 outline-none ring-2 ring-transparent duration-200 hover:border-black/20 focus:border-pink-500 focus:ring-pink-100"
               />
             </div>
           </span>

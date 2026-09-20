@@ -147,7 +147,7 @@ function Reviews({ reviews }) {
   );
 }
 
-export function StorefrontPage({ viewModel, backHref }) {
+export function StorefrontPage({ viewModel, backHref, showBackLink = true }) {
   const { provider, portfolio, treatment_sections: treatmentSections } =
     viewModel;
 
@@ -155,7 +155,7 @@ export function StorefrontPage({ viewModel, backHref }) {
     <main className="container max-w-md p-5">
       <div className="mt-6 flex flex-col gap-10">
         <header>
-          {backHref ? (
+          {backHref && showBackLink ? (
             <a
               href={backHref}
               className="mb-8 inline-flex text-sm font-semibold text-pink-600"

@@ -34,7 +34,11 @@ const providerRoutes = [
   {
     name: "Settings",
     href: "/dashboard/settings",
-    paths: ["/dashboard/settings", "/dashboard/locations"],
+    paths: [
+      "/dashboard/settings",
+      "/dashboard/locations",
+      "/account/settings",
+    ],
   },
 ];
 
@@ -46,9 +50,9 @@ function routeIsActive(pathname, route) {
   );
 }
 
-function HomeLogo() {
+function HomeLogo({ href = "/" }) {
   return (
-    <Link href="/" className="text-xl font-semibold tracking-tighter">
+    <Link href={href} className="text-xl font-semibold tracking-tighter">
       Ceaute
     </Link>
   );
@@ -74,11 +78,17 @@ function HeaderLink({ href, children, exact = false }) {
   );
 }
 
-function ProviderNavigation({ mobile = false, onNavigate }) {
+function ProviderNavigation({ mobile = false }) {
   const pathname = usePathname();
 
   return (
-    <ul className={mobile ? "flex flex-col py-2" : "flex items-center gap-1"}>
+    <ul
+      className={
+        mobile
+          ? "flex min-w-max items-center gap-1 px-4"
+          : "flex items-center gap-1"
+      }
+    >
       {providerRoutes.map((route) => {
         const active = routeIsActive(pathname, route);
 
@@ -86,12 +96,13 @@ function ProviderNavigation({ mobile = false, onNavigate }) {
           <li key={route.href}>
             <Link
               href={route.href}
-              onClick={onNavigate}
               aria-current={active ? "page" : undefined}
               className={
                 mobile
-                  ? `block px-4 py-2.5 text-sm font-medium hover:bg-black/[0.04] ${
-                      active ? "text-black" : "text-black/60"
+                  ? `relative block whitespace-nowrap border-b-2 px-3 py-3 text-sm font-medium ${
+                      active
+                        ? "border-pink-600 text-black"
+                        : "border-transparent text-black/55"
                     }`
                   : `relative rounded-full px-3 py-1.5 text-sm font-medium transition hover:bg-black/[0.04] hover:text-black ${
                       active ? "text-black" : "text-black/60"
@@ -108,75 +119,7 @@ function ProviderNavigation({ mobile = false, onNavigate }) {
   );
 }
 
-function MobileProviderNavigation() {
-  const [open, setOpen] = useState(false);
-
-  return (
-    <div className="relative md:hidden">
-      <button
-        type="button"
-        aria-expanded={open}
-        aria-controls="provider-navigation"
-        onClick={() => setOpen((current) => !current)}
-        className="rounded-full px-3 py-2 text-sm font-medium text-black/70 hover:bg-black/[0.04]"
-      >
-        Menu
-      </button>
-      {open ? (
-        <nav
-          id="provider-navigation"
-          aria-label="Provider"
-          className="absolute right-0 top-12 z-50 w-56 rounded-xl border border-black/10 bg-white shadow-lg"
-        >
-          <ProviderNavigation mobile onNavigate={() => setOpen(false)} />
-        </nav>
-      ) : null}
-    </div>
-  );
-}
-
-function MobileCustomerNavigation() {
-  const [open, setOpen] = useState(false);
-
-  return (
-    <div className="relative sm:hidden">
-      <button
-        type="button"
-        aria-expanded={open}
-        aria-controls="customer-navigation"
-        onClick={() => setOpen((current) => !current)}
-        className="rounded-full px-3 py-2 text-sm font-medium text-black/70 hover:bg-black/[0.04]"
-      >
-        Menu
-      </button>
-      {open ? (
-        <nav
-          id="customer-navigation"
-          aria-label="Customer"
-          className="absolute right-0 top-12 z-50 w-56 rounded-xl border border-black/10 bg-white p-2 shadow-lg"
-        >
-          {[
-            ["Discover", "/discover"],
-            ["Bookings", "/account/bookings"],
-            ["Account", "/account"],
-          ].map(([name, href]) => (
-            <Link
-              key={href}
-              href={href}
-              onClick={() => setOpen(false)}
-              className="block rounded-lg px-3 py-2.5 text-sm font-medium text-black/60 hover:bg-black/[0.04] hover:text-black"
-            >
-              {name}
-              <LinkPendingHint />
-            </Link>
-          ))}
-        </nav>
-      ) : null}
-    </div>
-  );
-}
-
-function AccountMenu({ user, providerPage }) {
+function AccountMenu({ user, providerPage, isProviderWorkspace }) {
   const [open, setOpen] = useState(false);
   const hasProviderPage = Boolean(providerPage);
   const closeMenu = () => setOpen(false);
@@ -212,12 +155,7 @@ function AccountMenu({ user, providerPage }) {
           {hasProviderPage ? (
             <>
               {providerPage.username ? (
-                <Link
-                  href={`/@${providerPage.username}`}
-                  role="menuitem"
-                  onClick={closeMenu}
-                  className="block rounded-lg px-3 py-2.5 hover:bg-black/[0.04]"
-                >
+                <div className="px-3 py-2.5">
                   <span className="flex items-center justify-between gap-4 text-sm font-medium">
                     <span>Your page</span>
                     <span className="text-xs text-black/50">{pageStatus}</span>
@@ -225,17 +163,30 @@ function AccountMenu({ user, providerPage }) {
                   <span className="mt-0.5 block truncate text-xs text-black/50">
                     ceaute.com/@{providerPage.username}
                   </span>
+                </div>
+              ) : null}
+              {providerPage.username ? (
+                <Link
+                  href={`/@${providerPage.username}`}
+                  role="menuitem"
+                  onClick={closeMenu}
+                  className="block rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-black/[0.04]"
+                >
+                  View page
+                  <LinkPendingHint />
                 </Link>
               ) : null}
-              <Link
-                href="/dashboard"
-                role="menuitem"
-                onClick={closeMenu}
-                className="block rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-black/[0.04]"
-              >
-                Dashboard
-                <LinkPendingHint />
-              </Link>
+              {!isProviderWorkspace ? (
+                <Link
+                  href="/dashboard"
+                  role="menuitem"
+                  onClick={closeMenu}
+                  className="block rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-black/[0.04]"
+                >
+                  Dashboard
+                  <LinkPendingHint />
+                </Link>
+              ) : null}
             </>
           ) : (
             <>
@@ -277,7 +228,11 @@ function AccountMenu({ user, providerPage }) {
 
 export default function AppHeaderClient({ user, providerPage = null }) {
   const pathname = usePathname();
-  const isProviderWorkspace = Boolean(user && pathname.startsWith("/dashboard"));
+  const isProviderWorkspace = Boolean(
+    user &&
+      providerPage &&
+      (pathname.startsWith("/dashboard") || pathname === "/account/settings"),
+  );
 
   useEffect(() => {
     if (user) {
@@ -296,7 +251,7 @@ export default function AppHeaderClient({ user, providerPage = null }) {
   return (
     <header className="sticky top-0 z-40 border-b border-black/10 bg-white/95 backdrop-blur">
       <nav className="relative mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
-        <HomeLogo />
+        <HomeLogo href={user ? "/discover" : "/"} />
 
         {isProviderWorkspace ? (
           <div className="absolute left-1/2 hidden -translate-x-1/2 md:block">
@@ -314,23 +269,24 @@ export default function AppHeaderClient({ user, providerPage = null }) {
 
         <div className="ml-auto flex items-center gap-1.5">
           {user ? (
-            <>
-              {isProviderWorkspace ? <MobileProviderNavigation /> : null}
-              {!isProviderWorkspace && providerPage ? (
-                <MobileCustomerNavigation />
-              ) : null}
-              {!isProviderWorkspace && !providerPage ? (
-                <div className="sm:hidden">
-                  <HeaderLink href="/discover">Discover</HeaderLink>
-                </div>
-              ) : null}
-              <AccountMenu user={user} providerPage={providerPage} />
-            </>
+            <AccountMenu
+              user={user}
+              providerPage={providerPage}
+              isProviderWorkspace={isProviderWorkspace}
+            />
           ) : (
             <HeaderLink href="/sign-in">Log in</HeaderLink>
           )}
         </div>
       </nav>
+      {isProviderWorkspace ? (
+        <nav
+          aria-label="Provider"
+          className="overflow-x-auto border-t border-black/5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:hidden"
+        >
+          <ProviderNavigation mobile />
+        </nav>
+      ) : null}
     </header>
   );
 }

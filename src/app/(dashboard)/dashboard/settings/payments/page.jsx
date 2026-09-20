@@ -1,4 +1,3 @@
-import Link from "next/link";
 import {
   acceptProviderAgreement,
   getPaymentSettings,
@@ -9,6 +8,7 @@ import { PendingButton } from "@/components/pending-button";
 import { describeRestrictionForProvider } from "@/lib/payments/provider-liability";
 import { PaymentActions } from "./_components/payment-actions";
 import { calculateBookingFeeSplit } from "@/lib/payments/booking-payments";
+import { SettingsSectionNav } from "../../_components/settings-section-nav";
 
 const money = new Intl.NumberFormat("en-GB", {
   style: "currency",
@@ -19,7 +19,7 @@ function ProviderPricing() {
   const example = calculateBookingFeeSplit({ amountChargedPence: 5000 });
 
   return (
-    <section className="mt-8 rounded-xl border p-4 text-sm">
+    <section className="mt-8 rounded-xl border border-black/10 p-4 text-sm">
       <h2 className="text-lg font-semibold">Fees</h2>
       <p className="mt-1 text-black/55">Example £50 online payment</p>
       <dl className="mt-4 grid gap-2">
@@ -94,13 +94,10 @@ export default async function DashboardPaymentSettingsPage() {
   return (
     <main className="container max-w-md p-5">
       <div className="mt-6 flex flex-col">
-        <Link
-          href="/dashboard/settings"
-          className="text-sm font-semibold text-pink-600"
-        >
-          Settings
-        </Link>
-        <h1 className="mt-6 text-3xl font-bold tracking-tighter">Payments</h1>
+        <SettingsSectionNav />
+        <h2 className="mt-8 text-2xl font-semibold tracking-tighter">
+          Payments
+        </h2>
 
         {restrictionMessage ? (
           <p
@@ -112,7 +109,7 @@ export default async function DashboardPaymentSettingsPage() {
           </p>
         ) : null}
 
-        <section className="mt-8 rounded-xl border p-4 text-sm">
+        <section className="mt-8 rounded-xl border border-black/10 p-4 text-sm">
           <h2 className="text-lg font-semibold">Provider agreement</h2>
           {agreementAcceptedAt ? (
             <p className="mt-2 text-black/60">
@@ -146,7 +143,7 @@ export default async function DashboardPaymentSettingsPage() {
           </p>
         ) : null}
 
-        <section className="mt-8 rounded-xl border p-4 text-sm">
+        <section className="mt-8 rounded-xl border border-black/10 p-4 text-sm">
           <div className="flex items-center justify-between gap-4">
             <h2 className="text-lg font-semibold">Stripe</h2>
             <p className="text-sm font-medium text-black/60">

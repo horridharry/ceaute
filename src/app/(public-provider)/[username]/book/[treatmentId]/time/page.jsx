@@ -83,7 +83,7 @@ export default async function TreatmentBookingTimePage({ params, searchParams })
           </Link>
         </div>
 
-        <div className="mt-4 flex flex-col gap-4 rounded-lg border">
+        <div className="mt-4 flex flex-col gap-4 rounded-lg border border-black/10">
           <BookingScheduler
             username={providerPage.username}
             treatment={treatment}

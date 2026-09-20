@@ -7,6 +7,7 @@ import {
 } from "./actions";
 import { ProviderPageForm } from "./_components/provider-page-form";
 import { PublicationActions } from "./_components/publication-actions";
+import { PageSectionNav } from "../_components/page-section-nav";
 
 export default async function DashboardProfilePage() {
   const { providerPage, publication } = await getProviderPage();
@@ -15,33 +16,10 @@ export default async function DashboardProfilePage() {
     <>
       <main className="container max-w-md p-5">
         <div className="mt-6">
-          <h1 className="text-3xl font-bold tracking-tighter">Page</h1>
-          <nav
-            aria-label="Page settings"
-            className="mt-6 flex flex-wrap gap-x-5 gap-y-2 border-b border-black/10 pb-4 text-sm font-medium"
-          >
-            <Link href="/dashboard/profile" className="text-pink-600">
-              Profile
-            </Link>
-            <Link
-              href="/dashboard/profile/portfolio"
-              className="hover:text-pink-600"
-            >
-              Portfolio
-            </Link>
-            <Link href="/dashboard/availability" className="hover:text-pink-600">
-              Availability
-            </Link>
-            <Link
-              href="/dashboard/profile/preview"
-              className="hover:text-pink-600"
-            >
-              Preview
-            </Link>
-          </nav>
+          <PageSectionNav />
         </div>
 
-        <section className="mt-8 rounded-xl border p-4 text-sm">
+        <section className="mt-8 rounded-xl border border-black/10 p-4 text-sm">
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-black/50">

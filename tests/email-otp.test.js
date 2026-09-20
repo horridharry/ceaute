@@ -163,9 +163,8 @@ test("incorrect, expired and already-used codes share Supabase's error and one c
   assert.deepEqual(result, { ok: false, outcome: "invalid-code" });
 
   const message = otpVerifyMessage(result.outcome);
-  assert.match(message, /incorrect/);
-  assert.match(message, /expired/);
-  assert.match(message, /already been used/);
+  assert.match(message, /didn't work/);
+  assert.match(message, /latest code/);
   assert.match(message, /request a new one/);
 });
 

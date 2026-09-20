@@ -1,7 +1,11 @@
 import { redirect } from "next/navigation";
-import { getRequestSession } from "@/lib/auth/request-session";
+import {
+  getOwnedProviderPage,
+  getRequestSession,
+} from "@/lib/auth/request-session";
 import { updatePersonalDetails } from "./actions";
 import PersonalDetailsForm from "./personal-details-form";
+import { SettingsSectionNav } from "@/app/(dashboard)/dashboard/_components/settings-section-nav";
 
 export default async function AccountSettingsPage() {
   const { supabase, claims } = await getRequestSession();
@@ -22,10 +26,16 @@ export default async function AccountSettingsPage() {
     throw new Error("Could not load your details.");
   }
 
+  const providerPage = await getOwnedProviderPage(userId);
+
   return (
     <main className="container max-w-lg p-5 bg-white mx-auto">
-      <div className="flex flex-col">
-        <h1 className="text-3xl font-bold tracking-tighter">Account</h1>
+      <div className="mt-6 flex flex-col">
+        {providerPage ? (
+          <SettingsSectionNav />
+        ) : (
+          <h1 className="text-3xl font-bold tracking-tighter">Account</h1>
+        )}
 
         <div className="mt-8">
           <h2 className="text-2xl font-semibold tracking-tighter">

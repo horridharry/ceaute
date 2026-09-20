@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
+import { SettingsSectionNav } from "../../_components/settings-section-nav";
 
 function ActionMessage({ message }) {
   return message ? (
@@ -64,7 +65,9 @@ function LocationCard({ location, makePrimaryAction, deleteAction }) {
   return (
     <li
       className={`list-none rounded-xl border p-3 ${
-        location.is_primary ? "border-pink-300 bg-pink-50/40" : ""
+        location.is_primary
+          ? "border-pink-200 bg-pink-50/40"
+          : "border-black/10"
       }`}
     >
       <div className="flex items-start justify-between gap-4">
@@ -110,15 +113,12 @@ export function LocationsPage({ locations, makePrimaryAction, deleteAction }) {
   return (
     <main className="container max-w-md p-5">
       <div className="mt-6 flex flex-col">
+        <SettingsSectionNav />
         <div className="flex items-end justify-between gap-4">
-          <h1 className="text-3xl font-bold tracking-tighter">Locations</h1>
+          <h2 className="mt-8 text-2xl font-semibold tracking-tighter">
+            Locations
+          </h2>
           <div className="flex items-center gap-2">
-            <Link
-              href="/dashboard/settings"
-              className="w-max rounded-lg border border-black/10 p-3 px-4 text-sm font-semibold text-pink-600 duration-200 hover:border-black/20"
-            >
-              Back
-            </Link>
             <Link
               href="/dashboard/locations/new"
               className="flex w-max items-center rounded-3xl bg-white p-1.5 px-3 text-sm font-semibold text-pink-600 duration-300 hover:bg-pink-500/10"

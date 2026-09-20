@@ -2,17 +2,9 @@ import Link from "next/link";
 import { formatDurationMinutes } from "../../_lib/provider-data";
 
 const NoTreatments = () => (
-  <div className="flex h-52 rounded-xl border p-2 duration-200">
-    <span className="m-auto flex flex-col">
-      <p className="w-max text-center text-sm">
-        You haven&apos;t created any treatments yet
-      </p>
-      <Link
-        href="/dashboard/treatments/new"
-        className="mx-auto mt-4 flex w-max items-center overflow-hidden rounded-3xl bg-white p-1.5 px-3 text-center text-sm font-semibold text-pink-600 duration-300 hover:bg-pink-500/10"
-      >
-        Create a new treatment
-      </Link>
+  <div className="flex h-40 rounded-xl border border-black/10 p-4">
+    <span className="m-auto text-center text-sm text-black/55">
+      No treatments yet.
     </span>
   </div>
 );
@@ -29,7 +21,7 @@ const TreatmentStatus = ({ isActive }) => (
 
 const TreatmentItem = ({ treatment }) => (
   <Link href={`/dashboard/treatments/${treatment.treatmentId}/edit`}>
-    <article className="rounded-xl border p-3 duration-200 hover:border-black/20 hover:bg-black/5">
+    <article className="min-w-0 rounded-xl border border-black/10 p-3 duration-200 hover:border-black/20 hover:bg-black/5">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
           <h2 className="truncate font-medium">{treatment.name}</h2>
@@ -64,42 +56,41 @@ const TreatmentItem = ({ treatment }) => (
 
 export function TreatmentsUI({ treatments }) {
   return (
-    <main className="container max-w-md p-5">
-      <div className="mt-6 flex flex-col">
-        <div className="flex items-end justify-between">
+    <main className="container w-full max-w-md min-w-0 p-5">
+      <div className="mt-6 min-w-0">
+        <div className="flex items-center justify-between gap-4">
           <h1 className="text-3xl font-bold tracking-tighter">Treatments</h1>
-          <div className="flex items-center gap-2">
-            <Link
-              href="/dashboard/treatment-groups"
-              className="flex w-max items-center overflow-hidden rounded-3xl bg-white p-1.5 px-3 text-center text-sm font-semibold text-pink-600 duration-300 hover:bg-pink-500/10"
-            >
-              Manage groups
-            </Link>
-            <Link
-              href="/dashboard/add-ons"
-              className="flex w-max items-center overflow-hidden rounded-3xl bg-white p-1.5 px-3 text-center text-sm font-semibold text-pink-600 duration-300 hover:bg-pink-500/10"
-            >
-              Manage add-ons
-            </Link>
-            {treatments.length !== 0 ? (
-              <Link
-                href="/dashboard/treatments/new"
-                className="flex w-max items-center overflow-hidden rounded-3xl bg-white p-1.5 px-3 text-center text-sm font-semibold text-pink-600 duration-300 hover:bg-pink-500/10"
-              >
-                Create
-              </Link>
-            ) : null}
-          </div>
+          <Link
+            href="/dashboard/treatments/new"
+            className="shrink-0 rounded-full px-3 py-2 text-sm font-semibold text-pink-600 hover:bg-pink-50"
+          >
+            + New
+          </Link>
         </div>
 
-        <div className="mt-12 flex flex-col gap-4">
+        <nav className="mt-5 flex gap-5 border-b border-black/10 pb-3 text-sm font-medium">
+          <Link
+            href="/dashboard/treatment-groups"
+            className="text-black/55 hover:text-black"
+          >
+            Groups
+          </Link>
+          <Link
+            href="/dashboard/add-ons"
+            className="text-black/55 hover:text-black"
+          >
+            Add-ons
+          </Link>
+        </nav>
+
+        <ul className="mt-8 flex min-w-0 flex-col gap-4">
           {treatments.map((treatment) => (
             <li key={treatment.treatmentId} className="list-none">
               <TreatmentItem treatment={treatment} />
             </li>
           ))}
           {treatments.length === 0 ? <NoTreatments /> : null}
-        </div>
+        </ul>
       </div>
     </main>
   );

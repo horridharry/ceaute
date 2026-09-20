@@ -5,7 +5,7 @@ import {
 import { SmallTreatmentPhoto } from "./treatment-photo";
 
 export const BookingTreatmentSummary = ({ treatment }) => (
-  <div className="rounded-xl border border-black/20 p-2.5">
+  <div className="rounded-xl border border-black/10 p-2.5">
     <div className="flex h-full items-center gap-2.5">
       <SmallTreatmentPhoto url={treatment.image_url} />
       <div className="max-w-sm flex-1 overflow-hidden text-ellipsis">
@@ -22,4 +22,3 @@ export const BookingTreatmentSummary = ({ treatment }) => (
     </div>
   </div>
 );
-

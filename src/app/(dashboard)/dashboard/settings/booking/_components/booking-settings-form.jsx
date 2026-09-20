@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useActionState, useState } from "react";
 import { keepFormValuesOnSubmit } from "@/lib/forms/keep-form-values";
+import { SettingsSectionNav } from "../../../_components/settings-section-nav";
 
 const MONEY_PATTERN = /^\d+(\.\d{1,2})?$/;
 
@@ -44,9 +44,10 @@ export function BookingSettingsForm({ settings, updateBookingSettings }) {
   return (
     <main className="container max-w-md p-5">
       <div className="mt-6 flex flex-col">
-        <h1 className="text-3xl font-bold tracking-tighter">
+        <SettingsSectionNav />
+        <h2 className="mt-8 text-2xl font-semibold tracking-tighter">
           Booking settings
-        </h1>
+        </h2>
 
         <form
           id="booking_settings"
@@ -85,7 +86,7 @@ export function BookingSettingsForm({ settings, updateBookingSettings }) {
                 inputMode="decimal"
                 value={commitmentAmount}
                 onChange={updateCommitmentAmount}
-                className="relative w-full appearance-none rounded-lg border p-2.5 pl-8 outline-none ring-1 ring-transparent duration-200 hover:border-black/25 focus:border-pink-600 focus:ring-pink-600"
+                className="relative w-full appearance-none rounded-lg border border-black/10 p-2.5 pl-8 outline-none ring-2 ring-transparent duration-200 hover:border-black/20 focus:border-pink-500 focus:ring-pink-100"
               />
             </div>
           </span>
@@ -126,12 +127,6 @@ export function BookingSettingsForm({ settings, updateBookingSettings }) {
           <p className="mt-4 text-sm text-red-600">{stateMessage}</p>
 
           <div className="mt-8 flex items-center justify-end gap-2">
-            <Link
-              href="/dashboard/settings"
-              className="w-max rounded-lg border border-black/10 p-3 px-6 text-sm font-semibold text-pink-600 duration-200 hover:border-black/20 active:border-transparent active:bg-pink-500/10 active:text-pink-500"
-            >
-              Back
-            </Link>
             <button
               form="booking_settings"
               type="submit"

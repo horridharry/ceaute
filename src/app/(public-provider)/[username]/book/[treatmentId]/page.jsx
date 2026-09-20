@@ -49,7 +49,7 @@ export default async function TreatmentBookingPage({ params, searchParams }) {
 
         <Form
           action={`/@${providerPage.username}/book/${treatment.id}/time`}
-          className="mt-8 rounded-lg border p-4"
+          className="mt-8 rounded-lg border border-black/10 p-4"
         >
           <h2 className="text-sm font-semibold">Add-ons</h2>
           {compatibleAddOns.length ? (
