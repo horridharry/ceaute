@@ -61,6 +61,7 @@ export async function searchPublicProviders(searchParams = {}) {
   );
 
   if (error) {
+    console.error("Failed to search public providers:", error);
     throw new Error("Could not search providers.");
   }
 
