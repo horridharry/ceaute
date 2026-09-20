@@ -15,28 +15,67 @@
 // domain. VERCEL_URL is set by Vercel rather than the request and remains
 // deliberately confined to the Preview fallback.
 
+// A value configured through a dashboard or a .env file frequently arrives
+// wrapped in the quotes it was pasted with. `"https://preview.ceaute.com"` and
+// `https://preview.ceaute.com` are indistinguishable when read back by eye, but
+// the first produces a callback URL that does not start with https:// and that
+// Stripe rejects outright. Strip the quotes rather than propagate them.
+function stripSurroundingQuotes(value) {
+  const quoted = /^(["'])([\s\S]*)\1$/.exec(value);
+
+  return quoted ? quoted[2] : value;
+}
+
 function normalise(value) {
-  const trimmed = value?.trim();
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const unquoted = stripSurroundingQuotes(value.trim()).trim();
+  const trimmed = unquoted.replace(/\/+$/, "");
 
   if (!trimmed) {
     return null;
   }
 
-  return trimmed.replace(/\/+$/, "");
+  return trimmed;
+}
+
+// Fails closed, in the same spirit as the Stripe mode check: a configured
+// origin that is not an absolute http(s) URL cannot build a usable callback,
+// and every downstream failure it causes — a Stripe 400, a dead link in a
+// booking email — is far harder to read than this message.
+function assertUsableOrigin(origin, variableName) {
+  let parsed;
+
+  try {
+    parsed = new URL(origin);
+  } catch {
+    parsed = null;
+  }
+
+  if (!parsed || (parsed.protocol !== "https:" && parsed.protocol !== "http:")) {
+    throw new Error(
+      `${variableName} must be an absolute http(s) URL such as ` +
+        `https://preview.ceaute.com, not ${JSON.stringify(origin)}.`,
+    );
+  }
+
+  return origin;
 }
 
 export function resolveApplicationOrigin(environment = process.env) {
   const configuredOrigin = normalise(environment.CEAUTE_APP_URL);
 
   if (configuredOrigin) {
-    return configuredOrigin;
+    return assertUsableOrigin(configuredOrigin, "CEAUTE_APP_URL");
   }
 
   if (environment.VERCEL_ENV === "preview") {
     const previewHost = normalise(environment.VERCEL_URL);
 
     if (previewHost) {
-      return `https://${previewHost}`;
+      return assertUsableOrigin(`https://${previewHost}`, "VERCEL_URL");
     }
   }
 

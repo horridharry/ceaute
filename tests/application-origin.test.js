@@ -188,3 +188,45 @@ test("an unconfigured run with no usable headers refuses to guess an origin", ()
     /Could not determine the application origin\./,
   );
 });
+
+// A value pasted into a dashboard or .env file with its quotes attached reads
+// back as correct but builds URLs that do not start with https://.
+test("a quoted CEAUTE_APP_URL is unwrapped rather than propagated", () => {
+  assert.equal(
+    resolveApplicationOrigin({ CEAUTE_APP_URL: '"https://preview.ceaute.com"' }),
+    previewAppUrl,
+  );
+  assert.equal(
+    resolveApplicationOrigin({ CEAUTE_APP_URL: "'https://preview.ceaute.com/'" }),
+    previewAppUrl,
+  );
+  assert.equal(
+    resolveApplicationOrigin({ CEAUTE_APP_URL: '  "https://ceaute.com"  ' }),
+    productionAppUrl,
+  );
+});
+
+test("a quoted VERCEL_URL is unwrapped before the Preview fallback uses it", () => {
+  assert.equal(
+    resolveApplicationOrigin({
+      VERCEL_ENV: "preview",
+      VERCEL_URL: '"ceaute-abc123.vercel.app"',
+    }),
+    "https://ceaute-abc123.vercel.app",
+  );
+});
+
+test("a configured origin that is not an absolute http(s) URL fails closed", () => {
+  for (const value of [
+    "preview.ceaute.com",
+    "ftp://preview.ceaute.com",
+    "javascript:alert(1)",
+    "/dashboard",
+  ]) {
+    assert.throws(
+      () => resolveApplicationOrigin({ CEAUTE_APP_URL: value }),
+      /CEAUTE_APP_URL must be an absolute http\(s\) URL/,
+      `expected ${value} to be rejected`,
+    );
+  }
+});

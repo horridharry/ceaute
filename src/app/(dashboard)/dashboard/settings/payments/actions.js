@@ -220,6 +220,7 @@ export async function startOrResumeOnboarding() {
 
   let accountId = existingAccount?.stripe_account_id;
   let accountLink;
+  let accountLinkParams;
 
   try {
     if (!accountId) {
@@ -259,7 +260,7 @@ export async function startOrResumeOnboarding() {
       }
     }
 
-    const accountLinkParams = buildRecipientOnboardingAccountLink({
+    accountLinkParams = buildRecipientOnboardingAccountLink({
       accountId,
       origin,
     });
@@ -283,6 +284,13 @@ export async function startOrResumeOnboarding() {
     console.error("Stripe onboarding could not start", {
       providerPageId: providerPage.id,
       stripeAccountId: accountId ?? null,
+      // The callback URLs are the usual suspect in an invalid_fields rejection,
+      // and they are non-secret, so the failure must name the exact values sent.
+      origin,
+      refreshUrl:
+        accountLinkParams?.use_case.account_onboarding.refresh_url ?? null,
+      returnUrl:
+        accountLinkParams?.use_case.account_onboarding.return_url ?? null,
       ...describeStripeError(stripeError),
     });
 
