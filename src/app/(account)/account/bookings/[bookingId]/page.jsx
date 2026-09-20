@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BookingInspirationImages } from "@/components/booking-inspiration-images";
 import { PendingButton } from "@/components/pending-button";
-import { StatusBadge } from "@/app/(dashboard)/dashboard/_components/status-badge";
+import { StatusBadge } from "@/components/status-badge";
 import { BOOKING_FALLBACK_LABEL } from "@/lib/bookings/booking-display";
 import {
   addBookingInspirationImages,

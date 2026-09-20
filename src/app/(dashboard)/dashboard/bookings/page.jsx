@@ -2,7 +2,7 @@ import Link from "next/link";
 import { unstable_rethrow } from "next/navigation";
 import { getAllBookings } from "./actions";
 import { SectionTabs } from "../_components/section-tabs";
-import { StatusBadge } from "../_components/status-badge";
+import { StatusBadge } from "@/components/status-badge";
 
 const bookingTabs = [
   { key: "upcoming", label: "Upcoming" },

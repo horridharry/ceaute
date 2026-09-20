@@ -1,6 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { LinkPendingHint } from "@/components/link-pending-hint";
 import { SectionTabs } from "./section-tabs";
 
 const links = [
@@ -11,12 +13,23 @@ const links = [
   { label: "Preview", href: "/dashboard/profile/preview" },
 ];
 
-export function PageSectionNav() {
+export function PageSectionNav({ action = null }) {
   const pathname = usePathname();
 
   return (
     <header className="min-w-0">
-      <h1 className="text-3xl font-bold tracking-tighter">Page</h1>
+      <div className="flex items-center justify-between gap-4">
+        <h1 className="text-3xl font-bold tracking-tighter">Page</h1>
+        {action ? (
+          <Link
+            href={action.href}
+            className="shrink-0 rounded-full px-3 py-2 text-sm font-semibold text-accent-600 hover:bg-accent-50"
+          >
+            {action.label}
+            <LinkPendingHint />
+          </Link>
+        ) : null}
+      </div>
       <SectionTabs
         ariaLabel="Page settings"
         items={links.map((link) => ({

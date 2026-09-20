@@ -65,9 +65,7 @@ function LocationCard({ location, makePrimaryAction, deleteAction }) {
   return (
     <li
       className={`list-none rounded-xl border p-3 ${
-        location.is_primary
-          ? "border-accent-100 bg-accent-50/40"
-          : "border-black/10"
+        location.is_primary ? "border-accent-600" : "border-black/10"
       }`}
     >
       <div className="flex items-start justify-between gap-4">
@@ -108,29 +106,12 @@ function LocationCard({ location, makePrimaryAction, deleteAction }) {
 }
 
 export function LocationsPage({ locations, makePrimaryAction, deleteAction }) {
-  const hasOnlyCurrentLocation = locations.length === 1;
-
   return (
     <main className="container max-w-md p-5">
       <div className="mt-6 flex flex-col">
-        <PageSectionNav />
-        <div className="flex items-end justify-between gap-4">
-          <h2 className="mt-8 text-2xl font-semibold tracking-tighter">
-            Locations
-          </h2>
-          <div className="flex items-center gap-2">
-            <Link
-              href="/dashboard/locations/new"
-              className="flex w-max items-center rounded-3xl bg-white p-1.5 px-3 text-sm font-semibold text-accent-600 duration-300 hover:bg-accent-600/10"
-            >
-              Add
-            </Link>
-          </div>
-        </div>
-
-        <p className="mt-3 text-sm text-black/60">
-          Your current location is used for your page and new bookings.
-        </p>
+        <PageSectionNav
+          action={{ label: "+ Add", href: "/dashboard/locations/new" }}
+        />
 
         {locations.length === 0 ? (
           <p className="mt-10 text-sm text-black/60">
@@ -150,14 +131,9 @@ export function LocationsPage({ locations, makePrimaryAction, deleteAction }) {
           </ul>
         )}
 
-        {hasOnlyCurrentLocation ? (
-          <p className="mt-6 text-sm text-black/60">
-            Add another location before replacing this one.
-          </p>
-        ) : null}
-
         <p className="mt-6 text-sm text-black/60">
-          Confirmed bookings keep their original address.
+          Changing where you work from does not move bookings that are already
+          confirmed. Those stay at the address the customer agreed to.
         </p>
       </div>
     </main>

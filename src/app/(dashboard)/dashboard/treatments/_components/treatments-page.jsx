@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { formatDurationMinutes } from "../../_lib/provider-data";
 import { CatalogueSectionNav } from "../../_components/catalogue-section-nav";
-import { StatusBadge } from "../../_components/status-badge";
+import { StatusBadge } from "@/components/status-badge";
 
 const NoTreatments = () => (
   <div className="flex h-40 rounded-xl border border-black/10 p-4">

@@ -129,6 +129,9 @@ export function BookingInspirationImages({
   description,
   // Short qualifier shown beside the label, e.g. "Optional" at checkout.
   meta = "",
+  // What this screen calls the section. A provider is looking for what the
+  // customer wants, not for the name of the feature.
+  label = "Inspiration images",
   // Fades the grid once the images are kept with a finished booking rather
   // than still being part of a decision. Off by default: checkout and the
   // hold states show them at full strength.
@@ -144,7 +147,7 @@ export function BookingInspirationImages({
     <section className="mt-4 border-t pt-4">
       <div className="flex items-baseline justify-between gap-3">
         <p className="text-xs font-semibold uppercase tracking-wide text-black/50">
-          Inspiration images
+          {label}
         </p>
         {meta ? <p className="text-xs text-black/45">{meta}</p> : null}
       </div>

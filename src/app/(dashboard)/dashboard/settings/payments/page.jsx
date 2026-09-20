@@ -9,7 +9,7 @@ import { describeRestrictionForProvider } from "@/lib/payments/provider-liabilit
 import { PaymentActions } from "./_components/payment-actions";
 import { calculateBookingFeeSplit } from "@/lib/payments/booking-payments";
 import { SettingsSectionNav } from "../../_components/settings-section-nav";
-import { StatusBadge } from "../../_components/status-badge";
+import { StatusBadge } from "@/components/status-badge";
 
 const money = new Intl.NumberFormat("en-GB", {
   style: "currency",
@@ -102,9 +102,6 @@ export default async function DashboardPaymentSettingsPage() {
     <main className="container max-w-md p-5">
       <div className="mt-6 flex flex-col">
         <SettingsSectionNav />
-        <h2 className="mt-8 text-2xl font-semibold tracking-tighter">
-          Payments
-        </h2>
 
         {restrictionMessage ? (
           <p

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { CatalogueSectionNav } from "../../_components/catalogue-section-nav";
-import { StatusBadge } from "../../_components/status-badge";
+import { StatusBadge } from "@/components/status-badge";
 
 const currencyFormatter = new Intl.NumberFormat("en-GB", {
   style: "currency",
@@ -49,11 +49,20 @@ function AddOnItem({ addOn }) {
                   : "No extra time"}
               </span>
             </div>
-            <p className="mt-2 text-xs text-black/50">
-              {addOn.compatible_treatment_count === 1
-                ? "1 compatible treatment"
-                : `${addOn.compatible_treatment_count} compatible treatments`}
-            </p>
+            {/* The link between an add-on and its treatments is invisible
+                everywhere else, so the count lives on the row -- and an
+                orphan says so rather than reading "0". */}
+            {addOn.compatible_treatment_count === 0 ? (
+              <p className="mt-2 text-xs font-medium text-warn">
+                Not on any treatment yet
+              </p>
+            ) : (
+              <p className="mt-2 text-xs text-black/50">
+                {addOn.compatible_treatment_count === 1
+                  ? "On 1 treatment"
+                  : `On ${addOn.compatible_treatment_count} treatments`}
+              </p>
+            )}
           </div>
           <AddOnState isActive={addOn.is_active} />
         </div>

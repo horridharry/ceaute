@@ -68,14 +68,14 @@ function getErrors(days) {
   );
 }
 
+// One chip per date, so the label has to be short. The schema stores single
+// blocked dates, so a week off is seven chips and there is no range to show.
 function formatBlockedDate(localDate) {
   const [year, month, day] = localDate.split("-").map(Number);
 
   return new Intl.DateTimeFormat("en-GB", {
-    weekday: "short",
     day: "numeric",
     month: "short",
-    year: "numeric",
     timeZone: "Europe/London",
   }).format(new Date(Date.UTC(year, month - 1, day, 12)));
 }
@@ -96,6 +96,8 @@ export function AvailabilityForm({
     "",
   );
   const [days, setDays] = useState(() => scheduleToState(schedule));
+  // One row open at a time: the editor appears in place, under the row tapped.
+  const [openDayOfWeek, setOpenDayOfWeek] = useState(null);
   const timeOptions = useMemo(() => generateTimeOptions(), []);
   const errors = getErrors(days);
   const hasErrors = Object.keys(errors).length > 0;
@@ -120,49 +122,66 @@ export function AvailabilityForm({
     <main className="container max-w-md p-5">
       <div className="mt-6 flex flex-col">
         <PageSectionNav />
-        <h2 className="mt-8 text-2xl font-semibold tracking-tighter">
-          Availability
-        </h2>
-        <p className="mt-1 text-sm text-black/60">
-          Set your regular hours in Europe/London time.
-        </p>
 
         <form
           id="availability"
-          className="mt-12 flex flex-col gap-4"
+          className="mt-8 flex flex-col"
           action={updateScheduleAction}
           onSubmit={keepFormValuesOnSubmit(updateScheduleAction)}
         >
-          {days.map((day, index) => (
-            <div
-              key={day.dayOfWeek}
-              className={index === days.length - 1 ? "" : "border-b pb-4"}
-            >
-              <div className="flex items-center">
-                <label
-                  htmlFor={`${day.dayOfWeek}_enabled`}
-                  className={
-                    day.enabled
-                      ? "flex-1 text-sm font-medium"
-                      : "flex-1 text-sm text-black/60"
-                  }
-                >
-                  {DAYS_OF_WEEK[index].label}
-                </label>
-                <input
-                  type="checkbox"
-                  id={`${day.dayOfWeek}_enabled`}
-                  name="enabled_weekday"
-                  value={day.dayOfWeek}
-                  checked={day.enabled}
-                  onChange={() => toggleDay(day.dayOfWeek)}
-                  className="h-5 w-5 cursor-pointer appearance-none rounded border border-black/15 bg-white outline-none ring-2 ring-transparent duration-200 checked:border-transparent checked:bg-accent-600 hover:border-black/25 focus:ring-accent-100"
-                />
-              </div>
+          {days.map((day, index) => {
+            const label = DAYS_OF_WEEK[index].label;
+            const isOpen = openDayOfWeek === day.dayOfWeek;
+            const openLabel = timeOptions.find(
+              (option) => option.value === day.openTime,
+            )?.label;
+            const closeLabel = timeOptions.find(
+              (option) => option.value === day.closeTime,
+            )?.label;
 
-              {day.enabled ? (
-                <div className="pt-4">
-                  <div className="flex gap-x-2.5">
+            return (
+              <div
+                key={day.dayOfWeek}
+                className="border-b border-black/8 last:border-b-0"
+              >
+                <button
+                  type="button"
+                  onClick={() =>
+                    setOpenDayOfWeek(isOpen ? null : day.dayOfWeek)
+                  }
+                  aria-expanded={isOpen}
+                  className="flex w-full items-center justify-between gap-4 py-3.5 text-left"
+                >
+                  <span className="text-sm font-medium">{label}</span>
+                  {day.enabled ? (
+                    <span className="text-sm font-medium tabular-nums text-accent-600">
+                      {openLabel} &ndash; {closeLabel}
+                    </span>
+                  ) : (
+                    <span className="text-sm text-black/45">Closed</span>
+                  )}
+                </button>
+
+                {/* Always mounted so a collapsed row still submits its times;
+                    `hidden` keeps the controls in the form either way. */}
+                <div hidden={!isOpen} className="pb-4">
+                  <label
+                    htmlFor={`${day.dayOfWeek}_enabled`}
+                    className="flex cursor-pointer items-center gap-2 text-sm"
+                  >
+                    <input
+                      type="checkbox"
+                      id={`${day.dayOfWeek}_enabled`}
+                      name="enabled_weekday"
+                      value={day.dayOfWeek}
+                      checked={day.enabled}
+                      onChange={() => toggleDay(day.dayOfWeek)}
+                      className="h-5 w-5 cursor-pointer appearance-none rounded border border-black/15 bg-white outline-none duration-200 checked:border-transparent checked:bg-accent-600 hover:border-black/25"
+                    />
+                    Open on {label}
+                  </label>
+
+                  <div className="mt-3 flex gap-x-2.5">
                     <span className="field-set flex-1">
                       <label
                         htmlFor={`${day.dayOfWeek}_starts_at`}
@@ -174,6 +193,7 @@ export function AvailabilityForm({
                         id={`${day.dayOfWeek}_starts_at`}
                         name={`${day.dayOfWeek}_starts_at`}
                         value={day.openTime}
+                        disabled={!day.enabled}
                         onChange={(event) =>
                           updateTime(
                             day.dayOfWeek,
@@ -181,7 +201,7 @@ export function AvailabilityForm({
                             event.target.value,
                           )
                         }
-                        className="field cursor-pointer"
+                        className="field cursor-pointer disabled:opacity-40"
                       >
                         {timeOptions.map((timeOption) => (
                           <option key={timeOption.value} value={timeOption.value}>
@@ -202,6 +222,7 @@ export function AvailabilityForm({
                         id={`${day.dayOfWeek}_ends_at`}
                         name={`${day.dayOfWeek}_ends_at`}
                         value={day.closeTime}
+                        disabled={!day.enabled}
                         onChange={(event) =>
                           updateTime(
                             day.dayOfWeek,
@@ -209,7 +230,7 @@ export function AvailabilityForm({
                             event.target.value,
                           )
                         }
-                        className="field cursor-pointer"
+                        className="field cursor-pointer disabled:opacity-40"
                       >
                         {timeOptions.map((timeOption) => (
                           <option key={timeOption.value} value={timeOption.value}>
@@ -219,21 +240,16 @@ export function AvailabilityForm({
                       </select>
                     </span>
                   </div>
-                  <p
-                    className={
-                      errors[day.dayOfWeek]
-                        ? "mt-2 text-sm text-red-600 opacity-100 transition-opacity duration-500 ease-in"
-                        : "mt-2 text-sm text-red-600 opacity-0 transition-opacity duration-500 ease-in"
-                    }
-                  >
-                    {errors[day.dayOfWeek] || "Times are valid"}
-                  </p>
+
+                  {errors[day.dayOfWeek] ? (
+                    <p className="mt-2 text-sm text-bad">
+                      {errors[day.dayOfWeek]}
+                    </p>
+                  ) : null}
                 </div>
-              ) : (
-                <p className="pt-2 text-sm text-black/50">Closed</p>
-              )}
-            </div>
-          ))}
+              </div>
+            );
+          })}
 
           {stateMessage ? (
             <p className="mt-4 text-sm text-red-600">{stateMessage}</p>
@@ -254,9 +270,9 @@ export function AvailabilityForm({
 
         <section className="mt-12 flex flex-col gap-4">
           <div>
-            <h2 className="text-xl font-semibold tracking-tight">
-              Blocked dates
-            </h2>
+            <p className="text-xs font-semibold uppercase tracking-wide text-black/50">
+              Days off
+            </p>
             <p className="mt-1 text-sm text-black/60">
               Existing bookings are not cancelled.
             </p>
@@ -278,26 +294,20 @@ export function AvailabilityForm({
               type="submit"
               disabled={blockDatePending}
               aria-disabled={blockDatePending}
-              className="w-max rounded-lg bg-accent-700 p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-accent-700 disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+              className="w-max rounded-[10px] bg-accent-600 p-3 px-4 text-sm font-medium text-white duration-200 disabled:cursor-not-allowed disabled:opacity-40"
             >
-              {blockDatePending ? "Blocking..." : "Block date"}
+              {blockDatePending ? "Adding..." : "Add"}
             </button>
           </form>
 
           {blockDateMessage ? (
-            <p className="text-sm text-red-600">{blockDateMessage}</p>
+            <p className="text-sm text-bad">{blockDateMessage}</p>
           ) : null}
 
           {blockedDates.length ? (
-            <ul className="flex flex-col gap-2">
+            <ul className="flex flex-wrap gap-2">
               {blockedDates.map((blockedDate) => (
-                <li
-                  key={blockedDate.id}
-                  className="flex items-center gap-3 rounded-lg border border-black/10 p-3"
-                >
-                  <p className="flex-1 text-sm font-medium">
-                    {formatBlockedDate(blockedDate.local_date)}
-                  </p>
+                <li key={blockedDate.id}>
                   <form action={removeBlockedDate}>
                     <input
                       type="hidden"
@@ -306,18 +316,20 @@ export function AvailabilityForm({
                     />
                     <PendingButton
                       pendingLabel="Removing..."
-                      className="rounded-lg border border-black/10 p-2 px-3 text-sm font-semibold text-accent-600 duration-200 hover:border-black/20 active:border-transparent active:bg-accent-600/10 active:text-accent-600 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="inline-flex items-center gap-1.5 rounded-full border border-black/12 py-1.5 pr-2.5 pl-3 text-sm tabular-nums duration-200 hover:border-black/25 disabled:cursor-not-allowed disabled:opacity-40"
                     >
-                      Remove
+                      {formatBlockedDate(blockedDate.local_date)}
+                      <span aria-hidden="true" className="text-black/45">
+                        &times;
+                      </span>
+                      <span className="sr-only">Remove</span>
                     </PendingButton>
                   </form>
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="rounded-lg border border-dashed border-black/15 p-4 text-sm text-black/60">
-              No upcoming blocked dates.
-            </p>
+            <p className="text-sm text-black/55">No days off coming up.</p>
           )}
         </section>
       </div>

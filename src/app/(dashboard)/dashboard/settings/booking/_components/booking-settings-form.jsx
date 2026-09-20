@@ -45,9 +45,6 @@ export function BookingSettingsForm({ settings, updateBookingSettings }) {
     <main className="container max-w-md p-5">
       <div className="mt-6 flex flex-col">
         <SettingsSectionNav />
-        <h2 className="mt-8 text-2xl font-semibold tracking-tighter">
-          Booking settings
-        </h2>
 
         <form
           id="booking_settings"

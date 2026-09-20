@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BookingInspirationImages } from "@/components/booking-inspiration-images";
 import { PendingButton } from "@/components/pending-button";
+import { BOOKING_FALLBACK_LABEL } from "@/lib/bookings/booking-display";
 import { cancelProviderBooking, getProviderBooking } from "../actions";
 
 const canShowExactAddress = (booking) =>
@@ -34,6 +35,29 @@ function ExactLocation({ booking }) {
           Access: {booking.access_instructions}
         </p>
       ) : null}
+    </div>
+  );
+}
+
+// Contact first: at 9am the phone number is the single most-used thing here,
+// so it leads and it dials.
+function Contact({ booking }) {
+  const phone = booking.customer_phone;
+  const hasPhone = phone && phone !== BOOKING_FALLBACK_LABEL;
+
+  return (
+    <div className="mt-3">
+      {hasPhone ? (
+        <a
+          href={`tel:${phone.replace(/\s/g, "")}`}
+          className="inline-flex rounded-[10px] bg-ink px-4 py-2.5 text-sm font-medium text-white"
+        >
+          Call {phone}
+        </a>
+      ) : (
+        <p className="text-black/60">No phone number on this booking.</p>
+      )}
+      <p className="mt-2 text-black/60">{booking.customer_email}</p>
     </div>
   );
 }
@@ -115,7 +139,10 @@ export default async function BookingDetailPage({ params }) {
 
         <section className="mt-6 rounded-xl border border-black/10 p-4 text-sm">
           <h2 className="text-lg font-semibold">{booking.customer_name}</h2>
-          <p className="mt-3 font-medium">{booking.treatment_name}</p>
+          <Contact booking={booking} />
+          <p className="mt-4 border-t border-black/10 pt-4 font-medium">
+            {booking.treatment_name}
+          </p>
           <p className="mt-3">
             <span className="font-semibold">{booking.date_label}</span>
             {", "}
@@ -146,20 +173,14 @@ export default async function BookingDetailPage({ params }) {
             </div>
           ) : null}
 
-          <div className="mt-4 border-t border-black/10 pt-4">
-            <p className="font-semibold">Customer</p>
-            <p className="mt-2">{booking.customer_name}</p>
-            <p className="text-black/60">{booking.customer_email}</p>
-            <p className="text-black/60">{booking.customer_phone}</p>
-          </div>
-
           <ExactLocation booking={booking} />
 
           <BookingInspirationImages
             images={booking.inspiration_images}
             allowance={null}
             canManage={false}
-            description="The customer's reference pictures for this appointment. Only they can change them."
+            label="What they want"
+            description="The customer's reference pictures. Only they can change them."
           />
 
           <div className="mt-4 border-t border-black/10 pt-4">
