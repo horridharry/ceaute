@@ -25,20 +25,37 @@ test("complete email configuration permits the existing claim flow", () => {
   );
 });
 
-test("a Preview deployment sends links to its own deployment URL", () => {
+test("a Preview deployment sends links to its configured canonical URL", () => {
   assert.deepEqual(
     getBookingEmailConfiguration({
       RESEND_API_KEY: "re_test",
       CEAUTE_EMAIL_FROM: "Ceaute <bookings@example.test>",
-      CEAUTE_APP_URL: "https://ceaute.com",
+      CEAUTE_APP_URL: "https://preview.ceaute.com",
       VERCEL_ENV: "preview",
-      VERCEL_URL: "ceaute-git-feature-branch.vercel.app",
+      VERCEL_URL: "ceaute-abc123.vercel.app",
     }),
     {
       configured: true,
       apiKey: "re_test",
       from: "Ceaute <bookings@example.test>",
-      appUrl: "https://ceaute-git-feature-branch.vercel.app",
+      appUrl: "https://preview.ceaute.com",
+    },
+  );
+});
+
+test("an unconfigured Preview email falls back to its generated URL", () => {
+  assert.deepEqual(
+    getBookingEmailConfiguration({
+      RESEND_API_KEY: "re_test",
+      CEAUTE_EMAIL_FROM: "Ceaute <bookings@example.test>",
+      VERCEL_ENV: "preview",
+      VERCEL_URL: "ceaute-abc123.vercel.app",
+    }),
+    {
+      configured: true,
+      apiKey: "re_test",
+      from: "Ceaute <bookings@example.test>",
+      appUrl: "https://ceaute-abc123.vercel.app",
     },
   );
 });

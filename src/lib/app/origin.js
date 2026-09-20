@@ -2,22 +2,18 @@
 // absolute URL the server builds is hung off: booking-email links, Stripe
 // Checkout success/cancel URLs, and Stripe Connect onboarding return URLs.
 //
-// Three environments, two rules:
+// Three environments, one canonical rule and one fallback:
 //
-//   * Vercel Preview resolves to the deployment currently serving the request,
-//     `https://${VERCEL_URL}`. Every preview gets a fresh hostname, so a fixed
-//     value would send a tester on a preview back to Production halfway
-//     through the journey they are testing.
-//   * Production and local development resolve to the configured
-//     CEAUTE_APP_URL. Production must stay pinned to the canonical origin:
-//     Stripe bakes success_url and cancel_url into the Session and they are
-//     persisted with the payment attempt, so a paying customer must land back
-//     on https://ceaute.com and not on whatever host happened to serve the
-//     request.
+//   * Every environment uses its explicitly configured CEAUTE_APP_URL. Preview
+//     and Production each have a permanent customer-facing domain, while local
+//     development normally configures http://localhost:3000.
+//   * An unconfigured Vercel Preview falls back to its generated VERCEL_URL so
+//     an ad-hoc deployment can still build absolute URLs.
 //
-// VERCEL_URL is set by Vercel itself from the deployment, never from the
-// request, so it is not attacker-controlled the way Host or Origin headers
-// are. It is still deliberately confined to Preview.
+// Stripe persists Checkout success/cancel URLs and Connect return URLs, so a
+// generated deployment hostname must never override the configured canonical
+// domain. VERCEL_URL is set by Vercel rather than the request and remains
+// deliberately confined to the Preview fallback.
 
 function normalise(value) {
   const trimmed = value?.trim();
@@ -30,6 +26,12 @@ function normalise(value) {
 }
 
 export function resolveApplicationOrigin(environment = process.env) {
+  const configuredOrigin = normalise(environment.CEAUTE_APP_URL);
+
+  if (configuredOrigin) {
+    return configuredOrigin;
+  }
+
   if (environment.VERCEL_ENV === "preview") {
     const previewHost = normalise(environment.VERCEL_URL);
 
@@ -38,7 +40,7 @@ export function resolveApplicationOrigin(environment = process.env) {
     }
   }
 
-  return normalise(environment.CEAUTE_APP_URL);
+  return null;
 }
 
 // The origin an in-flight request should build absolute URLs from.

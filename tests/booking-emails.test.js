@@ -262,7 +262,7 @@ test("an email whose payload has no booking path shows the link as unavailable r
   assert.doesNotMatch(html, /undefined/);
 });
 
-test("a booking email sent from a Preview deployment links back to that deployment", async () => {
+test("a booking email sent from Preview uses its canonical application URL", async () => {
   const supabase = fakeSupabase([outboxEmail()]);
   const { requests, fetchImpl } = fakeFetch(() => okResponse({ id: "m" }));
 
@@ -271,18 +271,18 @@ test("a booking email sent from a Preview deployment links back to that deployme
     fetchImpl,
     environment: {
       ...environment,
-      CEAUTE_APP_URL: "https://ceaute.com",
+      CEAUTE_APP_URL: "https://preview.ceaute.com",
       VERCEL_ENV: "preview",
-      VERCEL_URL: "ceaute-git-feature-branch.vercel.app",
+      VERCEL_URL: "ceaute-abc123.vercel.app",
     },
   });
 
   const { text, html } = requests[0].body;
   assert.match(
     text,
-    /View booking: https:\/\/ceaute-git-feature-branch\.vercel\.app\/account\/bookings\/booking-1/,
+    /View booking: https:\/\/preview\.ceaute\.com\/account\/bookings\/booking-1/,
   );
-  assert.match(html, /https:\/\/ceaute-git-feature-branch\.vercel\.app\/account\/bookings\/booking-1/);
-  assert.doesNotMatch(text, /https:\/\/ceaute\.com/);
-  assert.doesNotMatch(html, /https:\/\/ceaute\.com/);
+  assert.match(html, /https:\/\/preview\.ceaute\.com\/account\/bookings\/booking-1/);
+  assert.doesNotMatch(text, /ceaute-abc123\.vercel\.app/);
+  assert.doesNotMatch(html, /ceaute-abc123\.vercel\.app/);
 });

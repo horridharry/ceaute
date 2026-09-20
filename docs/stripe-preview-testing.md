@@ -8,8 +8,9 @@ deployment that uses `ceaute-dev`?** Live activation remains in
 
 Stripe Checkout return URLs and Stripe webhook destinations are independent.
 The application puts `success_url` and `cancel_url` into each Checkout Session,
-so `src/lib/app/origin.js` can correctly derive those URLs from `VERCEL_URL` for
-the exact Preview deployment serving the customer.
+so `src/lib/app/origin.js` derives those URLs from the environment's canonical
+`CEAUTE_APP_URL`. The integration Preview therefore sends customers back to
+`https://preview.ceaute.com`; `VERCEL_URL` is only a missing-config fallback.
 
 A Checkout Session has no webhook URL. Stripe sends account events to the
 webhook destinations configured in Stripe Workbench (or through the Stripe
@@ -19,12 +20,11 @@ the key and event mode; it does not select a destination. `CEAUTE_APP_URL`,
 
 ## Recommended Preview architecture
 
-Use one designated integration Preview for the shared `ceaute-dev` database and
-Stripe Test account. Point Stripe at its stable Vercel Git branch URL (the value
-Vercel exposes as `VERCEL_BRANCH_URL`) or at a stable custom alias. A branch URL
-always follows the latest successful deployment of that branch; the
-commit-specific `VERCEL_URL` changes on every deployment and must not be copied
-into long-lived Stripe configuration.
+Ceaute's designated integration environment is the `preview` branch at
+`https://preview.ceaute.com`, backed by `ceaute-dev` and Stripe Test. Production
+is the `main` branch at `https://ceaute.com`, backed by `ceaute-prod` and Stripe
+Live. The commit-specific `VERCEL_URL` changes on every deployment and must not
+be copied into long-lived Stripe configuration or override `CEAUTE_APP_URL`.
 
 Arbitrary ephemeral Preview deployments cannot each receive only the events
 for Checkout Sessions they created. Stripe destinations subscribe to account
@@ -36,13 +36,12 @@ simple supported model.
 
 ## Hosted configuration
 
-These are dashboard actions, not code changes:
+These are hosted configuration invariants, not application routing logic:
 
-1. In Vercel, identify the stable branch URL for the designated integration
-   Preview and confirm it is backed by the Preview environment variables for
-   `ceaute-dev` and Stripe Test mode.
-2. In Stripe Test mode, update or create the payments webhook destination at
-   `https://<stable-preview-branch-url>/api/stripe/payments`. Subscribe to:
+1. In Vercel, the `preview` branch and `https://preview.ceaute.com` use
+   `ceaute-dev`, `CEAUTE_APP_URL=https://preview.ceaute.com`, and Stripe Test.
+2. In Stripe Test mode, the payments webhook destination is
+   `https://preview.ceaute.com/api/stripe/payments`. It subscribes to:
    `checkout.session.completed`, `checkout.session.expired`,
    `payment_intent.payment_failed`, `payment_intent.canceled`, `refund.updated`,
    `refund.failed`, and the five `charge.dispute.*` events listed in

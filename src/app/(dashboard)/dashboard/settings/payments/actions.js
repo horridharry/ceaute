@@ -172,8 +172,8 @@ export async function startOrResumeOnboarding() {
   });
   const stripe = getStripe();
   // Stripe persists refresh_url and return_url on the Account Link, so they
-  // must not come from a request header a caller controls. In Production this
-  // is the canonical origin; in Preview it is the deployment under test.
+  // must use the environment's configured canonical origin rather than a
+  // generated deployment hostname or a request header a caller controls.
   const requestHeaders = await headers();
   const origin = resolveRequestOrigin(requestHeaders);
 

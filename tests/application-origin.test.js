@@ -6,36 +6,26 @@ import {
 } from "../src/lib/app/origin.js";
 
 const productionAppUrl = "https://ceaute.com";
+const previewAppUrl = "https://preview.ceaute.com";
 
-test("a Preview deployment resolves to its own deployment URL", () => {
+test("Preview prefers its configured canonical origin over VERCEL_URL", () => {
   assert.equal(
     resolveApplicationOrigin({
       VERCEL_ENV: "preview",
-      VERCEL_URL: "ceaute-git-feature-branch.vercel.app",
-      CEAUTE_APP_URL: productionAppUrl,
+      VERCEL_URL: "ceaute-abc123.vercel.app",
+      CEAUTE_APP_URL: previewAppUrl,
     }),
-    "https://ceaute-git-feature-branch.vercel.app",
+    previewAppUrl,
   );
 });
 
-test("a Preview deployment never falls back to the canonical Production origin", () => {
-  const origin = resolveApplicationOrigin({
-    VERCEL_ENV: "preview",
-    VERCEL_URL: "ceaute-git-feature-branch.vercel.app",
-    CEAUTE_APP_URL: productionAppUrl,
-  });
-
-  assert.notEqual(origin, productionAppUrl);
-  assert.ok(!origin.includes("ceaute.com"));
-});
-
-test("a Preview deployment without VERCEL_URL falls back to the configured origin", () => {
+test("an unconfigured Preview falls back to its generated VERCEL_URL", () => {
   assert.equal(
     resolveApplicationOrigin({
       VERCEL_ENV: "preview",
-      CEAUTE_APP_URL: productionAppUrl,
+      VERCEL_URL: "ceaute-abc123.vercel.app",
     }),
-    productionAppUrl,
+    "https://ceaute-abc123.vercel.app",
   );
 });
 
@@ -81,6 +71,14 @@ test("a trailing slash is stripped so callers can concatenate a path", () => {
   assert.equal(
     resolveApplicationOrigin({ CEAUTE_APP_URL: "https://ceaute.com/" }),
     productionAppUrl,
+  );
+  assert.equal(
+    resolveApplicationOrigin({
+      VERCEL_ENV: "preview",
+      CEAUTE_APP_URL: `${previewAppUrl}/`,
+      VERCEL_URL: "ceaute-ignored.vercel.app/",
+    }),
+    previewAppUrl,
   );
   assert.equal(
     resolveApplicationOrigin({
@@ -133,14 +131,24 @@ test("Production Checkout URLs ignore VERCEL_URL as well as the request headers"
   );
 });
 
-test("Preview Checkout URLs use the deployment URL, not the request headers", () => {
+test("Preview Checkout URLs use the configured canonical origin", () => {
   assert.equal(
     resolveRequestOrigin(hostileHeaders, {
       VERCEL_ENV: "preview",
-      VERCEL_URL: "ceaute-git-feature-branch.vercel.app",
-      CEAUTE_APP_URL: productionAppUrl,
+      VERCEL_URL: "ceaute-abc123.vercel.app",
+      CEAUTE_APP_URL: previewAppUrl,
     }),
-    "https://ceaute-git-feature-branch.vercel.app",
+    previewAppUrl,
+  );
+});
+
+test("an unconfigured Preview Checkout URL uses the generated origin", () => {
+  assert.equal(
+    resolveRequestOrigin(hostileHeaders, {
+      VERCEL_ENV: "preview",
+      VERCEL_URL: "ceaute-abc123.vercel.app",
+    }),
+    "https://ceaute-abc123.vercel.app",
   );
 });
 
