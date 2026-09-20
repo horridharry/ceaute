@@ -1,8 +1,10 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import { enforceApplicationProfileSession } from '@/lib/auth/application-session';
 import {
   PROVIDER_ONBOARDING_PATH,
   providerOnboardingPath,
+  providerWorkspacePath,
 } from '@/lib/providers/onboarding-path';
 
 const protectedCustomerPaths = ['/account'];
@@ -24,12 +26,26 @@ function isDashboardPath(pathname: string) {
   return pathname === '/dashboard' || pathname.startsWith('/dashboard/');
 }
 
-function redirectToSignIn(request: NextRequest) {
-  const nextPath = `${request.nextUrl.pathname}${request.nextUrl.search}`;
-  const redirectUrl = new URL('/sign-in', request.url);
-  redirectUrl.searchParams.set('next', nextPath);
+function intendedSignInDestination(request: NextRequest) {
+  const requestedPath = `${request.nextUrl.pathname}${request.nextUrl.search}`;
 
-  return NextResponse.redirect(redirectUrl);
+  if (request.nextUrl.pathname !== PROVIDER_ONBOARDING_PATH) {
+    return requestedPath;
+  }
+
+  return providerWorkspacePath(request.nextUrl.searchParams.get('next')) ?? requestedPath;
+}
+
+function redirectToSignIn(request: NextRequest, cookieSource?: NextResponse) {
+  const redirectUrl = new URL('/sign-in', request.url);
+  redirectUrl.searchParams.set('next', intendedSignInDestination(request));
+  const redirectResponse = NextResponse.redirect(redirectUrl);
+
+  cookieSource?.cookies.getAll().forEach((cookie) => {
+    redirectResponse.cookies.set(cookie);
+  });
+
+  return redirectResponse;
 }
 
 export async function refreshSession(request: NextRequest) {
@@ -60,6 +76,17 @@ export async function refreshSession(request: NextRequest) {
 
   if ((isProtectedCustomerPath(pathname) || isDashboardPath(pathname)) && !userId) {
     return redirectToSignIn(request);
+  }
+
+  if ((isProtectedCustomerPath(pathname) || isDashboardPath(pathname)) && userId) {
+    const hasApplicationProfile = await enforceApplicationProfileSession({
+      supabase,
+      userId,
+    });
+
+    if (!hasApplicationProfile) {
+      return redirectToSignIn(request, response);
+    }
   }
 
   if (isDashboardWorkspacePath(pathname) && userId) {
