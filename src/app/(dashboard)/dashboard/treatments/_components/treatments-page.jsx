@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { formatDurationMinutes } from "../../_lib/provider-data";
 import { CatalogueSectionNav } from "../../_components/catalogue-section-nav";
+import { StatusBadge } from "../../_components/status-badge";
 
 const NoTreatments = () => (
   <div className="flex h-40 rounded-xl border border-black/10 p-4">
@@ -11,13 +12,12 @@ const NoTreatments = () => (
 );
 
 const TreatmentStatus = ({ isActive }) => (
-  <span
-    className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-      isActive ? "bg-pink-50 text-pink-700" : "bg-black/5 text-black/50"
-    }`}
+  <StatusBadge
+    tone={isActive ? "active" : "neutral"}
+    className="font-medium"
   >
     {isActive ? "Active" : "Archived"}
-  </span>
+  </StatusBadge>
 );
 
 const TreatmentItem = ({ treatment }) => (

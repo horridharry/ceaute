@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useMemo, useState } from "react";
+import { FormField } from "../../_components/form-field";
 import { FocusedTaskHeader } from "../../_components/focused-task-header";
 
 function ErrorMessage({ message }) {
@@ -100,11 +101,7 @@ export function TreatmentAddOnForm({
             <input type="hidden" name="addOnId" value={addOn.addOnId} />
           ) : null}
 
-          <span className="field-set">
-            <label htmlFor="name" className="label">
-              Name
-            </label>
-            <ErrorMessage message={nameError} />
+          <FormField label="Name" htmlFor="name" error={nameError}>
             <input
               id="name"
               name="name"
@@ -113,13 +110,13 @@ export function TreatmentAddOnForm({
               value={name}
               onChange={(event) => setName(event.target.value)}
             />
-          </span>
+          </FormField>
 
-          <span className="field-set">
-            <label htmlFor="additional_price" className="label">
-              Additional price
-            </label>
-            <ErrorMessage message={priceError} />
+          <FormField
+            label="Additional price"
+            htmlFor="additional_price"
+            error={priceError}
+          >
             <input
               type="text"
               id="additional_price"
@@ -130,13 +127,13 @@ export function TreatmentAddOnForm({
               value={additionalPrice}
               onChange={(event) => setAdditionalPrice(event.target.value)}
             />
-          </span>
+          </FormField>
 
-          <span className="field-set">
-            <label htmlFor="additional_duration_minutes" className="label">
-              Additional duration
-            </label>
-            <ErrorMessage message={durationError} />
+          <FormField
+            label="Additional duration"
+            htmlFor="additional_duration_minutes"
+            error={durationError}
+          >
             <input
               type="number"
               id="additional_duration_minutes"
@@ -148,7 +145,7 @@ export function TreatmentAddOnForm({
               value={additionalDuration}
               onChange={(event) => setAdditionalDuration(event.target.value)}
             />
-          </span>
+          </FormField>
 
           <fieldset className="field-set">
             <legend className="label">Compatible treatments</legend>

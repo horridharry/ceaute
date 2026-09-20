@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { FormField } from "../../_components/form-field";
 import { FocusedTaskHeader } from "../../_components/focused-task-header";
 
 const validateLength = (value, maxLength, label) => {
@@ -50,11 +51,12 @@ export function LocationFormUI({ action, location = null }) {
           {editing ? (
             <input type="hidden" name="location_id" value={location.id} />
           ) : null}
-          <span className="field-set">
-            <label className="label" htmlFor="public_area">
-              Public area
-            </label>
-            <p className="text-sm text-red-600">{errors.public_area ?? ""}</p>
+          <FormField
+            label="Public area"
+            htmlFor="public_area"
+            error={errors.public_area}
+            reserveErrorSpace
+          >
             <input
               id="public_area"
               name="public_area"
@@ -68,15 +70,14 @@ export function LocationFormUI({ action, location = null }) {
               className="field"
               placeholder="Shoreditch, London"
             />
-          </span>
+          </FormField>
 
-          <span className="field-set">
-            <label className="label" htmlFor="address_line_1">
-              Address line 1
-            </label>
-            <p className="text-sm text-red-600">
-              {errors.address_line_1 ?? ""}
-            </p>
+          <FormField
+            label="Address line 1"
+            htmlFor="address_line_1"
+            error={errors.address_line_1}
+            reserveErrorSpace
+          >
             <input
               id="address_line_1"
               name="address_line_1"
@@ -89,15 +90,14 @@ export function LocationFormUI({ action, location = null }) {
               }
               className="field"
             />
-          </span>
+          </FormField>
 
-          <span className="field-set">
-            <label className="label" htmlFor="address_line_2">
-              Address line 2
-            </label>
-            <p className="text-sm text-red-600">
-              {errors.address_line_2 ?? ""}
-            </p>
+          <FormField
+            label="Address line 2"
+            htmlFor="address_line_2"
+            error={errors.address_line_2}
+            reserveErrorSpace
+          >
             <input
               id="address_line_2"
               name="address_line_2"
@@ -110,13 +110,14 @@ export function LocationFormUI({ action, location = null }) {
               }
               className="field"
             />
-          </span>
+          </FormField>
 
-          <span className="field-set">
-            <label className="label" htmlFor="city">
-              City
-            </label>
-            <p className="text-sm text-red-600">{errors.city ?? ""}</p>
+          <FormField
+            label="City"
+            htmlFor="city"
+            error={errors.city}
+            reserveErrorSpace
+          >
             <input
               id="city"
               name="city"
@@ -129,13 +130,14 @@ export function LocationFormUI({ action, location = null }) {
               }
               className="field"
             />
-          </span>
+          </FormField>
 
-          <span className="field-set">
-            <label className="label" htmlFor="postcode">
-              Postcode
-            </label>
-            <p className="text-sm text-red-600">{errors.postcode ?? ""}</p>
+          <FormField
+            label="Postcode"
+            htmlFor="postcode"
+            error={errors.postcode}
+            reserveErrorSpace
+          >
             <input
               id="postcode"
               name="postcode"
@@ -148,12 +150,12 @@ export function LocationFormUI({ action, location = null }) {
               }
               className="field"
             />
-          </span>
+          </FormField>
 
-          <span className="field-set">
-            <label className="label" htmlFor="access_instructions">
-              Access instructions
-            </label>
+          <FormField
+            label="Access instructions"
+            htmlFor="access_instructions"
+          >
             <textarea
               id="access_instructions"
               name="access_instructions"
@@ -161,7 +163,7 @@ export function LocationFormUI({ action, location = null }) {
               defaultValue={location?.access_instructions ?? ""}
               className="field resize-none"
             />
-          </span>
+          </FormField>
 
           {stateMessage ? (
             <p className="mt-4 text-sm text-red-600">{stateMessage}</p>
