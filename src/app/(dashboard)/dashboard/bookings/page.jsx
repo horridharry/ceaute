@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { unstable_rethrow } from "next/navigation";
 import { getAllBookings } from "./actions";
+import { SectionTabs } from "../_components/section-tabs";
+import { StatusBadge } from "../_components/status-badge";
 
 const bookingTabs = [
   { key: "upcoming", label: "Upcoming" },
@@ -30,9 +32,9 @@ function BookingItem({ booking }) {
               {booking.treatment_name}
             </p>
           </div>
-          <span className="shrink-0 rounded-full bg-black/5 px-2 py-0.5 text-xs text-black/55">
+          <StatusBadge tone="quiet" className="shrink-0">
             {booking.status_label}
-          </span>
+          </StatusBadge>
         </div>
         <p className="mt-2 text-sm font-medium">
           {booking.time_label} <span className="text-black/35">•</span>{" "}
@@ -110,36 +112,18 @@ export default async function DashboardBookingsPage({ searchParams }) {
     <main className="container max-w-md p-5">
       <div className="mt-6 min-w-0">
         <h1 className="text-3xl font-bold tracking-tighter">Bookings</h1>
-        <nav
-          aria-label="Booking status"
-          className="-mx-1 mt-5 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-        >
-          <ul className="flex min-w-max gap-5 border-b border-black/10">
-            {bookingTabs.map((tab) => {
-              const active = tab.key === activeTab.key;
-
-              return (
-                <li key={tab.key}>
-                  <Link
-                    href={
-                      tab.key === "upcoming"
-                        ? "/dashboard/bookings"
-                        : `/dashboard/bookings?view=${tab.key}`
-                    }
-                    aria-current={active ? "page" : undefined}
-                    className={`block border-b-2 pb-3 text-sm font-medium ${
-                      active
-                        ? "border-pink-600 text-black"
-                        : "border-transparent text-black/55 hover:text-black"
-                    }`}
-                  >
-                    {tab.label}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </nav>
+        <SectionTabs
+          ariaLabel="Booking status"
+          showPendingHint={false}
+          items={bookingTabs.map((tab) => ({
+            label: tab.label,
+            href:
+              tab.key === "upcoming"
+                ? "/dashboard/bookings"
+                : `/dashboard/bookings?view=${tab.key}`,
+            active: tab.key === activeTab.key,
+          }))}
+        />
 
         {failed ? (
           <BookingsLoadFailed />

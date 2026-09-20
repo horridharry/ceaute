@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { CatalogueSectionNav } from "../../_components/catalogue-section-nav";
+import { StatusBadge } from "../../_components/status-badge";
 
 const currencyFormatter = new Intl.NumberFormat("en-GB", {
   style: "currency",
@@ -23,13 +24,12 @@ function formatDurationMinutes(minutes) {
 
 function AddOnState({ isActive }) {
   return (
-    <span
-      className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-        isActive ? "bg-pink-50 text-pink-700" : "bg-black/5 text-black/50"
-      }`}
+    <StatusBadge
+      tone={isActive ? "active" : "neutral"}
+      className="font-medium"
     >
       {isActive ? "Active" : "Archived"}
-    </span>
+    </StatusBadge>
   );
 }
 

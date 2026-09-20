@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LinkPendingHint } from "@/components/link-pending-hint";
+import { SectionTabs } from "./section-tabs";
 
 const sections = [
   {
@@ -42,33 +43,14 @@ export function CatalogueSectionNav() {
           <LinkPendingHint />
         </Link>
       </div>
-      <nav
-        aria-label="Catalogue"
-        className="-mx-1 mt-5 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-      >
-        <ul className="flex min-w-max items-center gap-5 border-b border-black/10">
-          {sections.map((section) => {
-            const active = section.href === activeSection.href;
-
-            return (
-              <li key={section.href}>
-                <Link
-                  href={section.href}
-                  aria-current={active ? "page" : undefined}
-                  className={`block whitespace-nowrap border-b-2 pb-3 text-sm font-medium ${
-                    active
-                      ? "border-pink-600 text-black"
-                      : "border-transparent text-black/55 hover:text-black"
-                  }`}
-                >
-                  {section.label}
-                  <LinkPendingHint />
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      </nav>
+      <SectionTabs
+        ariaLabel="Catalogue"
+        items={sections.map((section) => ({
+          label: section.label,
+          href: section.href,
+          active: section.href === activeSection.href,
+        }))}
+      />
     </header>
   );
 }

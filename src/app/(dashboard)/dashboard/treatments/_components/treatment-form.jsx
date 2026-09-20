@@ -1,10 +1,24 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useMemo, useState } from "react";
-import { FocusedTaskHeader } from "../../_components/focused-task-header";
+import { FormField } from "../../_components/form-field";
 
-function ErrorMessage({ message }) {
-  return message ? <p className="text-sm text-red-600">{message}</p> : null;
+function SubmitButton({ pending, mode, hasClientError, formId }) {
+  const idleLabel = mode === "create" ? "Create treatment" : "Save treatment";
+  const pendingLabel = mode === "create" ? "Creating..." : "Saving...";
+
+  return (
+    <button
+      type="submit"
+      form={formId}
+      disabled={pending || hasClientError}
+      aria-disabled={pending || hasClientError}
+      className="w-max rounded-lg bg-pink-700 p-3 px-4 text-sm font-semibold text-white"
+    >
+      {pending ? pendingLabel : idleLabel}
+    </button>
+  );
 }
 
 function ArchiveButton({ treatment, archiveAction, restoreAction, pending }) {
@@ -72,7 +86,7 @@ export function TreatmentForm({
       ? "Duration must be a whole number of minutes greater than zero."
       : null;
   const hasClientError = Boolean(nameError || priceError || durationError);
-  const heading = mode === "create" ? "New treatment" : "Edit treatment";
+  const heading = mode === "create" ? "Create treatment" : "Edit treatment";
   const fallbackCategoryId = useMemo(
     () => treatment?.discovery_category_id || discoveryCategories[0]?.id || "",
     [discoveryCategories, treatment?.discovery_category_id],
@@ -81,19 +95,11 @@ export function TreatmentForm({
   return (
     <main className="container max-w-md p-5">
       <div className="mt-6 flex flex-col">
-        <FocusedTaskHeader
-          backHref="/dashboard/treatments"
-          title={heading}
-          formId="treatment_form"
-          submitLabel={mode === "create" ? "Create" : "Save"}
-          pendingLabel={mode === "create" ? "Creating..." : "Saving..."}
-          pending={pending}
-          disabled={hasClientError}
-        />
+        <h1 className="text-3xl font-bold tracking-tighter">{heading}</h1>
 
         <form
           id="treatment_form"
-          className="mt-8 flex flex-col gap-4"
+          className="mt-12 flex flex-col gap-4"
           action={formAction}
         >
           {treatment ? (
@@ -104,11 +110,7 @@ export function TreatmentForm({
             />
           ) : null}
 
-          <span className="field-set">
-            <label htmlFor="name" className="label">
-              Name
-            </label>
-            <ErrorMessage message={nameError} />
+          <FormField label="Name" htmlFor="name" error={nameError}>
             <input
               id="name"
               name="name"
@@ -117,12 +119,9 @@ export function TreatmentForm({
               value={name}
               onChange={(event) => setName(event.target.value)}
             />
-          </span>
+          </FormField>
 
-          <span className="field-set">
-            <label htmlFor="description" className="label">
-              Description
-            </label>
+          <FormField label="Description" htmlFor="description">
             <textarea
               id="description"
               name="description"
@@ -132,13 +131,9 @@ export function TreatmentForm({
               value={description}
               onChange={(event) => setDescription(event.target.value)}
             />
-          </span>
+          </FormField>
 
-          <span className="field-set">
-            <label htmlFor="price" className="label">
-              Price
-            </label>
-            <ErrorMessage message={priceError} />
+          <FormField label="Price" htmlFor="price" error={priceError}>
             <input
               type="text"
               id="price"
@@ -150,13 +145,13 @@ export function TreatmentForm({
               value={price}
               onChange={(event) => setPrice(event.target.value)}
             />
-          </span>
+          </FormField>
 
-          <span className="field-set">
-            <label htmlFor="duration_minutes" className="label">
-              Duration
-            </label>
-            <ErrorMessage message={durationError} />
+          <FormField
+            label="Duration"
+            htmlFor="duration_minutes"
+            error={durationError}
+          >
             <input
               type="number"
               id="duration_minutes"
@@ -169,12 +164,12 @@ export function TreatmentForm({
               value={durationMinutes}
               onChange={(event) => setDurationMinutes(event.target.value)}
             />
-          </span>
+          </FormField>
 
-          <span className="field-set">
-            <label htmlFor="discovery_category_id" className="label">
-              Discovery category
-            </label>
+          <FormField
+            label="Discovery category"
+            htmlFor="discovery_category_id"
+          >
             <select
               id="discovery_category_id"
               name="discovery_category_id"
@@ -188,12 +183,9 @@ export function TreatmentForm({
                 </option>
               ))}
             </select>
-          </span>
+          </FormField>
 
-          <span className="field-set">
-            <label htmlFor="treatment_group_id" className="label">
-              Treatment group
-            </label>
+          <FormField label="Treatment group" htmlFor="treatment_group_id">
             <select
               id="treatment_group_id"
               name="treatment_group_id"
@@ -207,22 +199,34 @@ export function TreatmentForm({
                 </option>
               ))}
             </select>
-          </span>
+          </FormField>
 
           {stateMessage ? (
             <p className="mt-4 text-sm text-red-600">{stateMessage}</p>
           ) : null}
         </form>
-        {mode === "edit" ? (
-          <div className="mt-8 flex items-center">
+        <div className="mt-8 flex items-center gap-2">
+          {mode === "edit" ? (
             <ArchiveButton
               treatment={treatment}
               archiveAction={archiveAction}
               restoreAction={restoreAction}
               pending={pending}
             />
-          </div>
-        ) : null}
+          ) : null}
+          <Link
+            href="/dashboard/treatments"
+            className="w-max rounded-lg border border-black/10 p-3 px-6 text-sm font-semibold text-pink-600 duration-200 hover:border-black/20 active:border-transparent active:bg-pink-500/10 active:text-pink-500 disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+          >
+            Back
+          </Link>
+          <SubmitButton
+            formId="treatment_form"
+            pending={pending}
+            mode={mode}
+            hasClientError={hasClientError}
+          />
+        </div>
       </div>
     </main>
   );
