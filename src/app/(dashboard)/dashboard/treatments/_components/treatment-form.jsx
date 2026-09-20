@@ -1,27 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { useActionState, useMemo, useState } from "react";
+import { FocusedTaskHeader } from "../../_components/focused-task-header";
 
 function ErrorMessage({ message }) {
   return message ? <p className="text-sm text-red-600">{message}</p> : null;
-}
-
-function SubmitButton({ pending, mode, hasClientError, formId }) {
-  const idleLabel = mode === "create" ? "Create treatment" : "Save treatment";
-  const pendingLabel = mode === "create" ? "Creating..." : "Saving...";
-
-  return (
-    <button
-      type="submit"
-      form={formId}
-      disabled={pending || hasClientError}
-      aria-disabled={pending || hasClientError}
-      className="w-max rounded-lg bg-pink-700 p-3 px-4 text-sm font-semibold text-white"
-    >
-      {pending ? pendingLabel : idleLabel}
-    </button>
-  );
 }
 
 function ArchiveButton({ treatment, archiveAction, restoreAction, pending }) {
@@ -89,7 +72,7 @@ export function TreatmentForm({
       ? "Duration must be a whole number of minutes greater than zero."
       : null;
   const hasClientError = Boolean(nameError || priceError || durationError);
-  const heading = mode === "create" ? "Create treatment" : "Edit treatment";
+  const heading = mode === "create" ? "New treatment" : "Edit treatment";
   const fallbackCategoryId = useMemo(
     () => treatment?.discovery_category_id || discoveryCategories[0]?.id || "",
     [discoveryCategories, treatment?.discovery_category_id],
@@ -98,11 +81,19 @@ export function TreatmentForm({
   return (
     <main className="container max-w-md p-5">
       <div className="mt-6 flex flex-col">
-        <h1 className="text-3xl font-bold tracking-tighter">{heading}</h1>
+        <FocusedTaskHeader
+          backHref="/dashboard/treatments"
+          title={heading}
+          formId="treatment_form"
+          submitLabel={mode === "create" ? "Create" : "Save"}
+          pendingLabel={mode === "create" ? "Creating..." : "Saving..."}
+          pending={pending}
+          disabled={hasClientError}
+        />
 
         <form
           id="treatment_form"
-          className="mt-12 flex flex-col gap-4"
+          className="mt-8 flex flex-col gap-4"
           action={formAction}
         >
           {treatment ? (
@@ -222,28 +213,16 @@ export function TreatmentForm({
             <p className="mt-4 text-sm text-red-600">{stateMessage}</p>
           ) : null}
         </form>
-        <div className="mt-8 flex items-center gap-2">
-          {mode === "edit" ? (
+        {mode === "edit" ? (
+          <div className="mt-8 flex items-center">
             <ArchiveButton
               treatment={treatment}
               archiveAction={archiveAction}
               restoreAction={restoreAction}
               pending={pending}
             />
-          ) : null}
-          <Link
-            href="/dashboard/treatments"
-            className="w-max rounded-lg border border-black/10 p-3 px-6 text-sm font-semibold text-pink-600 duration-200 hover:border-black/20 active:border-transparent active:bg-pink-500/10 active:text-pink-500 disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
-          >
-            Back
-          </Link>
-          <SubmitButton
-            formId="treatment_form"
-            pending={pending}
-            mode={mode}
-            hasClientError={hasClientError}
-          />
-        </div>
+          </div>
+        ) : null}
       </div>
     </main>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { CatalogueSectionNav } from "../../_components/catalogue-section-nav";
 
 const currencyFormatter = new Intl.NumberFormat("en-GB", {
   style: "currency",
@@ -35,7 +36,7 @@ function AddOnState({ isActive }) {
 function AddOnItem({ addOn }) {
   return (
     <Link href={`/dashboard/add-ons/${addOn.addOnId}/edit`}>
-      <article className="rounded-xl border p-3 duration-200 hover:border-black/20 hover:bg-black/5">
+      <article className="rounded-xl border border-black/10 p-3 duration-200 hover:border-black/20 hover:bg-black/5">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0 flex-1">
             <h2 className="truncate font-medium">{addOn.name}</h2>
@@ -87,23 +88,7 @@ export function TreatmentAddOnsPage({ addOns }) {
   return (
     <main className="container max-w-md p-5">
       <div className="mt-6 flex flex-col">
-        <div className="flex items-end justify-between gap-4">
-          <h1 className="text-3xl font-bold tracking-tighter">Add-ons</h1>
-          <div className="flex items-center gap-2">
-            <Link
-              href="/dashboard/treatments"
-              className="w-max rounded-lg border border-black/10 p-3 px-4 text-sm font-semibold text-pink-600 duration-200 hover:border-black/20 active:border-transparent active:bg-pink-500/10 active:text-pink-500"
-            >
-              Back
-            </Link>
-            <Link
-              href="/dashboard/add-ons/new"
-              className="flex w-max items-center overflow-hidden rounded-3xl bg-white p-1.5 px-3 text-center text-sm font-semibold text-pink-600 duration-300 hover:bg-pink-500/10"
-            >
-              Create
-            </Link>
-          </div>
-        </div>
+        <CatalogueSectionNav />
 
         <AddOnList
           title="Active add-ons"

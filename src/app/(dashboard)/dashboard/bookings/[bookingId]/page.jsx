@@ -21,7 +21,7 @@ function ExactLocation({ booking }) {
   ].filter(Boolean);
 
   return (
-    <div className="mt-4 border-t pt-4">
+    <div className="mt-4 border-t border-black/10 pt-4">
       <p className="font-semibold">Location</p>
       <p className="mt-2 text-black/60">Area: {booking.public_area}</p>
       {addressLines.length ? (
@@ -41,7 +41,7 @@ function ExactLocation({ booking }) {
 function CancellationPanel({ booking }) {
   if (booking.status === "cancelled") {
     return (
-      <div className="mt-4 border-t pt-4">
+      <div className="mt-4 border-t border-black/10 pt-4">
         <p className="font-semibold">Cancellation</p>
         <p className="mt-2 text-black/60">
           Cancelled by {booking.cancelled_by_label} on{" "}
@@ -66,7 +66,7 @@ function CancellationPanel({ booking }) {
   }
 
   return (
-    <div className="mt-4 border-t pt-4">
+    <div className="mt-4 border-t border-black/10 pt-4">
       <p className="font-semibold">Cancel booking</p>
       <p className="mt-2 text-black/60">
         Provider cancellation refunds the full amount paid online:{" "}
@@ -113,7 +113,7 @@ export default async function BookingDetailPage({ params }) {
           </Link>
         </div>
 
-        <section className="mt-6 rounded-xl border p-4 text-sm">
+        <section className="mt-6 rounded-xl border border-black/10 p-4 text-sm">
           <h2 className="text-lg font-semibold">{booking.customer_name}</h2>
           <p className="mt-3 font-medium">{booking.treatment_name}</p>
           <p className="mt-3">
@@ -134,7 +134,7 @@ export default async function BookingDetailPage({ params }) {
           <p className="text-xs text-black/60">{booking.status_label}</p>
 
           {booking.selected_add_ons.length ? (
-            <div className="mt-4 border-t pt-4">
+            <div className="mt-4 border-t border-black/10 pt-4">
               <p className="font-semibold">Add-ons</p>
               <ul className="mt-2 flex flex-col gap-2">
                 {booking.selected_add_ons.map((addOn) => (
@@ -146,7 +146,7 @@ export default async function BookingDetailPage({ params }) {
             </div>
           ) : null}
 
-          <div className="mt-4 border-t pt-4">
+          <div className="mt-4 border-t border-black/10 pt-4">
             <p className="font-semibold">Customer</p>
             <p className="mt-2">{booking.customer_name}</p>
             <p className="text-black/60">{booking.customer_email}</p>
@@ -162,7 +162,7 @@ export default async function BookingDetailPage({ params }) {
             description="The customer's reference pictures for this appointment. Only they can change them."
           />
 
-          <div className="mt-4 border-t pt-4">
+          <div className="mt-4 border-t border-black/10 pt-4">
             <p className="font-semibold">Cancellation terms</p>
             <p className="mt-2 text-black/60">
               Cancellation window: {booking.cancellation_window_hours} hours

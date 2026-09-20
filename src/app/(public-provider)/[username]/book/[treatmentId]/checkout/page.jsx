@@ -145,31 +145,36 @@ function calculatePaymentSummary({ bookingSettings, totalPricePence }) {
 // consumer is bound, which is why they appear here and not only on /terms.
 function PolicyNotice() {
   return (
-    <div className="mt-4 text-xs leading-relaxed text-black/60">
+    <div className="mt-4 max-w-sm text-xs leading-relaxed text-black/55">
       <p>
-        By continuing you agree to Ceaute&rsquo;s{" "}
+        By continuing, you agree to our{" "}
         <Link href="/terms" className="font-semibold underline">
           Terms
         </Link>{" "}
         and{" "}
         <Link href="/privacy" className="font-semibold underline">
-          Privacy notice
+          Privacy Notice
         </Link>
         .
       </p>
-      <p className="mt-2">
-        Ceaute is a trading name of {legalIdentity.operatorName}, a{" "}
-        {legalIdentity.structure}, of {legalIdentity.businessAddress}.
-        Questions and complaints:{" "}
-        <a
-          href={`mailto:${legalIdentity.contactEmail}`}
-          className="font-semibold underline"
-        >
-          {legalIdentity.contactEmail}
-        </a>
-        . Your appointment is carried out by the provider named above, not by
-        Ceaute.
-      </p>
+      <details className="mt-2">
+        <summary className="cursor-pointer font-medium text-black/65">
+          Trader details
+        </summary>
+        <p className="mt-2">
+          Ceaute is a trading name of {legalIdentity.operatorName}, a{" "}
+          {legalIdentity.structure}, of {legalIdentity.businessAddress}.
+          Questions and complaints:{" "}
+          <a
+            href={`mailto:${legalIdentity.contactEmail}`}
+            className="font-semibold underline"
+          >
+            {legalIdentity.contactEmail}
+          </a>
+          . Your appointment is carried out by the provider named above, not by
+          Ceaute.
+        </p>
+      </details>
     </div>
   );
 }
@@ -344,7 +349,7 @@ export default async function BookingCheckoutPage({ params, searchParams }) {
             </div>
           ) : null}
 
-          <section className="mt-8 rounded-xl border p-4">
+          <section className="mt-8 rounded-xl border border-black/10 p-4">
             <h2 className="text-lg font-semibold tracking-tighter">
               Booking summary
             </h2>
@@ -440,9 +445,8 @@ export default async function BookingCheckoutPage({ params, searchParams }) {
                   ) : null}
                 </div>
               ) : (
-                <p className="border-t pt-3 text-black/60">
-                  Exact address and access instructions are shown after
-                  confirmation.
+                <p className="border-t border-black/10 pt-3 text-black/60">
+                  Exact address appears after confirmation.
                 </p>
               )}
               {displayState.showHoldExpiry ? (
@@ -454,7 +458,7 @@ export default async function BookingCheckoutPage({ params, searchParams }) {
             </div>
           </section>
 
-          <section className="mt-8 rounded-xl border p-4">
+          <section className="mt-8 rounded-xl border border-black/10 p-4">
             <BookingInspirationImages
               images={inspiration.images}
               allowance={inspiration.allowance}
@@ -467,9 +471,9 @@ export default async function BookingCheckoutPage({ params, searchParams }) {
               }}
               description={
                 inspiration.unavailable
-                  ? "Inspiration images cannot be shown right now. This does not affect your booking or your payment, and you can add images later from your booking details."
+                  ? "Inspiration images cannot be shown right now. You can add them later from your booking."
                   : displayState.canPay
-                    ? "Optional. If you have a picture of the result you want, add it for your provider. You can go straight to payment without one, and add or change images later."
+                    ? "Optional. Add an inspiration image for your provider. You can update it later from your booking."
                     : "Images attached to this booking."
               }
             />
@@ -558,11 +562,8 @@ export default async function BookingCheckoutPage({ params, searchParams }) {
         <h1 className="text-3xl font-bold tracking-tighter">
           Review details
         </h1>
-        <p className="mt-1 text-sm">
-          Confirm your contact details before the final booking step.
-        </p>
 
-        <section className="mt-8 rounded-xl border p-4">
+        <section className="mt-8 rounded-xl border border-black/10 p-4">
           <h2 className="text-lg font-semibold tracking-tighter">
             Order summary
           </h2>

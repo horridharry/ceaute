@@ -2,107 +2,150 @@ import Link from "next/link";
 import { unstable_rethrow } from "next/navigation";
 import { getAllBookings } from "./actions";
 
-const NoBookings = () => (
-  <div className="duration-200 rounded-xl border p-2 h-52 flex">
-    <p className="text-sm  text-center m-auto">
-      You don&apos;t have any bookings yet
-    </p>
-  </div>
-);
+const bookingTabs = [
+  { key: "upcoming", label: "Upcoming" },
+  { key: "previous", label: "Past" },
+  { key: "cancelled", label: "Cancelled" },
+];
 
 const BookingsLoadFailed = () => (
-  <div className="duration-200 rounded-xl border p-2 h-52 flex">
-    <p className="text-sm  text-center m-auto">
+  <div className="mt-8 flex h-40 rounded-xl border border-black/10 p-4">
+    <p className="m-auto text-center text-sm text-black/60">
       Could not load bookings. Refresh to try again.
     </p>
   </div>
 );
 
-const BookingItem = ({ booking }) => (
-  <Link href={`/dashboard/bookings/${booking.booking_id}`}>
-    <div className="appearance-none list-none rounded-xl border p-2.5 duration-200 hover:border-black/20 hover:bg-black/5 ">
-      <div className="flex h-full">
-        <div className="max-w-sm flex-1 overflow-hidden text-ellipsis">
-          <h2 className="font-semibold">{booking.customer_name}</h2>
-          <p className="mt-3 text-sm">{booking.treatment_name}</p>
-
-          <span className="flex flex-wrap gap-1 text-sm">
-            <p className="font-semibold">{booking.date_label},</p>
-            <p className="font-semibold">{booking.time_label}</p>
-            <p>{`(${booking.duration_label})`}</p>
+function BookingItem({ booking }) {
+  return (
+    <Link
+      href={`/dashboard/bookings/${booking.booking_id}`}
+      className="block border-b border-black/10 py-4 last:border-b-0 hover:bg-black/[0.025]"
+    >
+      <article className="min-w-0 px-1">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <h3 className="truncate font-semibold">{booking.customer_name}</h3>
+            <p className="mt-1 truncate text-sm text-black/70">
+              {booking.treatment_name}
+            </p>
+          </div>
+          <span className="shrink-0 rounded-full bg-black/5 px-2 py-0.5 text-xs text-black/55">
+            {booking.status_label}
           </span>
-          <p className="mt-2 text-sm font-medium">{booking.total_price_label}</p>
-          <p className="text-sm text-black/60">
-            Paid online: {booking.amount_paid_online_label}
-          </p>
-          <p className="text-sm text-black/60">
-            Due at appointment: {booking.amount_due_at_appointment_label}
-          </p>
-          <p className="text-xs text-black/60">{booking.status_label}</p>
         </div>
-      </div>
-    </div>
-  </Link>
-);
+        <p className="mt-2 text-sm font-medium">
+          {booking.time_label} <span className="text-black/35">•</span>{" "}
+          {booking.duration_label}
+        </p>
+        <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-black/55">
+          <span>Total {booking.total_price_label}</span>
+          <span>Paid online {booking.amount_paid_online_label}</span>
+          <span>Due {booking.amount_due_at_appointment_label}</span>
+        </div>
+      </article>
+    </Link>
+  );
+}
 
-const BookingSection = ({ title, bookings }) => (
-  <section className="mt-8">
-    <h2 className="text-lg font-semibold">{title}</h2>
-    <ul className="mt-3 flex flex-col gap-4">
-      {bookings.map((booking) => (
-        <li className="list-none" key={booking.booking_id}>
-          <BookingItem booking={booking} />
-        </li>
+function bookingsByDay(bookings) {
+  const grouped = new Map();
+
+  for (const booking of bookings) {
+    const date = booking.date_label || "Date unavailable";
+    const entries = grouped.get(date) ?? [];
+    entries.push(booking);
+    grouped.set(date, entries);
+  }
+
+  return Array.from(grouped, ([date, entries]) => ({ date, entries }));
+}
+
+function BookingList({ bookings }) {
+  if (bookings.length === 0) {
+    return (
+      <p className="mt-10 text-sm text-black/55">No bookings in this view.</p>
+    );
+  }
+
+  return (
+    <div className="mt-8">
+      {bookingsByDay(bookings).map((group) => (
+        <section key={group.date} className="mt-8 first:mt-0">
+          <h2 className="text-sm font-semibold text-black/55">{group.date}</h2>
+          <div className="mt-2">
+            {group.entries.map((booking) => (
+              <BookingItem key={booking.booking_id} booking={booking} />
+            ))}
+          </div>
+        </section>
       ))}
-      {bookings.length === 0 ? (
-        <li className="list-none rounded-xl border p-4 text-sm text-black/60">
-          No bookings.
-        </li>
-      ) : null}
-    </ul>
-  </section>
-);
+    </div>
+  );
+}
 
 // Loads bookings during the server render, like the customer bookings page.
-// The previous client component rendered an empty shell and then called the
-// same loader through a second server round trip, so every visit paid for two
-// requests through the proxy and function before any booking appeared. The
-// route-level loading.jsx already gives navigation its pending state.
+// The route-level loading state covers navigation while this request completes.
 async function loadBookingGroups() {
   try {
     return { bookingGroups: await getAllBookings(), failed: false };
   } catch (error) {
-    // Sign-in redirects are thrown; they must reach Next.js untouched.
     unstable_rethrow(error);
     console.error(error);
     return { bookingGroups: null, failed: true };
   }
 }
 
-export default async function DashboardBookingsPage() {
+export default async function DashboardBookingsPage({ searchParams }) {
+  const params = await searchParams;
+  const requestedView = Array.isArray(params?.view)
+    ? params.view[0]
+    : params?.view;
+  const activeTab =
+    bookingTabs.find((tab) => tab.key === requestedView) ?? bookingTabs[0];
   const { bookingGroups, failed } = await loadBookingGroups();
-  const hasBookings =
-    !failed &&
-    (bookingGroups.upcoming.length > 0 ||
-      bookingGroups.previous.length > 0 ||
-      bookingGroups.cancelled.length > 0);
+  const bookings = failed ? [] : bookingGroups[activeTab.key];
 
   return (
     <main className="container max-w-md p-5">
-      <div className="mt-6 flex flex-col">
+      <div className="mt-6 min-w-0">
         <h1 className="text-3xl font-bold tracking-tighter">Bookings</h1>
-        <p className="text-sm mt-1">Manage your bookings with clients</p>
-        <div className="mt-12">
-          {failed ? <BookingsLoadFailed /> : null}
-          {!failed && !hasBookings ? <NoBookings /> : null}
-          {hasBookings ? (
-            <>
-              <BookingSection title="Upcoming" bookings={bookingGroups.upcoming} />
-              <BookingSection title="Previous" bookings={bookingGroups.previous} />
-              <BookingSection title="Cancelled" bookings={bookingGroups.cancelled} />
-            </>
-          ) : null}
-        </div>
+        <nav
+          aria-label="Booking status"
+          className="-mx-1 mt-5 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
+          <ul className="flex min-w-max gap-5 border-b border-black/10">
+            {bookingTabs.map((tab) => {
+              const active = tab.key === activeTab.key;
+
+              return (
+                <li key={tab.key}>
+                  <Link
+                    href={
+                      tab.key === "upcoming"
+                        ? "/dashboard/bookings"
+                        : `/dashboard/bookings?view=${tab.key}`
+                    }
+                    aria-current={active ? "page" : undefined}
+                    className={`block border-b-2 pb-3 text-sm font-medium ${
+                      active
+                        ? "border-pink-600 text-black"
+                        : "border-transparent text-black/55 hover:text-black"
+                    }`}
+                  >
+                    {tab.label}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
+
+        {failed ? (
+          <BookingsLoadFailed />
+        ) : (
+          <BookingList bookings={bookings} />
+        )}
       </div>
     </main>
   );

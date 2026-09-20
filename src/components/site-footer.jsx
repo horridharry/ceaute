@@ -1,20 +1,26 @@
-import Link from "next/link";
-import {
-  describeOperator,
-  legalIdentity,
-  needsSeparateAddressForService,
-} from "@/lib/legal/identity";
+"use client";
 
-// Electronic Commerce Regulations 2002 reg 6 wants the trader's name,
-// geographic address and email "easily, directly and permanently accessible",
-// which a link on one screen does not achieve — so this renders on every page.
-// Values come from src/lib/legal/identity.js; nothing here is hardcoded.
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+
 export function SiteFooter() {
+  const pathname = usePathname();
+  const hideFooter =
+    pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/sign-in") ||
+    pathname.startsWith("/sign-up") ||
+    pathname.startsWith("/verify") ||
+    pathname.startsWith("/auth") ||
+    pathname.includes("/book/");
+
+  if (hideFooter) {
+    return null;
+  }
+
   return (
-    <footer className="mt-auto border-t border-black/10 bg-white">
-      <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-8 text-xs leading-relaxed text-black/55 sm:px-6">
+    <footer className="mt-auto bg-white">
+      <div className="mx-auto flex max-w-6xl px-4 py-6 text-xs text-black/45 sm:px-6">
         <div className="flex gap-4">
-          <Link href="/" className="font-medium hover:underline"></Link>
           <Link href="/terms" className="font-medium hover:underline">
             Terms
           </Link>

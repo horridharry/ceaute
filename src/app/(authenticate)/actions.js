@@ -81,6 +81,10 @@ async function sendEmailCode(flow, path, nextValue, formData) {
   const result = await requestEmailCode({ supabase, email, flow, fullName });
 
   if (!result.ok) {
+    if (flow === "sign-in" && result.outcome === "no-account") {
+      redirect(authenticationFormPath("/sign-up", { next, email }));
+    }
+
     redirect(
       authenticationFormPath(path, {
         error: result.outcome,

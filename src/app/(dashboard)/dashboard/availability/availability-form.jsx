@@ -1,10 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { useActionState, useMemo, useState } from "react";
 import { APPOINTMENT_GRID_MINUTES } from "@/lib/bookings/appointment-grid";
 import { keepFormValuesOnSubmit } from "@/lib/forms/keep-form-values";
 import { PendingButton } from "@/components/pending-button";
+import { PageSectionNav } from "../_components/page-section-nav";
 
 const DAYS_OF_WEEK = [
   { value: "monday", label: "Monday" },
@@ -119,10 +119,12 @@ export function AvailabilityForm({
   return (
     <main className="container max-w-md p-5">
       <div className="mt-6 flex flex-col">
-        <h1 className="text-3xl font-bold tracking-tighter">Availability</h1>
+        <PageSectionNav />
+        <h2 className="mt-8 text-2xl font-semibold tracking-tighter">
+          Availability
+        </h2>
         <p className="mt-1 text-sm text-black/60">
-          Set one continuous working period for each open day. Times are saved as
-          Europe/London local times.
+          Set your regular hours in Europe/London time.
         </p>
 
         <form
@@ -154,7 +156,7 @@ export function AvailabilityForm({
                   value={day.dayOfWeek}
                   checked={day.enabled}
                   onChange={() => toggleDay(day.dayOfWeek)}
-                  className="h-5 w-5 cursor-pointer appearance-none rounded border border-black/30 bg-white outline-none ring-1 ring-transparent duration-200 checked:border-transparent checked:bg-pink-600 hover:border-pink-600 hover:ring-pink-600"
+                  className="h-5 w-5 cursor-pointer appearance-none rounded border border-black/15 bg-white outline-none ring-2 ring-transparent duration-200 checked:border-transparent checked:bg-pink-600 hover:border-black/25 focus:ring-pink-100"
                 />
               </div>
 
@@ -238,12 +240,6 @@ export function AvailabilityForm({
           ) : null}
 
           <div className="mt-8 flex items-center justify-end gap-4">
-            <Link
-              href="/dashboard"
-              className="w-max rounded-lg border border-black/10 p-3 px-6 text-sm font-semibold text-pink-600 duration-200 hover:border-black/20 active:border-transparent active:bg-pink-500/10 active:text-pink-500"
-            >
-              Back
-            </Link>
             <button
               form="availability"
               type="submit"
@@ -262,8 +258,7 @@ export function AvailabilityForm({
               Blocked dates
             </h2>
             <p className="mt-1 text-sm text-black/60">
-              Block a whole day for time off. This affects future availability
-              and does not cancel existing bookings.
+              Existing bookings are not cancelled.
             </p>
           </div>
 
@@ -298,7 +293,7 @@ export function AvailabilityForm({
               {blockedDates.map((blockedDate) => (
                 <li
                   key={blockedDate.id}
-                  className="flex items-center gap-3 rounded-lg border p-3"
+                  className="flex items-center gap-3 rounded-lg border border-black/10 p-3"
                 >
                   <p className="flex-1 text-sm font-medium">
                     {formatBlockedDate(blockedDate.local_date)}
@@ -320,7 +315,7 @@ export function AvailabilityForm({
               ))}
             </ul>
           ) : (
-            <p className="rounded-lg border border-dashed p-4 text-sm text-black/60">
+            <p className="rounded-lg border border-dashed border-black/15 p-4 text-sm text-black/60">
               No upcoming blocked dates.
             </p>
           )}

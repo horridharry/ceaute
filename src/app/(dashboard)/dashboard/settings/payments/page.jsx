@@ -1,4 +1,3 @@
-import Link from "next/link";
 import {
   acceptProviderAgreement,
   getPaymentSettings,
@@ -9,26 +8,20 @@ import { PendingButton } from "@/components/pending-button";
 import { describeRestrictionForProvider } from "@/lib/payments/provider-liability";
 import { PaymentActions } from "./_components/payment-actions";
 import { calculateBookingFeeSplit } from "@/lib/payments/booking-payments";
+import { SettingsSectionNav } from "../../_components/settings-section-nav";
 
 const money = new Intl.NumberFormat("en-GB", {
   style: "currency",
   currency: "GBP",
 });
 
-// Worked on a round £50 so the two deductions are legible side by side. The
-// figures come from the same calculation the checkout uses, so this cannot
-// drift away from what a provider is actually paid.
 function ProviderPricing() {
   const example = calculateBookingFeeSplit({ amountChargedPence: 5000 });
 
   return (
-    <section className="mt-8 rounded-xl border p-4 text-sm">
-      <h2 className="text-lg font-semibold">What you receive</h2>
-      <p className="mt-2 text-black/60">
-        Customers pay the price you advertise. Two amounts come out of every
-        payment Ceaute processes for you, and the rest is transferred to your
-        Stripe account.
-      </p>
+    <section className="mt-8 rounded-xl border border-black/10 p-4 text-sm">
+      <h2 className="text-lg font-semibold">Fees</h2>
+      <p className="mt-1 text-black/55">Example £50 online payment</p>
       <dl className="mt-4 grid gap-2">
         <div className="flex justify-between gap-4">
           <dt>Customer pays</dt>
@@ -37,11 +30,13 @@ function ProviderPricing() {
           </dd>
         </div>
         <div className="flex justify-between gap-4 text-black/60">
-          <dt>Card processing, charged by Stripe</dt>
-          <dd>&minus; {money.format(example.estimatedStripeFeePence / 100)}</dd>
+          <dt>Stripe processing estimate</dt>
+          <dd>
+            &minus; {money.format(example.estimatedStripeFeePence / 100)}
+          </dd>
         </div>
         <div className="flex justify-between gap-4 text-black/60">
-          <dt>Ceaute platform fee, 2%</dt>
+          <dt>Ceaute fee (2%)</dt>
           <dd>&minus; {money.format(example.platformFeePence / 100)}</dd>
         </div>
         <div className="flex justify-between gap-4 border-t pt-2">
@@ -51,41 +46,25 @@ function ProviderPricing() {
           </dd>
         </div>
       </dl>
-      <p className="mt-4 text-black/60">
-        The Ceaute platform fee is 2% of the amount processed. Card processing
-        is Stripe&rsquo;s own charge, not Ceaute&rsquo;s: it is shown above at
-        Stripe&rsquo;s published UK rate of 1.5% + 20p, and cards issued outside
-        the UK or to a business cost more.
-      </p>
-      <p className="mt-2 text-black/60">
-        Both apply only to money taken through Ceaute. Where you take a deposit,
-        the balance your customer pays you in person is yours in full &mdash; it
-        never passes through Ceaute and is never charged for. There is no
-        subscription and no monthly fee.
+      <p className="mt-4 text-xs leading-relaxed text-black/55">
+        The Stripe estimate uses its UK rate of 1.5% + 20p; other cards can cost
+        more. Fees apply only to money paid through Ceaute. There is no monthly
+        fee.
       </p>
 
-      <h3 className="mt-6 font-semibold">If a booking is refunded</h3>
+      <h3 className="mt-6 font-semibold">Refunds</h3>
       <ul className="mt-2 flex list-disc flex-col gap-2 pl-5 text-black/60">
         <li>
-          <strong className="text-black">
-            A customer cancels inside your cancellation window
-          </strong>{" "}
-          &mdash; they are refunded in full. You receive nothing and you pay
-          nothing: Ceaute returns its platform fee and covers Stripe&rsquo;s
-          charge. It costs you {money.format(0)}.
+          Early customer cancellation: full refund; provider cost{" "}
+          {money.format(0)}.
         </li>
         <li>
-          <strong className="text-black">A customer cancels late</strong>{" "}
-          &mdash; your policy decides what you keep, and the 2% is charged on
-          what you actually keep rather than on the original payment. Anything
-          collected above that is returned to you. Stripe does not return its
-          charge on the original payment, so that stays your cost.
+          Late customer cancellation: your policy decides what you keep; Stripe
+          processing is not returned.
         </li>
         <li>
-          <strong className="text-black">You cancel</strong> &mdash; the
-          customer is refunded in full and Ceaute returns its platform fee.
-          Because the cancellation was yours, Stripe&rsquo;s charge on the
-          original payment is your cost.
+          Provider cancellation: full customer refund; you cover Stripe
+          processing.
         </li>
       </ul>
     </section>
@@ -105,23 +84,20 @@ export default async function DashboardPaymentSettingsPage() {
   const hasAccount = Boolean(paymentAccount?.stripe_account_id);
   const currentlyDue = paymentAccount?.requirements_currently_due ?? [];
   const pastDue = paymentAccount?.requirements_past_due ?? [];
-  const titleByState = {
-    needs_information: hasAccount ? "Setup incomplete" : "Not connected",
-    pending_review: "Stripe is reviewing your information",
-    ready: "Payments ready",
-    restricted: "Payments restricted",
+  const labelByState = {
+    needs_information: hasAccount ? "Action required" : "Not connected",
+    pending_review: "In review",
+    ready: "Connected",
+    restricted: "Restricted",
   };
 
   return (
     <main className="container max-w-md p-5">
       <div className="mt-6 flex flex-col">
-        <Link href="/dashboard/settings" className="text-sm font-semibold text-pink-600">
-          Back to settings
-        </Link>
-        <h1 className="mt-8 text-3xl font-bold tracking-tighter">Payments</h1>
-        <p className="mt-1 text-sm text-black/60">
-          Connect Stripe Express so Ceaute can route customer payments to you.
-        </p>
+        <SettingsSectionNav />
+        <h2 className="mt-8 text-2xl font-semibold tracking-tighter">
+          Payments
+        </h2>
 
         {restrictionMessage ? (
           <p
@@ -133,11 +109,11 @@ export default async function DashboardPaymentSettingsPage() {
           </p>
         ) : null}
 
-        <section className="mt-8 rounded-xl border p-4 text-sm">
+        <section className="mt-8 rounded-xl border border-black/10 p-4 text-sm">
           <h2 className="text-lg font-semibold">Provider agreement</h2>
           {agreementAcceptedAt ? (
             <p className="mt-2 text-black/60">
-              You accepted version {agreementVersion} on{" "}
+              Version {agreementVersion} accepted{" "}
               {new Intl.DateTimeFormat("en-GB", {
                 dateStyle: "long",
               }).format(new Date(agreementAcceptedAt))}
@@ -146,11 +122,8 @@ export default async function DashboardPaymentSettingsPage() {
           ) : (
             <>
               <p className="mt-2 text-black/60">
-                Before you can take paid bookings you need to accept the
-                provider agreement, which sets out what you are paid, what
-                happens when a booking is refunded, and who carries the cost if
-                a customer disputes a payment. It is version {agreementVersion}
-                .
+                Accept version {agreementVersion} before taking paid bookings.
+                It covers payouts, refunds and disputes.
               </p>
               <form action={acceptProviderAgreement} className="mt-4">
                 <PendingButton
@@ -170,11 +143,16 @@ export default async function DashboardPaymentSettingsPage() {
           </p>
         ) : null}
 
-        <section className="mt-8 rounded-xl border p-4 text-sm">
-          <h2 className="text-lg font-semibold">
-            {titleByState[state.state]}
-          </h2>
-          <p className="mt-2 text-black/60">{state.message}</p>
+        <section className="mt-8 rounded-xl border border-black/10 p-4 text-sm">
+          <div className="flex items-center justify-between gap-4">
+            <h2 className="text-lg font-semibold">Stripe</h2>
+            <p className="text-sm font-medium text-black/60">
+              {labelByState[state.state]}
+            </p>
+          </div>
+          {state.state === "ready" ? null : (
+            <p className="mt-3 text-black/60">{state.message}</p>
+          )}
           {hasAccount ? (
             <dl className="mt-4 grid gap-2">
               <div className="flex justify-between gap-4">

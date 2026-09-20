@@ -1,9 +1,5 @@
-import { PublicProviderNav } from "./_components/public-provider-nav";
 import { notFound } from "next/navigation";
-import {
-  hasPublicUsernamePrefix,
-  normalizePublicUsername,
-} from "./_lib/public-provider-format";
+import { hasPublicUsernamePrefix } from "./_lib/public-provider-format";
 
 export default async function UsernameLayout({ params, children }) {
   const { username } = await params;
@@ -12,12 +8,5 @@ export default async function UsernameLayout({ params, children }) {
     notFound();
   }
 
-  const decodedUsername = normalizePublicUsername(username);
-
-  return (
-    <>
-      <PublicProviderNav username={decodedUsername} />
-      <div>{children}</div>
-    </>
-  );
+  return children;
 }

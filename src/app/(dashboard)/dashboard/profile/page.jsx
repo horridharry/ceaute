@@ -7,6 +7,7 @@ import {
 } from "./actions";
 import { ProviderPageForm } from "./_components/provider-page-form";
 import { PublicationActions } from "./_components/publication-actions";
+import { PageSectionNav } from "../_components/page-section-nav";
 
 export default async function DashboardProfilePage() {
   const { providerPage, publication } = await getProviderPage();
@@ -14,15 +15,19 @@ export default async function DashboardProfilePage() {
   return (
     <>
       <main className="container max-w-md p-5">
-        <section className="mt-6 rounded-xl border p-4 text-sm">
+        <div className="mt-6">
+          <PageSectionNav />
+        </div>
+
+        <section className="mt-8 rounded-xl border border-black/10 p-4 text-sm">
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-black/50">
                 Page status
               </p>
-              <h1 className="mt-1 text-2xl font-bold tracking-tighter capitalize">
+              <h2 className="mt-1 text-2xl font-bold tracking-tighter capitalize">
                 {providerPage.status}
-              </h1>
+              </h2>
             </div>
             {providerPage.status === "published" && providerPage.username ? (
               <Link
@@ -34,11 +39,7 @@ export default async function DashboardProfilePage() {
             ) : null}
           </div>
 
-          {publication.ready ? (
-            <p className="mt-4 text-black/60">
-              Your page has everything needed for publication.
-            </p>
-          ) : (
+          {publication.ready ? null : (
             <div className="mt-4 text-black/60">
               <p className="font-semibold text-black">
                 Missing publication requirements

@@ -14,19 +14,18 @@ export function SigninForm({
     initialState,
   );
   return (
-    <main className="container mx-auto flex min-h-screen max-w-md items-center justify-center p-2">
-      <div className="flex w-full flex-col border rounded-2xl border-black/10 bg-white p-8">
+    <main className="container mx-auto flex min-h-screen max-w-sm items-center px-5 py-12">
+      <div className="flex w-full flex-col">
         <Link href={"/"} className="flex w-max items-center gap-x-1">
-          <h2 className="select-none text-xs font-bold uppercase tracking-widest opacity-70">
-            ceaute
+          <h2 className="select-none text-lg font-semibold tracking-tighter">
+            Ceaute
           </h2>
         </Link>
-        <h1 className="mt-8 text-2xl font-bold tracking-tight text-black/90">
+        <h1 className="mt-10 text-2xl font-bold tracking-tight text-black/90">
           Log in
         </h1>
-        <p className="font-medium text-black/60">Continue to Ceaute account</p>
 
-        <form className="mt-6 grid gap-2" action={authenticateUserAction}>
+        <form className="mt-8 grid gap-2" action={authenticateUserAction}>
           <label htmlFor="email" className="text-sm">
             Email
           </label>
@@ -37,10 +36,14 @@ export function SigninForm({
             required
             autoFocus
             defaultValue={initialEmail}
-            className="appearance-none rounded-xl border border-black/20 p-3 outline-none ring-2 ring-transparent duration-200 hover:border-black/30 focus:border-pink-600 focus:ring-pink-200"
+            className="appearance-none rounded-lg border border-black/10 p-3 outline-none ring-2 ring-transparent duration-200 hover:border-black/20 focus:border-pink-500 focus:ring-pink-100"
           />
 
-          <p className="text-sm text-red-600">{state?.message}</p>
+          {state?.message ? (
+            <p className="mt-1 text-sm text-red-600" role="alert">
+              {state.message}
+            </p>
+          ) : null}
           <SubmitButton pending={pending} />
         </form>
 
@@ -56,7 +59,7 @@ export function SigninForm({
             Get started.
           </Link>
         </p>
-        <div className="mt-8 flex gap-5">
+        <div className="mt-8 flex gap-5 border-t border-black/10 pt-5">
           <Link
             href="/privacy"
             className="text-xs font-medium text-black/50 hover:underline"
@@ -79,7 +82,7 @@ const SubmitButton = ({ pending }) => {
   return (
     <button
       type="submit"
-      className="cursor-pointer mt-4 rounded-lg bg-pink-800 p-2.5 text-sm font-medium text-white shadow-sm duration-200 hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-30 aria-disabled:cursor-not-allowed aria-disabled:opacity-30
+      className="mt-4 cursor-pointer rounded-lg bg-pink-800 p-3 text-sm font-semibold text-white duration-200 hover:bg-pink-900 disabled:cursor-not-allowed disabled:opacity-30 aria-disabled:cursor-not-allowed aria-disabled:opacity-30
       active:opacity-60"
       aria-disabled={pending}
       disabled={pending}

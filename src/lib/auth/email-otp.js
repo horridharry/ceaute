@@ -159,7 +159,7 @@ export function otpRequestMessage(flow, outcome) {
 const VERIFY_MESSAGES = {
   "malformed-code": `Enter the ${EMAIL_OTP_LENGTH}-digit code from the email.`,
   "invalid-code":
-    "That code is incorrect, has expired or has already been used. Use the code from the most recent email, or request a new one.",
+    "That code didn't work. Try the latest code or request a new one.",
   "rate-limited": "Too many attempts. Wait a few minutes before trying again.",
   unavailable: "We could not check the code just now. Try again shortly.",
 };

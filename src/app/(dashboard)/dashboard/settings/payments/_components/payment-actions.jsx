@@ -52,7 +52,7 @@ export function PaymentActions({
               {onboardingPending
                 ? "Connecting..."
                 : hasAccount
-                  ? "Resume onboarding"
+                  ? "Continue setup"
                   : "Connect Stripe"}
             </button>
           </form>

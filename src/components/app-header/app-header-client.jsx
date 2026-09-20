@@ -1,4 +1,5 @@
 "use client";
+
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
@@ -7,13 +8,65 @@ import { logoutUser } from "@/app/(authenticate)/actions";
 import { LinkPendingHint } from "@/components/link-pending-hint";
 import { PendingButton } from "@/components/pending-button";
 
-const HomeLogo = () => (
-  <Link href="/" className="text-xl font-semibold tracking-tighter">
-    Ceaute
-  </Link>
-);
-
 const hiddenHeaderPrefixes = ["/sign-in", "/sign-up", "/verify", "/auth"];
+
+const providerRoutes = [
+  { name: "Today", href: "/dashboard", paths: ["/dashboard"] },
+  {
+    name: "Bookings",
+    href: "/dashboard/bookings",
+    paths: ["/dashboard/bookings"],
+  },
+  {
+    name: "Treatments",
+    href: "/dashboard/treatments",
+    paths: [
+      "/dashboard/treatments",
+      "/dashboard/treatment-groups",
+      "/dashboard/add-ons",
+    ],
+  },
+  {
+    name: "Page",
+    href: "/dashboard/profile",
+    paths: [
+      "/dashboard/profile",
+      "/dashboard/availability",
+      "/dashboard/locations",
+    ],
+  },
+  {
+    name: "Settings",
+    href: "/dashboard/settings",
+    paths: [
+      "/dashboard/settings",
+      "/account/settings",
+    ],
+  },
+];
+
+const focusedProviderRoutePatterns = [
+  /^\/dashboard\/treatments\/(?:new|[^/]+\/edit)$/,
+  /^\/dashboard\/treatment-groups\/(?:new|[^/]+\/edit)$/,
+  /^\/dashboard\/add-ons\/(?:new|[^/]+\/edit)$/,
+  /^\/dashboard\/locations\/(?:new|[^/]+\/edit)$/,
+];
+
+function routeIsActive(pathname, route) {
+  return route.paths.some((path) =>
+    path === "/dashboard"
+      ? pathname === path
+      : pathname === path || pathname.startsWith(`${path}/`),
+  );
+}
+
+function HomeLogo({ href = "/" }) {
+  return (
+    <Link href={href} className="text-xl font-semibold tracking-tighter">
+      Ceaute
+    </Link>
+  );
+}
 
 function HeaderLink({ href, children, exact = false }) {
   const pathname = usePathname();
@@ -26,7 +79,7 @@ function HeaderLink({ href, children, exact = false }) {
       href={href}
       aria-current={isActive ? "page" : undefined}
       className={`relative rounded-full px-3 py-1.5 text-sm font-medium transition hover:bg-black/[0.04] hover:text-black ${
-        isActive ? "text-black" : "text-black/70"
+        isActive ? "text-black" : "text-black/60"
       }`}
     >
       {children}
@@ -35,9 +88,50 @@ function HeaderLink({ href, children, exact = false }) {
   );
 }
 
-function AccountMenu({ user, hasProviderPage }) {
+function ProviderNavigation({ mobile = false }) {
+  const pathname = usePathname();
+
+  return (
+    <ul
+      className={
+        mobile
+          ? "flex min-w-max items-center gap-1 px-4"
+          : "flex items-center gap-1"
+      }
+    >
+      {providerRoutes.map((route) => {
+        const active = routeIsActive(pathname, route);
+
+        return (
+          <li key={route.href}>
+            <Link
+              href={route.href}
+              aria-current={active ? "page" : undefined}
+              className={
+                mobile
+                  ? `relative block whitespace-nowrap border-b-2 px-3 py-3 text-sm font-medium ${
+                      active
+                        ? "border-pink-600 text-black"
+                        : "border-transparent text-black/55"
+                    }`
+                  : `relative rounded-full px-3 py-1.5 text-sm font-medium transition hover:bg-black/[0.04] hover:text-black ${
+                      active ? "text-black" : "text-black/60"
+                    }`
+              }
+            >
+              {route.name}
+              <LinkPendingHint />
+            </Link>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+function AccountMenu({ user, providerPage }) {
   const [open, setOpen] = useState(false);
-  const dashboardHref = hasProviderPage ? "/dashboard" : "/dashboard/onboarding";
+  const hasProviderPage = Boolean(providerPage);
   const closeMenu = () => setOpen(false);
   const logout = async () => {
     posthog.reset();
@@ -45,66 +139,83 @@ function AccountMenu({ user, hasProviderPage }) {
   };
 
   return (
-    <div className="">
+    <div className="relative">
       <button
         type="button"
+        aria-label="Open account menu"
         aria-expanded={open}
         aria-haspopup="menu"
         onClick={() => setOpen((currentOpen) => !currentOpen)}
-        className="flex max-w-44 items-center gap-2 rounded-full border border-transparent bg-white text-sm font-medium text-black/75  transition hover:border-black/20 hover:bg-black/[0.03]"
+        className="grid h-10 w-10 place-items-center rounded-full bg-pink-100 text-xs font-semibold text-pink-700 transition hover:bg-pink-200"
       >
-        <span className="grid h-10 w-10 place-items-center rounded-full bg-pink-100 text-xs font-semibold text-pink-700">
-          {user.name.slice(0, 1).toUpperCase()}
-        </span>
+        {user.name.slice(0, 1).toUpperCase()}
       </button>
 
       {open ? (
         <div
           role="menu"
-          className="absolute right-0 top-14.5 z-50 h-screen w-full overflow-hidden    bg-white p-2"
+          className="absolute right-0 top-12 z-50 w-56 rounded-xl border border-black/10 bg-white p-2 shadow-lg"
         >
-          <div className="mt-12" />
-          <Link
-            href="/discover"
-            role="menuitem"
-            onClick={closeMenu}
-            className="block px-4 py-2 text-xl font-medium text-black/60 hover:text-black"
-          >
-            Go to Ceaute
-          </Link>
-          <Link
-            href="/account/bookings"
-            role="menuitem"
-            onClick={closeMenu}
-            className="block px-4 py-2 text-xl font-medium text-black/60 hover:text-black/80"
-          >
-            My bookings
-          </Link>
-          <Link
-            href="/account"
-            role="menuitem"
-            onClick={closeMenu}
-            className="block px-4 py-2 text-xl font-medium text-black/60 hover:text-black/80"
-          >
-            My account
-          </Link>
+          {hasProviderPage ? (
+            <>
+              <Link
+                href="/dashboard"
+                role="menuitem"
+                onClick={closeMenu}
+                className="block rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-black/[0.04]"
+              >
+                Dashboard
+                <LinkPendingHint />
+              </Link>
+              <Link
+                href="/account/bookings"
+                role="menuitem"
+                onClick={closeMenu}
+                className="block rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-black/[0.04]"
+              >
+                Bookings
+                <LinkPendingHint />
+              </Link>
+              <Link
+                href="/account"
+                role="menuitem"
+                onClick={closeMenu}
+                className="block rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-black/[0.04]"
+              >
+                Account
+                <LinkPendingHint />
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link
+                href="/account/bookings"
+                role="menuitem"
+                onClick={closeMenu}
+                className="block rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-black/[0.04]"
+              >
+                Bookings
+                <LinkPendingHint />
+              </Link>
+              <Link
+                href="/account"
+                role="menuitem"
+                onClick={closeMenu}
+                className="block rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-black/[0.04]"
+              >
+                Account
+                <LinkPendingHint />
+              </Link>
+            </>
+          )}
 
-          <div className="mt-auto" />
-          <Link
-            href={dashboardHref}
-            role="menuitem"
-            onClick={closeMenu}
-            className="block px-4 py-2 text-2xl font-semibold text-black/60 hover:text-black/80"
-          >
-            {hasProviderPage ? "Provider workspace" : "Become a provider"}
-          </Link>
-          <form action={logout} className="mt-12">
+          <form action={logout} className="mt-2 border-t border-black/10 pt-2">
             <PendingButton
               role="menuitem"
-              pendingLabel="Signing out..."
-              className="cursor-pointer rounded-full border border-black/40 w-full p-2.5 text-sm font-medium text-black  hover:opacity-80 duration-200 disabled:cursor-not-allowed disabled:opacity-60"
+              pendingLabel="Logging out..."
+              className="w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium hover:bg-black/[0.04] disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Sign out
+              Log out
             </PendingButton>
           </form>
         </div>
@@ -113,54 +224,70 @@ function AccountMenu({ user, hasProviderPage }) {
   );
 }
 
-export default function AppHeaderClient({ user, hasProviderPage = false }) {
+export default function AppHeaderClient({ user, providerPage = null }) {
   const pathname = usePathname();
+  const isProviderWorkspace = Boolean(
+    user &&
+      providerPage &&
+      (pathname.startsWith("/dashboard") || pathname === "/account/settings"),
+  );
 
   useEffect(() => {
     if (user) {
       posthog.identify(user.id, {
         email: user.email,
         name: user.name,
-        has_provider_page: hasProviderPage,
+        has_provider_page: Boolean(providerPage),
       });
     }
-  }, [hasProviderPage, user?.email, user?.id, user?.name]);
+  }, [providerPage, user]);
 
   if (hiddenHeaderPrefixes.some((prefix) => pathname.startsWith(prefix))) {
     return null;
   }
 
+  if (focusedProviderRoutePatterns.some((pattern) => pattern.test(pathname))) {
+    return null;
+  }
+
   return (
-    <header className="sticky top-0 z-40 border-b border-black/10 bg-white/90 backdrop-blur">
-      <nav className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
-        <HomeLogo />
-        <div className="flex items-center gap-1.5">
+    <header className="sticky top-0 z-40 border-b border-black/10 bg-white/95 backdrop-blur">
+      <nav className="relative mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
+        <HomeLogo href={user ? "/discover" : "/"} />
+
+        {isProviderWorkspace ? (
+          <div className="absolute left-1/2 hidden -translate-x-1/2 md:block">
+            <ProviderNavigation />
+          </div>
+        ) : user ? (
+          <div className="hidden items-center gap-1 sm:flex">
+            <HeaderLink href="/discover">Discover</HeaderLink>
+            <HeaderLink href="/account/bookings">Bookings</HeaderLink>
+            <HeaderLink href="/account" exact>
+              Account
+            </HeaderLink>
+          </div>
+        ) : null}
+
+        <div className="ml-auto flex items-center gap-1.5">
           {user ? (
-            <>
-              <div className="hidden items-center gap-1.5 sm:flex">
-                <HeaderLink href="/discover">Discover</HeaderLink>
-                <HeaderLink href="/account/bookings">Bookings</HeaderLink>
-                <HeaderLink href="/account" exact>
-                  Account
-                </HeaderLink>
-              </div>
-              <AccountMenu user={user} hasProviderPage={hasProviderPage} />
-            </>
+            <AccountMenu
+              user={user}
+              providerPage={providerPage}
+            />
           ) : (
-            <>
-              <HeaderLink href="/discover">Discover</HeaderLink>
-              <HeaderLink href="/sign-in">Sign in</HeaderLink>
-              <Link
-                href="/sign-up"
-                className="rounded-full bg-pink-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-pink-700"
-              >
-                Sign up
-                <LinkPendingHint />
-              </Link>
-            </>
+            <HeaderLink href="/sign-in">Log in</HeaderLink>
           )}
         </div>
       </nav>
+      {isProviderWorkspace ? (
+        <nav
+          aria-label="Provider"
+          className="overflow-x-auto border-t border-black/5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:hidden"
+        >
+          <ProviderNavigation mobile />
+        </nav>
+      ) : null}
     </header>
   );
 }

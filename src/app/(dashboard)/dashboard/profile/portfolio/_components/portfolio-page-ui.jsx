@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useActionState, useState } from "react";
+import { PageSectionNav } from "../../../_components/page-section-nav";
 
 const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
@@ -165,13 +165,16 @@ export function PortfolioPageUI({
   return (
     <main className="container max-w-md p-5">
       <div className="mt-6 flex flex-col">
-        <h1 className="text-3xl font-bold tracking-tighter">Portfolio</h1>
+        <PageSectionNav />
+        <h2 className="mt-8 text-2xl font-semibold tracking-tighter">
+          Portfolio
+        </h2>
 
         <UploadForm uploadPortfolioImage={uploadPortfolioImage} />
 
         <div className="mt-10 flex flex-col gap-5">
           {images.length === 0 ? (
-            <div className="flex h-40 rounded-xl border p-4">
+            <div className="flex h-40 rounded-xl border border-black/10 p-4">
               <p className="m-auto text-center text-sm text-black/60">
                 No portfolio images yet.
               </p>
@@ -179,7 +182,10 @@ export function PortfolioPageUI({
           ) : null}
 
           {images.map((image, index) => (
-            <section key={image.id} className="rounded-xl border p-3">
+            <section
+              key={image.id}
+              className="rounded-xl border border-black/10 p-3"
+            >
               <div
                 className="h-56 rounded-lg bg-black/5 bg-cover bg-center"
                 style={
@@ -230,14 +236,6 @@ export function PortfolioPageUI({
           ))}
         </div>
 
-        <div className="mt-8 flex justify-end">
-          <Link
-            href="/dashboard/profile"
-            className="w-max rounded-lg border border-black/10 p-3 px-6 text-sm font-semibold text-pink-600 duration-200 hover:border-black/20 active:border-transparent active:bg-pink-500/10 active:text-pink-500"
-          >
-            Back
-          </Link>
-        </div>
       </div>
     </main>
   );
