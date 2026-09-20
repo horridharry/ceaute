@@ -3,6 +3,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { resolveRequestOrigin } from "@/lib/app/origin";
+import { captureServerEvent } from "@/lib/analytics/posthog-server";
 import { calculateBookingPaymentAmounts } from "@/lib/payments/booking-payments";
 import {
   PROVIDER_AGREEMENT_VERSION,
@@ -162,6 +163,17 @@ export async function createBookingHoldFromDetails(formData) {
 
     throw new Error("Could not hold that booking time.");
   }
+
+  // Second step of the customer booking funnel.
+  await captureServerEvent({
+    distinctId: profileId,
+    event: "booking_hold_created",
+    properties: {
+      booking_id: holdId,
+      provider_page_id: providerPage.id,
+      treatment_id: treatment.id,
+    },
+  });
 
   redirect(
     buildCheckoutUrl({
@@ -358,6 +370,17 @@ export async function startStripeCheckoutForBooking(formData) {
   ) {
     redirect(`${returnPath}&payment=expired`);
   }
+
+  // Third step of the customer booking funnel: the customer starts paying for a
+  // valid held booking. The remaining branches are outcomes of that attempt.
+  await captureServerEvent({
+    distinctId: profileId,
+    event: "booking_checkout_started",
+    properties: {
+      booking_id: booking.id,
+      provider_page_id: booking.provider_page_id,
+    },
+  });
 
   const [providerPageResult, paymentAccountResult] = await Promise.all([
     supabase

@@ -1,5 +1,6 @@
 "use server";
 import { revalidatePath } from "next/cache";
+import { captureServerEvent } from "@/lib/analytics/posthog-server";
 import {
   getSignedInProvider,
   normalizeUsername,
@@ -131,7 +132,7 @@ export const updateProviderPage = async (_currentState, formData) => {
 // the outcome; PostgreSQL's publish_provider_page re-checks every requirement
 // and its rejection reason is what the provider needs to see.
 export const publishPage = async () => {
-  const { supabase, providerPage } = await getSignedInProvider({
+  const { supabase, providerPage, user } = await getSignedInProvider({
     next: "/dashboard/profile",
   });
 
@@ -161,6 +162,13 @@ export const publishPage = async () => {
   if (error) {
     return publicationFailure(error, "publish");
   }
+
+  // Final step of the provider activation funnel.
+  await captureServerEvent({
+    distinctId: user.id,
+    event: "provider_page_published",
+    properties: { provider_page_id: providerPage.id },
+  });
 
   revalidatePath("/", "layout");
   revalidatePath("/dashboard/profile");

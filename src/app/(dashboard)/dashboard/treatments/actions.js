@@ -7,6 +7,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { captureServerEvent } from "@/lib/analytics/posthog-server";
 import { getOptionalId, getString } from "../_lib/form-values";
 import {
   durationToMinutes,
@@ -173,7 +174,7 @@ export async function getTreatmentFormOptions({
 }
 
 export async function createTreatment(_currentState, formData) {
-  const { supabase, providerPage } = await getSignedInProvider({
+  const { supabase, providerPage, user } = await getSignedInProvider({
     next: "/dashboard/treatments/new",
   });
   const result = await validateTreatmentForm({ formData, supabase, providerPage });
@@ -193,6 +194,13 @@ export async function createTreatment(_currentState, formData) {
   if (error) {
     return "Could not create the treatment.";
   }
+
+  // Second step of the provider activation funnel.
+  await captureServerEvent({
+    distinctId: user.id,
+    event: "treatment_created",
+    properties: { provider_page_id: providerPage.id },
+  });
 
   refreshTreatmentPages();
   redirect("/dashboard/treatments");

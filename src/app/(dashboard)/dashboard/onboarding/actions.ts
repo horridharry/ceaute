@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { captureServerEvent } from '@/lib/analytics/posthog-server';
 import { createClient } from '@/lib/supabase/server';
 import {
   USERNAME_MAX_LENGTH,
@@ -88,6 +89,13 @@ export async function startProviderOnboarding(_currentState: string, formData: F
 
     return 'Could not save provider onboarding.';
   }
+
+  // First step of the provider activation funnel.
+  await captureServerEvent({
+    distinctId: userId,
+    event: 'provider_onboarding_completed',
+    properties: { username },
+  });
 
   revalidatePath('/', 'layout');
   redirect('/dashboard');

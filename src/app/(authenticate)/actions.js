@@ -16,6 +16,7 @@ import {
   verifyEmailCode,
 } from "@/lib/auth/email-otp";
 import { validatedNextPath } from "@/lib/auth/redirect";
+import { captureServerEvent } from "@/lib/analytics/posthog-server";
 import { createClient } from "@/lib/supabase/server";
 
 const VERIFY_PATH = "/verify";
@@ -116,6 +117,13 @@ async function verifyCode(prevState, formData) {
   if (!result.ok) {
     return { ...prevState, notice: "", message: otpVerifyMessage(result.outcome) };
   }
+
+  // First step of the customer booking funnel.
+  await captureServerEvent({
+    distinctId: result.userId,
+    event: "authentication_completed",
+    properties: { method: "email_otp", flow: pending.flow },
+  });
 
   const cookieStore = await cookies();
   cookieStore.delete(PENDING_AUTH_COOKIE);

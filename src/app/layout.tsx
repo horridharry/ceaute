@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Inter } from "next/font/google";
 import AppHeader from "@/components/app-header/app-header";
+import PosthogUser from "@/components/analytics/posthog-user";
 import { SiteFooter } from "@/components/site-footer";
 
 import "./globals.css";
@@ -31,6 +32,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
       className={`${inter.className} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <PosthogUser />
         <AppHeader />
         {children}
         <SiteFooter />

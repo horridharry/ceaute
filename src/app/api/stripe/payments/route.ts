@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import Stripe from 'stripe';
+import { captureServerEvent } from '@/lib/analytics/posthog-server';
 import {
   getStripeObjectId,
   processBookingRefund,
@@ -140,6 +141,49 @@ async function processCompletedCheckout(session: Stripe.Checkout.Session) {
     if (refundResult.action === 'processing') {
       throw new Error('The required Stripe refund is still being processed.');
     }
+  }
+
+  await captureBookingPaymentCompleted(result.booking_id, session);
+}
+
+// Final step of the customer booking funnel. The webhook is the only place a
+// payment is confirmed, so it is where this event belongs. It runs once per
+// paid checkout (the route claims each event before processing). The booking
+// read resolves the customer's distinct id, and the whole thing is wrapped so a
+// lookup failure can never fail the webhook.
+async function captureBookingPaymentCompleted(
+  bookingId: string | null | undefined,
+  session: Stripe.Checkout.Session,
+) {
+  if (!bookingId) {
+    return;
+  }
+
+  try {
+    const supabase = createServiceRoleClient();
+    const { data: booking } = await supabase
+      .schema('ceaute')
+      .from('booking')
+      .select('customer_profile_id, provider_page_id')
+      .eq('id', bookingId)
+      .maybeSingle();
+
+    if (!booking?.customer_profile_id) {
+      return;
+    }
+
+    await captureServerEvent({
+      distinctId: booking.customer_profile_id,
+      event: 'booking_payment_completed',
+      properties: {
+        booking_id: bookingId,
+        provider_page_id: booking.provider_page_id,
+        amount_total_pence: session.amount_total,
+        currency: session.currency,
+      },
+    });
+  } catch {
+    // Analytics must never fail a confirmed payment.
   }
 }
 

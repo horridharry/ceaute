@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getSignedInProvider } from "../../_lib/provider-data";
+import { captureServerEvent } from "@/lib/analytics/posthog-server";
 import { resolveRequestOrigin } from "@/lib/app/origin";
 import {
   classifyStripePaymentAccount,
@@ -105,6 +106,16 @@ export async function acceptProviderAgreement() {
   if (error && error.code !== "23505") {
     throw new Error("Could not record agreement acceptance.");
   }
+
+  // Third step of the provider activation funnel.
+  await captureServerEvent({
+    distinctId: user.id,
+    event: "provider_agreement_accepted",
+    properties: {
+      provider_page_id: providerPage.id,
+      agreement_version: PROVIDER_AGREEMENT_VERSION,
+    },
+  });
 
   revalidatePath(PAYMENTS_PATH);
   return success("Provider agreement accepted.");
@@ -247,6 +258,13 @@ export async function startOrResumeOnboarding() {
       "Stripe could not start onboarding right now. Try again in a few minutes.",
     );
   }
+
+  // Fourth step of the provider activation funnel.
+  await captureServerEvent({
+    distinctId: user.id,
+    event: "stripe_onboarding_started",
+    properties: { provider_page_id: providerPage.id },
+  });
 
   redirect(accountLink.url);
 }
