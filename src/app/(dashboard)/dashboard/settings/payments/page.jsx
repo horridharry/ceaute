@@ -9,6 +9,7 @@ import { describeRestrictionForProvider } from "@/lib/payments/provider-liabilit
 import { PaymentActions } from "./_components/payment-actions";
 import { calculateBookingFeeSplit } from "@/lib/payments/booking-payments";
 import { SettingsSectionNav } from "../../_components/settings-section-nav";
+import { StatusBadge } from "../../_components/status-badge";
 
 const money = new Intl.NumberFormat("en-GB", {
   style: "currency",
@@ -84,6 +85,12 @@ export default async function DashboardPaymentSettingsPage() {
   const hasAccount = Boolean(paymentAccount?.stripe_account_id);
   const currentlyDue = paymentAccount?.requirements_currently_due ?? [];
   const pastDue = paymentAccount?.requirements_past_due ?? [];
+  const toneByState = {
+    needs_information: "warn",
+    pending_review: "warn",
+    ready: "good",
+    restricted: "bad",
+  };
   const labelByState = {
     needs_information: hasAccount ? "Action required" : "Not connected",
     pending_review: "In review",
@@ -146,9 +153,9 @@ export default async function DashboardPaymentSettingsPage() {
         <section className="mt-8 rounded-xl border border-black/10 p-4 text-sm">
           <div className="flex items-center justify-between gap-4">
             <h2 className="text-lg font-semibold">Stripe</h2>
-            <p className="text-sm font-medium text-black/60">
+            <StatusBadge tone={toneByState[state.state]}>
               {labelByState[state.state]}
-            </p>
+            </StatusBadge>
           </div>
           {state.state === "ready" ? null : (
             <p className="mt-3 text-black/60">{state.message}</p>

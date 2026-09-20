@@ -32,7 +32,7 @@ function BookingItem({ booking }) {
               {booking.treatment_name}
             </p>
           </div>
-          <StatusBadge tone="quiet" className="shrink-0">
+          <StatusBadge tone="neutral" className="shrink-0">
             {booking.status_label}
           </StatusBadge>
         </div>

@@ -1,6 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useMemo, useState } from "react";
+import { PendingButton } from "@/components/pending-button";
 import { FormField } from "../../_components/form-field";
 import { FocusedTaskHeader } from "../../_components/focused-task-header";
 
@@ -74,9 +76,6 @@ export function TreatmentAddOnForm({
     Number(additionalPrice) === 0 && Number(additionalDuration) === 0
       ? "Add-ons must increase the price, duration or both."
       : null;
-  const hasClientError = Boolean(
-    nameError || priceError || durationError || needsIncreaseError,
-  );
   const heading = mode === "create" ? "New add-on" : "Edit add-on";
 
   return (
@@ -84,12 +83,8 @@ export function TreatmentAddOnForm({
       <div className="mt-6 flex flex-col">
         <FocusedTaskHeader
           backHref="/dashboard/add-ons"
+          backLabel="Add-ons"
           title={heading}
-          formId="treatment_add_on_form"
-          submitLabel={mode === "create" ? "Create" : "Save"}
-          pendingLabel={mode === "create" ? "Creating..." : "Saving..."}
-          pending={pending}
-          disabled={hasClientError}
         />
 
         <form
@@ -181,6 +176,18 @@ export function TreatmentAddOnForm({
           {stateMessage ? (
             <p className="mt-4 text-sm text-red-600">{stateMessage}</p>
           ) : null}
+          <PendingButton
+            pendingLabel={mode === "create" ? "Creating..." : "Saving..."}
+            className="mt-1 w-full rounded-[11px] bg-accent-600 py-3.5 text-sm font-medium text-white disabled:opacity-40"
+          >
+            {mode === "create" ? "Create" : "Save"}
+          </PendingButton>
+          <Link
+            href="/dashboard/add-ons"
+            className="block py-1 text-center text-sm font-medium text-black/50"
+          >
+            Discard
+          </Link>
         </form>
 
         {mode === "edit" ? (

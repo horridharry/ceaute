@@ -1,6 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useState } from "react";
+import { PendingButton } from "@/components/pending-button";
 import { FormField } from "../../_components/form-field";
 import { FocusedTaskHeader } from "../../_components/focused-task-header";
 
@@ -13,7 +15,7 @@ const validateLength = (value, maxLength, label) => {
 };
 
 export function LocationFormUI({ action, location = null }) {
-  const [stateMessage, formAction, pending] = useActionState(action, "");
+  const [stateMessage, formAction] = useActionState(action, "");
   const [errors, setErrors] = useState({});
   const editing = Boolean(location);
 
@@ -24,19 +26,13 @@ export function LocationFormUI({ action, location = null }) {
     }));
   };
 
-  const hasClientError = Object.values(errors).some(Boolean);
-
   return (
     <main className="container max-w-md p-5">
       <div className="mt-6 flex flex-col">
         <FocusedTaskHeader
           backHref="/dashboard/locations"
+          backLabel="Locations"
           title={editing ? "Edit location" : "New location"}
-          formId="save_location"
-          submitLabel={editing ? "Save" : "Add"}
-          pendingLabel="Saving..."
-          pending={pending}
-          disabled={hasClientError}
         />
         <p className="mt-2 text-sm text-black/60">
           The public area appears on your page. The exact address stays private
@@ -55,7 +51,6 @@ export function LocationFormUI({ action, location = null }) {
             label="Public area"
             htmlFor="public_area"
             error={errors.public_area}
-            reserveErrorSpace
           >
             <input
               id="public_area"
@@ -76,7 +71,6 @@ export function LocationFormUI({ action, location = null }) {
             label="Address line 1"
             htmlFor="address_line_1"
             error={errors.address_line_1}
-            reserveErrorSpace
           >
             <input
               id="address_line_1"
@@ -96,7 +90,6 @@ export function LocationFormUI({ action, location = null }) {
             label="Address line 2"
             htmlFor="address_line_2"
             error={errors.address_line_2}
-            reserveErrorSpace
           >
             <input
               id="address_line_2"
@@ -116,7 +109,6 @@ export function LocationFormUI({ action, location = null }) {
             label="City"
             htmlFor="city"
             error={errors.city}
-            reserveErrorSpace
           >
             <input
               id="city"
@@ -136,7 +128,6 @@ export function LocationFormUI({ action, location = null }) {
             label="Postcode"
             htmlFor="postcode"
             error={errors.postcode}
-            reserveErrorSpace
           >
             <input
               id="postcode"
@@ -168,6 +159,18 @@ export function LocationFormUI({ action, location = null }) {
           {stateMessage ? (
             <p className="mt-4 text-sm text-red-600">{stateMessage}</p>
           ) : null}
+          <PendingButton
+            pendingLabel="Saving..."
+            className="mt-1 w-full rounded-[11px] bg-accent-600 py-3.5 text-sm font-medium text-white disabled:opacity-40"
+          >
+            {editing ? "Save" : "Add"}
+          </PendingButton>
+          <Link
+            href="/dashboard/locations"
+            className="block py-1 text-center text-sm font-medium text-black/50"
+          >
+            Discard
+          </Link>
         </form>
       </div>
     </main>

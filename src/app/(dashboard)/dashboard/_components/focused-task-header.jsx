@@ -1,36 +1,18 @@
 import Link from "next/link";
 import { LinkPendingHint } from "@/components/link-pending-hint";
 
-export function FocusedTaskHeader({
-  backHref,
-  title,
-  formId,
-  submitLabel,
-  pendingLabel = "Saving...",
-  pending = false,
-  disabled = false,
-}) {
+export function FocusedTaskHeader({ backHref, backLabel, title }) {
   return (
-    <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 border-b border-black/10 pb-4">
+    <header className="pt-1">
       <Link
         href={backHref}
-        className="w-max text-sm font-medium text-black/60 hover:text-black"
+        className="inline-flex items-center gap-1.5 text-xs font-medium text-accent-600"
       >
-        Cancel
+        <span aria-hidden="true" className="text-[15px] leading-none">‹</span>
+        {backLabel}
         <LinkPendingHint />
       </Link>
-      <h1 className="max-w-44 truncate text-center text-base font-semibold sm:max-w-none">
-        {title}
-      </h1>
-      <button
-        type="submit"
-        form={formId}
-        disabled={pending || disabled}
-        aria-disabled={pending || disabled}
-        className="ml-auto w-max text-sm font-semibold text-accent-700 disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        {pending ? pendingLabel : submitLabel}
-      </button>
+      <h1 className="mt-1.5 text-2xl font-bold tracking-tighter">{title}</h1>
     </header>
   );
 }
