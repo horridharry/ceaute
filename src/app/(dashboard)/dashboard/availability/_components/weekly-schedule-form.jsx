@@ -10,10 +10,16 @@ import {
 } from "../_lib/schedule-form";
 
 export function WeeklyScheduleForm({ schedule, updateSchedule }) {
-  const [stateMessage, updateScheduleAction, pending] = useActionState(
+  const [state, updateScheduleAction, pending] = useActionState(
     updateSchedule,
-    "",
+    { status: "idle" },
   );
+  const stateMessage =
+    state.status === "error"
+      ? state.message
+      : state.status === "saved"
+        ? "Saved."
+        : "";
   const [days, setDays] = useState(() => scheduleToState(schedule));
   const timeOptions = useMemo(() => generateTimeOptions(), []);
   const errors = getErrors(days);

@@ -5,6 +5,9 @@ import { WeeklyScheduleForm } from "./_components/weekly-schedule-form";
 export function AvailabilityForm({
   schedule,
   blockedDates,
+  bookingCountRows,
+  isPublished,
+  today,
   updateSchedule,
   blockDate,
   removeBlockedDate,
@@ -20,10 +23,17 @@ export function AvailabilityForm({
           Set your regular hours in Europe/London time.
         </p>
 
-        <WeeklyScheduleForm schedule={schedule} updateSchedule={updateSchedule} />
+        <WeeklyScheduleForm
+          schedule={schedule}
+          isPublished={isPublished}
+          updateSchedule={updateSchedule}
+        />
 
         <BlockedDatesForm
           blockedDates={blockedDates}
+          bookingCountRows={bookingCountRows}
+          today={today}
+          schedule={schedule}
           blockDate={blockDate}
           removeBlockedDate={removeBlockedDate}
         />

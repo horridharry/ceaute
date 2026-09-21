@@ -5,10 +5,22 @@ import { PendingButton } from "@/components/pending-button";
 import { formatBlockedDate } from "../_lib/schedule-form";
 
 export function BlockedDatesForm({ blockedDates, blockDate, removeBlockedDate }) {
-  const [blockDateMessage, blockDateAction, blockDatePending] = useActionState(
+  const [blockDateState, blockDateAction, blockDatePending] = useActionState(
     blockDate,
-    "",
+    { status: "idle" },
   );
+  const [removeState, removeBlockedDateAction] = useActionState(
+    removeBlockedDate,
+    { status: "idle" },
+  );
+  const blockDateMessage =
+    blockDateState.status === "error"
+      ? blockDateState.message
+      : blockDateState.status === "blocked"
+        ? "Date blocked."
+        : "";
+  const removeMessage =
+    removeState.status === "error" ? removeState.message : "";
 
   return (
     <section className="mt-12 flex flex-col gap-4">
@@ -47,6 +59,10 @@ export function BlockedDatesForm({ blockedDates, blockDate, removeBlockedDate })
         <p className="text-sm text-red-600">{blockDateMessage}</p>
       ) : null}
 
+      {removeMessage ? (
+        <p className="text-sm text-red-600">{removeMessage}</p>
+      ) : null}
+
       {blockedDates.length ? (
         <ul className="flex flex-col gap-2">
           {blockedDates.map((blockedDate) => (
@@ -57,7 +73,7 @@ export function BlockedDatesForm({ blockedDates, blockDate, removeBlockedDate })
               <p className="flex-1 text-sm font-medium">
                 {formatBlockedDate(blockedDate.local_date)}
               </p>
-              <form action={removeBlockedDate}>
+              <form action={removeBlockedDateAction}>
                 <input
                   type="hidden"
                   name="blocked_date_id"
