@@ -131,6 +131,22 @@ calculator alone does not change the accepted booking rules. The booking window
 is not provider-configurable; the legacy `provider_page.booking_window_days`
 column is unused and providers cannot change it.
 
+Providers manage availability at `/dashboard/availability`. Weekdays show as
+summary rows ("Monday 9 am to 5 pm", "Wednesday Closed") that expand in place
+for editing; the week is edited as a draft and saved together with one Save
+hours action, whose bar appears only while there are unsaved changes. Leaving
+with unsaved hours asks first, whether through Ceaute's links or browser
+back/forward; reload and closing the tab use the browser's own prompt, which iOS
+Safari never shows, so those two cases are unprotected on iPhone (a browser
+limitation). A published provider who saves a week with every day closed is
+asked to confirm; the page stays published but takes no new bookings, and a
+banner says so. Blocked dates are added one at a time and removed immediately,
+separately from weekly hours. Blocking a date never cancels or changes existing
+bookings: confirmed bookings stay, and a checkout already in progress may still
+complete, while no new hold can start on a blocked date. The screen shows
+confirmed bookings and payments in progress per date, read once when the page
+loads; the counts are advisory and the database rules decide what can be booked.
+
 Creating a booking first inserts an `awaiting_payment` booking with a five-minute
 hold. Starting Stripe Checkout durably records the request and extends the hold
 to the Checkout expiry, currently about 31 minutes. Expired holds no longer
