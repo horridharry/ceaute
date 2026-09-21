@@ -1,5 +1,3 @@
-"use client";
-
 import Link from "next/link";
 import { SectionSwitcher } from "../../_components/section-switcher";
 import { StatusBadge } from "../../_components/status-badge";
