@@ -1,11 +1,6 @@
 import { AvailabilityForm } from "./availability-form";
-import {
-  blockDate,
-  getBlockedDates,
-  getSchedule,
-  removeBlockedDate,
-  updateSchedule,
-} from "./actions";
+import { blockDate, removeBlockedDate, updateSchedule } from "./actions";
+import { getBlockedDates, getSchedule } from "./queries";
 
 export default async function DashboardAvailabilityPage() {
   const [schedule, blockedDates] = await Promise.all([
