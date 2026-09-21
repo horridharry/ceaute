@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { LocationFormUI } from "../../_components/location-form-ui";
-import { getLocation, updateLocation } from "../../actions";
+import { updateLocation } from "../../actions";
+import { getLocation } from "../../queries";
 
 export default async function EditLocationPage({ params }) {
   const { locationId } = await params;
