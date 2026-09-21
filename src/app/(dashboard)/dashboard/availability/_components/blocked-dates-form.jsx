@@ -1,98 +1,190 @@
 "use client";
 
-import { useActionState } from "react";
-import { PendingButton } from "@/components/pending-button";
-import { formatBlockedDate } from "../_lib/schedule-form";
+import { useActionState, useEffect, useMemo, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { PendingButton } from "@/components/ui/pending-button";
+import {
+  formatBlockedDateBookingsLine,
+  toBookingCountsByDate,
+} from "../_lib/booking-messages";
+import {
+  formatBlockedDate,
+  formatClosedAnyway,
+  isBlockedDateOnClosedWeekday,
+  scheduleToState,
+} from "../_lib/schedule-form";
+import { BlockDatePanel } from "./block-date-panel";
 
-export function BlockedDatesForm({ blockedDates, blockDate, removeBlockedDate }) {
-  const [blockDateState, blockDateAction, blockDatePending] = useActionState(
-    blockDate,
-    { status: "idle" },
+// The Blocked dates section. Adding and removing take effect immediately and
+// never touch the weekly-hours draft.
+export function BlockedDatesForm({
+  blockedDates,
+  blockDate,
+  removeBlockedDate,
+  bookingCountRows,
+  today,
+  schedule,
+}) {
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [statusMessage, setStatusMessage] = useState("");
+  // { target: "block" } or { target: "neighbour", nextId, previousId }; a new
+  // object each time so the effect below runs for every request.
+  const [focusRequest, setFocusRequest] = useState(null);
+  const sectionRef = useRef(null);
+  const blockButtonRef = useRef(null);
+  const blockedDatesRef = useRef(blockedDates);
+  const countsByDate = useMemo(
+    () => toBookingCountsByDate(bookingCountRows),
+    [bookingCountRows],
   );
-  const [removeState, removeBlockedDateAction] = useActionState(
-    removeBlockedDate,
-    { status: "idle" },
-  );
-  const blockDateMessage =
-    blockDateState.status === "error"
-      ? blockDateState.message
-      : blockDateState.status === "blocked"
-        ? "Date blocked."
-        : "";
-  const removeMessage =
-    removeState.status === "error" ? removeState.message : "";
+  const days = useMemo(() => scheduleToState(schedule), [schedule]);
+
+  useEffect(() => {
+    blockedDatesRef.current = blockedDates;
+  }, [blockedDates]);
+
+  const [, removeAction] = useActionState(async (currentState, formData) => {
+    const blockedDateId = String(formData.get("blocked_date_id") ?? "");
+    const rows = blockedDatesRef.current;
+    const index = rows.findIndex((row) => row.id === blockedDateId);
+    const submittedDate = index >= 0 ? rows[index].local_date : null;
+    const nextId = index >= 0 ? rows[index + 1]?.id ?? null : null;
+    const previousId = index > 0 ? rows[index - 1].id : null;
+    const result = await removeBlockedDate(currentState, formData);
+
+    if (result?.status === "removed") {
+      const localDate = result.localDate ?? submittedDate;
+
+      setStatusMessage(
+        localDate
+          ? `Unblocked ${formatBlockedDate(String(localDate).slice(0, 10), today)}`
+          : "Unblocked",
+      );
+      setFocusRequest({ target: "neighbour", nextId, previousId });
+    } else if (result?.status === "error") {
+      setStatusMessage(result.message);
+    }
+
+    return result;
+  }, { status: "idle" });
+
+  useEffect(() => {
+    if (!focusRequest) {
+      return;
+    }
+
+    const findRemoveButton = (id) =>
+      id
+        ? sectionRef.current?.querySelector(
+            `[data-blocked-date-id="${CSS.escape(id)}"] button[type="submit"]`,
+          )
+        : null;
+    const target =
+      focusRequest.target === "neighbour"
+        ? findRemoveButton(focusRequest.nextId) ??
+          findRemoveButton(focusRequest.previousId) ??
+          blockButtonRef.current
+        : blockButtonRef.current;
+
+    target?.focus();
+  }, [focusRequest]);
+
+  const openPanel = () => {
+    setStatusMessage("");
+    setFocusRequest(null);
+    setPanelOpen(true);
+  };
+
+  const closePanel = () => {
+    setPanelOpen(false);
+    setFocusRequest({ target: "block" });
+  };
+
+  const handleBlocked = (localDate) => {
+    setStatusMessage(`Blocked ${formatBlockedDate(localDate, today)}`);
+    closePanel();
+  };
 
   return (
-    <section className="mt-12 flex flex-col gap-4">
+    <section ref={sectionRef} className="mt-12 flex flex-col gap-4">
       <div>
-        <h2 className="text-xl font-semibold tracking-tight">
-          Blocked dates
-        </h2>
+        <h2 className="text-xl font-semibold tracking-tight">Blocked dates</h2>
         <p className="mt-1 text-sm text-black/60">
-          Existing bookings are not cancelled.
+          Days you won&apos;t take bookings, even if you normally work.
         </p>
       </div>
 
-      <form action={blockDateAction} className="flex items-end gap-3">
-        <span className="field-set flex-1">
-          <label className="label" htmlFor="local_date">
-            Date
-          </label>
-          <input
-            id="local_date"
-            name="local_date"
-            type="date"
-            className="field"
-          />
-        </span>
-        <button
-          type="submit"
-          disabled={blockDatePending}
-          aria-disabled={blockDatePending}
-          className="w-max rounded-lg bg-pink-700 p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-pink-800 disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
-        >
-          {blockDatePending ? "Blocking..." : "Block date"}
-        </button>
-      </form>
-
-      {blockDateMessage ? (
-        <p className="text-sm text-red-600">{blockDateMessage}</p>
-      ) : null}
-
-      {removeMessage ? (
-        <p className="text-sm text-red-600">{removeMessage}</p>
-      ) : null}
-
       {blockedDates.length ? (
-        <ul className="flex flex-col gap-2">
-          {blockedDates.map((blockedDate) => (
-            <li
-              key={blockedDate.id}
-              className="flex items-center gap-3 rounded-lg border border-black/10 p-3"
-            >
-              <p className="flex-1 text-sm font-medium">
-                {formatBlockedDate(blockedDate.local_date)}
-              </p>
-              <form action={removeBlockedDateAction}>
-                <input
-                  type="hidden"
-                  name="blocked_date_id"
-                  value={blockedDate.id}
-                />
-                <PendingButton
-                  pendingLabel="Removing..."
-                  className="rounded-lg border border-black/10 p-2 px-3 text-sm font-semibold text-pink-600 duration-200 hover:border-black/20 active:border-transparent active:bg-pink-500/10 active:text-pink-500 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  Remove
-                </PendingButton>
-              </form>
-            </li>
-          ))}
+        <ul className="flex flex-col">
+          {blockedDates.map((blockedDate) => {
+            const localDate = String(blockedDate.local_date).slice(0, 10);
+            const label = formatBlockedDate(localDate, today);
+            const bookingsLine = formatBlockedDateBookingsLine(
+              countsByDate[localDate],
+            );
+            const closedAnyway = isBlockedDateOnClosedWeekday(localDate, days);
+
+            return (
+              <li
+                key={blockedDate.id}
+                data-blocked-date-id={blockedDate.id}
+                className="flex min-h-14 items-center gap-3 border-b border-black/10 py-2"
+              >
+                <div className="min-w-0 flex-1 break-words">
+                  <p className="text-sm font-medium">{label}</p>
+                  {bookingsLine ? (
+                    <p className="text-sm text-black/60">{bookingsLine}</p>
+                  ) : null}
+                  {closedAnyway ? (
+                    <p className="text-sm text-black/60">
+                      {formatClosedAnyway(localDate)}
+                    </p>
+                  ) : null}
+                </div>
+                <form action={removeAction} className="shrink-0">
+                  <input
+                    type="hidden"
+                    name="blocked_date_id"
+                    value={blockedDate.id}
+                  />
+                  <PendingButton
+                    variant="secondary"
+                    aria-label={`Remove ${label}`}
+                    className="min-h-11"
+                  >
+                    Remove
+                  </PendingButton>
+                </form>
+              </li>
+            );
+          })}
         </ul>
       ) : (
-        <p className="rounded-lg border border-dashed border-black/15 p-4 text-sm text-black/60">
-          No upcoming blocked dates.
-        </p>
+        <p className="text-sm text-black/60">No blocked dates.</p>
+      )}
+
+      <p role="status" className="text-sm">
+        {statusMessage}
+      </p>
+
+      {panelOpen ? (
+        <BlockDatePanel
+          bookingCountsByDate={countsByDate}
+          today={today}
+          blockDate={blockDate}
+          onBlocked={handleBlocked}
+          onCancel={closePanel}
+        />
+      ) : (
+        <Button
+          ref={blockButtonRef}
+          type="button"
+          variant="secondary"
+          onClick={openPanel}
+          className="min-h-11 self-start"
+        >
+          Block a date
+        </Button>
       )}
     </section>
   );
