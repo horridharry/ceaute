@@ -3,24 +3,12 @@
 import Link from "next/link";
 import { SectionSwitcher } from "../../_components/section-switcher";
 import { StatusBadge } from "../../_components/status-badge";
+import { formatDurationMinutes } from "../../_lib/price-duration";
 
 const currencyFormatter = new Intl.NumberFormat("en-GB", {
   style: "currency",
   currency: "GBP",
 });
-
-function formatDurationMinutes(minutes) {
-  const safeMinutes = Number.isFinite(Number(minutes)) ? Number(minutes) : 0;
-  const hours = Math.floor(safeMinutes / 60);
-  const remainingMinutes = safeMinutes % 60;
-
-  return [
-    hours ? `${hours} hours` : "",
-    remainingMinutes ? `${remainingMinutes} minutes` : "",
-  ]
-    .filter(Boolean)
-    .join(" ");
-}
 
 function AddOnState({ isActive }) {
   return (

@@ -1,5 +1,5 @@
 import { TreatmentAddOnsPage } from "./_components/treatment-add-ons-page";
-import { getAllAddOns } from "./actions";
+import { getAllAddOns } from "./queries";
 
 export default async function AddOnsPage() {
   const addOns = await getAllAddOns();

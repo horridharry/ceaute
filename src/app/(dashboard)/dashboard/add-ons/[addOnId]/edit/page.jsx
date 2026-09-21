@@ -1,11 +1,10 @@
 import { TreatmentAddOnForm } from "../../_components/treatment-add-on-form";
 import {
   archiveAddOn,
-  getAddOn,
-  getAddOnFormOptions,
   restoreAddOn,
   updateAddOnWithCompatibility,
 } from "../../actions";
+import { getAddOn, getAddOnFormOptions } from "../../queries";
 
 export default async function EditAddOnPage({ params }) {
   const { addOnId } = await params;
