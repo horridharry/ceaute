@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { logoutUser } from "@/app/(authenticate)/actions";
+import { logoutUser } from "@/features/auth/logout-action";
 import { LinkPendingHint } from "@/components/link-pending-hint";
 import { PendingButton } from "@/components/pending-button";
 import { ProviderNavigation } from "./provider-navigation";

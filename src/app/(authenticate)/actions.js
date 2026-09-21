@@ -18,6 +18,7 @@ import {
 import { authenticationFormPath } from "@/lib/auth/form-path";
 import { validatedNextPath } from "@/lib/auth/redirect";
 import { createClient } from "@/lib/supabase/server";
+import { logoutUser } from "@/features/auth/logout-action";
 
 const VERIFY_PATH = "/verify";
 
@@ -185,10 +186,7 @@ export async function submitCode(prevState, formData) {
     : verifyCode(prevState, formData);
 }
 
-export async function logoutUser() {
-  const supabase = await createClient();
-  await supabase.auth.signOut();
-  redirect("/sign-in");
-}
+// Compatibility re-export; removed in task 15.
+export { logoutUser };
 
 export const signOut = logoutUser;
