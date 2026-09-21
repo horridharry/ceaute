@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { CatalogueSectionNav } from "../../_components/catalogue-section-nav";
+import { SectionSwitcher } from "../../_components/section-switcher";
 import { StatusBadge } from "../../_components/status-badge";
 
 const currencyFormatter = new Intl.NumberFormat("en-GB", {
@@ -88,7 +88,7 @@ export function TreatmentAddOnsPage({ addOns }) {
   return (
     <main className="container max-w-md p-5">
       <div className="mt-6 flex flex-col">
-        <CatalogueSectionNav />
+        <SectionSwitcher />
 
         <AddOnList
           title="Active add-ons"

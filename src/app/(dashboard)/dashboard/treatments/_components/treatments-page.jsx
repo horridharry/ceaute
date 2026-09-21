@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { formatDurationMinutes } from "../../_lib/provider-data";
-import { CatalogueSectionNav } from "../../_components/catalogue-section-nav";
+import { SectionSwitcher } from "../../_components/section-switcher";
 import { StatusBadge } from "../../_components/status-badge";
 
 const NoTreatments = () => (
@@ -59,7 +59,7 @@ export function TreatmentsUI({ treatments }) {
   return (
     <main className="container w-full max-w-md min-w-0 p-5">
       <div className="mt-6 min-w-0">
-        <CatalogueSectionNav />
+        <SectionSwitcher />
 
         <ul className="mt-8 flex min-w-0 flex-col gap-4">
           {treatments.map((treatment) => (

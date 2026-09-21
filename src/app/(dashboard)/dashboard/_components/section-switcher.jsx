@@ -8,22 +8,25 @@ import { SectionTabs } from "./section-tabs";
 const sections = [
   {
     label: "Treatments",
+    heading: "Treatments",
     href: "/dashboard/treatments",
     newHref: "/dashboard/treatments/new",
   },
   {
     label: "Groups",
+    heading: "Treatment groups",
     href: "/dashboard/treatment-groups",
     newHref: "/dashboard/treatment-groups/new",
   },
   {
     label: "Add-ons",
+    heading: "Add-ons",
     href: "/dashboard/add-ons",
     newHref: "/dashboard/add-ons/new",
   },
 ];
 
-export function CatalogueSectionNav() {
+export function SectionSwitcher() {
   const pathname = usePathname();
   const activeSection =
     sections.find(
@@ -34,7 +37,9 @@ export function CatalogueSectionNav() {
   return (
     <header className="min-w-0">
       <div className="flex items-center justify-between gap-4">
-        <h1 className="text-3xl font-bold tracking-tighter">Catalogue</h1>
+        <h1 className="text-3xl font-bold tracking-tighter">
+          {activeSection.heading}
+        </h1>
         <Link
           href={activeSection.newHref}
           className="shrink-0 rounded-full px-3 py-2 text-sm font-semibold text-pink-600 hover:bg-pink-50"
@@ -44,7 +49,7 @@ export function CatalogueSectionNav() {
         </Link>
       </div>
       <SectionTabs
-        ariaLabel="Catalogue"
+        ariaLabel={activeSection.heading}
         items={sections.map((section) => ({
           label: section.label,
           href: section.href,
