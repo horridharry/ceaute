@@ -1,9 +1,9 @@
 import {
   acceptProviderAgreement,
-  getPaymentSettings,
   refreshPaymentStatus,
   startOrResumeOnboarding,
 } from "./actions";
+import { getPaymentSettings } from "./queries";
 import { PendingButton } from "@/components/pending-button";
 import { describeRestrictionForProvider } from "@/lib/payments/provider-liability";
 import { PaymentActions } from "./_components/payment-actions";
