@@ -47,12 +47,21 @@ You own only the edit.
    types, props, CSS classes, test names, comments, commit messages, and
    user-facing copy. Ordinary English and domain words are not banned; the
    rule is about a product concept that stands in for the three as a group.
-   A shared layout for those three routes is named for what it does
-   (for example a list shell), not for a category it invents, and a shared
-   data abstraction over the three is not permitted at all.
-6. **No generic abstractions over distinct domain rules.** Treatments, Treatment
-   Groups, and Add-ons keep separate actions, validation, and tables. Booking
-   states stay explicit. Extract shared *presentation*, not shared *rules*.
+   There is no shared layout, shell, feature directory or data abstraction
+   over those three; each is its own section.
+6. **Provider-management sections are independent.** Treatments, Treatment
+   Groups, Add-ons, Locations, Availability, Profile, Portfolio, Preview,
+   Payments and Booking Settings (at minimum) are independent product
+   sections. Each owns its own presentation, components, queries, actions and
+   product behaviour inside its own folder. Do not group sections into a shared
+   feature, workspace, shell or directory because they currently share a route
+   prefix, a navigation tab row or a nav item, and do not invent an umbrella
+   concept for any such grouping. Sections may share only genuinely
+   product-agnostic infrastructure: `src/components/ui` primitives, generic
+   page/layout, tabs/navigation and status/display primitives, and
+   dashboard-level chrome. Sharing a visual primitive does not make two
+   sections one feature. Booking states stay explicit. Extract shared
+   *presentation* only where it is product-agnostic, never shared *rules*.
 7. **Git.** Do not commit, branch, stash, rebase, push, or run `git checkout`
    on files you did not create. Leave your work in the working tree. The lead
    inspects the diff and integrates.

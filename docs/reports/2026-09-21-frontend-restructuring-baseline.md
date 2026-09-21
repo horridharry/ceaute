@@ -264,3 +264,136 @@ npm run typecheck  zero errors
 npm run lint    10 problems, ALL in handoff/support.js, zero in tracked source
 npm run build   passes; 47 routes + /_not-found, all dynamic; only known
                 warning MODULE_TYPELESS_PACKAGE_JSON on src/lib/legal/identity.js
+
+## 12. Product architecture correction (2026-09-21, from the product owner)
+
+DECISION 4 - provider-management areas are independent product sections.
+  At minimum: Treatments, Treatment Groups, Add-ons, Locations, Availability,
+  Profile, Portfolio, Payments, Booking Settings. Preview is treated the same way.
+  Each section is independently changeable and owns its own presentation,
+  components, queries, actions and product behaviour.
+  The earlier plan assumed three groupings. All three are withdrawn:
+  - Treatments / Treatment Groups / Add-ons as one shared list-screen workspace
+    (old task 6);
+  - Profile / Portfolio / Availability / Locations / Preview as one
+    page-settings feature (old task 10);
+  - Payments / Booking Settings (with Account) as one Settings feature
+    (old task 5).
+  A current route prefix, a shared tab row, or a shared provider-navigation
+  item is navigation, not product ownership. No replacement umbrella concept or
+  feature directory is introduced for any of these groupings.
+  Sections may share only genuinely product-agnostic infrastructure:
+  src/components/ui primitives, generic page/layout primitives, generic
+  tabs/navigation primitives (SectionTabs), generic status/display primitives
+  (StatusBadge, FormField, FocusedTaskHeader), and dashboard-level chrome
+  (header, provider navigation, focused-task header suppression). Using a
+  shared primitive does not make two sections one feature.
+  Existing domain-specific actions, queries and components stay independently
+  owned unless the code is genuinely product-agnostic.
+
+Effect on completed work: none needs undoing.
+  - src/features/storefront/ is the public storefront (one product surface).
+  - src/features/navigation/ owns generic navigation (SectionTabs) and the
+    SettingsSectionNav tab row as navigation. It is not a Settings feature.
+  - src/features/auth/logout-action.js is auth infrastructure.
+Effect on task 4: none. Task 4 moves global and dashboard-level chrome only.
+  Its focused-task route list is dashboard chrome, not a product grouping.
+
+Evidence at 0c8ffe3 (import scan of src/app/(dashboard)/dashboard): no section
+folder imports another section folder's modules, with one exception:
+dashboard/page.jsx:3 (Today) imports getAllBookings from ./bookings/actions.
+Shared dashboard modules are _components/{section-tabs (re-export),
+form-field, focused-task-header, status-badge, settings-row,
+page-section-nav, catalogue-section-nav, settings-section-nav (re-export)} and
+_lib/{form-values, username, provider-data}. provider-data.js mixes
+product-agnostic helpers (getSignedInProvider, price and duration
+conversion) with section-specific ones (providerPageToFormValues: Profile;
+treatmentToProviderTreatment: Treatments; weekday helpers: Availability).
+
+### Disposition of the remaining original tasks
+
+old 5  settings shell ........................ WITHDRAWN as a shell. Payments
+       and Booking Settings become independent section tasks (S9, S10).
+old 6  shared list shell ..................... WITHDRAWN. The Decision 1 part
+       (remove the "Catalogue" heading and aria-label) becomes N1.
+old 7  Treatments (Decision 2) ............... KEPT inside S1 (Treatments).
+old 8  Treatment Groups + Add-ons ............ SPLIT into S2 and S3.
+old 9a query/action split, three sections .... SPLIT into S1, S2, S3.
+       There is no shared module across them.
+old 9b booking/account loader split .......... KEPT as S11 (provider Bookings
+       and Today) and S12 (customer bookings).
+old 10 page-settings shell ................... WITHDRAWN. Becomes S4-S8.
+old 11 availability/portfolio splits ......... KEPT inside S5 and S7.
+old 12 checkout decomposition ................ KEPT, unchanged (Wave E).
+old 13 shared booking detail ................. SUSPENDED pending a product
+       decision: customer and provider booking detail are treated as
+       independent; only product-agnostic display may be shared.
+old 14 narrow client boundaries .............. KEPT as a final generic pass (X1).
+old 15 remove re-exports, boundary rule, docs  KEPT (X2). Adds a section
+       independence import rule.
+
+The revised task list and wave order follow in section 13. Task numbers 0-4
+and 12 keep their meaning.
+
+## 13. Revised remaining plan after task 4 (proposed 2026-09-21, not yet approved)
+
+Each section task has its own file fence: its own route folder, plus moving
+its own section-specific helpers out of shared modules. A section task never
+edits another section's folder. Generic infrastructure is changed only by
+P1, N1, X1 and X2.
+
+P1   provider-data split. Move section-specific helpers out of
+     dashboard/_lib/provider-data.js to the section that owns them, with
+     compatibility re-exports. Product-agnostic helpers stay. The surveyor
+     confirms callers first. Behaviour-preserving move.
+N1   Decision 1. Remove the "Catalogue" <h1> and aria-label. Each of the
+     Treatments, Treatment Groups and Add-ons list screens shows its own
+     section name as its heading. Retire CatalogueSectionNav without any
+     replacement umbrella name. Where the cross-link tab list lives is an
+     open decision (see below).
+S1   Treatments. Decision 2 (focused-task chrome: add the two Treatments
+     patterns to task 4's dashboard focused-task list and use
+     FocusedTaskHeader), query/action split, and adopting ui primitives.
+     Old 7 and the Treatments part of 9a.
+S2   Treatment Groups. Query/action split and adopting ui primitives.
+S3   Add-ons. The same, plus the baseline section 7 C->B formatter
+     de-duplication, only if identical output is proven.
+S4   Locations.
+S5   Availability, including the oversized-component split (part of old 11).
+S6   Profile, including the double <main> on /dashboard/profile (a landmark
+     change that needs approval).
+S7   Portfolio, including the oversized-component split (part of old 11).
+S8   Preview. Probably nothing beyond primitives; may close as a no-op.
+S9   Payments. Presentation only; no Stripe or payment semantics change.
+S10  Booking Settings.
+S11  Provider Bookings and Today. Split queries from actions. Today stops
+     importing the Bookings actions module (dashboard/page.jsx:3).
+S12  Customer bookings (account). Split queries from actions (old 9b).
+X1   Narrow client boundaries. A generic pass over whatever is left.
+X2   Remove compatibility re-exports. Add import-boundary rules: no @/app/
+     imports; src/features never imports src/app; no section folder imports
+     another section folder. Update docs/architecture.md, and docs/product.md
+     where "Catalogue" names the three sections.
+
+Proposed wave order after D (task 4) and E (task 12):
+Wave F   P1                          alone (shared module with many callers)
+Wave G   N1                          alone (touches three sections' list screens)
+Wave H   S1 ‖ S4 ‖ S9                test:db (S9 is next to payments)
+Wave I   S2 ‖ S5 ‖ S10
+Wave J   S3 ‖ S6 + S8 ‖ S7
+Wave K   S11 ‖ S12                   test:db (bookings)
+Wave L   X1                          alone
+Wave M   X2                          alone, full gate incl. test:db
+
+Open decisions for the product owner:
+  1. Old 13 (shared booking detail). Recommended: withdraw it. Customer and
+     provider booking detail stay independent; share only product-agnostic
+     display (src/lib/bookings/booking-display.js, StatusBadge).
+  2. N1 cross-link tabs. Recommended: each of the three list screens renders
+     the generic SectionTabs with its own inline three-link list and a static
+     active item. No shared owner and no group name are needed, and one
+     client component goes away. The alternative is a navigation-owned tab
+     list in src/features/navigation.
+  3. S6: approve fixing the double <main> landmark as an intended change.
+  4. S11: Today owns its own query (recommended) rather than importing one
+     owned by Bookings. Settle when the S11 brief is written.
