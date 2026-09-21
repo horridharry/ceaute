@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { unstable_rethrow } from "next/navigation";
-import { getAllBookings } from "./bookings/actions";
+import { getTodayBookingGroups } from "./queries";
 
 const londonDay = new Intl.DateTimeFormat("en-GB", {
   year: "numeric",
@@ -33,7 +33,7 @@ function isToday(value, now) {
 
 async function loadTodaysBookings(now) {
   try {
-    const groups = await getAllBookings();
+    const groups = await getTodayBookingGroups();
 
     return {
       failed: false,
