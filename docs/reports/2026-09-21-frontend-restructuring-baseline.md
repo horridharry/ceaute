@@ -397,3 +397,86 @@ Open decisions for the product owner:
   3. S6: approve fixing the double <main> landmark as an intended change.
   4. S11: Today owns its own query (recommended) rather than importing one
      owned by Bookings. Settle when the S11 brief is written.
+
+## 14. Product owner decisions on section 13 (2026-09-21)
+
+1. Old 13 (shared booking detail) is WITHDRAWN. Customer bookings and Provider
+   Bookings stay independently owned. They may reuse generic display
+   primitives, but there is no shared booking-detail feature owner.
+2. N1 removes the "Catalogue" product concept and terminology ONLY. Existing
+   navigation behaviour between Treatments, Treatment Groups and Add-ons is
+   kept as it is until the product owner designs provider-dashboard
+   navigation. No three-way tab redesign, no replacement grouping, and no new
+   relationship between these sections.
+3. S6: fix the double <main> on /dashboard/profile. This corrects document
+   semantics; the visible experience is unchanged.
+4. S11: Today owns its own query. Genuinely generic lower-level data access
+   may live outside both sections; neither section owns the other's query.
+
+After task 4 is accepted, the lead executes the rest of the programme toward
+the section 12 end state without per-task approval. The lead may re-order or
+re-decompose tasks when the repository evidence requires it. The lead stops
+only for: a visible product behaviour decision; a product or navigation design
+decision; possible booking, payment, refund, privacy, security or database
+semantic change; a need to violate section independence; or a regression that
+cannot be resolved without one of those. Section 13 is therefore a starting
+decomposition, not a fixed plan.
+
+## 15. Task 4 pre-dispatch capture (2026-09-21, HEAD 55fdea3, next dev)
+
+Setup: local Supabase with local-only fixtures. Users customer@ceaute.test and
+provider@ceaute.test; published @capturepro with one Treatment, Treatment
+Group, Add-on and Location; draft @draftpro. Readings taken from the rendered
+DOM after hydration. Loading boundaries: 5 (the "6" in section 2 was a
+miscount; the set is identical at e7cc76a and HEAD).
+
+Observed (H = app header, F = site footer; variant s/c/p = signed-out,
+customer, provider):
+  signed out  / /discover /privacy          H s, logo "/", F
+              /sign-in /sign-up /verify /auth/error        no H, no F
+              /@capturepro                   H s, F
+              /@capturepro/book/<t>          H s, no F
+              /dashboard/*, /account         redirect to /sign-in (proxy)
+  customer    /discover (Discover active), /account/bookings (Bookings active)
+                                             H c, logo /discover, F
+              /account -> /account/settings  H c, no active link, F
+              /dashboard -> /dashboard/onboarding          H c, no F
+  provider    /dashboard (Today active), /dashboard/bookings (Bookings)
+                                             H p, logo /discover, no F
+              /dashboard/treatments, /treatments/new, /treatments/<id>/edit,
+              /dashboard/treatment-groups, /dashboard/add-ons
+                                             H p, "Treatments" active, no F
+              /dashboard/treatment-groups/new|<id>/edit,
+              /dashboard/add-ons/new|<id>/edit,
+              /dashboard/locations/new|<id>/edit           no H, no F
+              /dashboard/locations, /availability, /profile, /profile/portfolio,
+              /profile/preview               H p, "Page" active, no F
+              /dashboard/profile             two <main> elements (known)
+              /dashboard/settings, /settings/booking, /settings/payments
+                                             H p, "Settings" active, no F
+              /account/settings              H p, "Settings" active, F
+              /account/bookings, /discover, /@capturepro   H c, F
+              /@capturepro/book/<t>          H c, no F
+              /sign-in                       redirect to /dashboard
+404 and error cases:
+  /foo (s, c)                                root 404 UI, H, F
+  /verifyx (s, p)                            root 404 UI, no H, no F
+  /@draftpro, /@nosuchprovider (s)           404 UI, H, F
+  /@capturepro/book/<zero-uuid> (s, c)       404 UI, H, no F
+  /@capturepro/book/<t>/nope (s)             404 UI, H, no F
+  /account/bookings/<zero-uuid> (c)          404 UI, H c, F
+  /account/bookings/not-a-uuid (c)           error UI, H c, F
+  /dashboard/bookings/<zero-uuid> (p)        404 UI, H p, no F
+  /dashboard/bookings/not-a-uuid (p)         error UI, H p, no F
+  /dashboard/nope (p)                        root 404 UI, H p, no F
+  /dashboard/nope (c)                        redirect to /dashboard/onboarding
+
+Probe: a temporary not-found.jsx in dashboard/ and [username]/ (deleted
+afterwards). notFound() calls resolved to the nearest segment not-found
+(dashboard bad booking; book bad Treatment; @draftpro). Unmatched URLs
+(/dashboard/nope, /@capturepro/book/<t>/nope) still rendered the root
+not-found under the root layout only.
+
+Cross-area client navigation (customer, dev server), in ms:
+/@capturepro 370, /account/bookings 391, /discover 366, /account/bookings 367,
+/@capturepro 368, /discover 362.
