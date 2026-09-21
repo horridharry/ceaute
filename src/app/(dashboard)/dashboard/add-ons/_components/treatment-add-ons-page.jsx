@@ -1,26 +1,12 @@
-"use client";
-
 import Link from "next/link";
-import { CatalogueSectionNav } from "../../_components/catalogue-section-nav";
+import { SectionSwitcher } from "../../_components/section-switcher";
 import { StatusBadge } from "../../_components/status-badge";
+import { formatDurationMinutes } from "../../_lib/price-duration";
 
 const currencyFormatter = new Intl.NumberFormat("en-GB", {
   style: "currency",
   currency: "GBP",
 });
-
-function formatDurationMinutes(minutes) {
-  const safeMinutes = Number.isFinite(Number(minutes)) ? Number(minutes) : 0;
-  const hours = Math.floor(safeMinutes / 60);
-  const remainingMinutes = safeMinutes % 60;
-
-  return [
-    hours ? `${hours} hours` : "",
-    remainingMinutes ? `${remainingMinutes} minutes` : "",
-  ]
-    .filter(Boolean)
-    .join(" ");
-}
 
 function AddOnState({ isActive }) {
   return (
@@ -88,7 +74,7 @@ export function TreatmentAddOnsPage({ addOns }) {
   return (
     <main className="container max-w-md p-5">
       <div className="mt-6 flex flex-col">
-        <CatalogueSectionNav />
+        <SectionSwitcher />
 
         <AddOnList
           title="Active add-ons"

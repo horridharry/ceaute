@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { SectionTabs } from "./section-tabs";
+import { SectionTabs } from "@/features/navigation/section-tabs";
 
 const links = [
   { label: "Profile", href: "/dashboard/profile", exact: true },

@@ -185,10 +185,3 @@ export async function submitCode(prevState, formData) {
     : verifyCode(prevState, formData);
 }
 
-export async function logoutUser() {
-  const supabase = await createClient();
-  await supabase.auth.signOut();
-  redirect("/sign-in");
-}
-
-export const signOut = logoutUser;

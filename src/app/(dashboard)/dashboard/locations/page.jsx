@@ -1,5 +1,6 @@
 import { LocationsPage } from "./_components/locations-page";
-import { deleteLocation, getLocations, makeLocationPrimary } from "./actions";
+import { deleteLocation, makeLocationPrimary } from "./actions";
+import { getLocations } from "./queries";
 
 export default async function DashboardLocationsPage() {
   const locations = await getLocations();

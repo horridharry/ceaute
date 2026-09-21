@@ -1,5 +1,8 @@
 import { notFound } from "next/navigation";
-import { hasPublicUsernamePrefix } from "./_lib/public-provider-format";
+import { hasPublicUsernamePrefix } from "@/features/storefront/format";
+import AppHeader from "@/components/app-header/app-header";
+import { SiteFooter } from "@/components/site-footer";
+import { BookingFlowFooterGate } from "./_components/booking-flow-footer-gate";
 
 export default async function UsernameLayout({ params, children }) {
   const { username } = await params;
@@ -8,5 +11,13 @@ export default async function UsernameLayout({ params, children }) {
     notFound();
   }
 
-  return children;
+  return (
+    <>
+      <AppHeader />
+      {children}
+      <BookingFlowFooterGate>
+        <SiteFooter />
+      </BookingFlowFooterGate>
+    </>
+  );
 }

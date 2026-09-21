@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
-import { CatalogueSectionNav } from "../../_components/catalogue-section-nav";
+import { SectionSwitcher } from "../../_components/section-switcher";
 
 function ActionMessage({ message }) {
   return message ? <p className="mt-2 text-sm text-black/60">{message}</p> : null;
@@ -95,7 +95,7 @@ export function TreatmentGroupsPage({
   return (
     <main className="container max-w-md p-5">
       <div className="mt-6 flex flex-col">
-        <CatalogueSectionNav />
+        <SectionSwitcher />
 
         <GroupList
           title="Active groups"

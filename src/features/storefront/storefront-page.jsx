@@ -2,8 +2,8 @@ import {
   formatDurationMinutes,
   formatPricePence,
   shouldShowReviewsSection,
-} from "../_lib/public-provider-format";
-import { TreatmentSelectionList } from "./treatment-selection";
+} from "@/features/storefront/format";
+import { TreatmentSelectionList } from "./treatment-selection-list";
 
 function EmptyState({ children }) {
   return (

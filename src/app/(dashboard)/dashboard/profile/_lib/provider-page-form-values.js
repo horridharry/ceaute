@@ -1,4 +1,4 @@
-import { normalizeUsername } from "../../_lib/username";
+import { normalizeUsername } from "@/lib/providers/username";
 
 export const PROVIDER_CATEGORIES = [
   "Nails",
@@ -35,4 +35,16 @@ export function providerPageValuesFromFormData(formData) {
 
 export function isProviderCategory(value) {
   return PROVIDER_CATEGORY_SET.has(value);
+}
+
+export function providerPageToFormValues(providerPage) {
+  return {
+    providerPageId: providerPage.id,
+    userId: providerPage.owner_profile_id,
+    username: providerPage.username ?? "",
+    businessName: providerPage.display_name ?? "",
+    providerCategory: providerPage.provider_category ?? "",
+    biography: providerPage.biography ?? "",
+    status: providerPage.status,
+  };
 }

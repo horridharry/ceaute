@@ -5,11 +5,11 @@ import { useRouter } from "next/navigation";
 import {
   formatDurationMinutes,
   formatPricePence,
-} from "../_lib/public-provider-format";
+} from "@/features/storefront/format";
 import {
   buildTreatmentTimeHref,
   calculateSelectionTotals,
-} from "../_lib/treatment-selection";
+} from "./treatment-selection";
 
 // The approved customer interaction (docs/product.md "Booking and
 // availability"): tapping a treatment always opens its details bottom

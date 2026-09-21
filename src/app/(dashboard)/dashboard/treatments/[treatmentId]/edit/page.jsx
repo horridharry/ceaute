@@ -1,11 +1,10 @@
 import { TreatmentForm } from "../../_components/treatment-form";
 import {
   archiveTreatment,
-  getTreatment,
-  getTreatmentFormOptions,
   restoreTreatment,
   updateTreatment,
 } from "../../actions";
+import { getTreatment, getTreatmentFormOptions } from "../../queries";
 
 export default async function EditTreatmentPage({ params }) {
   const { treatmentId } = await params;

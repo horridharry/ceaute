@@ -3,18 +3,10 @@
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { logoutUser } from "@/app/(authenticate)/actions";
+import { logoutUser } from "@/features/auth/logout-action";
 import { LinkPendingHint } from "@/components/link-pending-hint";
 import { PendingButton } from "@/components/pending-button";
 import { ProviderNavigation } from "./provider-navigation";
-
-const hiddenHeaderPrefixes = ["/sign-in", "/sign-up", "/verify", "/auth"];
-
-const focusedProviderRoutePatterns = [
-  /^\/dashboard\/treatment-groups\/(?:new|[^/]+\/edit)$/,
-  /^\/dashboard\/add-ons\/(?:new|[^/]+\/edit)$/,
-  /^\/dashboard\/locations\/(?:new|[^/]+\/edit)$/,
-];
 
 function HomeLogo({ href = "/" }) {
   return (
@@ -145,14 +137,6 @@ export default function AppHeaderClient({ user, providerPage = null }) {
       providerPage &&
       (pathname.startsWith("/dashboard") || pathname === "/account/settings"),
   );
-
-  if (hiddenHeaderPrefixes.some((prefix) => pathname.startsWith(prefix))) {
-    return null;
-  }
-
-  if (focusedProviderRoutePatterns.some((pattern) => pattern.test(pathname))) {
-    return null;
-  }
 
   return (
     <header className="sticky top-0 z-40 border-b border-black/10 bg-white/95 backdrop-blur">

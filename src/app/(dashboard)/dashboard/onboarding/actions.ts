@@ -8,7 +8,7 @@ import {
   USERNAME_MAX_LENGTH,
   USERNAME_MIN_LENGTH,
   normalizeUsername,
-} from '../_lib/username';
+} from '@/lib/providers/username';
 
 export async function startProviderOnboarding(
   nextValue: string | null,

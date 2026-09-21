@@ -4,7 +4,7 @@ import {
   normalizeUsername,
   usernameRequiredError,
   validateUsername,
-} from "../src/app/(dashboard)/dashboard/_lib/username.js";
+} from "../src/lib/providers/username.js";
 
 test("a published page cannot clear its username, matching the database constraint", () => {
   assert.match(

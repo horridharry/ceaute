@@ -1,5 +1,5 @@
-import { StorefrontPage } from "@/app/(public-provider)/[username]/_components/storefront-page";
-import { buildStorefrontViewModel } from "@/app/(public-provider)/[username]/_lib/storefront-view-model";
+import { StorefrontPage } from "@/features/storefront/storefront-page";
+import { buildStorefrontViewModel } from "@/features/storefront/storefront-view-model";
 import { getSignedInProvider } from "../../_lib/provider-data";
 import { PageSectionNav } from "../../_components/page-section-nav";
 

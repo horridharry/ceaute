@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getCustomerBookings } from "./actions";
+import { getCustomerBookings } from "./queries";
 
 const NoBookings = () => (
   <div className="rounded-xl border p-4 text-sm text-black/60">

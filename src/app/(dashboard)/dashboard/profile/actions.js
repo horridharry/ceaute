@@ -1,31 +1,13 @@
 "use server";
 import { revalidatePath } from "next/cache";
-import {
-  getSignedInProvider,
-  providerPageToFormValues,
-} from "../_lib/provider-data";
-import { usernameRequiredError } from "../_lib/username";
+import { getSignedInProvider } from "../_lib/provider-data";
+import { usernameRequiredError } from "@/lib/providers/username";
 import {
   isProviderCategory,
   providerPageValuesFromFormData,
 } from "./_lib/provider-page-form-values";
 import { getProviderPagePublicationReadiness } from "./publication-readiness";
 import { publicationFailure, publicationSuccess } from "./publication-outcome";
-
-export const getProviderPage = async () => {
-  const { supabase, providerPage } = await getSignedInProvider({
-    next: "/dashboard/profile",
-  });
-  const publication = await getProviderPagePublicationReadiness({
-    supabase,
-    providerPage,
-  });
-
-  return {
-    providerPage: providerPageToFormValues(providerPage),
-    publication,
-  };
-};
 
 export const updateProviderPage = async (_currentState, formData) => {
   const { supabase, providerPage } = await getSignedInProvider({

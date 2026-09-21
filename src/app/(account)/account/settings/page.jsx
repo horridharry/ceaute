@@ -5,7 +5,7 @@ import {
 } from "@/lib/auth/request-session";
 import { updatePersonalDetails } from "./actions";
 import PersonalDetailsForm from "./personal-details-form";
-import { SettingsSectionNav } from "@/app/(dashboard)/dashboard/_components/settings-section-nav";
+import { SettingsSectionNav } from "@/features/navigation/settings-section-nav";
 
 export default async function AccountSettingsPage() {
   const { supabase, claims } = await getRequestSession();

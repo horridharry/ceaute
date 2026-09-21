@@ -1,7 +1,7 @@
 import {
   formatDurationMinutes,
   formatPricePence,
-} from "../../_lib/public-provider-format";
+} from "@/features/storefront/format";
 import { SmallTreatmentPhoto } from "./treatment-photo";
 
 export const BookingTreatmentSummary = ({ treatment }) => (

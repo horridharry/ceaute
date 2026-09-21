@@ -2,7 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BookingInspirationImages } from "@/components/booking-inspiration-images";
 import { PendingButton } from "@/components/pending-button";
-import { cancelProviderBooking, getProviderBooking } from "../actions";
+import { cancelProviderBooking } from "../actions";
+import { getProviderBooking } from "../queries";
 
 const canShowExactAddress = (booking) =>
   Boolean(booking.confirmed_at) &&

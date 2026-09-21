@@ -42,3 +42,8 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .env.local
+
+# agent worktrees
+# Created by Claude Code when a subagent runs in an isolated worktree, and
+# removed once that work is integrated. Never part of a change.
+/.claude/worktrees/

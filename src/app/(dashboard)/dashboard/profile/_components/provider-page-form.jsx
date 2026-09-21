@@ -3,7 +3,7 @@
 import { useActionState, useState } from "react";
 import Link from "next/link";
 import { keepFormValuesOnSubmit } from "@/lib/forms/keep-form-values";
-import { normalizeUsername, validateUsername } from "../../_lib/username";
+import { normalizeUsername, validateUsername } from "@/lib/providers/username";
 import { PROVIDER_CATEGORIES } from "../_lib/provider-page-form-values";
 
 export function ProviderPageForm({ providerPage, updateProviderPage }) {
@@ -63,7 +63,7 @@ export function ProviderPageForm({ providerPage, updateProviderPage }) {
   const hasClientError = businessNameError || usernameError || biographyError;
 
   return (
-    <main className="container max-w-md p-5">
+    <div className="container max-w-md p-5">
       <div className="mt-6 flex flex-col">
         <h2 className="text-2xl font-semibold tracking-tighter">Profile</h2>
 
@@ -185,6 +185,6 @@ export function ProviderPageForm({ providerPage, updateProviderPage }) {
           </div>
         </form>
       </div>
-    </main>
+    </div>
   );
 }

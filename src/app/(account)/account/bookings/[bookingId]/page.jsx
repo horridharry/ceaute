@@ -5,10 +5,10 @@ import { PendingButton } from "@/components/pending-button";
 import {
   addBookingInspirationImages,
   cancelCustomerBooking,
-  getCustomerBooking,
   removeBookingInspirationImageAction,
   submitBookingReview,
 } from "../actions";
+import { getCustomerBooking } from "../queries";
 
 const canShowExactAddress = (booking) =>
   Boolean(booking.confirmed_at) &&

@@ -1,14 +1,14 @@
 import {
   acceptProviderAgreement,
-  getPaymentSettings,
   refreshPaymentStatus,
   startOrResumeOnboarding,
 } from "./actions";
+import { getPaymentSettings } from "./queries";
 import { PendingButton } from "@/components/pending-button";
 import { describeRestrictionForProvider } from "@/lib/payments/provider-liability";
 import { PaymentActions } from "./_components/payment-actions";
 import { calculateBookingFeeSplit } from "@/lib/payments/booking-payments";
-import { SettingsSectionNav } from "../../_components/settings-section-nav";
+import { SettingsSectionNav } from "@/features/navigation/settings-section-nav";
 
 const money = new Intl.NumberFormat("en-GB", {
   style: "currency",

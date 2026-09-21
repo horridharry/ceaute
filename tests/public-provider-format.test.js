@@ -4,7 +4,7 @@ import {
   formatDateLabel,
   formatTimeLabel,
   shouldShowReviewsSection,
-} from "../src/app/(public-provider)/[username]/_lib/public-provider-format.js";
+} from "../src/features/storefront/format.js";
 
 test("formats winter appointments in Europe/London GMT", () => {
   const startAt = new Date("2026-01-15T10:00:00.000Z");
