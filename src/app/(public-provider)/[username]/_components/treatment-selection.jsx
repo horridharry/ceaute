@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   formatDurationMinutes,
   formatPricePence,
-} from "../_lib/public-provider-format";
+} from "@/features/storefront/format";
 import {
   buildTreatmentTimeHref,
   calculateSelectionTotals,

@@ -2,7 +2,7 @@ import {
   formatDurationMinutes,
   formatPricePence,
   shouldShowReviewsSection,
-} from "../_lib/public-provider-format";
+} from "@/features/storefront/format";
 import { TreatmentSelectionList } from "./treatment-selection";
 
 function EmptyState({ children }) {

@@ -25,14 +25,8 @@ import {
   formatTimeLabel,
   hasPublicUsernamePrefix,
   normalizePublicUsername,
-} from "../../../_lib/public-provider-format";
-
-function normalizeAddOnSearch(searchParams) {
-  const addOns = searchParams?.add_on;
-  const addOnIds = Array.isArray(addOns) ? addOns : [addOns];
-
-  return addOnIds.filter(Boolean).map((addOnId) => String(addOnId));
-}
+} from "@/features/storefront/format";
+import { normalizeAddOnSearch } from "@/features/storefront/add-on-search";
 
 function firstSearchValue(value) {
   return Array.isArray(value) ? value[0] : value;

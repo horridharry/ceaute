@@ -6,7 +6,7 @@ import { getPublishedProviderPageByUsername } from "./_lib/public-provider-data"
 import {
   hasPublicUsernamePrefix,
   normalizePublicUsername,
-} from "./_lib/public-provider-format";
+} from "@/features/storefront/format";
 
 export default async function UsernamePage({ params }) {
   const { username } = await params;

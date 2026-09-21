@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { hasPublicUsernamePrefix } from "./_lib/public-provider-format";
+import { hasPublicUsernamePrefix } from "@/features/storefront/format";
 
 export default async function UsernameLayout({ params, children }) {
   const { username } = await params;

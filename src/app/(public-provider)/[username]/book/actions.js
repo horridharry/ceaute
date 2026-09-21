@@ -16,7 +16,8 @@ import {
   getStripe,
 } from "@/lib/stripe/server";
 import { getPublicBookingDetailsPage } from "../_lib/public-provider-data";
-import { normalizePublicUsername } from "../_lib/public-provider-format";
+import { normalizePublicUsername } from "@/features/storefront/format";
+import { buildTreatmentTimeHref } from "../_lib/treatment-selection";
 
 function normalizeAddOnIds(formData) {
   return formData
@@ -39,17 +40,6 @@ function buildCheckoutUrl({ username, treatmentId, startAt, addOnIds, holdId }) 
   }
 
   return `/@${username}/book/${treatmentId}/checkout?${searchParams.toString()}`;
-}
-
-function buildTimeUrl({ username, treatmentId, addOnIds }) {
-  const searchParams = new URLSearchParams();
-
-  for (const addOnId of addOnIds) {
-    searchParams.append("add_on", addOnId);
-  }
-
-  const query = searchParams.toString();
-  return `/@${username}/book/${treatmentId}/time${query ? `?${query}` : ""}`;
 }
 
 // The same rule and columns as the account settings screen.
@@ -115,7 +105,7 @@ export async function createBookingHoldFromDetails(formData) {
 
   if (Number.isNaN(startAt.getTime())) {
     redirect(
-      buildTimeUrl({
+      buildTreatmentTimeHref({
         username: providerPage.username,
         treatmentId: treatment.id,
         addOnIds: selectedAddOns.map((addOn) => addOn.id),
@@ -129,7 +119,7 @@ export async function createBookingHoldFromDetails(formData) {
 
   if (!selectedSlotStillAvailable) {
     redirect(
-      buildTimeUrl({
+      buildTreatmentTimeHref({
         username: providerPage.username,
         treatmentId: treatment.id,
         addOnIds: selectedAddOns.map((addOn) => addOn.id),
@@ -152,7 +142,7 @@ export async function createBookingHoldFromDetails(formData) {
   if (error) {
     if (error.code === "23P01") {
       redirect(
-        buildTimeUrl({
+        buildTreatmentTimeHref({
           username: providerPage.username,
           treatmentId: treatment.id,
           addOnIds: selectedAddOns.map((addOn) => addOn.id),

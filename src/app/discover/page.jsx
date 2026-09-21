@@ -5,7 +5,7 @@ import {
   getDiscoveryCategories,
   searchPublicProviders,
 } from "./actions";
-import { formatPricePence } from "../(public-provider)/[username]/_lib/public-provider-format";
+import { formatPricePence } from "@/features/storefront/format";
 
 const treatmentSummary = (treatments) =>
   treatments
