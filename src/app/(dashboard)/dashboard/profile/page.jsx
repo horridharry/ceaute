@@ -1,6 +1,6 @@
 import Link from "next/link";
+import { getProviderPage } from "./queries";
 import {
-  getProviderPage,
   publishPage,
   unpublishPage,
   updateProviderPage,
