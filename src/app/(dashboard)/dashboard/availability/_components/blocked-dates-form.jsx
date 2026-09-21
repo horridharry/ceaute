@@ -79,12 +79,17 @@ export function BlockedDatesForm({
             `[data-blocked-date-id="${CSS.escape(id)}"] button[type="submit"]`,
           )
         : null;
+    // "Block a date" is hidden while the panel is open, so the panel's date
+    // input stands in for it then.
+    const blockTarget =
+      blockButtonRef.current ??
+      sectionRef.current?.querySelector("#local_date");
     const target =
       focusRequest.target === "neighbour"
         ? findRemoveButton(focusRequest.nextId) ??
           findRemoveButton(focusRequest.previousId) ??
-          blockButtonRef.current
-        : blockButtonRef.current;
+          blockTarget
+        : blockTarget;
 
     target?.focus();
   }, [focusRequest]);

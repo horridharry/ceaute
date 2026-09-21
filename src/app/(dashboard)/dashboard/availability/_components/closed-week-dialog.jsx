@@ -31,6 +31,15 @@ export function ClosedWeekDialog({ open, onKeepEditing, onConfirm }) {
       ref={dialogRef}
       aria-labelledby={titleId}
       aria-describedby={bodyId}
+      onKeyDown={(event) => {
+        // Escape means Keep editing. Handled here as well as in onCancel
+        // because not every browser turns Escape into a cancel event;
+        // preventDefault stops the ones that do from firing it too.
+        if (event.key === "Escape") {
+          event.preventDefault();
+          onKeepEditing();
+        }
+      }}
       onCancel={(event) => {
         // Escape means Keep editing. The effect above closes the dialog.
         event.preventDefault();
