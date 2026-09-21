@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { formatDurationMinutes } from "../../_lib/provider-data";
+import { formatDurationMinutes } from "../../_lib/price-duration";
 import { SectionSwitcher } from "../../_components/section-switcher";
 import { StatusBadge } from "../../_components/status-badge";
 

@@ -10,10 +10,10 @@ import { redirect } from "next/navigation";
 import { getIdList, getString } from "../_lib/form-values";
 import {
   durationToMinutes,
-  getSignedInProvider,
   nonNegativePriceToPence,
   penceToPrice,
-} from "../_lib/provider-data";
+} from "../_lib/price-duration";
+import { getSignedInProvider } from "../_lib/provider-data";
 
 const addOnSelect =
   "id, name, additional_price_pence, additional_duration_minutes, is_active, updated_at";

@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react";
 import Link from "next/link";
-import { normalizeUsername, validateUsername } from "../../_lib/username";
+import { normalizeUsername, validateUsername } from "@/lib/providers/username";
 
 export function ProviderOnboardingForm({ action, providerPage }) {
   const [stateMessage, formAction, pending] = useActionState(action, "");

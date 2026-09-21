@@ -3,7 +3,7 @@
 import { useActionState, useState } from "react";
 import Link from "next/link";
 import { keepFormValuesOnSubmit } from "@/lib/forms/keep-form-values";
-import { normalizeUsername, validateUsername } from "../../_lib/username";
+import { normalizeUsername, validateUsername } from "@/lib/providers/username";
 import { PROVIDER_CATEGORIES } from "../_lib/provider-page-form-values";
 
 export function ProviderPageForm({ providerPage, updateProviderPage }) {

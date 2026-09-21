@@ -1,11 +1,8 @@
 "use server";
 import { revalidatePath } from "next/cache";
 import { isOnAppointmentGrid } from "@/lib/bookings/appointment-grid";
-import {
-  getSignedInProvider,
-  weekdayNameToNumber,
-  weekdayNumberToName,
-} from "../_lib/provider-data";
+import { getSignedInProvider } from "../_lib/provider-data";
+import { weekdayNameToNumber, weekdayNumberToName } from "./_lib/weekdays";
 
 const DAYS_OF_WEEK = [
   "monday",

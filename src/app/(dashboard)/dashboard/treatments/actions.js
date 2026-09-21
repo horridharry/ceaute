@@ -8,12 +8,9 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getOptionalId, getString } from "../_lib/form-values";
-import {
-  durationToMinutes,
-  getSignedInProvider,
-  priceToPence,
-  treatmentToProviderTreatment,
-} from "../_lib/provider-data";
+import { durationToMinutes } from "../_lib/price-duration";
+import { getSignedInProvider } from "../_lib/provider-data";
+import { priceToPence, treatmentToProviderTreatment } from "./_lib/treatment-values";
 
 const treatmentSelect = `
   id,
