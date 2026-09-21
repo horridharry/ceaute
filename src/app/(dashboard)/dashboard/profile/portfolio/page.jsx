@@ -1,6 +1,6 @@
+import { getPortfolioImages } from "./queries";
 import {
   deletePortfolioImage,
-  getPortfolioImages,
   movePortfolioImage,
   setPortfolioImageVisibility,
   updatePortfolioImageCaption,
