@@ -226,3 +226,41 @@ npm run build   passes, 46 routes, all dynamic
 A wave passes only if: no new lint problem outside handoff/support.js; the test
 count does not fall; typecheck stays clean; the build still passes.
 npm run test:db is run by the lead at waves D, E and K.
+
+### Wave C outcome (appended 2026-09-21)
+
+Wave C  task 3   commit 140cfe8 - the three remaining cross-route-group
+                 imports now have a non-route owner:
+                 StorefrontPage, buildStorefrontViewModel -> src/features/storefront/
+                 SettingsSectionNav -> src/features/navigation/
+                 logoutUser -> src/features/auth/logout-action.js ("use server")
+                 Their route-private dependencies moved with them so nothing
+                 under src/features imports from src/app: TreatmentSelectionList
+                 (now treatment-selection-list.jsx) and the treatment-selection
+                 helpers -> src/features/storefront/; SectionTabs ->
+                 src/features/navigation/.
+                 Bodies byte-identical except two relative import specifiers the
+                 relocation required. Compatibility re-exports remain at all old
+                 paths for task 15; unaffected callers (including book/actions.js)
+                 still resolve through them. The signOut alias is kept.
+                 No `@/app/` import remains anywhere in src/ or tests/.
+                 Section 5's task 3 targets are RESOLVED.
+
+Route-count correction. Section 9 and the gate above say "46 routes". The
+route files at 140cfe8 are identical to e7cc76a, and the build table lists 48
+lines: 47 routes plus /_not-found. The earlier figure was a counting
+convention, not a different route set. From Wave D the gate compares the exact
+route list printed by `npm run build`, not a count.
+
+Terminology clarification. The rule behind Decision 1 is that "Catalogue" /
+"Catalog" must not be introduced or retained as an umbrella product concept
+for Treatments, Treatment Groups and Add-ons, and no replacement umbrella
+product term is invented. Ordinary English and domain words are not banned.
+The .claude/agents/ definitions were narrowed to match.
+
+### Verification gate as at commit 140cfe8
+npm test        328 pass / 0 fail
+npm run typecheck  zero errors
+npm run lint    10 problems, ALL in handoff/support.js, zero in tracked source
+npm run build   passes; 47 routes + /_not-found, all dynamic; only known
+                warning MODULE_TYPELESS_PACKAGE_JSON on src/lib/legal/identity.js

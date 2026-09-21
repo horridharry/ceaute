@@ -41,12 +41,12 @@ You own only the edit.
    of inventing one.
 5. **Terminology.** The product nouns are **Treatments**, **Treatment Groups**,
    and **Add-ons**. Name whichever of the three you mean, every time.
-   Never introduce an umbrella term for them and never invent a replacement
-   one. "Catalogue" is banned outright, as are "catalog", "catalogue item",
-   "offering", "service entity", "listing", "inventory", and anything else
-   that stands in for the three as a group. This applies to file and folder
-   names, route-group names, component and function names, types, props,
-   CSS classes, test names, comments, commit messages, and user-facing copy.
+   Do not use "Catalogue"/"Catalog" as an umbrella product concept for them,
+   and do not invent a replacement umbrella product term. This applies to
+   file and folder names, route-group names, component and function names,
+   types, props, CSS classes, test names, comments, commit messages, and
+   user-facing copy. Ordinary English and domain words are not banned; the
+   rule is about a product concept that stands in for the three as a group.
    A shared layout for those three routes is named for what it does
    (for example a list shell), not for a category it invents, and a shared
    data abstraction over the three is not permitted at all.

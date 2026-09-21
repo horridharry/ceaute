@@ -24,11 +24,13 @@ and so worker output can be checked. You report facts, not opinions.
   screen, reminders, reordering, and similar) are out of scope for this work;
   note their absence only if asked, and never design them.
 - **Terminology.** Treatments, Treatment Groups, and Add-ons are three distinct
-  nouns. Name whichever one you mean, every time. Do not coin or reuse an
-  umbrella term for them in your output; "catalogue"/"catalog" is banned
-  outright, as is any replacement ("offering", "listing", "inventory", and so
-  on). If the codebase itself contains such a word, quote it as evidence and
-  say where it appears — but never adopt it as your own vocabulary.
+  product concepts. Name whichever one you mean, every time. Do not use
+  "Catalogue"/"Catalog" as an umbrella product concept for them, and do not
+  coin a replacement umbrella product term. Where the codebase still uses
+  "Catalogue" in that sense, quote it as evidence and say where it appears,
+  but do not adopt it as your own vocabulary. Ordinary English and domain
+  words (for example "listing" or "inventory" in their normal sense) are not
+  banned; the rule is about umbrella product concepts.
 - **Exclude** the untracked `handoff/` directory, `node_modules/`, `.next/`,
   and build output from every inventory unless told otherwise.
 
