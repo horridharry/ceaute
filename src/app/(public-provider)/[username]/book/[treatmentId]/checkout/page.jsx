@@ -1,257 +1,28 @@
-import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
-import { BookingInspirationImages } from "@/components/booking-inspiration-images";
-import { PendingButton } from "@/components/pending-button";
 import { calculateBookingPaymentAmounts } from "@/lib/payments/booking-payments";
 import { createClient } from "@/lib/supabase/server";
-import { legalIdentity } from "@/lib/legal/identity";
-import {
-  createBookingHoldFromDetails,
-  getBookingHoldSummary,
-  startStripeCheckoutForBooking,
-} from "../../actions";
-import {
-  addBookingImagesDuringCheckout,
-  getBookingInspirationImages,
-  removeBookingImageDuringCheckout,
-} from "../../inspiration-actions";
+import { getBookingHoldSummary } from "../../actions";
+import { getBookingInspirationImages } from "../../inspiration-actions";
 import { describeCheckoutPaymentNotice } from "../../_lib/checkout-payment-notice";
 import { getPublicBookingDetailsPage } from "../../../_lib/public-provider-data";
 import {
   addMinutes,
-  formatDateLabel,
-  formatDurationMinutes,
-  formatPricePence,
-  formatTimeLabel,
   hasPublicUsernamePrefix,
   normalizePublicUsername,
 } from "@/features/storefront/format";
 import { normalizeAddOnSearch } from "@/features/storefront/add-on-search";
-
-function firstSearchValue(value) {
-  return Array.isArray(value) ? value[0] : value;
-}
-
-function buildCheckoutPath({
-  username,
-  treatmentId,
-  startAt,
-  addOnIds,
-  state = {},
-}) {
-  const searchParams = new URLSearchParams({ start_at: startAt });
-
-  for (const addOnId of addOnIds) {
-    searchParams.append("add_on", addOnId);
-  }
-
-  const holdId = firstSearchValue(state.hold ?? state.booking);
-  const preservedValues = {
-    hold: holdId,
-    checkout: firstSearchValue(state.checkout),
-    session_id: firstSearchValue(state.session_id),
-    next: firstSearchValue(state.next),
-    payment: firstSearchValue(state.payment),
-  };
-
-  for (const [key, value] of Object.entries(preservedValues)) {
-    if (value) {
-      searchParams.set(key, String(value));
-    }
-  }
-
-  return `/@${username}/book/${treatmentId}/checkout?${searchParams.toString()}`;
-}
-
-function buildReturnPath({ username, treatmentId, startAt, addOnIds, holdId }) {
-  const searchParams = new URLSearchParams({ start_at: startAt });
-
-  for (const addOnId of addOnIds) {
-    searchParams.append("add_on", addOnId);
-  }
-
-  searchParams.set("hold", holdId);
-
-  return `/@${username}/book/${treatmentId}/checkout?${searchParams.toString()}`;
-}
-
-function buildTimePath({ username, treatmentId, addOnIds }) {
-  const searchParams = new URLSearchParams();
-
-  for (const addOnId of addOnIds) {
-    searchParams.append("add_on", addOnId);
-  }
-
-  const query = searchParams.toString();
-  return `/@${username}/book/${treatmentId}/time${query ? `?${query}` : ""}`;
-}
-
-// Mirrors prepare_booking_cancellation: a late customer cancellation retains
-// least(commitment amount, amount actually paid online) and refunds the rest.
-// Both checkout steps state this, because the Terms promise the retained
-// amount is shown before the customer pays.
-function describeLateCancellationOutcome({
-  commitmentAmountPence,
-  amountDueNowPence,
-}) {
-  const retainedPence = Math.min(
-    Math.max(0, Number(commitmentAmountPence ?? 0)),
-    amountDueNowPence,
-  );
-
-  return retainedPence < amountDueNowPence
-    ? `${formatPricePence(retainedPence)} is retained after late cancellation and the rest is refunded.`
-    : `${formatPricePence(retainedPence)} is retained after late cancellation.`;
-}
-
-function calculatePaymentSummary({ bookingSettings, totalPricePence }) {
-  if (bookingSettings.payment_mode === "fixed_deposit") {
-    const amountDueNow = Math.min(
-      Number(bookingSettings.commitment_amount_pence ?? 0),
-      totalPricePence,
-    );
-
-    return {
-      amountDueNow,
-      amountDueAtAppointment: totalPricePence - amountDueNow,
-      cancellationOutcome: describeLateCancellationOutcome({
-        commitmentAmountPence: bookingSettings.commitment_amount_pence,
-        amountDueNowPence: amountDueNow,
-      }),
-    };
-  }
-
-  return {
-    amountDueNow: totalPricePence,
-    amountDueAtAppointment: 0,
-    cancellationOutcome: describeLateCancellationOutcome({
-      commitmentAmountPence:
-        bookingSettings.commitment_amount_pence ?? totalPricePence,
-      amountDueNowPence: totalPricePence,
-    }),
-  };
-}
-
-// There is no acceptance checkbox: continuing to payment is the acceptance
-// interaction (see docs/product.md), so the policies must be reachable from
-// both checkout steps before the customer pays. CCR 2013 Schedule 2 (b) and
-// (c) also want the trader's identity and geographic address given before the
-// consumer is bound, which is why they appear here and not only on /terms.
-function PolicyNotice() {
-  return (
-    <div className="mt-4 max-w-sm text-xs leading-relaxed text-black/55">
-      <p>
-        By continuing, you agree to our{" "}
-        <Link href="/terms" className="font-semibold underline">
-          Terms
-        </Link>{" "}
-        and{" "}
-        <Link href="/privacy" className="font-semibold underline">
-          Privacy Notice
-        </Link>
-        .
-      </p>
-      <details className="mt-2">
-        <summary className="cursor-pointer font-medium text-black/65">
-          Trader details
-        </summary>
-        <p className="mt-2">
-          Ceaute is a trading name of {legalIdentity.operatorName}, a{" "}
-          {legalIdentity.structure}, of {legalIdentity.businessAddress}.
-          Questions and complaints:{" "}
-          <a
-            href={`mailto:${legalIdentity.contactEmail}`}
-            className="font-semibold underline"
-          >
-            {legalIdentity.contactEmail}
-          </a>
-          . Your appointment is carried out by the provider named above, not by
-          Ceaute.
-        </p>
-      </details>
-    </div>
-  );
-}
-
-function getBookingDisplayState(booking, now = Date.now()) {
-  if (booking.status === "confirmed") {
-    return {
-      heading: "Booking confirmed",
-      message: "Your booking is confirmed.",
-      canPay: false,
-    };
-  }
-
-  const expiresAt = new Date(booking.expires_at ?? "").getTime();
-  const isExpired =
-    booking.status === "expired" ||
-    (["awaiting_payment", "cancelled"].includes(booking.status) &&
-      expiresAt <= now);
-
-  if (isExpired) {
-    return {
-      heading: "Slot expired",
-      message: "That held slot expired. Please choose a new time.",
-      canPay: false,
-    };
-  }
-
-  if (booking.status === "cancelled") {
-    return {
-      heading: "Booking cancelled",
-      message: "This booking was cancelled and is not confirmed.",
-      canPay: false,
-    };
-  }
-
-  if (booking.status !== "awaiting_payment" || !Number.isFinite(expiresAt)) {
-    return {
-      heading: "Booking unavailable",
-      message: "This booking cannot continue. Please choose a new time.",
-      canPay: false,
-    };
-  }
-
-  if (["failed", "cancelled"].includes(booking.payment_status)) {
-    return {
-      heading: "Payment failed",
-      message: "Payment was not completed. Your booking has not been confirmed.",
-      canPay: true,
-      showHoldExpiry: true,
-    };
-  }
-
-  if (
-    ["refund_required", "refunded", "refund_failed"].includes(booking.payment_status)
-  ) {
-    return {
-      heading: "Payment unsuccessful",
-      message:
-        "Your payment could not confirm this booking. Please choose a new time.",
-      canPay: false,
-      showHoldExpiry: true,
-    };
-  }
-
-  if (
-    ["created", "checkout_created", "succeeded"].includes(booking.payment_status)
-  ) {
-    return {
-      heading: "Booking held",
-      message:
-        "Payment is being verified. This page will show confirmation once Stripe's webhook confirms it.",
-      canPay: booking.payment_status !== "succeeded",
-      showHoldExpiry: true,
-    };
-  }
-
-  return {
-    heading: "Booking held",
-    message: "This time is held for 5 minutes while you continue.",
-    canPay: !booking.payment_status,
-    showHoldExpiry: true,
-  };
-}
+import {
+  firstSearchValue,
+  buildCheckoutPath,
+  buildReturnPath,
+  buildTimePath,
+} from "./_lib/checkout-paths";
+import {
+  calculatePaymentSummary,
+  getBookingDisplayState,
+} from "./_lib/checkout-display";
+import { BookingHoldCheckout } from "./_components/booking-hold-checkout";
+import { BookingDetailsCheckout } from "./_components/booking-details-checkout";
 
 export default async function BookingCheckoutPage({ params, searchParams }) {
   const { username, treatmentId } = await params;
@@ -324,172 +95,19 @@ export default async function BookingCheckoutPage({ params, searchParams }) {
     });
 
     return (
-      <main className="container max-w-md p-5">
-        <div className="mt-6 flex flex-col">
-          <h1 className="text-3xl font-bold tracking-tighter">
-            {displayState.heading}
-          </h1>
-          <p className="mt-1 text-sm">
-            {displayState.message}
-          </p>
-
-          {paymentNotice ? (
-            <div
-              role="status"
-              className="mt-8 rounded-xl border border-red-200 p-4 text-sm text-red-700"
-            >
-              <p className="font-semibold">{paymentNotice.heading}</p>
-              <p className="mt-1">{paymentNotice.message}</p>
-            </div>
-          ) : null}
-
-          <section className="mt-8 rounded-xl border border-black/10 p-4">
-            <h2 className="text-lg font-semibold tracking-tighter">
-              Booking summary
-            </h2>
-            <div className="mt-4 flex flex-col gap-3 text-sm">
-              <div>
-                <p className="font-semibold">
-                  {serviceSnapshot.provider_display_name}
-                </p>
-                <p className="text-black/60">
-                  @{serviceSnapshot.provider_username}
-                </p>
-                <p className="text-black/60">{serviceSnapshot.public_area}</p>
-              </div>
-              <div>
-                <p className="font-semibold">{serviceSnapshot.treatment_name}</p>
-                {selectedAddOns.length ? (
-                  <ul className="mt-1 text-black/60">
-                    {selectedAddOns.map((addOn) => (
-                      <li key={addOn.id}>
-                        + {addOn.name} (
-                        {formatPricePence(addOn.additional_price_pence)},{" "}
-                        {formatDurationMinutes(
-                          addOn.additional_duration_minutes,
-                        )}
-                        )
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
-              </div>
-              <div>
-                <p className="font-semibold">
-                  {formatDateLabel(holdStartAt)} · {formatTimeLabel(holdStartAt)}{" "}
-                  - {formatTimeLabel(holdEndAt)}
-                </p>
-                <p className="text-black/60">
-                  Total duration:{" "}
-                  {formatDurationMinutes(serviceSnapshot.duration_minutes)}
-                </p>
-              </div>
-              <div className="border-t pt-3">
-                <p className="flex justify-between">
-                  <span>Total price</span>
-                  <span className="font-semibold">
-                    {formatPricePence(serviceSnapshot.total_price_pence)}
-                  </span>
-                </p>
-                <p className="flex justify-between">
-                  <span>Due now</span>
-                  <span className="font-semibold">
-                    {formatPricePence(paymentAmounts.amountChargedPence)}
-                  </span>
-                </p>
-                <p className="flex justify-between">
-                  <span>Due at appointment</span>
-                  <span className="font-semibold">
-                    {formatPricePence(paymentAmounts.amountDueLaterPence)}
-                  </span>
-                </p>
-              </div>
-              <div className="border-t pt-3 text-black/60">
-                <p>
-                  Cancellation window:{" "}
-                  {serviceSnapshot.cancellation_window_hours ?? 24} hours.
-                </p>
-                <p>
-                  {describeLateCancellationOutcome({
-                    commitmentAmountPence:
-                      serviceSnapshot.commitment_amount_pence,
-                    amountDueNowPence: paymentAmounts.amountChargedPence,
-                  })}
-                </p>
-                {serviceSnapshot.written_policy ? (
-                  <p className="mt-2 whitespace-pre-wrap">
-                    {serviceSnapshot.written_policy}
-                  </p>
-                ) : null}
-              </div>
-              {isConfirmed ? (
-                <div className="border-t pt-3">
-                  <p className="font-semibold">Exact address</p>
-                  <p>{serviceSnapshot.address_line_1}</p>
-                  {serviceSnapshot.address_line_2 ? (
-                    <p>{serviceSnapshot.address_line_2}</p>
-                  ) : null}
-                  <p>
-                    {serviceSnapshot.city} {serviceSnapshot.postcode}
-                  </p>
-                  {serviceSnapshot.access_instructions ? (
-                    <p className="mt-2 text-black/60">
-                      {serviceSnapshot.access_instructions}
-                    </p>
-                  ) : null}
-                </div>
-              ) : (
-                <p className="border-t border-black/10 pt-3 text-black/60">
-                  Exact address appears after confirmation.
-                </p>
-              )}
-              {displayState.showHoldExpiry ? (
-                <p className="text-black/60">
-                  Hold expires at{" "}
-                  {formatTimeLabel(new Date(holdSummary.expires_at))}.
-                </p>
-              ) : null}
-            </div>
-          </section>
-
-          <section className="mt-8 rounded-xl border border-black/10 p-4">
-            <BookingInspirationImages
-              images={inspiration.images}
-              allowance={inspiration.allowance}
-              canManage={displayState.canPay && !inspiration.unavailable}
-              addAction={addBookingImagesDuringCheckout}
-              removeAction={removeBookingImageDuringCheckout}
-              hiddenFields={{
-                booking_id: holdSummary.id,
-                return_path: returnPath,
-              }}
-              description={
-                inspiration.unavailable
-                  ? "Inspiration images cannot be shown right now. You can add them later from your booking."
-                  : displayState.canPay
-                    ? "Optional. Add an inspiration image for your provider. You can update it later from your booking."
-                    : "Images attached to this booking."
-              }
-            />
-          </section>
-
-          {displayState.canPay ? (
-            <div className="mt-8 flex flex-col items-end gap-3">
-              <form action={startStripeCheckoutForBooking}>
-                <input type="hidden" name="booking_id" value={holdSummary.id} />
-                <input type="hidden" name="return_path" value={returnPath} />
-                <PendingButton
-                  pendingLabel="Opening Stripe..."
-                  className="w-max rounded-lg bg-pink-700 p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-pink-800 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  Pay with Stripe
-                </PendingButton>
-              </form>
-              <PolicyNotice />
-            </div>
-          ) : null}
-        </div>
-      </main>
+      <BookingHoldCheckout
+        displayState={displayState}
+        paymentNotice={paymentNotice}
+        serviceSnapshot={serviceSnapshot}
+        selectedAddOns={selectedAddOns}
+        holdStartAt={holdStartAt}
+        holdEndAt={holdEndAt}
+        paymentAmounts={paymentAmounts}
+        isConfirmed={isConfirmed}
+        inspiration={inspiration}
+        holdSummary={holdSummary}
+        returnPath={returnPath}
+      />
     );
   }
 
@@ -551,140 +169,18 @@ export default async function BookingCheckoutPage({ params, searchParams }) {
   });
 
   return (
-    <main className="container max-w-md p-5">
-      <div className="mt-6 flex flex-col">
-        <h1 className="text-3xl font-bold tracking-tighter">
-          Review details
-        </h1>
-
-        <section className="mt-8 rounded-xl border border-black/10 p-4">
-          <h2 className="text-lg font-semibold tracking-tighter">
-            Order summary
-          </h2>
-          <div className="mt-4 flex flex-col gap-3 text-sm">
-            <div>
-              <p className="font-semibold">{providerPage.display_name}</p>
-              <p className="text-black/60">@{providerPage.username}</p>
-              {location.public_area ? (
-                <p className="text-black/60">{location.public_area}</p>
-              ) : null}
-            </div>
-            <div>
-              <p className="font-semibold">{treatment.name}</p>
-              {selectedAddOns.length ? (
-                <ul className="mt-1 text-black/60">
-                  {selectedAddOns.map((addOn) => (
-                    <li key={addOn.id}>
-                      + {addOn.name} (
-                      {formatPricePence(addOn.additional_price_pence)},{" "}
-                      {formatDurationMinutes(
-                        addOn.additional_duration_minutes,
-                      )}
-                      )
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
-            </div>
-            <div>
-              <p className="font-semibold">
-                {formatDateLabel(startAt)} · {formatTimeLabel(startAt)} -{" "}
-                {formatTimeLabel(endAt)}
-              </p>
-              <p className="text-black/60">
-                Total duration: {formatDurationMinutes(totalDurationMinutes)}
-              </p>
-            </div>
-            <div className="border-t pt-3">
-              <p className="flex justify-between">
-                <span>Total price</span>
-                <span className="font-semibold">
-                  {formatPricePence(totalPricePence)}
-                </span>
-              </p>
-              <p className="flex justify-between">
-                <span>Due now</span>
-                <span className="font-semibold">
-                  {formatPricePence(paymentSummary.amountDueNow)}
-                </span>
-              </p>
-              <p className="flex justify-between">
-                <span>Due at appointment</span>
-                <span className="font-semibold">
-                  {formatPricePence(paymentSummary.amountDueAtAppointment)}
-                </span>
-              </p>
-            </div>
-            <div className="border-t pt-3 text-black/60">
-              <p>
-                Cancellation window:{" "}
-                {bookingSettings.cancellation_window_hours ?? 24} hours.
-              </p>
-              <p>{paymentSummary.cancellationOutcome}</p>
-              {bookingSettings.written_policy ? (
-                <p className="mt-2 whitespace-pre-wrap">
-                  {bookingSettings.written_policy}
-                </p>
-              ) : null}
-            </div>
-          </div>
-        </section>
-
-        <form
-          action={createBookingHoldFromDetails}
-          id="booking_details"
-          className="mt-8 flex flex-col gap-4"
-        >
-          <input type="hidden" name="username" value={providerPage.username} />
-          <input type="hidden" name="treatment_id" value={treatment.id} />
-          <input type="hidden" name="start_at" value={startAt.toISOString()} />
-          {selectedAddOns.map((addOn) => (
-            <input key={addOn.id} type="hidden" name="add_on" value={addOn.id} />
-          ))}
-          <span className="field-set">
-            <label htmlFor="full_name" className="label">
-              Full name
-            </label>
-            <input
-              type="text"
-              id="full_name"
-              name="full_name"
-              required
-              defaultValue={profileResult.data?.full_name ?? ""}
-              className="field"
-            />
-          </span>
-          <span className="field-set">
-            <label htmlFor="phone" className="label">
-              Phone number
-            </label>
-            <input
-              type="tel"
-              id="phone"
-              name="phone"
-              required
-              defaultValue={profileResult.data?.phone_e164 ?? ""}
-              className="field"
-            />
-          </span>
-          <div className="mt-8 flex flex-col items-end gap-4">
-            <SubmitButton />
-          </div>
-        </form>
-        <PolicyNotice />
-      </div>
-    </main>
+    <BookingDetailsCheckout
+      providerPage={providerPage}
+      treatment={treatment}
+      selectedAddOns={selectedAddOns}
+      startAt={startAt}
+      endAt={endAt}
+      totalDurationMinutes={totalDurationMinutes}
+      totalPricePence={totalPricePence}
+      location={location}
+      bookingSettings={bookingSettings}
+      paymentSummary={paymentSummary}
+      profileResult={profileResult}
+    />
   );
 }
-
-const SubmitButton = () => {
-  return (
-    <PendingButton
-      form="booking_details"
-      pendingLabel="Continuing..."
-      className="w-max rounded-lg bg-pink-700 p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-pink-800 disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
-    >
-      Continue
-    </PendingButton>
-  );
-};
