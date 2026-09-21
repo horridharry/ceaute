@@ -164,64 +164,6 @@ export async function createBookingHoldFromDetails(formData) {
   );
 }
 
-export async function getBookingHoldSummary(bookingId) {
-  const supabase = await createClient();
-  const { data: summaries, error } = await supabase.schema("ceaute").rpc(
-    "get_booking_hold_summary",
-    {
-      target_booking_id: bookingId,
-    },
-  );
-
-  if (error) {
-    throw new Error("Could not load booking hold.");
-  }
-
-  const summary = summaries?.[0];
-
-  if (!summary) {
-    return null;
-  }
-
-  // The authenticated RPC must authorize access before this privileged read.
-  const paymentSupabase = createServiceRoleClient();
-  const { data: paymentAttempt, error: paymentError } = await paymentSupabase
-    .schema("ceaute")
-    .from("booking_payment_attempt")
-    .select("payment_status")
-    .eq("booking_id", summary.id)
-    .order("attempt_number", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (paymentError) {
-    throw new Error("Could not load booking payment status.");
-  }
-
-  const serviceSnapshot = { ...summary.service_snapshot };
-
-  if (
-    !summary.confirmed_at ||
-    !["confirmed", "completed"].includes(summary.status)
-  ) {
-    for (const field of [
-      "address_line_1",
-      "address_line_2",
-      "city",
-      "postcode",
-      "access_instructions",
-    ]) {
-      delete serviceSnapshot[field];
-    }
-  }
-
-  return {
-    ...summary,
-    service_snapshot: serviceSnapshot,
-    payment_status: paymentAttempt?.payment_status ?? null,
-  };
-}
-
 function isDefinitiveStripeCheckoutCreationError(error) {
   const stripeErrorType = error?.type ?? error?.rawType;
 

@@ -13,23 +13,9 @@
 import { revalidatePath } from "next/cache";
 import {
   addBookingInspirationImagesFromFiles,
-  describeInspirationImageAllowance,
-  listBookingInspirationImages,
   removeBookingInspirationImage,
 } from "@/lib/bookings/booking-inspiration-images";
-import { createClient } from "@/lib/supabase/server";
-
-async function getSignedInCustomer() {
-  const supabase = await createClient();
-  const { data } = await supabase.auth.getClaims();
-  const profileId = data?.claims?.sub;
-
-  if (!profileId) {
-    throw new Error("Sign in to continue.");
-  }
-
-  return { supabase, profileId };
-}
+import { getSignedInCustomer } from "./_lib/signed-in-customer";
 
 function readBookingId(formData) {
   return String(formData.get("booking_id") ?? "").trim();
@@ -41,29 +27,6 @@ function readCheckoutRoute(formData) {
   const returnPath = String(formData.get("return_path") ?? "").trim();
 
   return returnPath.startsWith("/@") ? returnPath.split("?")[0] : null;
-}
-
-// Nothing about this step may stand between the customer and paying. If the
-// images cannot be loaded the checkout screen still has to render, with the
-// payment button on it, so the failure is swallowed into an empty list rather
-// than thrown up to the route's error boundary.
-export async function getBookingInspirationImages(bookingId) {
-  try {
-    const { supabase } = await getSignedInCustomer();
-    const images = await listBookingInspirationImages({ supabase, bookingId });
-
-    return {
-      images,
-      allowance: describeInspirationImageAllowance(images.length),
-      unavailable: false,
-    };
-  } catch {
-    return {
-      images: [],
-      allowance: describeInspirationImageAllowance(0),
-      unavailable: true,
-    };
-  }
 }
 
 export async function addBookingImagesDuringCheckout(_currentState, formData) {

@@ -4,7 +4,7 @@ import { PendingButton } from "@/components/pending-button";
 import {
   getDiscoveryCategories,
   searchPublicProviders,
-} from "./actions";
+} from "./queries";
 import { formatPricePence } from "@/features/storefront/format";
 
 const treatmentSummary = (treatments) =>

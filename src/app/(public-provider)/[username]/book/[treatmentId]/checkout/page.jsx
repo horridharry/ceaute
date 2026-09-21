@@ -1,8 +1,10 @@
 import { redirect, notFound } from "next/navigation";
 import { calculateBookingPaymentAmounts } from "@/lib/payments/booking-payments";
 import { createClient } from "@/lib/supabase/server";
-import { getBookingHoldSummary } from "../../actions";
-import { getBookingInspirationImages } from "../../inspiration-actions";
+import {
+  getBookingHoldSummary,
+  getBookingInspirationImages,
+} from "../../queries";
 import { describeCheckoutPaymentNotice } from "../../_lib/checkout-payment-notice";
 import { getPublicBookingDetailsPage } from "../../../_lib/public-provider-data";
 import {
