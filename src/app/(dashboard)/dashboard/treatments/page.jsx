@@ -1,4 +1,4 @@
-import { getAllTreatments } from "./actions";
+import { getAllTreatments } from "./queries";
 import { TreatmentsUI } from "./_components/treatments-page";
 
 export default async function TreatmentsPage() {
