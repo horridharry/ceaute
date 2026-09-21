@@ -38,7 +38,7 @@ trade-offs behind this shape are in
 | Identity, publish, unpublish | `/dashboard/profile` | `profile/queries.js`, `profile/actions.js`, `profile/publication-readiness.js` (screen hints only) | `publish_provider_page`, `unpublish_provider_page` |
 | Portfolio images | `/dashboard/profile/portfolio` | `portfolio/queries.js`, `portfolio/actions.js`, `src/lib/supabase/signed-urls.js` | `portfolio_image` RLS, private storage bucket |
 | Saved locations, the current one, private address | `/dashboard/locations` | `locations/queries.js`, `locations/actions.js` | `provider_location` RLS and constraints; `set_primary_provider_location` |
-| Working hours and blocked dates | `/dashboard/availability` | `availability/queries.js`, `availability/actions.js`, `availability/_lib/schedule-form.js`, `src/lib/bookings/appointment-grid.js` | `replace_provider_availability_rules`, 15-minute grid checks |
+| Working hours and blocked dates | `/dashboard/availability` | `availability/queries.js`, `availability/actions.js`, `availability/_lib/schedule-form.js`, `availability/_lib/booking-messages.js`, `src/lib/bookings/appointment-grid.js` | `replace_provider_availability_rules`, 15-minute grid checks, `blocked_date` RLS, `get_provider_booking_counts_by_local_date` (advisory counts) |
 | Treatments | `/dashboard/treatments` | `treatments/queries.js`, `treatments/actions.js`, `treatments/_lib/treatment-values.js` | `treatment` RLS |
 | Treatment Groups | `/dashboard/treatment-groups` | `treatment-groups/queries.js`, `treatment-groups/actions.js` | `treatment_group` RLS |
 | Add-ons | `/dashboard/add-ons` | `add-ons/queries.js`, `add-ons/actions.js` | table RLS; `create_add_on_with_compatibility`, `update_add_on_with_compatibility` |
@@ -215,6 +215,13 @@ Sections may share only product-agnostic infrastructure:
 - dashboard infrastructure in `dashboard/_lib` (`getSignedInProvider`, form
   values, price and duration conversion, focused-task routes) and
   `dashboard/_components`;
+- `src/components/unsaved-changes`, the dashboard's unsaved-changes guard,
+  mounted once in the dashboard layout. A screen opts in with
+  `useUnsavedChanges(isDirty)`; only Availability's weekly hours does today,
+  and adopting it on another screen is a product decision for that screen.
+  Link clicks are caught in the capture phase on `window` and browser Back is
+  held with a same-URL sentinel history entry (see
+  `src/lib/forms/unsaved-navigation.js`);
 - lower-level domain code in `src/lib` (for example
   `src/lib/bookings/provider-booking-groups.js`, read by both Provider Bookings
   and Today, and `src/lib/providers/username.js`, used by Profile and

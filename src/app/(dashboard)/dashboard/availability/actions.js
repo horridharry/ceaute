@@ -1,21 +1,9 @@
 "use server";
 import { revalidatePath } from "next/cache";
-import { isOnAppointmentGrid } from "@/lib/bookings/appointment-grid";
 import { getSignedInProvider } from "../_lib/provider-data";
+import { parseSchedule } from "./_lib/schedule-form";
 import { todayInLondon } from "./_lib/today-london";
-import { weekdayNameToNumber } from "./_lib/weekdays";
 
-const DAYS_OF_WEEK = [
-  "monday",
-  "tuesday",
-  "wednesday",
-  "thursday",
-  "friday",
-  "saturday",
-  "sunday",
-];
-
-const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 function isValidLocalDate(value) {
@@ -33,51 +21,6 @@ function isValidLocalDate(value) {
   );
 }
 
-function parseSchedule(formData) {
-  const enabledDays = formData
-    .getAll("enabled_weekday")
-    .map((day) => String(day ?? "").trim().toLowerCase());
-  const uniqueEnabledDays = new Set(enabledDays);
-
-  if (enabledDays.length !== uniqueEnabledDays.size) {
-    return { error: "Each weekday can only be saved once." };
-  }
-
-  const schedule = [];
-
-  for (const dayOfWeek of enabledDays) {
-    if (!DAYS_OF_WEEK.includes(dayOfWeek)) {
-      return { error: "Choose valid weekdays only." };
-    }
-
-    const openTime = String(formData.get(`${dayOfWeek}_starts_at`) ?? "").trim();
-    const closeTime = String(formData.get(`${dayOfWeek}_ends_at`) ?? "").trim();
-
-    if (!TIME_PATTERN.test(openTime) || !TIME_PATTERN.test(closeTime)) {
-      return { error: "Choose valid opening and closing times." };
-    }
-
-    if (!isOnAppointmentGrid(openTime) || !isOnAppointmentGrid(closeTime)) {
-      return {
-        error:
-          "Opening and closing times must be on 15-minute boundaries, such as 09:00 or 09:15.",
-      };
-    }
-
-    if (closeTime <= openTime) {
-      return { error: "Closing time must be after opening time." };
-    }
-
-    schedule.push({
-      weekday: weekdayNameToNumber(dayOfWeek),
-      starts_at: openTime,
-      ends_at: closeTime,
-    });
-  }
-
-  return { schedule };
-}
-
 export const updateSchedule = async (_currentState, formData) => {
   const { supabase, providerPage } = await getSignedInProvider({
     next: "/dashboard/availability",
@@ -85,7 +28,7 @@ export const updateSchedule = async (_currentState, formData) => {
   const parsedSchedule = parseSchedule(formData);
 
   if (parsedSchedule.error) {
-    return parsedSchedule.error;
+    return { status: "error", message: parsedSchedule.error };
   }
 
   const { error } = await supabase.schema("ceaute").rpc(
@@ -98,19 +41,26 @@ export const updateSchedule = async (_currentState, formData) => {
 
   if (error) {
     if (error.code === "23514") {
-      return "Choose 15-minute opening and closing times, with closing after opening.";
+      return {
+        status: "error",
+        message:
+          "Choose 15-minute opening and closing times, with closing after opening.",
+      };
     }
 
     if (error.code === "23505") {
-      return "Each weekday can only be saved once.";
+      return {
+        status: "error",
+        message: "Each weekday can only be saved once.",
+      };
     }
 
-    return "Could not save availability.";
+    return { status: "error", message: "Could not save availability." };
   }
 
   revalidatePath("/dashboard/availability");
   revalidatePath("/", "layout");
-  return "Saved.";
+  return { status: "saved" };
 };
 
 export const blockDate = async (_currentState, formData) => {
@@ -120,11 +70,11 @@ export const blockDate = async (_currentState, formData) => {
   const localDate = String(formData.get("local_date") ?? "").trim();
 
   if (!isValidLocalDate(localDate)) {
-    return "Choose a valid date to block.";
+    return { status: "error", message: "Choose a valid date to block." };
   }
 
   if (localDate < todayInLondon()) {
-    return "Choose today or a future date.";
+    return { status: "error", message: "Choose today or a future date." };
   }
 
   const { error } = await supabase.schema("ceaute").from("blocked_date").insert({
@@ -134,38 +84,47 @@ export const blockDate = async (_currentState, formData) => {
 
   if (error) {
     if (error.code === "23505") {
-      return "That date is already blocked.";
+      return { status: "error", message: "That date is already blocked." };
     }
 
-    return "Could not block that date.";
+    return { status: "error", message: "Could not block that date." };
   }
 
   revalidatePath("/dashboard/availability");
   revalidatePath("/", "layout");
-  return "Date blocked.";
+  return { status: "blocked", localDate };
 };
 
-export const removeBlockedDate = async (formData) => {
+const REMOVE_BLOCKED_DATE_ERROR = {
+  status: "error",
+  message: "Could not remove that date. Try again.",
+};
+
+export const removeBlockedDate = async (_currentState, formData) => {
   const { supabase, providerPage } = await getSignedInProvider({
     next: "/dashboard/availability",
   });
   const blockedDateId = String(formData.get("blocked_date_id") ?? "").trim();
 
   if (!blockedDateId) {
-    return;
+    return REMOVE_BLOCKED_DATE_ERROR;
   }
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .schema("ceaute")
     .from("blocked_date")
     .delete()
     .eq("provider_page_id", providerPage.id)
-    .eq("id", blockedDateId);
+    .eq("id", blockedDateId)
+    .select("local_date");
 
   if (error) {
-    throw new Error("Could not remove blocked date.");
+    return REMOVE_BLOCKED_DATE_ERROR;
   }
 
+  // A row that is already gone counts as removed: the date is unblocked either
+  // way, so the page still refreshes and localDate is null.
   revalidatePath("/dashboard/availability");
   revalidatePath("/", "layout");
+  return { status: "removed", localDate: data?.[0]?.local_date ?? null };
 };
