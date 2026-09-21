@@ -1,170 +1,228 @@
 "use client";
 
-import { useActionState, useMemo, useState } from "react";
-import { keepFormValuesOnSubmit } from "@/lib/forms/keep-form-values";
+// The Weekly hours editor. Owns the saved week (baseline), the week being
+// edited (draft), which rows are open, and the save lifecycle. Rows, the save
+// bar and the closed-week dialog are presentational.
+import {
+  startTransition,
+  useActionState,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { flushSync } from "react-dom";
+import { useUnsavedChanges } from "@/components/unsaved-changes/use-unsaved-changes";
 import {
   DAYS_OF_WEEK,
   generateTimeOptions,
+  getChangedDays,
   getErrors,
+  hasNoOpenDays,
+  scheduleToFormData,
   scheduleToState,
 } from "../_lib/schedule-form";
+import { ClosedWeekDialog } from "./closed-week-dialog";
+import { SaveHoursBar } from "./save-hours-bar";
+import { WeekdayRow } from "./weekday-row";
 
-export function WeeklyScheduleForm({ schedule, updateSchedule }) {
-  const [state, updateScheduleAction, pending] = useActionState(
-    updateSchedule,
+const SAVED_FLASH_MS = 2000;
+
+export function WeeklyScheduleForm({ schedule, updateSchedule, isPublished }) {
+  // The editor doesn't reset from refreshed props after a save: the baseline
+  // becomes exactly the week that was submitted.
+  const [baseline, setBaseline] = useState(() => scheduleToState(schedule));
+  const [draft, setDraft] = useState(baseline);
+  const [expanded, setExpanded] = useState(() => new Set());
+  const [closedWeekOpen, setClosedWeekOpen] = useState(false);
+  const [savedAt, setSavedAt] = useState(null);
+  const submittedDraftRef = useRef(null);
+  const headingRef = useRef(null);
+  const saveButtonRef = useRef(null);
+  const focusSaveOnDialogCloseRef = useRef(false);
+  const headingId = useId();
+  const timeOptions = useMemo(() => generateTimeOptions(), []);
+
+  const [result, formAction, pending] = useActionState(
+    async (_previous, formData) => {
+      const submitted = submittedDraftRef.current;
+      // The server ignores the previous state, so none is sent.
+      const next = await updateSchedule(null, formData);
+
+      if (next?.status === "saved") {
+        startTransition(() => {
+          setBaseline(submitted);
+          setExpanded(new Set());
+          setSavedAt(Date.now());
+        });
+      }
+
+      return { ...next, submitted };
+    },
     { status: "idle" },
   );
-  const stateMessage =
-    state.status === "error"
-      ? state.message
-      : state.status === "saved"
-        ? "Saved."
-        : "";
-  const [days, setDays] = useState(() => scheduleToState(schedule));
-  const timeOptions = useMemo(() => generateTimeOptions(), []);
-  const errors = getErrors(days);
-  const hasErrors = Object.keys(errors).length > 0;
 
-  const updateDay = (dayOfWeek, updater) => {
-    setDays((currentDays) =>
-      currentDays.map((day) =>
-        day.dayOfWeek === dayOfWeek ? updater(day) : day,
+  const errors = getErrors(draft);
+  const invalidDays = Object.keys(errors);
+  const changedDays = getChangedDays(draft, baseline);
+  const isDirty = changedDays.length > 0;
+  // An error only stands while the draft is the one that failed to save.
+  const showError = result.status === "error" && result.submitted === draft;
+
+  const barStatus = pending
+    ? "saving"
+    : isDirty && showError
+      ? "error"
+      : isDirty && invalidDays.length > 0
+        ? "invalid"
+        : isDirty
+          ? "dirty"
+          : savedAt !== null
+            ? "saved"
+            : "hidden";
+
+  useUnsavedChanges(isDirty);
+
+  // After a save: focus the heading, then hide "Hours saved" after 2 seconds.
+  useEffect(() => {
+    if (savedAt === null) return undefined;
+    headingRef.current?.focus();
+    const timer = setTimeout(() => setSavedAt(null), SAVED_FLASH_MS);
+    return () => clearTimeout(timer);
+  }, [savedAt]);
+
+  // Saving disables every control, so a failed save can leave focus on the
+  // page body. Put it back on Save hours for the retry.
+  useEffect(() => {
+    if (result.status !== "error") return;
+    const active = document.activeElement;
+    if (!active || active === document.body) {
+      saveButtonRef.current?.focus();
+    }
+  }, [result]);
+
+  // Keep editing returns focus to Save hours once the dialog has closed (the
+  // dialog's own effect runs first and closes it).
+  useEffect(() => {
+    if (closedWeekOpen || !focusSaveOnDialogCloseRef.current) return;
+    focusSaveOnDialogCloseRef.current = false;
+    saveButtonRef.current?.focus();
+  }, [closedWeekOpen]);
+
+  const updateDay = (dayOfWeek, changes) => {
+    setSavedAt(null);
+    setDraft((current) =>
+      current.map((day) =>
+        day.dayOfWeek === dayOfWeek ? { ...day, ...changes } : day,
       ),
     );
   };
 
-  const toggleDay = (dayOfWeek) => {
-    updateDay(dayOfWeek, (day) => ({ ...day, enabled: !day.enabled }));
+  const toggleExpanded = (dayOfWeek) => {
+    setExpanded((current) => {
+      const next = new Set(current);
+      if (next.has(dayOfWeek)) {
+        next.delete(dayOfWeek);
+      } else {
+        next.add(dayOfWeek);
+      }
+      return next;
+    });
   };
 
-  const updateTime = (dayOfWeek, field, value) => {
-    updateDay(dayOfWeek, (day) => ({ ...day, [field]: value }));
+  const discard = () => {
+    setDraft(baseline);
+  };
+
+  const showInvalid = () => {
+    if (invalidDays.length === 0) return;
+    flushSync(() => {
+      setExpanded((current) => new Set([...current, ...invalidDays]));
+    });
+    document.getElementById(`${invalidDays[0]}_ends_at`)?.focus();
+  };
+
+  const submit = () => {
+    submittedDraftRef.current = draft;
+    startTransition(() => formAction(scheduleToFormData(draft)));
+  };
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    if (pending || !isDirty || invalidDays.length > 0) return;
+
+    if (isPublished && hasNoOpenDays(draft)) {
+      setClosedWeekOpen(true);
+      return;
+    }
+
+    submit();
+  };
+
+  const keepEditing = () => {
+    focusSaveOnDialogCloseRef.current = true;
+    setClosedWeekOpen(false);
+  };
+
+  const confirmClosedWeek = () => {
+    setClosedWeekOpen(false);
+    submit();
   };
 
   return (
-    <form
-      id="availability"
-      className="mt-12 flex flex-col gap-4"
-      action={updateScheduleAction}
-      onSubmit={keepFormValuesOnSubmit(updateScheduleAction)}
-    >
-      {days.map((day, index) => (
-        <div
-          key={day.dayOfWeek}
-          className={index === days.length - 1 ? "" : "border-b pb-4"}
-        >
-          <div className="flex items-center">
-            <label
-              htmlFor={`${day.dayOfWeek}_enabled`}
-              className={
-                day.enabled
-                  ? "flex-1 text-sm font-medium"
-                  : "flex-1 text-sm text-black/60"
-              }
-            >
-              {DAYS_OF_WEEK[index].label}
-            </label>
-            <input
-              type="checkbox"
-              id={`${day.dayOfWeek}_enabled`}
-              name="enabled_weekday"
-              value={day.dayOfWeek}
-              checked={day.enabled}
-              onChange={() => toggleDay(day.dayOfWeek)}
-              className="h-5 w-5 cursor-pointer appearance-none rounded border border-black/15 bg-white outline-none ring-2 ring-transparent duration-200 checked:border-transparent checked:bg-pink-600 hover:border-black/25 focus:ring-pink-100"
-            />
-          </div>
+    <section aria-labelledby={headingId} className="mt-10">
+      <h2
+        id={headingId}
+        ref={headingRef}
+        tabIndex={-1}
+        className="text-xl font-semibold tracking-tight"
+      >
+        Weekly hours
+      </h2>
 
-          {day.enabled ? (
-            <div className="pt-4">
-              <div className="flex gap-x-2.5">
-                <span className="field-set flex-1">
-                  <label
-                    htmlFor={`${day.dayOfWeek}_starts_at`}
-                    className="label"
-                  >
-                    Opens
-                  </label>
-                  <select
-                    id={`${day.dayOfWeek}_starts_at`}
-                    name={`${day.dayOfWeek}_starts_at`}
-                    value={day.openTime}
-                    onChange={(event) =>
-                      updateTime(
-                        day.dayOfWeek,
-                        "openTime",
-                        event.target.value,
-                      )
-                    }
-                    className="field cursor-pointer"
-                  >
-                    {timeOptions.map((timeOption) => (
-                      <option key={timeOption.value} value={timeOption.value}>
-                        {timeOption.label}
-                      </option>
-                    ))}
-                  </select>
-                </span>
+      <form
+        noValidate
+        aria-busy={pending || undefined}
+        onSubmit={handleSubmit}
+        className="mt-2 flex flex-col"
+      >
+        {draft.map((day, index) => (
+          <WeekdayRow
+            key={day.dayOfWeek}
+            day={day}
+            label={DAYS_OF_WEEK[index].label}
+            isExpanded={expanded.has(day.dayOfWeek)}
+            isChanged={changedDays.includes(day.dayOfWeek)}
+            error={errors[day.dayOfWeek] ?? ""}
+            disabled={pending}
+            timeOptions={timeOptions}
+            onToggleExpanded={() => toggleExpanded(day.dayOfWeek)}
+            onToggleOpen={(enabled) => updateDay(day.dayOfWeek, { enabled })}
+            onChangeTime={(field, value) =>
+              updateDay(day.dayOfWeek, { [field]: value })
+            }
+          />
+        ))}
 
-                <span className="field-set flex-1">
-                  <label
-                    htmlFor={`${day.dayOfWeek}_ends_at`}
-                    className="label"
-                  >
-                    Closes
-                  </label>
-                  <select
-                    id={`${day.dayOfWeek}_ends_at`}
-                    name={`${day.dayOfWeek}_ends_at`}
-                    value={day.closeTime}
-                    onChange={(event) =>
-                      updateTime(
-                        day.dayOfWeek,
-                        "closeTime",
-                        event.target.value,
-                      )
-                    }
-                    className="field cursor-pointer"
-                  >
-                    {timeOptions.map((timeOption) => (
-                      <option key={timeOption.value} value={timeOption.value}>
-                        {timeOption.label}
-                      </option>
-                    ))}
-                  </select>
-                </span>
-              </div>
-              <p
-                className={
-                  errors[day.dayOfWeek]
-                    ? "mt-2 text-sm text-red-600 opacity-100 transition-opacity duration-500 ease-in"
-                    : "mt-2 text-sm text-red-600 opacity-0 transition-opacity duration-500 ease-in"
-                }
-              >
-                {errors[day.dayOfWeek] || "Times are valid"}
-              </p>
-            </div>
-          ) : (
-            <p className="pt-2 text-sm text-black/50">Closed</p>
-          )}
-        </div>
-      ))}
+        {/* In normal flow (sticky, not fixed), so the bar takes up its own
+            height after the last row and never covers it. */}
+        <SaveHoursBar
+          status={barStatus}
+          changedCount={changedDays.length}
+          invalidDays={invalidDays}
+          errorMessage={result.message ?? ""}
+          saveButtonRef={saveButtonRef}
+          onDiscard={discard}
+          onShowInvalid={showInvalid}
+        />
+      </form>
 
-      {stateMessage ? (
-        <p className="mt-4 text-sm text-red-600">{stateMessage}</p>
-      ) : null}
-
-      <div className="mt-8 flex items-center justify-end gap-4">
-        <button
-          form="availability"
-          type="submit"
-          disabled={pending || hasErrors}
-          aria-disabled={pending || hasErrors}
-          className="w-max rounded-lg bg-pink-700 p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-pink-800 disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
-        >
-          {pending ? "Saving..." : "Save hours"}
-        </button>
-      </div>
-    </form>
+      <ClosedWeekDialog
+        open={closedWeekOpen}
+        onKeepEditing={keepEditing}
+        onConfirm={confirmClosedWeek}
+      />
+    </section>
   );
 }
