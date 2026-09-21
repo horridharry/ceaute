@@ -46,7 +46,7 @@ sign-up accept a validated return path, which survives the code screen so an
 interrupted booking resumes at its checkout, while a user without one is sent to the
 dashboard if they have a provider page and to the account area otherwise.
 
-## The public page and catalogue
+## The public page, treatments, treatment groups and add-ons
 
 A published provider is available at `/@[username]`. The page shows the public
 business identity, public area, visible portfolio images, booking terms, active

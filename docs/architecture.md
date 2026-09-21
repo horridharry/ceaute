@@ -13,9 +13,11 @@ Ceaute is one full-stack Next.js App Router deployment. Route groups under
 - `(dashboard)` contains the protected provider workspace at `/dashboard`.
 - `(account)` contains customer details and bookings at `/account`.
 - `(authenticate)` contains `/sign-in`, `/sign-up`, and the `/verify` code screen.
+- `(site)` contains the home page, `/discover` public search, `/privacy`, and
+  `/terms`.
 - `api` contains signed Stripe webhooks and secret-protected scheduled jobs.
 
-The ungrouped `/discover` route is public search. `next.config.ts` contains
+`next.config.ts` contains
 temporary redirects from legacy `/provider/...`, previous dashboard names, and
 the former `/booking/...` public paths. New links and documentation should use
 the canonical routes instead of extending the compatibility surface.
@@ -33,21 +35,23 @@ trade-offs behind this shape are in
 | Sign in, sign up, email code | `src/app/(authenticate)/*` (`/verify` is the code screen) | `(authenticate)/actions.js`, `src/lib/auth/email-otp.js`, `src/lib/auth/redirect.js` | Supabase Auth generates and verifies the code; `profile` row created by trigger |
 | Session and ownership guard | `src/proxy.ts` | `src/lib/supabase/proxy.ts`, `src/lib/auth/request-session.js` | RLS on provider-owned tables |
 | Create provider page | `/dashboard/onboarding` | `onboarding/actions.ts` | `create_provider_page_draft` |
-| Identity, publish, unpublish | `/dashboard/profile` | `profile/actions.js`, `profile/publication-readiness.js` (screen hints only) | `publish_provider_page`, `unpublish_provider_page` |
-| Portfolio images | `/dashboard/profile/portfolio` | `portfolio/actions.js`, `src/lib/supabase/signed-urls.js` | `portfolio_image` RLS, private storage bucket |
-| Saved locations, the current one, private address | `/dashboard/locations` | `locations/actions.js` | `provider_location` RLS and constraints; `set_primary_provider_location` |
-| Working hours and blocked dates | `/dashboard/availability` | `availability/actions.js`, `src/lib/bookings/appointment-grid.js` | `replace_provider_availability_rules`, 15-minute grid checks |
-| Treatments, groups, add-ons | `/dashboard/treatments`, `/dashboard/treatment-groups`, `/dashboard/add-ons` | each route's `actions.js`, `_lib/form-values.js` | table RLS; `create_add_on_with_compatibility`, `update_add_on_with_compatibility` |
-| Booking terms | `/dashboard/settings/booking` | `settings/booking/actions.js`, `src/lib/payments/booking-payments.js` | `provider_booking_setting` constraints (positive deposit) |
-| Stripe Connect onboarding | `/dashboard/settings/payments`, `POST /api/stripe/connect` | `settings/payments/actions.js`, `src/lib/stripe/server.js` | `sync_provider_payment_account`, Connect event claims |
-| Public page and discovery | `/@[username]`, `/discover` | `[username]/_lib/*`, `discover/actions.js` | `get_public_*` projections, `search_public_providers` (published only) |
+| Identity, publish, unpublish | `/dashboard/profile` | `profile/queries.js`, `profile/actions.js`, `profile/publication-readiness.js` (screen hints only) | `publish_provider_page`, `unpublish_provider_page` |
+| Portfolio images | `/dashboard/profile/portfolio` | `portfolio/queries.js`, `portfolio/actions.js`, `src/lib/supabase/signed-urls.js` | `portfolio_image` RLS, private storage bucket |
+| Saved locations, the current one, private address | `/dashboard/locations` | `locations/queries.js`, `locations/actions.js` | `provider_location` RLS and constraints; `set_primary_provider_location` |
+| Working hours and blocked dates | `/dashboard/availability` | `availability/queries.js`, `availability/actions.js`, `availability/_lib/schedule-form.js`, `src/lib/bookings/appointment-grid.js` | `replace_provider_availability_rules`, 15-minute grid checks |
+| Treatments | `/dashboard/treatments` | `treatments/queries.js`, `treatments/actions.js`, `treatments/_lib/treatment-values.js` | `treatment` RLS |
+| Treatment Groups | `/dashboard/treatment-groups` | `treatment-groups/queries.js`, `treatment-groups/actions.js` | `treatment_group` RLS |
+| Add-ons | `/dashboard/add-ons` | `add-ons/queries.js`, `add-ons/actions.js` | table RLS; `create_add_on_with_compatibility`, `update_add_on_with_compatibility` |
+| Booking terms | `/dashboard/settings/booking` | `settings/booking/queries.js`, `settings/booking/actions.js`, `src/lib/payments/booking-payments.js` | `provider_booking_setting` constraints (positive deposit) |
+| Stripe Connect onboarding | `/dashboard/settings/payments`, `POST /api/stripe/connect` | `settings/payments/queries.js`, `settings/payments/actions.js`, `src/lib/stripe/server.js` | `sync_provider_payment_account`, Connect event claims |
+| Public page and discovery | `/@[username]`, `/discover`, `/dashboard/profile/preview` | `src/features/storefront/*`, `[username]/_lib/public-provider-data.js`, `discover/queries.js` | `get_public_*` projections, `search_public_providers` (published only) |
 | Choose add-ons and time | `/@[username]/book/[treatmentId]`, `/time` | `[username]/_lib/public-provider-data.js`, `book/_lib/appointment-availability.js` | `get_public_availability_rules`, `get_public_blocked_dates`, `get_public_occupied_periods` |
-| Hold and Checkout | `/@[username]/book/[treatmentId]/checkout` | `book/actions.js` | `create_validated_booking_hold`, `claim_booking_checkout`, `record_booking_checkout_session`, exclusion constraint |
+| Hold and Checkout | `/@[username]/book/[treatmentId]/checkout` | `book/queries.js`, `book/actions.js`, `checkout/_lib/*`, `checkout/_components/*` | `create_validated_booking_hold`, `claim_booking_checkout`, `record_booking_checkout_session`, exclusion constraint |
 | Payment confirmation | `POST /api/stripe/payments` | `api/stripe/payments/route.ts`, `src/lib/payments/refunds.js` | `claim_stripe_payment_event`, `complete_booking_payment_attempt` |
 | Payment disputes | `POST /api/stripe/payments`, `GET /api/operator/disputes` | `src/lib/payments/disputes.js` (event mapping), `refund-settlement.js` (economics, off the live path) | `record_stripe_dispute`, `list_booking_disputes` |
-| Booking views | `/account/bookings`, `/dashboard/bookings` | each route's `actions.js`, `src/lib/bookings/booking-display.js`, `booking-payment-attempts.js` | `get_customer_booking_summaries`, `get_provider_booking_summaries` (redaction) |
+| Booking views | `/account/bookings`, `/dashboard/bookings`, `/dashboard` (Today) | each route's `queries.js` and `actions.js`, `src/lib/bookings/provider-booking-groups.js`, `booking-display.js`, `booking-payment-attempts.js` | `get_customer_booking_summaries`, `get_provider_booking_summaries` (redaction) |
 | Cancellation and refund | same booking routes, `GET /api/cron/recover-booking-refunds` | `src/lib/bookings/cancel-booking.js`, `src/lib/payments/refunds.js`, `refund-request.js`, `refund-recovery.js` | `prepare_booking_cancellation`, `claim_booking_refund_operation`, `record_booking_refund_state`, `list_retryable_booking_refund_operations` |
-| Inspiration images | `/@[username]/book/[treatmentId]/checkout`, `/account/bookings/[bookingId]`, `/dashboard/bookings/[bookingId]` | `book/inspiration-actions.js`, `account/bookings/actions.js`, `src/lib/bookings/booking-inspiration-images.js` | `booking_inspiration_image` RLS, `can_manage_booking_inspiration_images`, `can_view_booking_inspiration_images`, `add_booking_inspiration_image`, private storage bucket |
+| Inspiration images | `/@[username]/book/[treatmentId]/checkout`, `/account/bookings/[bookingId]`, `/dashboard/bookings/[bookingId]` | `book/queries.js`, `book/inspiration-actions.js`, `account/bookings/actions.js`, `src/lib/bookings/booking-inspiration-images.js` | `booking_inspiration_image` RLS, `can_manage_booking_inspiration_images`, `can_view_booking_inspiration_images`, `add_booking_inspiration_image`, private storage bucket |
 | Completion and abandoned-image cleanup, reviews | `GET /api/cron/complete-bookings`, `/account/bookings/[bookingId]` | `api/cron/*`, `src/lib/bookings/discard-inspiration-images.js`, `account/bookings/actions.js` | `complete_elapsed_bookings`, `list_discardable_booking_inspiration_images`, `discard_booking_inspiration_images`, `create_booking_review` |
 | Transactional email | `GET /api/cron/send-booking-emails` | `src/lib/emails/booking-emails.js` (delivery), `booking-email-content.js` (text and HTML content), `email-layout.js` (shared HTML layout) | outbox rows enqueued by booking transitions; `claim_pending_booking_emails` |
 | Scheduling | Supabase Cron | migration `202609150001` | `invoke_cron_endpoint` via `pg_cron` and `pg_net` |
@@ -98,7 +102,7 @@ not trust a caller to have checked first, so a draft or suspended page returns
 nothing even when its ID is known. The booking journey under
 `/@[username]/book` and discovery use them. The storefront page itself is the
 exception: `[username]/page.jsx` resolves the page with one narrow
-`status = 'published'` query and then `storefront-view-model.js` reads the
+`status = 'published'` query and then `src/features/storefront/storefront-view-model.js` reads the
 provider-owned tables directly with the client it is given. That builder is
 shared with the dashboard preview, which passes the signed-in user's client so
 a draft page renders through RLS. The storefront's publication guarantee
@@ -141,19 +145,20 @@ payment, and replay guarantees.
 
 ## Server actions and shared orchestration
 
-Most provider form orchestration is route-local in `actions.js` files beside the
-dashboard area it serves. These actions authenticate, validate input, use the
-signed-in Supabase client, revalidate routes, and redirect. This keeps a
-vertical slice easy to find. The same `"use server"` files also export the
-read loaders their pages call, so every exported function is a callable
-endpoint and must authenticate first; all of them currently do, through
-`getSignedInProvider` or `getSignedInCustomer`. `src/app/error.tsx` and
-`src/app/not-found.tsx` are the route-level boundaries: a loader that throws
-shows fixed copy and the error digest, never the thrown message, because that
-text can be raw PostgreSQL or Stripe output. Treatments, treatment groups, and add-ons each own
-the actions under their own route, so treatment logic, group archival, and
-add-on compatibility can be read separately; the public booking action module
-remains a deliberate candidate for later simplification.
+Each area splits its server code into two route-local files. `actions.js`
+starts with `"use server"` and exports only mutations: they authenticate,
+validate input, use the signed-in Supabase client, revalidate routes, and
+redirect. Every export of a `"use server"` file is a callable endpoint, so
+nothing else belongs there. `queries.js` is a plain server module holding the
+read loaders the area's pages call; it is not callable from the browser, and
+its loaders still authenticate through `getSignedInProvider` or
+`getSignedInCustomer` because they read with the signed-in client. A helper that
+both files need goes in the area's own `_lib/`.
+
+A loader that throws reaches the nearest `error` boundary (see Page chrome
+below), which shows fixed copy and the error digest, never the thrown message,
+because that text can be raw PostgreSQL or Stripe output. The copy lives once in
+`src/components/route-error.tsx`.
 
 Add-ons are the one provider form whose save is not a plain table write. An
 add-on and the treatments it may be booked with change together in
@@ -188,6 +193,54 @@ reconcile money; email modules deliver claimed outbox rows; Supabase and Stripe
 modules construct trusted clients. Keep transaction decisions in PostgreSQL
 rather than trying to simulate a database transaction across several server
 actions.
+
+## Frontend ownership
+
+Provider-management areas are independent product sections: Treatments,
+Treatment Groups, Add-ons, Locations, Availability, Profile, Portfolio, Preview,
+Payments, Booking Settings, Provider Bookings, and Today each own their
+presentation, components, queries, actions, and behaviour inside their own
+folder under `src/app/(dashboard)/dashboard`. Customer bookings under
+`src/app/(account)` are independent of Provider Bookings. A shared route prefix,
+tab row, or navigation item does not make two sections one feature, and there
+is no umbrella concept over Treatments, Treatment Groups, and Add-ons.
+
+Sections may share only product-agnostic infrastructure:
+
+- `src/components/ui` primitives and `src/components` (header, footer, error
+  and not-found content, pending feedback);
+- `src/features/navigation` (section tabs), `src/features/storefront` (the
+  public storefront, also rendered by the dashboard preview), and
+  `src/features/auth/logout-action.js`;
+- dashboard infrastructure in `dashboard/_lib` (`getSignedInProvider`, form
+  values, price and duration conversion, focused-task routes) and
+  `dashboard/_components`;
+- lower-level domain code in `src/lib` (for example
+  `src/lib/bookings/provider-booking-groups.js`, read by both Provider Bookings
+  and Today, and `src/lib/providers/username.js`, used by Profile and
+  Onboarding).
+
+`tests/import-boundaries.test.js` enforces this: no `@/app/` imports, nothing
+in `src/features`, `src/components`, or `src/lib` imports from `src/app`, no
+dashboard section imports another section's folder, route groups do not import
+each other's modules, and no source uses "catalog".
+
+## Page chrome
+
+The root layout renders only the document. Each route group's layout decides
+whether the header and footer appear, so no global component keeps a list of
+routes. `(site)` and `account` render both; the dashboard renders the header
+through `FocusedTaskHeaderGate`, which hides it on the create and edit screens
+listed in `dashboard/_lib/focused-task-routes.js`, and never renders the footer;
+`[username]` renders the header and hides the footer inside the booking flow;
+`(authenticate)` and `/auth` have no chrome. The header component still chooses
+its provider-workspace variant, active link, and logo destination itself.
+
+The root `not-found.tsx` renders the header and footer around the shared
+not-found content because unmatched URLs render under the root layout only.
+`dashboard` and `[username]` have their own `not-found` so a `notFound()` call
+keeps that area's chrome. `(site)`, `account`, `dashboard`, and `[username]`
+each have an `error` boundary so a failing page keeps its chrome.
 
 ## Availability and booking boundary
 

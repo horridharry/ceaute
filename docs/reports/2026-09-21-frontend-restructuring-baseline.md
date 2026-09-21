@@ -480,3 +480,45 @@ not-found under the root layout only.
 Cross-area client navigation (customer, dev server), in ms:
 /@capturepro 370, /account/bookings 391, /discover 366, /account/bookings 367,
 /@capturepro 368, /discover 362.
+
+## 16. Programme outcome (2026-09-21)
+
+Completed after the section 15 capture, each as its own commit:
+
+89db189 task 4   header and footer ownership moved into layouts (approved
+                 differences 1-4 only; verified against the section 15 matrix)
+44964e1 task 12  customer checkout page split into route-owned modules
+23ad662 n1       "Catalogue" removed; list screens head with their own name
+0131e2a p1       section-specific helpers moved out of dashboard/_lib;
+                 provider-data.js holds only getSignedInProvider; pure
+                 conversions in dashboard/_lib/price-duration.js;
+                 username rules in src/lib/providers/username.js
+f6a97bd s1       Treatments queries; Decision 2 focused-task chrome
+8b016e5 s4       Locations queries
+f6944d3 s9       Payments queries
+7ef9535 s2       Treatment Groups queries
+ad2ef73 s5       Availability queries; form split into two client components
+17e1cfa s10      Booking Settings queries
+0782ddb s3       Add-ons queries; duplicated duration formatter removed
+eb796cc s6       Profile queries; one <main> on /dashboard/profile (Decision 3)
+fd01dbf s7       Portfolio queries
+183bc15 s11      Provider Bookings and Today each own their query; shared
+                 loader in src/lib/bookings/provider-booking-groups.js;
+                 Today moved into the (today) route group (URL unchanged)
+7dbf0c3 s12      customer bookings queries
+415b916 s13      discover/queries.js; booking-flow reads in book/queries.js
+5f81e19 x1       SiteFooter and the Add-ons list screen are Server Components
+1e84a74 x2       compatibility re-exports removed; tests/import-boundaries.test.js
+S8 (Preview) needed no change. Old task 13 was withdrawn (section 14).
+
+Verification method for every step after task 4: an untouched worktree of the
+previous commit ran as a second dev server, and the visible <main> HTML and
+header/footer state of 22 provider screens and 16 customer and public screens
+were compared by hash. The only differences are the approved ones: Treatments
+create/edit chrome (S1), the /dashboard/profile landmark (S6), and the N1
+headings. The gates ran per wave, with test:db after every wave that touched
+bookings, payments or settings.
+
+Recorded non-observable difference: Today's own signed-in check passes
+next=/dashboard (Bookings' passes /dashboard/bookings). The proxy redirects
+unauthenticated /dashboard requests before any page runs.
