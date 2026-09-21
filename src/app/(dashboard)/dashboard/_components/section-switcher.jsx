@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LinkPendingHint } from "@/components/link-pending-hint";
-import { SectionTabs } from "./section-tabs";
+import { SectionTabs } from "@/features/navigation/section-tabs";
 
 const sections = [
   {

@@ -3,7 +3,7 @@ import test from "node:test";
 import {
   buildTreatmentTimeHref,
   calculateSelectionTotals,
-} from "../src/app/(public-provider)/[username]/_lib/treatment-selection.js";
+} from "../src/features/storefront/treatment-selection.js";
 
 const treatment = {
   id: "treatment-1",

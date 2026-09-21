@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { keepFormValuesOnSubmit } from "@/lib/forms/keep-form-values";
-import { SettingsSectionNav } from "../../../_components/settings-section-nav";
+import { SettingsSectionNav } from "@/features/navigation/settings-section-nav";
 
 const MONEY_PATTERN = /^\d+(\.\d{1,2})?$/;
 

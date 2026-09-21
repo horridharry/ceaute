@@ -17,7 +17,7 @@ import {
 } from "@/lib/stripe/server";
 import { getPublicBookingDetailsPage } from "../_lib/public-provider-data";
 import { normalizePublicUsername } from "@/features/storefront/format";
-import { buildTreatmentTimeHref } from "../_lib/treatment-selection";
+import { buildTreatmentTimeHref } from "@/features/storefront/treatment-selection";
 
 function normalizeAddOnIds(formData) {
   return formData

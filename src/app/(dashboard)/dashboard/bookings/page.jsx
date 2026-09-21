@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { unstable_rethrow } from "next/navigation";
 import { getAllBookings } from "./queries";
-import { SectionTabs } from "../_components/section-tabs";
+import { SectionTabs } from "@/features/navigation/section-tabs";
 import { StatusBadge } from "../_components/status-badge";
 
 const bookingTabs = [
