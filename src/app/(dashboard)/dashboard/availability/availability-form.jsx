@@ -19,9 +19,13 @@ export function AvailabilityForm({
         <h2 className="mt-8 text-2xl font-semibold tracking-tighter">
           Availability
         </h2>
-        <p className="mt-1 text-sm text-black/60">
-          Set your regular hours in Europe/London time.
-        </p>
+        {schedule.length === 0 ? (
+          // Driven by the saved week (no working days saved), not the draft.
+          <p className="mt-4 rounded-lg bg-black/[0.04] p-3 text-sm">
+            Customers can&apos;t book you until you&apos;re open on at least one
+            day.
+          </p>
+        ) : null}
 
         <WeeklyScheduleForm
           schedule={schedule}
