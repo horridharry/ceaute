@@ -13,7 +13,7 @@ export function AvailabilityForm({
   removeBlockedDate,
 }) {
   return (
-    <main className="container max-w-md p-5">
+    <main className="container mx-auto max-w-md p-5">
       <div className="mt-6 flex flex-col">
         <PageSectionNav />
         <h2 className="mt-8 text-2xl font-semibold tracking-tighter">
