@@ -1,6 +1,5 @@
 import Link from "next/link";
 import {
-  formatPricePence,
   pluralCount,
   shouldShowReviewsSection,
   treatmentMetaLine,
@@ -71,33 +70,6 @@ function ProviderIdentity({ provider }) {
         <p className="mt-5 whitespace-pre-wrap text-sm">{provider.biography}</p>
       ) : null}
     </header>
-  );
-}
-
-function PaymentTerms({ terms }) {
-  const commitment = Number.isInteger(terms.commitment_amount_pence)
-    ? formatPricePence(terms.commitment_amount_pence)
-    : null;
-  const paymentText =
-    terms.payment_mode === "fixed_deposit"
-      ? `${commitment ?? "A fixed deposit"} is paid when booking and retained after late cancellation.`
-      : `Customers pay in full when booking. ${commitment ?? "The commitment amount"} is retained after late cancellation and the rest is refunded.`;
-
-  return (
-    <section className="flex flex-col gap-3">
-      <h2 className="text-lg font-semibold">Booking terms</h2>
-      <div className="rounded-xl border border-black/10 p-4 text-sm">
-        <p>{paymentText}</p>
-        {terms.cancellation_window_hours ? (
-          <p className="mt-2 text-black/60">
-            Cancellation window: {terms.cancellation_window_hours} hours
-          </p>
-        ) : null}
-        {terms.written_policy ? (
-          <p className="mt-4 whitespace-pre-wrap">{terms.written_policy}</p>
-        ) : null}
-      </div>
-    </section>
   );
 }
 
@@ -317,8 +289,6 @@ export function StorefrontPage({ viewModel, backHref, showBackLink = true }) {
             username={bookingUsername}
           />
         ) : null}
-
-        <PaymentTerms terms={viewModel.booking_terms} />
 
         {shouldShowReviewsSection(viewModel.reviews) ? (
           <ReviewsPreview reviews={viewModel.reviews} username={bookingUsername} />

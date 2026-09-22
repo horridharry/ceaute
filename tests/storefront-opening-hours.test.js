@@ -128,10 +128,6 @@ test("Availability is the last section, and only when the provider has open days
     body.indexOf("<ReviewsPreview") < body.indexOf("<Availability"),
     "Availability comes after Reviews",
   );
-  assert.ok(
-    body.indexOf("<Availability") > body.indexOf("<PaymentTerms"),
-    "Booking terms stays where it is, above Availability",
-  );
   assert.equal(
     body.slice(body.indexOf("<Availability")).split("</div>")[0].includes("<section"),
     false,
