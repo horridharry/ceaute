@@ -117,6 +117,14 @@ export function ProviderMenuSheet({ providerPage }) {
             buttonRef.current?.focus();
           }
         }}
+        onKeyDown={(event) => {
+          // Not every browser turns Escape into a cancel event, so close here
+          // too; preventDefault stops the ones that do from repeating it.
+          if (event.key === "Escape") {
+            event.preventDefault();
+            close();
+          }
+        }}
         onClick={(event) => {
           // The sheet fills the dialog box, so a click on the dialog itself
           // is a click on the backdrop.
