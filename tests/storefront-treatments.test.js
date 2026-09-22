@@ -230,16 +230,6 @@ test("See all buttons count everything, not the preview, and Portfolio stays a t
   assert.doesNotMatch(portfolio, /SECONDARY_BUTTON/, "Portfolio stays a text link, not a button");
 });
 
-test("the storefront shows at most three reviews and claims no all-reviews page", () => {
-  const storefront = read("src/features/storefront/storefront-page.jsx");
-  assert.match(storefront, /const REVIEWS_PREVIEW_COUNT = 3;/);
-  assert.match(storefront, /reviews\.slice\(0, REVIEWS_PREVIEW_COUNT\)\.map\(/);
-  assert.match(storefront, /shouldShowReviewsSection\(viewModel\.reviews\)/, "no reviews, no section");
-  // There is no all-reviews route yet, so nothing may link to one.
-  assert.doesNotMatch(storefront, /See all \$\{pluralCount\(.*review/);
-  assert.doesNotMatch(storefront, /\/reviews/);
-});
-
 test("both pages book through the same selection list and link", () => {
   const storefront = read("src/features/storefront/storefront-page.jsx");
   const allTreatments = read("src/features/storefront/all-treatments.jsx");

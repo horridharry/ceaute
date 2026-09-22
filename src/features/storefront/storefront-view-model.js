@@ -4,6 +4,9 @@ import { signStoragePaths } from "@/lib/supabase/signed-urls";
 import { ratingSummary } from "./format";
 import { buildTreatmentSections } from "./treatment-sections";
 import { treatmentQueries } from "./treatment-queries";
+import { publicReviews, visibleReviewsQuery } from "./review-queries";
+import { openingHoursQuery } from "./availability-queries";
+import { openingHours } from "./opening-hours";
 import {
   portfolioImagesWithSignedUrls,
   signPortfolioImages,
@@ -33,16 +36,6 @@ function mapBookingTerms(settings) {
   };
 }
 
-function reviewerDisplayName(profile) {
-  const fullName = String(profile?.full_name ?? "").trim();
-
-  if (!fullName) {
-    return "Verified customer";
-  }
-
-  return fullName.split(/\s+/)[0] || "Verified customer";
-}
-
 export async function buildStorefrontViewModel({ supabase, providerPage }) {
   const treatmentQuery = treatmentQueries(supabase, providerPage.id);
   const [
@@ -54,6 +47,7 @@ export async function buildStorefrontViewModel({ supabase, providerPage }) {
     compatibilityResult,
     bookingSettingsResult,
     reviewsResult,
+    openingHoursResult,
   ] = await Promise.all([
     supabase
       .schema("ceaute")
@@ -78,13 +72,8 @@ export async function buildStorefrontViewModel({ supabase, providerPage }) {
       )
       .eq("provider_page_id", providerPage.id)
       .maybeSingle(),
-    supabase
-      .schema("ceaute")
-      .from("booking_review")
-      .select("rating, comment, created_at, profile:customer_profile_id(full_name)")
-      .eq("provider_page_id", providerPage.id)
-      .eq("is_visible", true)
-      .order("created_at", { ascending: false }),
+    visibleReviewsQuery(supabase, providerPage.id),
+    openingHoursQuery(supabase, providerPage.id),
   ]);
 
   const failures = Object.entries({
@@ -96,6 +85,7 @@ export async function buildStorefrontViewModel({ supabase, providerPage }) {
     add_on_compatibility: compatibilityResult,
     booking_settings: bookingSettingsResult,
     reviews: reviewsResult,
+    opening_hours: openingHoursResult,
   }).filter(([, result]) => result.error);
 
   if (failures.length > 0) {
@@ -116,12 +106,7 @@ export async function buildStorefrontViewModel({ supabase, providerPage }) {
       SIGNED_IMAGE_SECONDS,
     ),
   ]);
-  const reviews = (reviewsResult.data ?? []).map((review) => ({
-    rating: review.rating,
-    comment: review.comment ?? "",
-    created_at: review.created_at,
-    reviewer_name: reviewerDisplayName(review.profile),
-  }));
+  const reviews = publicReviews(reviewsResult.data);
 
   return {
     provider: {
@@ -145,5 +130,6 @@ export async function buildStorefrontViewModel({ supabase, providerPage }) {
     }),
     booking_terms: mapBookingTerms(bookingSettingsResult.data),
     reviews,
+    opening_hours: openingHours(openingHoursResult.data),
   };
 }

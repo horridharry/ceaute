@@ -185,3 +185,22 @@ test("All treatments lives in the storefront group, under its published check", 
   );
   assert.match(withoutComments(read(page)), /getPublishedProviderPageByUsername\(/);
 });
+
+test("All reviews lives in the storefront group, under its published check", () => {
+  const reviewsDir = path.join(STOREFRONT_DIR, "reviews");
+  const page = routeFile(reviewsDir, "page");
+
+  assert.ok(page, "(storefront)/reviews/page exists");
+  assert.ok(
+    wrappingFiles(reviewsDir, "layout").includes(routeFile(STOREFRONT_DIR, "layout")),
+    "the (storefront) layout wraps All reviews",
+  );
+  assert.deepEqual(
+    wrappingFiles(reviewsDir, "loading")
+      .map((file) => path.relative(REPO_ROOT, file))
+      .filter((file) => !file.includes("(storefront)")),
+    [],
+    "no loading boundary above the published check",
+  );
+  assert.match(withoutComments(read(page)), /getPublishedProviderPageByUsername\(/);
+});
