@@ -39,22 +39,37 @@ export function PhotoGallery({ photos, label }) {
     }
   }, [index]);
 
+  // The URL with ?photo set (or removed), keeping any other query parameters.
+  const hrefWithPhoto = useCallback(
+    (photoId) => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (photoId) {
+        params.set("photo", photoId);
+      } else {
+        params.delete("photo");
+      }
+      const query = params.toString();
+      return query ? `${pathname}?${query}` : pathname;
+    },
+    [pathname, searchParams],
+  );
+
   useEffect(() => {
     if (requestedId && index === null) {
-      router.replace(pathname, { scroll: false });
+      router.replace(hrefWithPhoto(null), { scroll: false });
     }
-  }, [requestedId, index, pathname, router]);
+  }, [requestedId, index, hrefWithPhoto, router]);
 
   const showPhoto = useCallback(
     (nextIndex, mode) => {
-      const href = `${pathname}?photo=${encodeURIComponent(photos[nextIndex].id)}`;
+      const href = hrefWithPhoto(photos[nextIndex].id);
       if (mode === "push") {
         router.push(href, { scroll: false });
       } else {
         router.replace(href, { scroll: false });
       }
     },
-    [pathname, photos, router],
+    [hrefWithPhoto, photos, router],
   );
 
   function close() {
@@ -66,7 +81,7 @@ export function PhotoGallery({ photos, label }) {
       openedHere.current = false;
       router.back();
     } else {
-      router.replace(pathname, { scroll: false });
+      router.replace(hrefWithPhoto(null), { scroll: false });
     }
   }
 
