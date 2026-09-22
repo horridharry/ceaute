@@ -27,17 +27,14 @@ function PaymentTerms({ terms }) {
       <h2 className="text-lg font-semibold">Booking terms</h2>
       <div className="rounded-xl border p-4 text-sm">
         <p>{paymentText}</p>
-        <p className="mt-2 text-black/60">
-          Cancellation window:{" "}
-          {terms.cancellation_window_hours
-            ? `${terms.cancellation_window_hours} hours`
-            : "Not set yet"}
-        </p>
+        {terms.cancellation_window_hours ? (
+          <p className="mt-2 text-black/60">
+            Cancellation window: {terms.cancellation_window_hours} hours
+          </p>
+        ) : null}
         {terms.written_policy ? (
           <p className="mt-4 whitespace-pre-wrap">{terms.written_policy}</p>
-        ) : (
-          <p className="mt-4 text-black/60">No written policies added yet.</p>
-        )}
+        ) : null}
       </div>
     </section>
   );
@@ -175,16 +172,12 @@ export function StorefrontPage({ viewModel, backHref, showBackLink = true }) {
             <p className="mt-5 whitespace-pre-wrap text-sm">
               {provider.biography}
             </p>
-          ) : (
-            <p className="mt-5 text-sm text-black/60">
-              Biography has not been added yet.
-            </p>
-          )}
+          ) : null}
         </header>
 
-        <section className="flex flex-col gap-3">
-          <h2 className="text-lg font-semibold">Portfolio</h2>
-          {portfolio.length ? (
+        {portfolio.length ? (
+          <section className="flex flex-col gap-3">
+            <h2 className="text-lg font-semibold">Portfolio</h2>
             <div className="grid grid-cols-2 gap-3">
               {portfolio.map((image, index) => (
                 <figure key={`${image.image_url}-${index}`} className="min-w-0">
@@ -202,10 +195,8 @@ export function StorefrontPage({ viewModel, backHref, showBackLink = true }) {
                 </figure>
               ))}
             </div>
-          ) : (
-            <EmptyState>No visible portfolio images yet.</EmptyState>
-          )}
-        </section>
+          </section>
+        ) : null}
 
         <section className="flex flex-col gap-3">
           <h2 className="text-lg font-semibold">Treatments</h2>
