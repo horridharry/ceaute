@@ -44,7 +44,7 @@ function CloseIcon() {
   );
 }
 
-// The provider menu: a right-side sheet on every screen size. The sheet is
+// The provider menu: a left-side sheet on every screen size. The sheet is
 // open only for the path it was opened on, so any navigation closes it.
 export function ProviderMenuSheet({ providerPage }) {
   const pathname = usePathname();
@@ -130,7 +130,7 @@ export function ProviderMenuSheet({ providerPage }) {
           // is a click on the backdrop.
           if (event.target === event.currentTarget) close();
         }}
-        className="provider-menu-sheet fixed inset-y-0 right-0 left-auto m-0 h-dvh max-h-none w-[min(100%-48px,360px)] max-w-none bg-white p-0 text-black shadow-xl backdrop:bg-black/40"
+        className="provider-menu-sheet fixed inset-y-0 left-0 right-auto m-0 h-dvh max-h-none w-[min(100%-48px,360px)] max-w-none bg-white p-0 text-black shadow-xl backdrop:bg-black/40"
       >
         <div className="flex h-full flex-col overflow-y-auto">
           <div className="flex h-14 shrink-0 items-center justify-end px-4">

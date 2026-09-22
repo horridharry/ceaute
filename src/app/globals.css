@@ -76,7 +76,7 @@
 }
 
 /* Provider menu sheet (src/components/app-header/provider-menu-sheet.jsx):
-   slides in from the right unless the viewer prefers reduced motion. */
+   slides in from the left unless the viewer prefers reduced motion. */
 @media (prefers-reduced-motion: no-preference) {
   .provider-menu-sheet[open] {
     animation: provider-menu-sheet-in 200ms ease-out;
@@ -89,7 +89,7 @@
 
 @keyframes provider-menu-sheet-in {
   from {
-    transform: translateX(100%);
+    transform: translateX(-100%);
   }
 }
 
