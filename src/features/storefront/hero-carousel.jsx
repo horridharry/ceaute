@@ -9,28 +9,14 @@ function prefersReducedMotion() {
   );
 }
 
-function ChevronIcon({ direction }) {
-  return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 24 24"
-      className="h-5 w-5"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d={direction === "previous" ? "M15 6l-6 6 6 6" : "M9 6l6 6-6 6"} />
-    </svg>
-  );
-}
-
-// Every visible portfolio image, in portfolio order. Swiping uses native
-// scroll snapping; Previous/Next buttons and the arrow keys move one image
-// at a time. At either end a button is dimmed with aria-disabled rather than
-// disabled, so it keeps keyboard focus. An image that fails to load is
-// dropped, and with none left the hero is not shown.
+// Every visible portfolio image, in portfolio order. Moving between images is
+// a native horizontal swipe with scroll snapping; the pagination dots follow
+// the image in view and are also buttons, and the arrow keys work once the
+// images have focus. A single image gets no controls. An image that fails to
+// load is dropped, and with none left the hero is not shown.
+//
+// This is the phone presentation, also used on wider screens until the
+// desktop photo grid arrives with the portfolio gallery (Stage 3).
 export function HeroCarousel({ images, providerName, className = "" }) {
   const trackRef = useRef(null);
   const [failedUrls, setFailedUrls] = useState(() => new Set());
@@ -60,24 +46,24 @@ export function HeroCarousel({ images, providerName, className = "" }) {
       aria-roledescription="carousel"
       aria-label={label}
       className={`relative ${className}`}
-      onKeyDown={(event) => {
-        if (!hasControls) return;
-        if (event.key === "ArrowRight" && current < count - 1) {
-          event.preventDefault();
-          goTo(current + 1);
-        } else if (event.key === "ArrowLeft" && current > 0) {
-          event.preventDefault();
-          goTo(current - 1);
-        }
-      }}
     >
       <div
         ref={trackRef}
         // With several images the track itself is focusable, so the arrow
-        // keys work without first reaching a button.
+        // keys work without reaching for the dots.
         role={hasControls ? "group" : undefined}
         tabIndex={hasControls ? 0 : undefined}
         aria-label={hasControls ? `${label}, ${count} images` : undefined}
+        onKeyDown={(event) => {
+          if (!hasControls) return;
+          if (event.key === "ArrowRight" && current < count - 1) {
+            event.preventDefault();
+            goTo(current + 1);
+          } else if (event.key === "ArrowLeft" && current > 0) {
+            event.preventDefault();
+            goTo(current - 1);
+          }
+        }}
         onScroll={(event) => {
           const track = event.currentTarget;
           if (track.clientWidth > 0) {
@@ -112,34 +98,29 @@ export function HeroCarousel({ images, providerName, className = "" }) {
 
       {hasControls ? (
         <>
-          <button
-            type="button"
-            aria-label="Previous image"
-            aria-disabled={current === 0}
-            onClick={() => {
-              if (current > 0) goTo(current - 1);
-            }}
-            className="absolute left-3 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full bg-white/90 text-black shadow-sm transition hover:bg-white aria-disabled:cursor-default aria-disabled:opacity-40"
-          >
-            <ChevronIcon direction="previous" />
-          </button>
-          <button
-            type="button"
-            aria-label="Next image"
-            aria-disabled={current === count - 1}
-            onClick={() => {
-              if (current < count - 1) goTo(current + 1);
-            }}
-            className="absolute right-3 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full bg-white/90 text-black shadow-sm transition hover:bg-white aria-disabled:cursor-default aria-disabled:opacity-40"
-          >
-            <ChevronIcon direction="next" />
-          </button>
-          <p
-            aria-hidden="true"
-            className="absolute bottom-3 right-3 rounded-full bg-black/60 px-2.5 py-1 text-xs font-medium tabular-nums text-white"
-          >
-            {current + 1} / {count}
-          </p>
+          <div className="absolute inset-x-0 bottom-2 flex justify-center">
+            <div className="flex items-center rounded-full bg-black/25 px-1 backdrop-blur-sm">
+              {slides.map((image, slideIndex) => (
+                <button
+                  key={image.image_url}
+                  type="button"
+                  aria-label={`Show image ${slideIndex + 1} of ${count}`}
+                  aria-current={slideIndex === current ? "true" : undefined}
+                  onClick={() => goTo(slideIndex)}
+                  className="group grid h-6 w-6 place-items-center focus-visible:outline-none"
+                >
+                  <span
+                    aria-hidden="true"
+                    className={`block h-1.5 rounded-full transition-all group-focus-visible:ring-2 group-focus-visible:ring-white ${
+                      slideIndex === current
+                        ? "w-3.5 bg-white"
+                        : "w-1.5 bg-white/60"
+                    }`}
+                  />
+                </button>
+              ))}
+            </div>
+          </div>
           <p aria-live="polite" className="sr-only">
             {`Image ${current + 1} of ${count}`}
           </p>
@@ -163,7 +144,7 @@ export function ProviderPhoto({ src }) {
       src={src}
       alt=""
       onError={() => setFailed(true)}
-      className="h-16 w-16 shrink-0 rounded-full bg-black/5 object-cover"
+      className="h-14 w-14 shrink-0 rounded-full bg-black/5 object-cover"
     />
   );
 }
