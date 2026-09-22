@@ -120,6 +120,16 @@ existing hold or booking, including Stripe's success and cancel returns, must
 keep working after a provider is unpublished or suspended.
 `tests/storefront-route-boundaries.test.js` pins this structure.
 
+Portfolio images and display photos live in private buckets
+(`portfolio-images`, `provider-display-photos`) whose objects only the owning
+provider can reach; the storefront shows them through short-lived signed URLs.
+Link-preview crawlers need a stable public URL, so
+`[username]/(storefront)/og-image/route.js` streams exactly one image — the
+first visible portfolio image of a published page — and answers 404 for
+anything else. `provider_page.display_photo_path` is constrained to the page's
+own folder, and owners may update that column but no other platform-managed
+one.
+
 ## Where rules are enforced
 
 Application code validates forms, prepares view models, presents useful error
@@ -190,7 +200,8 @@ screen as messages; unexpected errors still throw.
 
 Images reach the server as Server Action form data, and Next's default ceiling
 for a Server Action body is 1 MB — under both the 5 MB a portfolio image and the
-10 MB an inspiration image are allowed to be. `next.config.ts` therefore raises
+10 MB an inspiration image are allowed to be (a display photo is also capped at
+5 MB). `next.config.ts` therefore raises
 `experimental.serverActions.bodySizeLimit` to `11mb`. That is a ceiling for
 every action, not a per-image limit: the limits that decide are the ones on the
 Storage buckets and in the database, and they are what a request bypassing the
