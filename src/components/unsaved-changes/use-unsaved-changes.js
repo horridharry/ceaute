@@ -43,3 +43,9 @@ export function useUnsavedChangesNavigation() {
   const { navigate } = useUnsavedChangesContext("useUnsavedChangesNavigation");
   return { navigate };
 }
+
+// True while the discard confirmation is showing. Safe outside
+// UnsavedChangesProvider, where it is always false.
+export function useUnsavedChangesConfirming() {
+  return useContext(UnsavedChangesContext)?.isConfirming ?? false;
+}

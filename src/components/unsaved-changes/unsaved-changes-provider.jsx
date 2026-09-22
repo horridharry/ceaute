@@ -86,8 +86,11 @@ export function UnsavedChangesProvider({ children }) {
       register: (id) => getController().register(id),
       unregister: (id, options) => getController().unregister(id, options),
       navigate: (href) => getController().navigate(href),
+      // True while the discard confirmation is open, so other overlays (the
+      // provider menu) can step aside for it.
+      isConfirming: pending !== null,
     }),
-    [getController],
+    [getController, pending],
   );
 
   return (
