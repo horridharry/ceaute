@@ -101,8 +101,8 @@ Those public projections require a published provider page themselves; they do
 not trust a caller to have checked first, so a draft or suspended page returns
 nothing even when its ID is known. The booking journey under
 `/@[username]/book` and discovery use them. The storefront page itself is the
-exception: the `[username]` layout and page resolve the page with one narrow,
-per-request cached `status = 'published'` query and then `src/features/storefront/storefront-view-model.js` reads the
+exception: the `[username]/(storefront)` layout and page resolve the page with
+one narrow, per-request cached `status = 'published'` query and then `src/features/storefront/storefront-view-model.js` reads the
 provider-owned tables directly with the client it is given. That builder is
 shared with the dashboard preview, which passes the signed-in user's client so
 a draft page renders through RLS. The storefront's publication guarantee
@@ -111,11 +111,14 @@ page that has not been through it. A provider reads their own unpublished page
 through the authenticated provider-owned tables, which is why the dashboard,
 its preview, and onboarding keep working before publication.
 
-That query runs in the `[username]` layout rather than only in the page
-because the segment's `loading.jsx` streams a fallback before the page
+That query runs in the `(storefront)` route group's layout rather than only in
+the page because the group's `loading.jsx` streams a fallback before the page
 renders; after that, `notFound()` can only mark the response `noindex` with a
-200. Checking in the layout keeps a missing or unpublished provider a real
-404.
+200. Checking in that layout keeps a missing or unpublished storefront a real
+404. It is deliberately not in the `[username]` layout: checkout for an
+existing hold or booking, including Stripe's success and cancel returns, must
+keep working after a provider is unpublished or suspended.
+`tests/storefront-route-boundaries.test.js` pins this structure.
 
 ## Where rules are enforced
 

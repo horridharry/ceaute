@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { StorefrontPage } from "@/features/storefront/storefront-page";
 import { buildStorefrontViewModel } from "@/features/storefront/storefront-view-model";
-import { getPublishedProviderPageByUsername } from "./_lib/public-provider-data";
+import { getPublishedProviderPageByUsername } from "../_lib/public-provider-data";
 import {
   hasPublicUsernamePrefix,
   normalizePublicUsername,
