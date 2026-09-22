@@ -3,6 +3,8 @@
 // (display_order, then created_at). Kept free of server-only imports so the
 // rules can be tested with a fake client.
 
+import { logSupabaseError } from "@/lib/supabase/log-error";
+
 export const PORTFOLIO_BUCKET = "portfolio-images";
 
 const TYPE_BY_EXTENSION = {
@@ -34,7 +36,8 @@ export async function findPublishedHeroImage(supabase, normalizedUsername) {
     .maybeSingle();
 
   if (pageError) {
-    throw new Error("Could not load provider page.");
+    logSupabaseError("hero image: provider page lookup", pageError);
+    throw new Error("Could not load provider page.", { cause: pageError });
   }
 
   if (!providerPage) {
@@ -53,7 +56,8 @@ export async function findPublishedHeroImage(supabase, normalizedUsername) {
     .maybeSingle();
 
   if (imageError) {
-    throw new Error("Could not load portfolio image.");
+    logSupabaseError("hero image: portfolio lookup", imageError);
+    throw new Error("Could not load portfolio image.", { cause: imageError });
   }
 
   return image

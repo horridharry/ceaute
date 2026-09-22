@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { calculateAvailableAppointmentTimes } from "../book/_lib/appointment-availability";
 import { normalizePublicUsername } from "@/features/storefront/format";
+import { logSupabaseError } from "@/lib/supabase/log-error";
 import { findPublishedHeroImage } from "@/features/storefront/hero-image";
 
 export const getPublishedProviderPageByUsername = cache(async (username) => {
@@ -24,7 +25,8 @@ export const getPublishedProviderPageByUsername = cache(async (username) => {
     .maybeSingle();
 
   if (error) {
-    throw new Error("Could not load provider page.");
+    logSupabaseError("published provider page lookup", error);
+    throw new Error("Could not load provider page.", { cause: error });
   }
 
   if (!providerPage) {
