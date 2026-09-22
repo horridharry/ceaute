@@ -1,6 +1,8 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
+import { EmptyState } from "@/components/ui/empty-state";
+import { PageContainer } from "@/components/ui/page-container";
+import { PageHeading } from "@/components/ui/page-heading";
 import { ReviewCard } from "@/features/storefront/review-card";
 import { loadVisibleReviews } from "@/features/storefront/review-queries";
 import {
@@ -49,31 +51,31 @@ export default async function ProviderReviewsPage({ params }) {
   const rating = ratingSummary(reviews);
 
   return (
-    <main className="container mx-auto max-w-md px-5 pb-10 pt-6 lg:max-w-[25.5rem] lg:px-0">
-      <Link
-        href={`/@${providerPage.username}`}
-        className="inline-flex min-h-11 items-center text-sm font-semibold text-pink-600"
-      >
-        <span aria-hidden="true">←&nbsp;</span>
-        {providerName(providerPage)}
-      </Link>
-      <h1 className="mt-2 text-2xl font-bold tracking-tighter">All reviews</h1>
+    <PageContainer width="column">
+      <PageHeading
+        size="md"
+        title="All reviews"
+        back={{
+          href: `/@${providerPage.username}`,
+          label: providerName(providerPage),
+        }}
+      />
       {rating ? (
-        <p className="mt-2 text-sm font-medium text-black">
+        <p className="mt-2 text-sm font-medium text-ink">
           <span aria-hidden="true">★ </span>
           <span className="sr-only">Rated </span>
           {rating.average}
           <span className="sr-only"> out of 5</span>{" "}
-          <span className="font-normal text-black/60">({rating.countLabel})</span>
+          <span className="font-normal text-ink-muted">({rating.countLabel})</span>
         </p>
       ) : null}
       <div className="mt-6 flex flex-col gap-3">
         {reviews.length ? (
           reviews.map((review, index) => <ReviewCard key={index} review={review} />)
         ) : (
-          <p className="text-sm text-black/60">No reviews yet.</p>
+          <EmptyState>No reviews yet.</EmptyState>
         )}
       </div>
-    </main>
+    </PageContainer>
   );
 }

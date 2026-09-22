@@ -1,25 +1,31 @@
 import Link from 'next/link';
+import { buttonClassName } from '@/components/ui/button-classes';
+import { Card } from '@/components/ui/card';
+import { PageContainer } from '@/components/ui/page-container';
+import { PageHeading } from '@/components/ui/page-heading';
 
 export default function NotFoundContent() {
   return (
-    <main className="container mx-auto flex max-w-md flex-col p-5">
-      <section className="mt-6 flex flex-col rounded-2xl border border-black/10 bg-white p-6">
-        <p className="text-xs font-bold uppercase tracking-widest text-pink-600">
+    <PageContainer className="flex flex-col">
+      <Card as="section" padding="lg" className="mt-6 flex flex-col bg-surface">
+        <p className="text-xs font-bold uppercase tracking-widest text-accent">
           Page not found
         </p>
-        <h1 className="mt-4 text-2xl font-bold tracking-tight text-black/90">
-          That page is not here
-        </h1>
-        <p className="mt-2 text-sm text-black/60">
-          The link may be out of date, or the provider page may not be published yet.
-        </p>
+        <PageHeading
+          size="md"
+          tracking="tight"
+          className="mt-4"
+          titleClassName="text-ink/90"
+          title="That page is not here"
+          description="The link may be out of date, or the provider page may not be published yet."
+        />
         <Link
           href="/discover"
-          className="mt-8 w-max rounded-lg bg-pink-800 p-2.5 px-4 text-sm font-medium text-white shadow-sm duration-200 hover:opacity-80"
+          className={buttonClassName({ variant: 'primary-strong', className: 'mt-8 w-max' })}
         >
           Discover providers
         </Link>
-      </section>
-    </main>
+      </Card>
+    </PageContainer>
   );
 }

@@ -1,14 +1,18 @@
+import { PageContainer } from "@/components/ui/page-container";
+import { Skeleton, SkeletonGroup } from "@/components/ui/skeleton";
+
+// The sign-in card shape: the wordmark, a heading line, a field and a button.
 export default function Loading() {
   return (
-    <main className="container mx-auto flex min-h-screen max-w-sm items-center px-5 py-12">
-      <div className="flex w-full animate-pulse flex-col">
+    <PageContainer width="auth">
+      <SkeletonGroup className="flex w-full flex-col">
         <h2 className="select-none text-lg font-semibold tracking-tighter">
           Ceaute
         </h2>
-        <span className="mt-10 w-40 rounded-lg bg-black/5 p-4"></span>
-        <span className="mt-8 w-full rounded-lg bg-black/5 p-6"></span>
-        <span className="mt-4 w-full rounded-lg bg-black/5 p-5"></span>
-      </div>
-    </main>
+        <Skeleton rounded="lg" className="mt-10 w-40 p-4" />
+        <Skeleton rounded="lg" className="mt-8 w-full p-6" />
+        <Skeleton rounded="lg" className="mt-4 w-full p-5" />
+      </SkeletonGroup>
+    </PageContainer>
   );
 }
