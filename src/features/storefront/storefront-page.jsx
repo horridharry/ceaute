@@ -6,14 +6,20 @@ import {
 import { TreatmentSelectionList } from "./treatment-selection-list";
 import { HeroCarousel, ProviderPhoto } from "./hero-carousel";
 
-// Average rating and review count, or "New" before the first review.
+// Average rating and review count, or a "New" pill before the first review.
 function RatingSummary({ rating }) {
   if (!rating) {
-    return <p className="font-medium text-black">New</p>;
+    return (
+      <p>
+        <span className="inline-flex items-center rounded-full border border-black/10 px-2.5 py-0.5 text-xs font-semibold text-black/70">
+          New
+        </span>
+      </p>
+    );
   }
 
   return (
-    <p className="font-medium text-black">
+    <p className="text-sm font-medium text-black">
       <span aria-hidden="true">★ </span>
       <span className="sr-only">Rated </span>
       {rating.average}
@@ -23,6 +29,9 @@ function RatingSummary({ rating }) {
   );
 }
 
+// Name first, then @username with the public area (never the exact
+// address), then the rating. The display photo is optional and absent
+// entirely when there is none.
 function ProviderIdentity({ provider }) {
   const handleAndArea = [
     provider.username ? `@${provider.username}` : "",
@@ -44,10 +53,7 @@ function ProviderIdentity({ provider }) {
           ) : null}
         </div>
       </div>
-      <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-        {provider.provider_category ? (
-          <p className="text-black/60">{provider.provider_category}</p>
-        ) : null}
+      <div className="mt-3">
         <RatingSummary rating={provider.rating} />
       </div>
       {provider.biography ? (
