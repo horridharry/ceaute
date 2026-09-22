@@ -1,36 +1,49 @@
 "use client";
 
 import { useFormStatus } from "react-dom";
-import { Button } from "./button";
+import { buttonClassName } from "./button-classes";
+import { pendingButtonState } from "./pending-state";
 
-// Submit button for a <form action={serverAction}> rendered by a Server
-// Component, composing the ui Button primitive above. Preserves the pending
-// behaviour of src/components/pending-button.jsx exactly: React tracks the
+// Submit button for a <form action={serverAction}>. React tracks the
 // surrounding form's submission, so the button shows its pending label and
 // refuses duplicate submissions without the form needing useActionState or
-// any client state of its own.
+// any client state of its own. Client forms that already use useActionState
+// keep their own pending flag.
 //
-// This is a NEW file alongside src/components/pending-button.jsx, not a
-// replacement for it -- nothing has been migrated to it. Consolidating the
-// two is left for the lead to decide at a later task.
+// By default it takes a Button variant and size. `unstyled` renders only the
+// caller's className, which is how src/components/pending-button.jsx keeps
+// its existing consumers (including checkout) exactly as they were.
 export function PendingButton({
   children,
   pendingLabel,
   disabled = false,
+  unstyled = false,
+  variant = "primary",
+  size = "md",
+  surface = "light",
+  className = "",
   ...buttonProps
 }) {
   const { pending } = useFormStatus();
-  const isDisabled = pending || disabled;
+  const { label, ...state } = pendingButtonState({
+    pending,
+    disabled,
+    children,
+    pendingLabel,
+  });
 
   return (
-    <Button
+    <button
       type="submit"
       {...buttonProps}
-      disabled={isDisabled}
-      aria-disabled={isDisabled}
-      aria-busy={pending || undefined}
+      {...state}
+      className={
+        unstyled
+          ? className
+          : buttonClassName({ variant, size, surface, className })
+      }
     >
-      {pending ? pendingLabel ?? children : children}
-    </Button>
+      {label}
+    </button>
   );
 }

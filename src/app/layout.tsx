@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { Inter } from "next/font/google";
 
@@ -11,15 +11,13 @@ export const metadata: Metadata = {
   description: "Discover and book independent beauty providers.",
 };
 
-export const viewport = {
+// No scale limit, so people can pinch-zoom; the browser chrome is white in
+// both OS themes because the app is light-only.
+export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f472b6" }, // Pink color for light mode
-    { media: "(prefers-color-scheme: dark)", color: "#1e293b" }, // Dark gray for dark mode
-  ],
+  themeColor: "#ffffff",
+  colorScheme: "light",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {

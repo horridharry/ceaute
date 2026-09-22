@@ -55,10 +55,15 @@ trade-offs behind this shape are in
 | Completion and abandoned-image cleanup, reviews | `GET /api/cron/complete-bookings`, `/account/bookings/[bookingId]` | `api/cron/*`, `src/lib/bookings/discard-inspiration-images.js`, `account/bookings/actions.js` | `complete_elapsed_bookings`, `list_discardable_booking_inspiration_images`, `discard_booking_inspiration_images`, `create_booking_review` |
 | Transactional email | `GET /api/cron/send-booking-emails` | `src/lib/emails/booking-emails.js` (delivery), `booking-email-content.js` (text and HTML content), `email-layout.js` (shared HTML layout) | outbox rows enqueued by booking transitions; `claim_pending_booking_emails` |
 | Scheduling | Supabase Cron | migration `202609150001` | `invoke_cron_endpoint` via `pg_cron` and `pg_net` |
+| Shared visual foundation | every page; `src/app/layout.tsx`, `src/app/globals.css` | `src/components/ui/*` (see [design-system.md](design-system.md)) | none |
 
 Tests follow the same split: `tests/*.test.js` cover pure JavaScript modules,
 `supabase/tests/database/*.test.sql` cover the PostgreSQL rules, and nothing
-yet covers the HTTP handlers or Server Actions end to end.
+yet covers the HTTP handlers or Server Actions end to end. The test loader
+(`tests/_support/resolve-alias.mjs`) compiles `.jsx`/`.tsx` with the
+TypeScript compiler, so a test can render a component that needs no data with
+`react-dom/server` and assert on its markup, as
+`tests/design-system-primitives.test.js` does.
 
 `src/proxy.ts` refreshes the Supabase session and protects account and dashboard
 URLs. Every dashboard URL requires authentication. Every dashboard URL except
@@ -275,8 +280,10 @@ is no umbrella concept over Treatments, Treatment Groups, and Add-ons.
 
 Sections may share only product-agnostic infrastructure:
 
-- `src/components/ui` primitives and `src/components` (header, footer, error
-  and not-found content, pending feedback);
+- `src/components/ui` primitives (tokens, buttons, form fields, page
+  container and heading, cards, empty and loading states; see
+  [design-system.md](design-system.md)) and `src/components` (header, footer,
+  error and not-found content, pending feedback);
 - `src/features/navigation` (section tabs), `src/features/storefront` (the
   public storefront, also rendered by the dashboard preview), and
   `src/features/auth/logout-action.js`;

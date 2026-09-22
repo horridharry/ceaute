@@ -1,12 +1,54 @@
 @import "tailwindcss";
 
+/* Named colours for the roles Ceaute's interface already uses. Each one is
+   the exact value the code used before it had a name, so adopting a token
+   never changes what renders; near-identical values (black/50 vs black/60,
+   red vs rose) stay separate on purpose. This is not a brand palette. Use a
+   token with an opacity modifier (text-ink/90) for a one-off shade rather
+   than adding a token. See docs/design-system.md. */
+@theme inline {
+  --color-ink: var(--color-black);
+  --color-ink-muted: color-mix(in oklab, var(--color-black) 60%, transparent);
+  --color-ink-subtle: color-mix(in oklab, var(--color-black) 50%, transparent);
+  --color-surface: var(--color-white);
+  --color-surface-subtle: color-mix(in oklab, var(--color-black) 5%, transparent);
+  --color-line: color-mix(in oklab, var(--color-black) 10%, transparent);
+  --color-line-strong: color-mix(in oklab, var(--color-black) 20%, transparent);
+  --color-action: var(--color-pink-700);
+  --color-action-strong: var(--color-pink-800);
+  --color-accent: var(--color-pink-600);
+  --color-accent-strong: var(--color-pink-700);
+  --color-focus: var(--color-pink-600);
+  --color-field-focus: var(--color-pink-500);
+  --color-field-focus-ring: var(--color-pink-100);
+  --color-danger: var(--color-red-600);
+  --color-danger-line: var(--color-red-200);
+  --color-destructive: var(--color-rose-600);
+  --color-destructive-surface: var(--color-rose-50);
+  --color-scrim: color-mix(in oklab, var(--color-black) 40%, transparent);
+}
+
+/* Ceaute is light-only. Declaring the scheme and painting the document keeps
+   every page white with dark text whatever the operating system prefers and
+   whatever sits behind the page. */
+@layer base {
+  html {
+    color-scheme: light;
+    @apply bg-surface text-ink;
+  }
+
+  body {
+    @apply bg-surface;
+  }
+}
+
 @layer components {
   .field {
-    @apply block rounded-lg border border-black/10 bg-white p-2.5 text-black outline-none ring-2 ring-transparent duration-200 hover:border-black/20 focus:border-pink-500 focus:ring-pink-100;
+    @apply block rounded-lg border border-line bg-surface p-2.5 text-ink outline-none ring-2 ring-transparent duration-200 hover:border-line-strong focus:border-field-focus focus:ring-field-focus-ring;
   }
 
   .label {
-    @apply cursor-pointer block text-sm text-black;
+    @apply cursor-pointer block text-sm text-ink;
   }
 
   .field-set {

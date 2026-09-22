@@ -41,6 +41,7 @@ it rather than repeating it.
 | [Product behaviour](docs/product.md) | What Ceaute does today and the rules a product change must preserve | Observable behaviour changes |
 | [Domain model](docs/domain.md) | The vocabulary used in code, routes, and database names | A concept is added or renamed |
 | [Architecture](docs/architecture.md) | Where behaviour lives, which boundary is authoritative, where a change belongs | A boundary, integration, or slice changes |
+| [Design system](docs/design-system.md) | Colour tokens, the light-only baseline, the shared UI primitives and their accessibility conventions | A token, primitive or UI convention changes |
 | [Provider agreement (draft)](docs/provider-agreement-draft.md) | What providers accept before taking paid bookings, and the version acceptance is recorded against | The agreement's substance changes — bump the version with it |
 | [Dispute response](docs/dispute-response.md) | What happens when a customer disputes a payment, and what a person must do by hand | The dispute flow or its limitations change |
 | [Stripe Preview testing](docs/stripe-preview-testing.md) | How Stripe Test webhooks are routed to the designated Vercel Preview | Preview integration routing or webhook assumptions change |

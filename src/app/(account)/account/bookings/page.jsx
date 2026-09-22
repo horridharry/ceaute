@@ -1,36 +1,43 @@
-import Link from "next/link";
+import { CardLink } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
+import { PageContainer } from "@/components/ui/page-container";
+import { PageHeading } from "@/components/ui/page-heading";
 import { getCustomerBookings } from "./queries";
 
+// These cards and empty states have always drawn their border in the text
+// colour (a bare `border` under Tailwind 4); border="current" keeps that.
 const NoBookings = () => (
-  <div className="rounded-xl border p-4 text-sm text-black/60">
+  <EmptyState as="div" variant="bounded" border="current">
     You do not have any bookings yet.
-  </div>
+  </EmptyState>
 );
 
 const BookingItem = ({ booking }) => (
-  <Link href={`/account/bookings/${booking.booking_id}`}>
-    <article className="rounded-xl border p-3 duration-200 hover:border-black/20 hover:bg-black/5">
-      <h3 className="font-semibold">{booking.provider_name}</h3>
-      <p className="mt-3 text-sm">{booking.treatment_name}</p>
-      {booking.selected_add_ons.length ? (
-        <p className="mt-1 text-sm text-black/60">
-          Add-ons:{" "}
-          {booking.selected_add_ons.map((addOn) => addOn.name).join(", ")}
-        </p>
-      ) : null}
-      <p className="mt-3 text-sm font-semibold">
-        {booking.date_label}, {booking.time_label}
+  <CardLink
+    href={`/account/bookings/${booking.booking_id}`}
+    padding="sm"
+    border="current"
+  >
+    <h3 className="font-semibold">{booking.provider_name}</h3>
+    <p className="mt-3 text-sm">{booking.treatment_name}</p>
+    {booking.selected_add_ons.length ? (
+      <p className="mt-1 text-sm text-ink-muted">
+        Add-ons:{" "}
+        {booking.selected_add_ons.map((addOn) => addOn.name).join(", ")}
       </p>
-      <p className="mt-2 text-sm">Total: {booking.total_price_label}</p>
-      <p className="text-sm text-black/60">
-        Paid online: {booking.amount_paid_online_label}
-      </p>
-      <p className="text-sm text-black/60">
-        Due at appointment: {booking.amount_due_at_appointment_label}
-      </p>
-      <p className="mt-2 text-xs text-black/60">{booking.status_label}</p>
-    </article>
-  </Link>
+    ) : null}
+    <p className="mt-3 text-sm font-semibold">
+      {booking.date_label}, {booking.time_label}
+    </p>
+    <p className="mt-2 text-sm">Total: {booking.total_price_label}</p>
+    <p className="text-sm text-ink-muted">
+      Paid online: {booking.amount_paid_online_label}
+    </p>
+    <p className="text-sm text-ink-muted">
+      Due at appointment: {booking.amount_due_at_appointment_label}
+    </p>
+    <p className="mt-2 text-xs text-ink-muted">{booking.status_label}</p>
+  </CardLink>
 );
 
 const BookingSection = ({ title, bookings }) => (
@@ -43,9 +50,9 @@ const BookingSection = ({ title, bookings }) => (
         </li>
       ))}
       {bookings.length === 0 ? (
-        <li className="rounded-xl border p-4 text-sm text-black/60">
+        <EmptyState as="li" variant="bounded" border="current">
           No bookings.
-        </li>
+        </EmptyState>
       ) : null}
     </ul>
   </section>
@@ -59,9 +66,9 @@ export default async function CustomerBookingsPage() {
     bookingGroups.cancelled.length > 0;
 
   return (
-    <main className="container max-w-md p-5 bg-white">
+    <PageContainer>
       <div className="mt-6 flex flex-col">
-        <h1 className="text-3xl font-bold tracking-tighter">Bookings</h1>
+        <PageHeading title="Bookings" />
 
         <div className="mt-8">
           {!hasBookings ? <NoBookings /> : null}
@@ -77,6 +84,6 @@ export default async function CustomerBookingsPage() {
           ) : null}
         </div>
       </div>
-    </main>
+    </PageContainer>
   );
 }

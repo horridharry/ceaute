@@ -166,7 +166,7 @@ test("All reviews lists every visible review with no filters, sorting or paginat
   assert.match(page, /reviews\.map\(\(review, index\) => <ReviewCard/, "every review, one list");
   assert.doesNotMatch(page, /slice\(/, "the page never trims the list");
   assert.doesNotMatch(page, /page=|offset|limit|filter|sort|aria-pressed/i, "no filters, sorting or pagination");
-  assert.match(page, /href=\{`\/@\$\{providerPage\.username\}`\}/, "back link to the storefront");
+  assert.match(page, /back=\{\{\s*href: `\/@\$\{providerPage\.username\}`/, "back link to the storefront");
 });
 
 test("review rules stay pure, and the loader stays off the client", () => {
