@@ -83,6 +83,44 @@ export function storefrontMetadata({ display_name, username, biography } = {}) {
   return { title: `${name} | Ceaute`, description };
 }
 
+// storefrontMetadata plus link-preview (Open Graph and Twitter) fields. The
+// preview image is the provider's hero image, served at a stable URL by
+// /@username/og-image; `heroImageId` versions that URL so a new hero image is
+// not hidden behind a cached old one. With no hero image or no known site
+// origin there is no image, rather than a broken one.
+export function storefrontPageMetadata({ providerPage, origin, heroImageId }) {
+  const { title, description } = storefrontMetadata(providerPage);
+  const username = String(providerPage?.username ?? "");
+  const siteOrigin = String(origin ?? "").replace(/\/+$/, "");
+  const pageUrl = siteOrigin && username ? `${siteOrigin}/@${username}` : null;
+  const image =
+    pageUrl && heroImageId
+      ? {
+          url: `${pageUrl}/og-image?v=${encodeURIComponent(heroImageId)}`,
+          alt: `Work by ${String(providerPage?.display_name ?? "").trim() || `@${username}`}`,
+        }
+      : null;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      type: "profile",
+      siteName: "Ceaute",
+      title,
+      description,
+      ...(pageUrl ? { url: pageUrl } : {}),
+      ...(image ? { images: [image] } : {}),
+    },
+    twitter: {
+      card: image ? "summary_large_image" : "summary",
+      title,
+      description,
+      ...(image ? { images: [image.url] } : {}),
+    },
+  };
+}
+
 // Average rating and count for the reviews the storefront may show (the
 // visible ones; every review belongs to a completed booking). Null when there
 // are none, which the page shows as "New". The average is rounded to one

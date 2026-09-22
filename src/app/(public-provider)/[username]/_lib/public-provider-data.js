@@ -33,6 +33,54 @@ export const getPublishedProviderPageByUsername = cache(async (username) => {
   return providerPage;
 });
 
+// The hero image used for link previews: the first visible portfolio image
+// of a published page, in the storefront's own order. Null when the page is
+// not published or shows no portfolio. Unlike the lookup above, this never
+// calls notFound(), so a route handler can answer 404 itself.
+export const getPublishedHeroImage = cache(async (username) => {
+  const normalizedUsername = normalizePublicUsername(username);
+
+  if (!normalizedUsername) {
+    return null;
+  }
+
+  const supabase = createServiceRoleClient();
+  const { data: providerPage, error: pageError } = await supabase
+    .schema("ceaute")
+    .from("provider_page")
+    .select("id, username")
+    .eq("username", normalizedUsername)
+    .eq("status", "published")
+    .maybeSingle();
+
+  if (pageError) {
+    throw new Error("Could not load provider page.");
+  }
+
+  if (!providerPage) {
+    return null;
+  }
+
+  const { data: image, error: imageError } = await supabase
+    .schema("ceaute")
+    .from("portfolio_image")
+    .select("id, storage_path")
+    .eq("provider_page_id", providerPage.id)
+    .eq("is_visible", true)
+    .order("display_order", { ascending: true })
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (imageError) {
+    throw new Error("Could not load portfolio image.");
+  }
+
+  return image
+    ? { id: image.id, storagePath: image.storage_path, username: providerPage.username }
+    : null;
+});
+
 export const getPublicTreatmentForProvider = cache(
   async (providerPageId, treatmentId) => {
     const supabase = createServiceRoleClient();
