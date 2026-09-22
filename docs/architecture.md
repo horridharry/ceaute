@@ -126,9 +126,16 @@ provider can reach; the storefront shows them through short-lived signed URLs.
 Link-preview crawlers need a stable public URL, so
 `[username]/(storefront)/og-image/route.js` streams exactly one image — the
 first visible portfolio image of a published page — and answers 404 for
-anything else. `provider_page.display_photo_path` is constrained to the page's
-own folder, and owners may update that column but no other platform-managed
-one.
+anything else. The route is never cached by the
+CDN (`private, no-store`), so a hidden image stops being served at once. Its
+absolute URL in `og:image` uses the canonical origin from
+`src/lib/app/origin.js` (`CEAUTE_APP_URL`), not the deployment's own host, so
+a branch deployment points at `preview.ceaute.com`; with no usable origin the
+page simply has no preview image. `provider_page.display_photo_path` is
+constrained to the page's own folder, and owners may update that column but no
+other platform-managed one. Display-photo cleanup
+(`src/lib/providers/display-photo-storage.js`) deletes only files nothing can
+reference, so it can never remove the current photo.
 
 ## Where rules are enforced
 
