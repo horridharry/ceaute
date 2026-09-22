@@ -27,11 +27,21 @@ unpublishing, including the database's rejection reason, is shown on the
 profile screen. Suspended pages cannot be published or changed back to draft
 by their owner.
 
-The provider workspace is `/dashboard`. Profile identity is managed at
-`/dashboard/profile`; portfolio and preview are subordinate routes. Locations,
-availability, treatments, add-ons, treatment groups, bookings, and settings have
-their own dashboard sections. `/dashboard/treatment-groups` is the canonical
-group route. `/dashboard/onboarding` is the intentional exception to the normal
+The provider workspace is `/dashboard`. Each provider-management area is an
+independent section with its own page and heading: Home, Bookings,
+Availability, Locations, Treatments, Treatment groups, Add-ons, Profile,
+Portfolio, Booking settings and Payments. The header's menu button opens them
+as one flat list in that order (`src/components/app-header/provider-menu.js`);
+its unlabelled dividers are scanning aids, not groups, and URL nesting
+(Portfolio under `/dashboard/profile`, the two settings pages under
+`/dashboard/settings`) implies no product hierarchy. After the sections,
+View your page opens the live `/@username` page once published, otherwise
+`/dashboard/profile/preview`, which is marked as not live and redirects to the
+live page after publishing. `/dashboard/settings` redirects to `/dashboard`.
+The personal control is the person rather than the business: Account, My
+bookings (bookings they made as a customer) and Discover inside the workspace,
+Your business, Bookings and Account outside it. `/dashboard/treatment-groups`
+is the canonical group route. `/dashboard/onboarding` is the intentional exception to the normal
 guard which redirects dashboard users without a provider page into onboarding.
 
 Customer settings and booking history stay under `/account`, including
