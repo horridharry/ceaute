@@ -3,13 +3,19 @@
 // to the owner's folder and page; the path is always generated here, never
 // taken from the request.
 //
-// Orphans are cleaned up in two ways:
-// - the page's path only changes if it still holds the path this request
-//   read (compare-and-set), so of two overlapping saves one is refused and
-//   removes its own upload instead of silently orphaning the other's;
-// - after every successful save or removal, anything else in the owner's
-//   folder is deleted, keeping only the path the page holds at that moment.
-//   This also collects files left behind by an earlier failed cleanup.
+// Cleanup never deletes the photo the page currently points at:
+// - The page's path changes only if it still holds the path this request
+//   read (compare-and-set). Of two overlapping saves one is refused, and the
+//   refused one deletes only its own, never-linked upload.
+// - After a successful change, the path this request replaced is deleted.
+//   Nothing points at it any more: paths are fresh random ids, and the app
+//   never links an existing file again.
+// - Anything else left in the owner's folder (for example after a failed
+//   delete) is removed only once it is older than STRAY_MIN_AGE_MS and is
+//   not the path the page holds. An upload is linked within the request that
+//   made it, and a request cannot outlive the platform's function timeout
+//   (300 seconds by default), so a file that old can never be one that an
+//   overlapping save is about to link.
 import {
   DISPLAY_PHOTO_BUCKET,
   displayPhotoStoragePath,
@@ -18,12 +24,19 @@ import {
 export const DISPLAY_PHOTO_CONFLICT_MESSAGE =
   "Your photo was changed somewhere else. Reload the page and try again.";
 
-// Paths in the owner's folder other than the one to keep. Storage lists a
-// placeholder object for empty folders, which is not a photo.
-export function strayDisplayPhotoPaths({ folder, names, keepPath }) {
-  return names
-    .filter((name) => name && name !== ".emptyFolderPlaceholder")
-    .map((name) => `${folder}/${name}`)
+export const STRAY_MIN_AGE_MS = 60 * 60 * 1000;
+
+// Leftover files that are safe to delete: not the path to keep, not the
+// placeholder Storage lists for empty folders, and older than
+// STRAY_MIN_AGE_MS. A file without a readable creation time is kept.
+export function strayDisplayPhotoPaths({ folder, objects, keepPath, now }) {
+  return objects
+    .filter((object) => object?.name && object.name !== ".emptyFolderPlaceholder")
+    .filter((object) => {
+      const createdAt = Date.parse(object.created_at ?? "");
+      return Number.isFinite(createdAt) && now - createdAt >= STRAY_MIN_AGE_MS;
+    })
+    .map((object) => `${folder}/${object.name}`)
     .filter((path) => path !== keepPath);
 }
 
@@ -60,8 +73,8 @@ async function currentPath(supabase, providerPageId) {
   return error ? undefined : (data?.display_photo_path ?? null);
 }
 
-// Best effort: a failure here only postpones the cleanup to the next save.
-export async function removeStrayDisplayPhotos(supabase, providerPageId) {
+// Best effort: a failure only leaves files for a later sweep.
+async function removeOldStrays(supabase, providerPageId, now) {
   const keepPath = await currentPath(supabase, providerPageId);
 
   if (keepPath === undefined) {
@@ -79,8 +92,9 @@ export async function removeStrayDisplayPhotos(supabase, providerPageId) {
 
   const stray = strayDisplayPhotoPaths({
     folder: providerPageId,
-    names: (objects ?? []).map((object) => object.name),
+    objects: objects ?? [],
     keepPath,
+    now,
   });
 
   if (stray.length > 0) {
@@ -95,6 +109,7 @@ export async function saveDisplayPhoto({
   previousPath,
   file,
   photoId,
+  now = Date.now(),
 }) {
   const storagePath = displayPhotoStoragePath({
     providerPageId,
@@ -119,6 +134,7 @@ export async function saveDisplayPhoto({
   );
 
   if (error || !changed) {
+    // Never linked, so nothing can point at it.
     await storage.remove([storagePath]);
     return {
       ok: false,
@@ -126,12 +142,21 @@ export async function saveDisplayPhoto({
     };
   }
 
-  await removeStrayDisplayPhotos(supabase, providerPageId);
+  if (previousPath && previousPath !== storagePath) {
+    await storage.remove([previousPath]);
+  }
+
+  await removeOldStrays(supabase, providerPageId, now);
   return { ok: true, message: "Photo saved.", storagePath };
 }
 
-// Clears the page's photo and removes the file.
-export async function clearDisplayPhoto({ supabase, providerPageId, previousPath }) {
+// Clears the page's photo and deletes the file.
+export async function clearDisplayPhoto({
+  supabase,
+  providerPageId,
+  previousPath,
+  now = Date.now(),
+}) {
   if (previousPath) {
     const { changed, error } = await compareAndSetPath(
       supabase,
@@ -147,8 +172,10 @@ export async function clearDisplayPhoto({ supabase, providerPageId, previousPath
     if (!changed) {
       return { ok: false, message: DISPLAY_PHOTO_CONFLICT_MESSAGE };
     }
+
+    await supabase.storage.from(DISPLAY_PHOTO_BUCKET).remove([previousPath]);
   }
 
-  await removeStrayDisplayPhotos(supabase, providerPageId);
+  await removeOldStrays(supabase, providerPageId, now);
   return { ok: true, message: "Photo removed." };
 }
