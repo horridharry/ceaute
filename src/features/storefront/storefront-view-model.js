@@ -3,6 +3,19 @@ import { signStoragePaths } from "@/lib/supabase/signed-urls";
 const PORTFOLIO_BUCKET = "portfolio-images";
 const SIGNED_IMAGE_SECONDS = 60 * 60;
 
+// Pairs each portfolio row with its signed URL, in the rows' order. A row
+// whose path could not be signed is left out rather than rendered as an
+// <img> with an empty src.
+export function portfolioImagesWithSignedUrls(images, signedUrlByPath) {
+  return images.flatMap((image) => {
+    const imageUrl = signedUrlByPath.get(image.storage_path);
+
+    return imageUrl
+      ? [{ image_url: imageUrl, caption: image.caption ?? "" }]
+      : [];
+  });
+}
+
 async function signedPortfolioImages(supabase, images) {
   const signedUrlByPath = await signStoragePaths(
     supabase,
@@ -11,10 +24,7 @@ async function signedPortfolioImages(supabase, images) {
     SIGNED_IMAGE_SECONDS,
   );
 
-  return images.map((image) => ({
-    image_url: signedUrlByPath.get(image.storage_path) ?? "",
-    caption: image.caption ?? "",
-  }));
+  return portfolioImagesWithSignedUrls(images, signedUrlByPath);
 }
 
 function mapBookingTerms(settings) {

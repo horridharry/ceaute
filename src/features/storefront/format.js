@@ -61,3 +61,24 @@ export function addMinutes(date, minutes) {
 export function shouldShowReviewsSection(reviews) {
   return Array.isArray(reviews) && reviews.length > 0;
 }
+
+const METADATA_DESCRIPTION_LENGTH = 160;
+
+// Title and description for a published provider page. The description is
+// the provider's own bio, shortened at a word boundary, or a plain booking
+// line when there is no bio.
+export function storefrontMetadata({ display_name, username, biography } = {}) {
+  const name = String(display_name ?? "").trim() || `@${username ?? ""}`;
+  const bio = String(biography ?? "").replace(/\s+/g, " ").trim();
+  let description = `Book with ${name} on Ceaute.`;
+
+  if (bio.length > METADATA_DESCRIPTION_LENGTH) {
+    const cut = bio.slice(0, METADATA_DESCRIPTION_LENGTH - 1);
+    const lastSpace = cut.lastIndexOf(" ");
+    description = `${(lastSpace > 0 ? cut.slice(0, lastSpace) : cut).replace(/[\s,.;:!?-]+$/, "")}…`;
+  } else if (bio) {
+    description = bio;
+  }
+
+  return { title: `${name} | Ceaute`, description };
+}
