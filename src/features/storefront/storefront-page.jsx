@@ -8,6 +8,11 @@ import { TreatmentSelectionList } from "./treatment-selection-list";
 import { HeroCarousel, ProviderPhoto } from "./hero-carousel";
 import { BentoHero } from "./bento-hero";
 import { galleryHref } from "@/features/photo-viewing/photo-navigation";
+import {
+  hasMoreTreatments,
+  treatmentPreview,
+  treatmentsHref,
+} from "./treatment-sections";
 
 // Average rating and review count, or a "New" pill before the first review.
 function RatingSummary({ rating }) {
@@ -63,14 +68,6 @@ function ProviderIdentity({ provider }) {
         <p className="mt-5 whitespace-pre-wrap text-sm">{provider.biography}</p>
       ) : null}
     </header>
-  );
-}
-
-function EmptyState({ children }) {
-  return (
-    <div className="rounded-xl border border-dashed border-black/15 p-4 text-sm text-black/60">
-      {children}
-    </div>
   );
 }
 
@@ -151,28 +148,37 @@ function TreatmentCard({ treatment }) {
   );
 }
 
-function TreatmentSections({ sections, username, bookingEnabled }) {
-  if (sections.length === 0) {
-    return <EmptyState>No active treatments are visible yet.</EmptyState>;
-  }
-
-  if (bookingEnabled) {
-    return <TreatmentSelectionList sections={sections} username={username} />;
-  }
+// The first treatments in page order, with no group headings, and "See all
+// treatments" when there are more. The owner's preview (no username) shows
+// the same treatments without booking or the link, because the All
+// treatments page, like booking, exists only for published pages.
+function TreatmentsPreview({ sections, username }) {
+  const treatments = treatmentPreview(sections);
+  const previewSections = [{ key: "preview", treatments }];
 
   return (
-    <div className="flex flex-col gap-6">
-      {sections.map((section) => (
-        <section key={section.name ?? "ungrouped"} className="flex flex-col gap-3">
-          {section.name ? (
-            <h2 className="text-lg font-semibold">{section.name}</h2>
-          ) : null}
-          {section.treatments.map((treatment) => (
+    <section className="flex flex-col gap-3">
+      <div className="flex items-center justify-between gap-4">
+        <h2 className="text-lg font-semibold">Treatments</h2>
+        {username && hasMoreTreatments(sections) ? (
+          <Link
+            href={treatmentsHref(username)}
+            className="inline-flex min-h-11 items-center text-sm font-semibold text-pink-600"
+          >
+            See all treatments
+          </Link>
+        ) : null}
+      </div>
+      {username ? (
+        <TreatmentSelectionList sections={previewSections} username={username} />
+      ) : (
+        <div className="flex flex-col gap-3">
+          {treatments.map((treatment) => (
             <TreatmentCard key={treatment.id} treatment={treatment} />
           ))}
-        </section>
-      ))}
-    </div>
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -270,9 +276,11 @@ export function StorefrontPage({ viewModel, backHref, showBackLink = true }) {
   const { provider, portfolio, treatment_sections: treatmentSections } =
     viewModel;
   // The owner's preview (backHref) is neither bookable nor linked to the
-  // gallery, which exists only for published pages.
+  // gallery or All treatments, which exist only for published pages.
   const publicView = !backHref;
   const galleryUsername = publicView ? provider.username : null;
+  // Booking and the All treatments page are public-only too.
+  const bookingUsername = publicView ? provider.username : null;
 
   // Phones and tablets: the swipeable hero, flush under the header on phones
   // and rounded in the column from sm. Wide screens: the Bento grid, wider
@@ -314,14 +322,12 @@ export function StorefrontPage({ viewModel, backHref, showBackLink = true }) {
           <PortfolioPreview photos={portfolio} username={galleryUsername} />
         ) : null}
 
-        <section className="flex flex-col gap-3">
-          <h2 className="text-lg font-semibold">Treatments</h2>
-          <TreatmentSections
+        {treatmentSections.length ? (
+          <TreatmentsPreview
             sections={treatmentSections}
-            username={provider.username}
-            bookingEnabled={publicView}
+            username={bookingUsername}
           />
-        </section>
+        ) : null}
 
         <PaymentTerms terms={viewModel.booking_terms} />
 

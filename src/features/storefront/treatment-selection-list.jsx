@@ -188,6 +188,8 @@ function TreatmentDetailsSheet({
   );
 }
 
+// `sections` are { key, heading?, treatments }; a section without a heading
+// (the storefront preview) lists its treatments with no group heading.
 export function TreatmentSelectionList({ sections, username }) {
   const router = useRouter();
   const [isNavigating, startTransition] = useTransition();
@@ -256,9 +258,9 @@ export function TreatmentSelectionList({ sections, username }) {
     <>
       <div className="flex flex-col gap-6">
         {sections.map((section) => (
-          <section key={section.name ?? "ungrouped"} className="flex flex-col gap-3">
-            {section.name ? (
-              <h2 className="text-lg font-semibold">{section.name}</h2>
+          <section key={section.key} className="flex flex-col gap-3">
+            {section.heading ? (
+              <h2 className="text-lg font-semibold">{section.heading}</h2>
             ) : null}
             {section.treatments.map((treatment) => (
               <TreatmentRow

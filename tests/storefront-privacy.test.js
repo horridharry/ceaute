@@ -39,15 +39,31 @@ test("the storefront reads only visible portfolio images, through the shared que
   assert.doesNotMatch(viewModel, /\.from\("portfolio_image"\)/, "no second, divergent portfolio query");
 });
 
-test("the owner preview renders the storefront without booking entry", () => {
+test("the owner preview renders the storefront without booking entry or All treatments", () => {
   assert.match(previewPage, /<StorefrontPage[\s\S]*backHref="\/dashboard\/profile"/);
   assert.match(storefrontPage, /const publicView = !backHref;/);
-  assert.match(storefrontPage, /bookingEnabled=\{publicView\}/);
+  assert.match(storefrontPage, /const bookingUsername = publicView \? provider\.username : null;/);
+  assert.match(storefrontPage, /<TreatmentsPreview[\s\S]*?username=\{bookingUsername\}/);
   assert.match(
     storefrontPage,
-    /if \(bookingEnabled\) \{\s*return <TreatmentSelectionList/,
-    "only the bookable variant renders the selection list that links into booking",
+    /\{username \? \(\s*<TreatmentSelectionList/,
+    "only the public page renders the selection list that links into booking",
   );
+  assert.match(
+    storefrontPage,
+    /\{username && hasMoreTreatments\(sections\) \? \(\s*<Link\s+href=\{treatmentsHref\(username\)\}/,
+    "See all treatments appears only on the public page, and only above three",
+  );
+});
+
+test("treatments are read once, through the shared queries, and the All treatments page reads no address", () => {
+  const queries = read("src/features/storefront/treatment-queries.js");
+  assert.match(viewModel, /treatmentQueries\(supabase, providerPage\.id\)/);
+  assert.doesNotMatch(viewModel, /\.from\("treatment/, "no second, divergent treatment query");
+  assert.doesNotMatch(queries, /address|postcode|access_instructions/i);
+  const page = read("src/app/(public-provider)/[username]/(storefront)/treatments/page.jsx");
+  assert.match(page, /loadTreatmentSections\(/);
+  assert.doesNotMatch(page, /\.from\(|address|postcode/i);
 });
 
 test("public photo queries read only the id, storage path and caption, and the browser gets no path", () => {
