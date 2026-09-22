@@ -6,6 +6,7 @@
 // assigning a treatment to a group belongs to ../treatments/actions.js.
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { getString, normalizeName } from "../_lib/form-values";
 import { groupTransitionOutcome, isTransition } from "../_lib/lifecycle-outcome";
 import { getSignedInProvider } from "../_lib/provider-data";
@@ -81,11 +82,13 @@ export async function createTreatmentGroup(_currentState, formData) {
   });
 
   if (error) {
-    return "Could not create the treatment group.";
+    return error.code === "23505"
+      ? "You already have a treatment group with that name."
+      : "Could not create the treatment group.";
   }
 
   refreshTreatmentGroupPages();
-  return "Group created.";
+  redirect("/dashboard/treatment-groups");
 }
 
 export async function renameTreatmentGroup(_currentState, formData) {
@@ -126,11 +129,13 @@ export async function renameTreatmentGroup(_currentState, formData) {
     .eq("provider_page_id", providerPage.id);
 
   if (error) {
-    return "Could not rename the treatment group.";
+    return error.code === "23505"
+      ? "You already have a treatment group with that name."
+      : "Could not rename the treatment group.";
   }
 
   refreshTreatmentGroupPages();
-  return "Group renamed.";
+  redirect("/dashboard/treatment-groups");
 }
 
 // Archive, restore and delete go through ceaute.transition_treatment_group

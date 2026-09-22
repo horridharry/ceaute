@@ -97,7 +97,42 @@ export async function getTreatment(treatmentId) {
     providerPage,
   });
 
-  return decorateTreatment(treatment, options);
+  // A treatment can sit in a group that was archived after it was filed
+  // there. The form must show that group rather than fall back to "No group"
+  // and ungroup the treatment on save, so it is loaded here even though the
+  // picker otherwise offers active groups only.
+  const archivedGroup =
+    treatment.treatment_group_id &&
+    !options.treatmentGroups.some((group) => group.id === treatment.treatment_group_id)
+      ? await getArchivedGroup({ supabase, providerPage, groupId: treatment.treatment_group_id })
+      : null;
+
+  return {
+    ...decorateTreatment(treatment, {
+      ...options,
+      treatmentGroups: archivedGroup
+        ? [...options.treatmentGroups, archivedGroup]
+        : options.treatmentGroups,
+    }),
+    archived_group: archivedGroup,
+  };
+}
+
+async function getArchivedGroup({ supabase, providerPage, groupId }) {
+  const { data, error } = await supabase
+    .schema("ceaute")
+    .from("treatment_group")
+    .select("id, name")
+    .eq("id", groupId)
+    .eq("provider_page_id", providerPage.id)
+    .eq("is_active", false)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error("Could not load the treatment's group.");
+  }
+
+  return data ?? null;
 }
 
 export async function getAllTreatments() {

@@ -11,6 +11,7 @@
 // happen together or not at all.
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { getString } from "../_lib/form-values";
 import { getSignedInProvider } from "../_lib/provider-data";
 
@@ -105,7 +106,7 @@ export const createLocation = async (_currentState, formData) => {
   }
 
   refreshLocationPages();
-  return "Location saved.";
+  redirect("/dashboard/locations");
 };
 
 export const updateLocation = async (_currentState, formData) => {
@@ -148,7 +149,7 @@ export const updateLocation = async (_currentState, formData) => {
   }
 
   refreshLocationPages();
-  return "Saved.";
+  redirect("/dashboard/locations");
 };
 
 // The database decides whether this is allowed and what it means for bookings

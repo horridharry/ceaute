@@ -26,7 +26,12 @@ function refreshTreatmentPages() {
   revalidatePath("/[username]", "layout");
 }
 
-async function validateTreatmentForm({ formData, supabase, providerPage }) {
+async function validateTreatmentForm({
+  formData,
+  supabase,
+  providerPage,
+  currentGroupId = null,
+}) {
   const name = getString(formData, "name");
   const description = getString(formData, "description");
   const pricePence = priceToPence(formData.get("price"));
@@ -77,8 +82,12 @@ async function validateTreatmentForm({ formData, supabase, providerPage }) {
 
   // A treatment may only be filed under one of this provider's own active
   // groups. PostgreSQL's composite foreign key rejects another provider's
-  // group; this check turns that into a usable message.
-  if (treatmentGroupId) {
+  // group; this check turns that into a usable message. A treatment that
+  // already sits in a group that has since been archived may keep it: the
+  // form shows that group as "(archived)" so saving never ungroups the
+  // treatment silently, and the database only refuses a *move* into an
+  // archived group.
+  if (treatmentGroupId && treatmentGroupId !== currentGroupId) {
     const { data: treatmentGroup, error: treatmentGroupError } = await supabase
       .schema("ceaute")
       .from("treatment_group")
@@ -141,7 +150,24 @@ export async function updateTreatment(_currentState, formData) {
     next: `/dashboard/treatments/${treatmentId}/edit`,
   });
 
-  const result = await validateTreatmentForm({ formData, supabase, providerPage });
+  const { data: current, error: currentError } = await supabase
+    .schema("ceaute")
+    .from("treatment")
+    .select("treatment_group_id")
+    .eq("id", treatmentId)
+    .eq("provider_page_id", providerPage.id)
+    .maybeSingle();
+
+  if (currentError || !current) {
+    return "Could not find that treatment.";
+  }
+
+  const result = await validateTreatmentForm({
+    formData,
+    supabase,
+    providerPage,
+    currentGroupId: current.treatment_group_id,
+  });
 
   if (result.error) {
     return result.error;

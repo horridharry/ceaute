@@ -112,10 +112,42 @@ export async function getAddOn(addOnId) {
     throw new Error("Could not load add-on compatibility.");
   }
 
+  const compatibleTreatmentIds = (compatibilityResult.data ?? []).map(
+    (compatibility) => compatibility.treatment_id,
+  );
+
   return {
     ...toAddOnSummary(addOnResult.data),
-    compatibleTreatmentIds: (compatibilityResult.data ?? []).map(
-      (compatibility) => compatibility.treatment_id,
-    ),
+    compatibleTreatmentIds,
+    archivedLinkedTreatments: await getArchivedLinkedTreatments({
+      supabase,
+      providerPage,
+      treatmentIds: compatibleTreatmentIds,
+    }),
   };
+}
+
+// Links to treatments that have since been archived are kept when the add-on
+// is saved (ceaute.replace_add_on_treatment_compatibility replaces only links
+// to active treatments). The form lists them, ticked and disabled, so the
+// provider can see them; a new link to an archived treatment is not offered.
+async function getArchivedLinkedTreatments({ supabase, providerPage, treatmentIds }) {
+  if (treatmentIds.length === 0) {
+    return [];
+  }
+
+  const { data, error } = await supabase
+    .schema("ceaute")
+    .from("treatment")
+    .select("id, name")
+    .eq("provider_page_id", providerPage.id)
+    .eq("is_active", false)
+    .in("id", treatmentIds)
+    .order("name", { ascending: true });
+
+  if (error) {
+    throw new Error("Could not load archived treatments.");
+  }
+
+  return data ?? [];
 }
