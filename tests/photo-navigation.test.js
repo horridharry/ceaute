@@ -1,13 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
-  MASONRY_GAP_PX,
-  MASONRY_ROW_PX,
   TAP_SLOP_PX,
   bentoTiles,
+  galleryBentoTiles,
   galleryHref,
   isTap,
-  masonryRowSpan,
   photoIndexById,
   shouldLoadViewerPhoto,
   stepPhotoIndex,
@@ -68,15 +66,110 @@ test("the viewer loads only the photo in view and its neighbours", () => {
   );
 });
 
-test("masonry tiles span whole rows that include the gap", () => {
-  assert.equal(masonryRowSpan(0), 1);
-  assert.equal(masonryRowSpan(Number.NaN), 1);
-  assert.equal(masonryRowSpan(200), Math.ceil((200 + MASONRY_GAP_PX) / MASONRY_ROW_PX));
-  // Spans never shrink as tiles get taller, and a taller photo gets more rows.
-  for (let height = 1; height < 600; height += 7) {
-    assert.ok(masonryRowSpan(height + 7) >= masonryRowSpan(height));
+// Row-major CSS grid auto-placement without "dense", for the classes
+// galleryBentoTiles uses: returns each tile's cells, or throws on overflow.
+function autoPlace(placements, columns) {
+  const taken = new Set();
+  const key = (row, col) => `${row},${col}`;
+  let row = 0;
+  let col = 0;
+  return placements.map((placement) => {
+    const span = (axis) => Number(placement.match(new RegExp(`(?:^| )${axis}-span-(\\d)`))[1]);
+    const cols = span("col");
+    const rows = span("row");
+    const start = placement.match(/(?:^| )col-start-(\d)/);
+    if (cols > columns) throw new Error(`${placement} is wider than ${columns} columns`);
+    const fits = (r, c) => {
+      if (c + cols > columns) return false;
+      for (let dr = 0; dr < rows; dr += 1) {
+        for (let dc = 0; dc < cols; dc += 1) if (taken.has(key(r + dr, c + dc))) return false;
+      }
+      return true;
+    };
+    if (start) {
+      const fixed = Number(start[1]) - 1;
+      if (fixed < col) row += 1;
+      while (!fits(row, fixed)) row += 1;
+      col = fixed;
+    } else {
+      while (!fits(row, col)) {
+        col += 1;
+        if (col + cols > columns) {
+          col = 0;
+          row += 1;
+        }
+      }
+    }
+    const cells = [];
+    for (let dr = 0; dr < rows; dr += 1) {
+      for (let dc = 0; dc < cols; dc += 1) {
+        taken.add(key(row + dr, col + dc));
+        cells.push([row + dr, col + dc]);
+      }
+    }
+    const placed = { row, col, cells };
+    col += cols;
+    return placed;
+  });
+}
+
+const phoneClasses = (placement) =>
+  placement.split(" ").filter((name) => !name.startsWith("md:")).join(" ");
+const wideClasses = (placement) =>
+  placement.split(" ").filter((name) => name.startsWith("md:")).map((name) => name.slice(3)).join(" ");
+
+test("the gallery grid fills every row, in portfolio order, at every size", () => {
+  assert.deepEqual(galleryBentoTiles(0), []);
+  assert.deepEqual(galleryBentoTiles(undefined), []);
+
+  for (let count = 1; count <= 40; count += 1) {
+    const tiles = galleryBentoTiles(count);
+    assert.equal(tiles.length, count, `${count} photos, ${count} tiles`);
+    assert.deepEqual(tiles.map((tile) => tile.index), tiles.map((_, index) => index));
+
+    for (const [columns, classes] of [[2, phoneClasses], [4, wideClasses]]) {
+      const placed = autoPlace(tiles.map((tile) => classes(tile.placement)), columns);
+      // Reading order (top then left) is portfolio order.
+      for (let index = 1; index < placed.length; index += 1) {
+        const [before, after] = [placed[index - 1], placed[index]];
+        assert.ok(
+          after.row > before.row || (after.row === before.row && after.col > before.col),
+          `${count} photos on ${columns} columns: photo ${index + 1} reads after photo ${index}`,
+        );
+      }
+      // No holes, except either side of a centred photo from md up.
+      const rows = Math.max(...placed.flatMap((tile) => tile.cells.map(([row]) => row))) + 1;
+      const filled = placed.reduce((sum, tile) => sum + tile.cells.length, 0);
+      const centred = tiles.filter((tile) => tile.placement.includes("col-start")).length;
+      const allowedHoles = columns === 4 ? centred * 4 : 0;
+      assert.equal(rows * columns - filled, allowedHoles, `${count} photos on ${columns} columns`);
+    }
   }
-  assert.ok(masonryRowSpan(400) > masonryRowSpan(200));
+});
+
+test("the gallery grid mixes large and small photos and centres a lone one", () => {
+  const large = (tile) => tile.placement.includes("md:col-span-2");
+  assert.deepEqual(galleryBentoTiles(1).map((tile) => tile.placement), [
+    "col-span-2 row-span-2 md:col-span-2 md:row-span-2 md:col-start-2",
+  ]);
+  assert.deepEqual(galleryBentoTiles(2).map(large), [true, true]);
+  assert.deepEqual(galleryBentoTiles(3).map(large), [true, true, true]);
+  assert.deepEqual(galleryBentoTiles(5).map(large), [true, false, false, false, false]);
+  // Blocks of five alternate the large photo's side.
+  assert.deepEqual(galleryBentoTiles(10).map(large), [
+    true, false, false, false, false,
+    false, false, true, false, false,
+  ]);
+  // Phones: one large, two small.
+  assert.deepEqual(
+    galleryBentoTiles(6).map((tile) => phoneClasses(tile.placement)),
+    ["col-span-2 row-span-2", "col-span-1 row-span-1", "col-span-1 row-span-1",
+      "col-span-2 row-span-2", "col-span-1 row-span-1", "col-span-1 row-span-1"],
+  );
+  for (const tile of galleryBentoTiles(20)) {
+    assert.match(tile.placement, /^col-span-(1 row-span-1|2 row-span-2) md:col-span-(1 md:row-span-1|2 md:row-span-2)$/,
+      "every tile is one 4:5 cell or a 2 x 2 block of the same shape");
+  }
 });
 
 test("the Bento grid has one prominent photo and at most four supporting ones", () => {

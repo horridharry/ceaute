@@ -67,21 +67,72 @@ export function shouldLoadViewerPhoto(index, current, radius = VIEWER_PRELOAD_RA
   return Math.abs(index - current) <= radius;
 }
 
-// Masonry: every tile spans a whole number of small grid rows, so CSS grid
-// auto-placement (row-major, no "dense") puts each photo in the first free
-// spot from the top and left. That keeps the page in portfolio order as it
-// is read, top to bottom and left to right, without stored image sizes.
-export const MASONRY_ROW_PX = 4;
-export const MASONRY_GAP_PX = 12;
+// The gallery's Bento grid: 2 columns on phones and 4 from md up, every cell
+// 4:5 (portrait, like most phone photos), and photos either one cell or a
+// 2 x 2 block of the same shape, so a photo is never squeezed into a strip.
+// Each photo gets a phone placement and an md placement. Both are chosen so
+// that plain row-major auto-placement (no "dense") fills the grid in
+// portfolio order: reading order, DOM order and keyboard order are the same.
+//
+// Phones repeat "one large, two small"; a final pair is two small, a final
+// single is large. From md up, blocks of five (one large beside four small,
+// the large side alternating) fill the grid; the remainder becomes two large
+// side by side and/or a row of four small, so the grid has no holes. A lone
+// photo, or one left after a pair of large ones (3 in all), is large and
+// centred.
+const PHONE_LARGE = "col-span-2 row-span-2";
+const PHONE_SMALL = "col-span-1 row-span-1";
+const WIDE_LARGE = "md:col-span-2 md:row-span-2";
+const WIDE_SMALL = "md:col-span-1 md:row-span-1";
+const WIDE_CENTRED = "md:col-span-2 md:row-span-2 md:col-start-2";
 
-export function masonryRowSpan(heightPx, rowPx = MASONRY_ROW_PX, gapPx = MASONRY_GAP_PX) {
-  if (!Number.isFinite(heightPx) || heightPx <= 0) {
-    return 1;
+function wideBlocks(count) {
+  if (count === 1) return ["centred"];
+  if (count === 3) return ["pair", "centred"];
+
+  const fives = Math.floor(count / 5);
+  const blocks = (n) => Array.from({ length: n }, () => "five");
+  switch (count % 5) {
+    case 1:
+      return [...blocks(fives - 1), "pair", "row"];
+    case 2:
+      return [...blocks(fives), "pair"];
+    case 3:
+      return [...blocks(fives - 1), "pair", "row", "pair"];
+    case 4:
+      return [...blocks(fives), "row"];
+    default:
+      return blocks(fives);
   }
+}
 
-  // The gap is folded into the rows (row-gap is 0), so tiles are separated by
-  // exactly gapPx vertically.
-  return Math.max(1, Math.ceil((heightPx + gapPx) / rowPx));
+function widePlacements(count) {
+  let fives = 0;
+  return wideBlocks(count).flatMap((block) => {
+    if (block === "centred") return [WIDE_CENTRED];
+    if (block === "pair") return [WIDE_LARGE, WIDE_LARGE];
+    if (block === "row") return [WIDE_SMALL, WIDE_SMALL, WIDE_SMALL, WIDE_SMALL];
+    const largeFirst = fives % 2 === 0;
+    fives += 1;
+    return largeFirst
+      ? [WIDE_LARGE, WIDE_SMALL, WIDE_SMALL, WIDE_SMALL, WIDE_SMALL]
+      : [WIDE_SMALL, WIDE_SMALL, WIDE_LARGE, WIDE_SMALL, WIDE_SMALL];
+  });
+}
+
+function phonePlacement(index, count) {
+  const endsWithPair = count % 3 === 2;
+  if (endsWithPair && index >= count - 2) return PHONE_SMALL;
+  return index % 3 === 0 ? PHONE_LARGE : PHONE_SMALL;
+}
+
+export function galleryBentoTiles(count) {
+  const n = Math.max(Number.isInteger(count) ? count : 0, 0);
+  const wide = widePlacements(n);
+  return wide.map((widePlacement, index) => ({
+    index,
+    placement: `${phonePlacement(index, n)} ${widePlacement}`,
+  }));
 }
 
 // The desktop "Bento" hero: one prominent photo and up to four supporting

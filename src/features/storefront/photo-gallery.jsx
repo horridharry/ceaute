@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { PhotoMasonry } from "@/features/photo-viewing/photo-masonry";
+import { PhotoBentoGrid } from "@/features/photo-viewing/photo-bento-grid";
 import { PhotoViewer } from "@/features/photo-viewing/photo-viewer";
 import { photoIndexById } from "@/features/photo-viewing/photo-navigation";
 
@@ -11,7 +11,7 @@ import { photoIndexById } from "@/features/photo-viewing/photo-navigation";
 // get fresh URLs from the server (storage paths never reach the browser).
 const SIGNED_URL_REFRESH_AFTER_MS = 50 * 60 * 1000;
 
-// The customer gallery: every visible photo in masonry, and the full-screen
+// The customer gallery: every visible photo in a Bento grid, and the full-screen
 // viewer driven by ?photo=<id>. Opening a photo from the grid adds a history
 // entry, so Back closes the viewer; moving between photos replaces it, so Back
 // does not step through every photo. A direct link opens the viewer at that
@@ -113,7 +113,7 @@ export function PhotoGallery({ photos, label }) {
 
   return (
     <>
-      <PhotoMasonry
+      <PhotoBentoGrid
         photos={photos}
         label={label}
         onOpen={(tileIndex) => {

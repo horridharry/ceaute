@@ -140,12 +140,13 @@ reference, so it can never remove the current photo.
 Public photo views (hero, Bento, Portfolio preview, gallery) read through one
 query, `visiblePortfolioQuery` in `src/features/storefront/portfolio-photos.js`
 (visible only, portfolio order), and send the browser `{ id, image_url,
-caption }` only. The viewer and masonry grid live in
+caption }` only. The viewer and the gallery's Bento grid live in
 `src/features/photo-viewing`, which imports nothing app-, dashboard- or
 data-specific so the gallery and the provider's Portfolio page can share it.
-The masonry grid uses small fixed CSS grid rows and tiles that measure
-themselves and span whole rows, so grid auto-placement keeps portfolio order
-without stored image sizes. Images are full-size originals behind one-hour
+The Bento grid (`galleryBentoTiles`) uses 4:5 cells sized from the grid's
+width and photos of one cell or 2 x 2, placed so plain row-major
+auto-placement fills the grid in portfolio order with no holes and no image
+measurement. Images are full-size originals behind one-hour
 signed URLs; the gallery lazy-loads, the viewer loads only the photo in view and
 its neighbours, and a failure after most of an hour refreshes the page once
 for new URLs. Smaller variants would need Supabase image transformations,

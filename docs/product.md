@@ -77,7 +77,7 @@ there is none. Link previews use the hero's first image, served at
 `/@[username]/og-image` only for a published page.
 
 `/@[username]/photos` is the gallery: every visible portfolio photo in
-portfolio order in a masonry grid, and a full-screen viewer (swipe,
+portfolio order in a Bento grid, and a full-screen viewer (swipe,
 Previous/Next, arrow keys, Escape) opened at a photo with `?photo=<id>`.
 Unpublished and unknown providers have no gallery (a real 404). The owner's
 unpublished preview has no gallery links. On the provider's Portfolio page,
