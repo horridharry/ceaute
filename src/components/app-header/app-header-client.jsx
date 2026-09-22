@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { logoutUser } from "@/features/auth/logout-action";
 import { LinkPendingHint } from "@/components/link-pending-hint";
 import { PendingButton } from "@/components/pending-button";
-import { ProviderNavigation } from "./provider-navigation";
+import { ProviderMenuSheet } from "./provider-menu-sheet";
 
 function HomeLogo({ href = "/" }) {
   return (
@@ -36,25 +36,77 @@ function HeaderLink({ href, children, exact = false }) {
   );
 }
 
-function AccountMenu({ user, providerPage }) {
+const menuItemClassName =
+  "flex min-h-11 w-full items-center rounded-lg px-3 text-left text-sm font-medium hover:bg-black/[0.04]";
+
+// "Me": the signed-in person. The provider menu is "my business".
+function personalMenuLinks({ hasProviderPage, isProviderWorkspace }) {
+  if (hasProviderPage && isProviderWorkspace) {
+    return [
+      { label: "Account", href: "/account" },
+      { label: "My bookings", href: "/account/bookings" },
+      { label: "Discover", href: "/discover" },
+    ];
+  }
+
+  if (hasProviderPage) {
+    return [
+      { label: "Your business", href: "/dashboard" },
+      { label: "Bookings", href: "/account/bookings" },
+      { label: "Account", href: "/account" },
+    ];
+  }
+
+  return [
+    { label: "Bookings", href: "/account/bookings" },
+    { label: "Account", href: "/account" },
+  ];
+}
+
+function AccountMenu({ user, hasProviderPage, isProviderWorkspace }) {
   const [open, setOpen] = useState(false);
-  const hasProviderPage = Boolean(providerPage);
+  const containerRef = useRef(null);
+  const buttonRef = useRef(null);
   const closeMenu = () => setOpen(false);
   const logout = async () => {
     await logoutUser();
   };
 
+  useEffect(() => {
+    if (!open) return undefined;
+
+    const onPointerDown = (event) => {
+      if (!containerRef.current?.contains(event.target)) setOpen(false);
+    };
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") {
+        setOpen(false);
+        buttonRef.current?.focus();
+      }
+    };
+
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
+
   return (
-    <div className="relative">
+    <div ref={containerRef} className="relative">
       <button
+        ref={buttonRef}
         type="button"
         aria-label="Open account menu"
         aria-expanded={open}
         aria-haspopup="menu"
         onClick={() => setOpen((currentOpen) => !currentOpen)}
-        className="grid h-10 w-10 place-items-center rounded-full bg-pink-100 text-xs font-semibold text-pink-700 transition hover:bg-pink-200"
+        className="grid h-11 w-11 place-items-center rounded-full"
       >
-        {user.name.slice(0, 1).toUpperCase()}
+        <span className="grid h-10 w-10 place-items-center rounded-full bg-pink-100 text-xs font-semibold text-pink-700 transition hover:bg-pink-200">
+          {user.name.slice(0, 1).toUpperCase()}
+        </span>
       </button>
 
       {open ? (
@@ -62,64 +114,26 @@ function AccountMenu({ user, providerPage }) {
           role="menu"
           className="absolute right-0 top-12 z-50 w-56 rounded-xl border border-black/10 bg-white p-2 shadow-lg"
         >
-          {hasProviderPage ? (
-            <>
+          {personalMenuLinks({ hasProviderPage, isProviderWorkspace }).map(
+            (link) => (
               <Link
-                href="/dashboard"
+                key={link.href}
+                href={link.href}
                 role="menuitem"
                 onClick={closeMenu}
-                className="block rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-black/[0.04]"
+                className={menuItemClassName}
               >
-                Dashboard
+                {link.label}
                 <LinkPendingHint />
               </Link>
-              <Link
-                href="/account/bookings"
-                role="menuitem"
-                onClick={closeMenu}
-                className="block rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-black/[0.04]"
-              >
-                Bookings
-                <LinkPendingHint />
-              </Link>
-              <Link
-                href="/account"
-                role="menuitem"
-                onClick={closeMenu}
-                className="block rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-black/[0.04]"
-              >
-                Account
-                <LinkPendingHint />
-              </Link>
-            </>
-          ) : (
-            <>
-              <Link
-                href="/account/bookings"
-                role="menuitem"
-                onClick={closeMenu}
-                className="block rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-black/[0.04]"
-              >
-                Bookings
-                <LinkPendingHint />
-              </Link>
-              <Link
-                href="/account"
-                role="menuitem"
-                onClick={closeMenu}
-                className="block rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-black/[0.04]"
-              >
-                Account
-                <LinkPendingHint />
-              </Link>
-            </>
+            ),
           )}
 
           <form action={logout} className="mt-2 border-t border-black/10 pt-2">
             <PendingButton
               role="menuitem"
               pendingLabel="Logging out..."
-              className="w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium hover:bg-black/[0.04] disabled:cursor-not-allowed disabled:opacity-60"
+              className={`${menuItemClassName} disabled:cursor-not-allowed disabled:opacity-60`}
             >
               Log out
             </PendingButton>
@@ -132,50 +146,44 @@ function AccountMenu({ user, providerPage }) {
 
 export default function AppHeaderClient({ user, providerPage = null }) {
   const pathname = usePathname();
-  const isProviderWorkspace = Boolean(
-    user &&
-      providerPage &&
-      (pathname.startsWith("/dashboard") || pathname === "/account/settings"),
-  );
+  const hasProviderPage = Boolean(user && providerPage);
+  // /account/settings is personal chrome, not the provider workspace.
+  const isProviderWorkspace =
+    hasProviderPage &&
+    (pathname === "/dashboard" || pathname.startsWith("/dashboard/"));
 
   return (
     <header className="sticky top-0 z-40 border-b border-black/10 bg-white/95 backdrop-blur">
-      <nav className="relative mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
-        <HomeLogo href={user ? "/discover" : "/"} />
+      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
+        <HomeLogo
+          href={isProviderWorkspace ? "/dashboard" : user ? "/discover" : "/"}
+        />
 
-        {isProviderWorkspace ? (
-          <div className="absolute left-1/2 hidden -translate-x-1/2 md:block">
-            <ProviderNavigation />
-          </div>
-        ) : user ? (
-          <div className="hidden items-center gap-1 sm:flex">
+        {user && !isProviderWorkspace ? (
+          <nav aria-label="Main" className="hidden items-center gap-1 sm:flex">
             <HeaderLink href="/discover">Discover</HeaderLink>
             <HeaderLink href="/account/bookings">Bookings</HeaderLink>
             <HeaderLink href="/account" exact>
               Account
             </HeaderLink>
-          </div>
+          </nav>
         ) : null}
 
         <div className="ml-auto flex items-center gap-1.5">
           {user ? (
             <AccountMenu
               user={user}
-              providerPage={providerPage}
+              hasProviderPage={hasProviderPage}
+              isProviderWorkspace={isProviderWorkspace}
             />
           ) : (
             <HeaderLink href="/sign-in">Log in</HeaderLink>
           )}
+          {isProviderWorkspace ? (
+            <ProviderMenuSheet providerPage={providerPage} />
+          ) : null}
         </div>
-      </nav>
-      {isProviderWorkspace ? (
-        <nav
-          aria-label="Provider"
-          className="overflow-x-auto border-t border-black/5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:hidden"
-        >
-          <ProviderNavigation mobile />
-        </nav>
-      ) : null}
+      </div>
     </header>
   );
 }

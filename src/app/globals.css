@@ -74,3 +74,27 @@
     opacity: 0.2;
   }
 }
+
+/* Provider menu sheet (src/components/app-header/provider-menu-sheet.jsx):
+   slides in from the right unless the viewer prefers reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .provider-menu-sheet[open] {
+    animation: provider-menu-sheet-in 200ms ease-out;
+  }
+
+  .provider-menu-sheet[open]::backdrop {
+    animation: provider-menu-backdrop-in 200ms ease-out;
+  }
+}
+
+@keyframes provider-menu-sheet-in {
+  from {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes provider-menu-backdrop-in {
+  from {
+    opacity: 0;
+  }
+}
