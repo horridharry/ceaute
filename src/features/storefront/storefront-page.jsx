@@ -232,7 +232,7 @@ function PortfolioPreview({ photos, username }) {
           </Link>
         ) : null}
       </div>
-      <ul className="grid grid-cols-3 gap-2">
+      <ul className="grid grid-cols-3 gap-1">
         {preview.map((photo, index) => {
           const img = (
             // eslint-disable-next-line @next/next/no-img-element -- Portfolio previews use short-lived signed storage URLs.
@@ -241,7 +241,7 @@ function PortfolioPreview({ photos, username }) {
               alt={photo.caption || `Portfolio photo ${index + 1}`}
               loading="lazy"
               decoding="async"
-              className="aspect-square w-full rounded-xl bg-black/5 object-cover"
+              className="aspect-[4/5] w-full rounded-lg bg-black/5 object-cover"
             />
           );
 
@@ -251,7 +251,7 @@ function PortfolioPreview({ photos, username }) {
                 <Link
                   href={galleryHref(username, photo.id)}
                   aria-label={`Open portfolio photo ${index + 1} in the gallery`}
-                  className="block rounded-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pink-600"
+                  className="block rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pink-600"
                 >
                   {img}
                 </Link>
