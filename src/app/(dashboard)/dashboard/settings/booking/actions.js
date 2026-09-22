@@ -29,6 +29,8 @@ function parsePoundsToPence(value) {
   return { value: amountPence };
 }
 
+// Returns { status: "saved" | "error", message } so the form can show a
+// success as a neutral status and a failure as an error.
 export const updateBookingSettings = async (_currentState, formData) => {
   const { supabase, providerPage } = await getSignedInProvider({
     next: "/dashboard/settings/booking",
@@ -44,15 +46,15 @@ export const updateBookingSettings = async (_currentState, formData) => {
   );
 
   if (!PAYMENT_MODES.has(paymentMode)) {
-    return "Choose full payment or fixed deposit.";
+    return { status: "error", message: "Choose full payment or fixed deposit." };
   }
 
   if (!CANCELLATION_WINDOWS.has(cancellationWindowHours)) {
-    return "Choose a 12, 24, or 48 hour cancellation window.";
+    return { status: "error", message: "Choose a 12, 24, or 48 hour cancellation window." };
   }
 
   if (commitmentAmount.error) {
-    return commitmentAmount.error;
+    return { status: "error", message: commitmentAmount.error };
   }
 
   if (
@@ -61,7 +63,7 @@ export const updateBookingSettings = async (_currentState, formData) => {
       commitmentAmountPence: commitmentAmount.value,
     })
   ) {
-    return "Deposit amount must be greater than £0.";
+    return { status: "error", message: "Deposit amount must be greater than £0." };
   }
 
   const { error } = await supabase
@@ -80,13 +82,13 @@ export const updateBookingSettings = async (_currentState, formData) => {
 
   if (error) {
     if (error.code === "23514") {
-      return "Check the booking settings and try again.";
+      return { status: "error", message: "Check the booking settings and try again." };
     }
 
-    return "Could not save booking settings.";
+    return { status: "error", message: "Could not save booking settings." };
   }
 
   revalidatePath("/dashboard/settings/booking");
   revalidatePath("/dashboard/settings");
-  return "Saved.";
+  return { status: "saved", message: "Saved." };
 };

@@ -401,6 +401,9 @@ test("every loading state uses the shared skeleton", () => {
     "src/app/(account)/account/loading.tsx",
     "src/app/(site)/discover/loading.jsx",
     "src/app/(dashboard)/dashboard/loading.jsx",
+    "src/app/(dashboard)/dashboard/bookings/loading.jsx",
+    "src/app/(dashboard)/dashboard/add-ons/loading.jsx",
+    "src/app/(dashboard)/dashboard/treatment-groups/loading.jsx",
     "src/app/(public-provider)/[username]/book/loading.jsx",
     "src/app/(public-provider)/[username]/(storefront)/loading.jsx",
   ];

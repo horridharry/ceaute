@@ -161,7 +161,7 @@ export const makeLocationPrimary = async (_currentState, formData) => {
   const locationId = getString(formData, "location_id");
 
   if (!locationId) {
-    return "Choose a location.";
+    return { status: "error", message: "Choose a location." };
   }
 
   const { error } = await supabase
@@ -174,14 +174,17 @@ export const makeLocationPrimary = async (_currentState, formData) => {
     // 23514 is the check_violation the database raises when a published page
     // is asked to work from a location that has no usable address.
     if (error.code === "23514") {
-      return "Add a public area and a full address to this location before working from it.";
+      return {
+        status: "error",
+        message: "Add a public area and a full address to this location before making it primary.",
+      };
     }
 
-    return "Could not change where you are working from.";
+    return { status: "error", message: "Could not change your primary location." };
   }
 
   refreshLocationPages();
-  return "You are now working from this location.";
+  return { status: "done", message: "This is now your primary location. New bookings use it." };
 };
 
 export const deleteLocation = async (_currentState, formData) => {
@@ -191,7 +194,7 @@ export const deleteLocation = async (_currentState, formData) => {
   const locationId = getString(formData, "location_id");
 
   if (!locationId) {
-    return "Choose a location to delete.";
+    return { status: "error", message: "Choose a location to delete." };
   }
 
   const { data: deleted, error } = await supabase
@@ -205,18 +208,21 @@ export const deleteLocation = async (_currentState, formData) => {
 
   if (error) {
     // 23001 is the restrict_violation the database raises when the location
-    // being deleted is the one the provider is currently working from.
+    // being deleted is the primary one.
     if (error.code === "23001") {
-      return "Make another saved location current before deleting this one.";
+      return {
+        status: "error",
+        message: "Make another saved location primary before deleting this one.",
+      };
     }
 
-    return "Could not delete that location.";
+    return { status: "error", message: "Could not delete that location." };
   }
 
   if (!deleted) {
-    return "That location is no longer saved.";
+    return { status: "error", message: "That location is no longer saved." };
   }
 
   refreshLocationPages();
-  return "Location deleted.";
+  return { status: "done", message: "Location deleted." };
 };

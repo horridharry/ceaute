@@ -1,3 +1,4 @@
+import { DashboardPage } from "../_components/dashboard-page";
 import { BlockedDatesForm } from "./_components/blocked-dates-form";
 import { WeeklyScheduleForm } from "./_components/weekly-schedule-form";
 
@@ -12,9 +13,8 @@ export function AvailabilityForm({
   removeBlockedDate,
 }) {
   return (
-    <main className="container mx-auto max-w-md p-5">
-      <div className="mt-6 flex flex-col">
-        <h1 className="text-3xl font-bold tracking-tighter">Availability</h1>
+    <DashboardPage title="Availability">
+      <div className="flex flex-col">
         {schedule.length === 0 ? (
           // Driven by the saved week (no working days saved), not the draft.
           <p className="mt-4 rounded-lg bg-black/[0.04] p-3 text-sm">
@@ -38,6 +38,6 @@ export function AvailabilityForm({
           removeBlockedDate={removeBlockedDate}
         />
       </div>
-    </main>
+    </DashboardPage>
   );
 }

@@ -1,161 +1,136 @@
 "use client";
 
-import Link from "next/link";
-import { useActionState } from "react";
-
-function ActionMessage({ message }) {
-  return message ? (
-    <p className="mt-2 text-sm text-black/60">{message}</p>
-  ) : null;
-}
+import { useRef, useState } from "react";
+import { ActionMenu } from "@/components/ui/action-menu";
+import { Badge } from "@/components/ui/badge";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { EmptyState } from "@/components/ui/empty-state";
+import { DashboardPage } from "../../_components/dashboard-page";
+import { ManagementRow } from "../../_components/management-row";
+import { useServerAction } from "../../_lib/use-server-action";
 
 function describeAddress(location) {
-  return [
-    location.address_line_1,
-    location.address_line_2,
-    location.city,
-    location.postcode,
-  ]
+  return [location.address_line_1, location.address_line_2, location.city, location.postcode]
     .filter(Boolean)
     .join(", ");
 }
 
-function MakePrimaryForm({ location, makePrimaryAction }) {
-  const [message, formAction, pending] = useActionState(makePrimaryAction, "");
-
-  return (
-    <form action={formAction} className="flex flex-col items-start">
-      <input type="hidden" name="location_id" value={location.id} />
-      <button
-        type="submit"
-        disabled={pending}
-        aria-disabled={pending}
-        className="w-max rounded-lg border border-black/10 p-3 px-4 text-sm font-semibold text-pink-600 duration-200 hover:border-black/20 disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
-      >
-        {pending ? "Moving..." : "Work from here"}
-      </button>
-      <ActionMessage message={message} />
-    </form>
-  );
-}
-
-function DeleteLocationForm({ location, deleteAction }) {
-  const [message, formAction, pending] = useActionState(deleteAction, "");
-
-  return (
-    <form action={formAction} className="flex flex-col items-start">
-      <input type="hidden" name="location_id" value={location.id} />
-      <button
-        type="submit"
-        disabled={pending}
-        aria-disabled={pending}
-        className="w-max rounded-lg p-3 px-4 text-sm font-semibold text-rose-600 duration-200 hover:bg-rose-50/80 active:bg-rose-600 active:text-white disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
-      >
-        {pending ? "Deleting..." : "Delete"}
-      </button>
-      <ActionMessage message={message} />
-    </form>
-  );
-}
-
-function LocationCard({ location, makePrimaryAction, deleteAction }) {
-  const address = describeAddress(location);
-
-  return (
-    <li
-      className={`list-none rounded-xl border p-3 ${
-        location.is_primary
-          ? "border-pink-200 bg-pink-50/40"
-          : "border-black/10"
-      }`}
-    >
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h3 className="font-medium">
-            {location.public_area || "No public area yet"}
-          </h3>
-          <p className="mt-1 text-sm text-black/60">
-            {address || "No address yet"}
-          </p>
-          {location.is_primary ? (
-            <p className="mt-2 text-xs font-semibold tracking-wide text-pink-700 uppercase">
-              Working here now
-            </p>
-          ) : null}
-        </div>
-        <Link
-          href={`/dashboard/locations/${location.id}/edit`}
-          className="w-max rounded-lg border border-black/10 p-3 px-4 text-sm font-semibold text-pink-600 duration-200 hover:border-black/20"
-        >
-          Edit
-        </Link>
-      </div>
-
-      <div className="mt-4 flex flex-wrap items-start gap-2">
-        {location.is_primary ? null : (
-          <MakePrimaryForm
-            location={location}
-            makePrimaryAction={makePrimaryAction}
-          />
-        )}
-        {location.is_primary ? null : (
-          <DeleteLocationForm location={location} deleteAction={deleteAction} />
-        )}
-      </div>
-    </li>
-  );
-}
-
+// Every card is white; the primary location is first and carries a compact
+// "Primary" badge. Which location is primary, and whether one can be deleted,
+// is decided by PostgreSQL (set_primary_provider_location and the
+// protect_primary_provider_location trigger).
 export function LocationsPage({ locations, makePrimaryAction, deleteAction }) {
-  const hasOnlyCurrentLocation = locations.length === 1;
+  const [outcome, setOutcome] = useState(null);
+  const [deleting, setDeleting] = useState(null);
+  const [deleteError, setDeleteError] = useState("");
+  const [makePrimary] = useServerAction(makePrimaryAction);
+  const [removeLocation, deletePending] = useServerAction(deleteAction);
+  const statusRef = useRef(null);
+
+  const report = (result) => {
+    setOutcome(result);
+    statusRef.current?.focus();
+  };
+
+  const confirmDelete = async () => {
+    const result = await removeLocation({ location_id: deleting.id });
+    if (result.status === "done") {
+      setDeleting(null);
+      setDeleteError("");
+      setOutcome(result);
+    } else {
+      setDeleteError(result.message);
+    }
+  };
+
+  const nameOf = (location) => location.public_area || "No public area yet";
 
   return (
-    <main className="container max-w-md p-5">
-      <div className="mt-6 flex flex-col">
-        <div className="flex items-end justify-between gap-4">
-          <h1 className="text-3xl font-bold tracking-tighter">Locations</h1>
-          <div className="flex items-center gap-2">
-            <Link
-              href="/dashboard/locations/new"
-              className="flex w-max items-center rounded-3xl bg-white p-1.5 px-3 text-sm font-semibold text-pink-600 duration-300 hover:bg-pink-500/10"
-            >
-              Add
-            </Link>
-          </div>
-        </div>
+    <DashboardPage
+      title="Locations"
+      description="Customers see the area. The full address is shared after they book."
+      newHref="/dashboard/locations/new"
+    >
+      <p
+        ref={statusRef}
+        tabIndex={-1}
+        role={outcome?.status === "error" ? "alert" : "status"}
+        className={`mt-4 text-sm outline-none ${outcome?.status === "error" ? "text-danger" : "text-ink-muted"}`}
+      >
+        {outcome?.message ?? ""}
+      </p>
 
-        <p className="mt-3 text-sm text-black/60">
-          Your current location is used for your page and new bookings.
+      {locations.length === 0 ? (
+        <EmptyState variant="bounded" className="mt-4">
+          You have not saved a location yet. Add one so customers can find you and book.
+        </EmptyState>
+      ) : (
+        <ul className="mt-4 flex flex-col gap-3">
+          {locations.map((location) => (
+            <ManagementRow
+              key={location.id}
+              href={`/dashboard/locations/${location.id}/edit`}
+              name={nameOf(location)}
+              badge={location.is_primary ? <Badge tone="attention">Primary</Badge> : null}
+              meta={[
+                describeAddress(location) || "No address yet",
+                location.is_primary ? "Used for new bookings" : "",
+              ]}
+              menu={
+                <ActionMenu
+                  label={`Actions for ${nameOf(location)}`}
+                  items={[
+                    { key: "edit", label: "Edit", href: `/dashboard/locations/${location.id}/edit` },
+                    ...(location.is_primary
+                      ? []
+                      : [
+                          {
+                            key: "primary",
+                            label: "Make primary",
+                            onSelect: async () =>
+                              report(await makePrimary({ location_id: location.id })),
+                          },
+                        ]),
+                    {
+                      key: "delete",
+                      label: location.is_primary ? "Delete" : "Delete…",
+                      tone: "danger",
+                      separatorBefore: true,
+                      disabled: location.is_primary,
+                      reason: location.is_primary ? "Make another location primary first" : "",
+                      onSelect: () => {
+                        setDeleteError("");
+                        setDeleting(location);
+                      },
+                    },
+                  ]}
+                />
+              }
+            />
+          ))}
+        </ul>
+      )}
+
+      {locations.length === 1 ? (
+        <p className="mt-4 text-sm text-ink-muted">
+          Add another location before replacing this one.
         </p>
+      ) : null}
+      <p className="mt-4 text-sm text-ink-muted">Confirmed bookings keep their original address.</p>
 
-        {locations.length === 0 ? (
-          <p className="mt-10 text-sm text-black/60">
-            You have not saved a location yet. Add one so customers can find you
-            and book.
-          </p>
-        ) : (
-          <ul className="mt-10 flex flex-col gap-4">
-            {locations.map((location) => (
-              <LocationCard
-                key={location.id}
-                location={location}
-                makePrimaryAction={makePrimaryAction}
-                deleteAction={deleteAction}
-              />
-            ))}
-          </ul>
-        )}
-
-        {hasOnlyCurrentLocation ? (
-          <p className="mt-6 text-sm text-black/60">
-            Add another location before replacing this one.
-          </p>
-        ) : null}
-
-        <p className="mt-6 text-sm text-black/60">
-          Confirmed bookings keep their original address.
-        </p>
-      </div>
-    </main>
+      <ConfirmDialog
+        open={Boolean(deleting)}
+        title={`Delete ${deleting ? nameOf(deleting) : "this location"}?`}
+        description="The saved address is removed. Confirmed bookings keep the address they were booked at."
+        cancelLabel="Keep location"
+        confirmLabel="Delete location"
+        pendingLabel="Deleting…"
+        pending={deletePending}
+        error={deleteError}
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleting(null)}
+        fallbackFocusRef={statusRef}
+      />
+    </DashboardPage>
   );
 }

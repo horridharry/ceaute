@@ -1,14 +1,20 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Field } from "@/components/ui/field";
+import { FormActions } from "@/components/ui/form-actions";
+import { FormError } from "@/components/ui/form-feedback";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { keepFormValuesOnSubmit } from "@/lib/forms/keep-form-values";
+import { DashboardPage } from "../../../_components/dashboard-page";
 
 const MONEY_PATTERN = /^\d+(\.\d{1,2})?$/;
 
 function buildExplanation(paymentMode, commitmentAmount) {
-  const amount = commitmentAmount
-    ? `£${commitmentAmount}`
-    : "the commitment amount";
+  const amount = commitmentAmount ? `£${commitmentAmount}` : "the commitment amount";
 
   if (paymentMode === "fixed_deposit") {
     return `Customers pay ${amount} when booking. If they cancel late, that same amount is retained.`;
@@ -17,126 +23,108 @@ function buildExplanation(paymentMode, commitmentAmount) {
   return `Customers pay the full service price when booking. If they cancel late, ${amount} is retained and anything above it is refunded.`;
 }
 
+// The reference form for the dashboard: one right-aligned Save at the end.
 export function BookingSettingsForm({ settings, updateBookingSettings }) {
-  const [stateMessage, formAction, pending] = useActionState(
-    updateBookingSettings,
-    "",
-  );
+  const [result, formAction, pending] = useActionState(updateBookingSettings, null);
   const [paymentMode, setPaymentMode] = useState(settings.payment_mode);
-  const [commitmentAmount, setCommitmentAmount] = useState(
-    settings.commitment_amount,
-  );
+  const [commitmentAmount, setCommitmentAmount] = useState(settings.commitment_amount);
   const [moneyError, setMoneyError] = useState("");
 
   const updateCommitmentAmount = (event) => {
     const nextAmount = event.target.value.trim();
     setCommitmentAmount(nextAmount);
-
-    if (nextAmount && !MONEY_PATTERN.test(nextAmount)) {
-      setMoneyError("Enter pounds with up to two decimal places.");
-      return;
-    }
-
-    setMoneyError("");
+    setMoneyError(
+      nextAmount && !MONEY_PATTERN.test(nextAmount)
+        ? "Enter pounds with up to two decimal places."
+        : "",
+    );
   };
 
   return (
-    <main className="container max-w-md p-5">
-      <div className="mt-6 flex flex-col">
-        <h1 className="text-3xl font-bold tracking-tighter">
-          Booking settings
-        </h1>
-
-        <form
-          id="booking_settings"
-          className="mt-12 flex flex-col gap-4"
-          action={formAction}
-          onSubmit={keepFormValuesOnSubmit(formAction)}
-        >
-          <span className="field-set">
-            <label className="label" htmlFor="payment_mode">
-              Payment mode
-            </label>
-            <select
-              id="payment_mode"
+    <DashboardPage title="Booking settings">
+      <form
+        id="booking_settings"
+        className="mt-8 flex flex-col gap-5"
+        action={formAction}
+        onSubmit={keepFormValuesOnSubmit(formAction)}
+      >
+        <Field label="Payment mode" htmlFor="payment_mode">
+          {(control) => (
+            <Select
+              {...control}
               name="payment_mode"
               value={paymentMode}
               onChange={(event) => setPaymentMode(event.target.value)}
-              className="field cursor-pointer"
             >
               <option value="full">Full payment</option>
               <option value="fixed_deposit">Fixed deposit</option>
-            </select>
-          </span>
+            </Select>
+          )}
+        </Field>
 
-          <span className="field-set">
-            <label className="label" htmlFor="commitment_amount">
-              {paymentMode === "fixed_deposit"
-                ? "Deposit amount"
-                : "Commitment amount"}
-            </label>
-            <p className="text-sm text-red-600">{moneyError}</p>
-            <div className="relative flex items-center rounded-lg">
-              <span className="absolute z-40 ml-3 text-sm opacity-80">£</span>
-              <input
-                id="commitment_amount"
+        <Field
+          label={paymentMode === "fixed_deposit" ? "Deposit amount" : "Commitment amount"}
+          htmlFor="commitment_amount"
+          error={moneyError}
+        >
+          {(control) => (
+            <span className="relative block">
+              <span aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-ink-muted">
+                £
+              </span>
+              <Input
+                {...control}
                 name="commitment_amount"
                 inputMode="decimal"
+                className="w-full pl-7"
                 value={commitmentAmount}
                 onChange={updateCommitmentAmount}
-                className="relative w-full appearance-none rounded-lg border border-black/10 p-2.5 pl-8 outline-none ring-2 ring-transparent duration-200 hover:border-black/20 focus:border-pink-500 focus:ring-pink-100"
               />
-            </div>
-          </span>
+            </span>
+          )}
+        </Field>
 
-          <span className="field-set">
-            <label className="label" htmlFor="cancellation_window_hours">
-              Cancellation window
-            </label>
-            <select
-              id="cancellation_window_hours"
+        <Field label="Cancellation window" htmlFor="cancellation_window_hours">
+          {(control) => (
+            <Select
+              {...control}
               name="cancellation_window_hours"
               defaultValue={settings.cancellation_window_hours}
-              className="field cursor-pointer"
             >
               <option value="12">12 hours</option>
               <option value="24">24 hours</option>
               <option value="48">48 hours</option>
-            </select>
-          </span>
+            </Select>
+          )}
+        </Field>
 
-          <p className="rounded-lg bg-black/5 p-3 text-sm text-black/70">
-            {buildExplanation(paymentMode, commitmentAmount)}
-          </p>
+        <p className="rounded-lg bg-surface-subtle p-3 text-sm text-ink/70">
+          {buildExplanation(paymentMode, commitmentAmount)}
+        </p>
 
-          <span className="field-set">
-            <label className="label" htmlFor="written_policy">
-              Written booking policies
-            </label>
-            <textarea
-              id="written_policy"
+        <Field label="Written booking policies" htmlFor="written_policy">
+          {(control) => (
+            <Textarea
+              {...control}
               name="written_policy"
               rows={6}
+              className="resize-none"
               defaultValue={settings.written_policy}
-              className="field resize-none"
             />
-          </span>
+          )}
+        </Field>
 
-          <p className="mt-4 text-sm text-red-600">{stateMessage}</p>
-
-          <div className="mt-8 flex items-center justify-end gap-2">
-            <button
-              form="booking_settings"
-              type="submit"
-              disabled={pending || Boolean(moneyError)}
-              aria-disabled={pending || Boolean(moneyError)}
-              className="w-max rounded-lg bg-pink-700 p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-pink-800 disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
-            >
-              {pending ? "Saving..." : "Save"}
-            </button>
-          </div>
-        </form>
-      </div>
-    </main>
+        <FormError>{result?.status === "error" ? result.message : ""}</FormError>
+        <FormActions status={result?.status === "saved" && !pending ? "Saved" : ""}>
+          <Button
+            type="submit"
+            disabled={pending || Boolean(moneyError)}
+            aria-busy={pending || undefined}
+          >
+            {pending ? "Saving…" : "Save"}
+          </Button>
+        </FormActions>
+      </form>
+    </DashboardPage>
   );
 }
