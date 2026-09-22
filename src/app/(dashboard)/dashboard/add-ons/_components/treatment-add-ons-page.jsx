@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { SectionSwitcher } from "../../_components/section-switcher";
+import { SectionHeading } from "../../_components/section-heading";
 import { StatusBadge } from "../../_components/status-badge";
 import { formatDurationMinutes } from "../../_lib/price-duration";
 
@@ -74,7 +74,7 @@ export function TreatmentAddOnsPage({ addOns }) {
   return (
     <main className="container max-w-md p-5">
       <div className="mt-6 flex flex-col">
-        <SectionSwitcher />
+        <SectionHeading title="Add-ons" newHref="/dashboard/add-ons/new" />
 
         <AddOnList
           title="Active add-ons"

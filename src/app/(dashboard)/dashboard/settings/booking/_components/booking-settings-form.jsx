@@ -2,7 +2,6 @@
 
 import { useActionState, useState } from "react";
 import { keepFormValuesOnSubmit } from "@/lib/forms/keep-form-values";
-import { SettingsSectionNav } from "@/features/navigation/settings-section-nav";
 
 const MONEY_PATTERN = /^\d+(\.\d{1,2})?$/;
 
@@ -44,10 +43,9 @@ export function BookingSettingsForm({ settings, updateBookingSettings }) {
   return (
     <main className="container max-w-md p-5">
       <div className="mt-6 flex flex-col">
-        <SettingsSectionNav />
-        <h2 className="mt-8 text-2xl font-semibold tracking-tighter">
+        <h1 className="text-3xl font-bold tracking-tighter">
           Booking settings
-        </h2>
+        </h1>
 
         <form
           id="booking_settings"

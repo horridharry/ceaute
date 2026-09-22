@@ -1,4 +1,3 @@
-import { PageSectionNav } from "../_components/page-section-nav";
 import { BlockedDatesForm } from "./_components/blocked-dates-form";
 import { WeeklyScheduleForm } from "./_components/weekly-schedule-form";
 
@@ -15,10 +14,7 @@ export function AvailabilityForm({
   return (
     <main className="container mx-auto max-w-md p-5">
       <div className="mt-6 flex flex-col">
-        <PageSectionNav />
-        <h2 className="mt-8 text-2xl font-semibold tracking-tighter">
-          Availability
-        </h2>
+        <h1 className="text-3xl font-bold tracking-tighter">Availability</h1>
         {schedule.length === 0 ? (
           // Driven by the saved week (no working days saved), not the draft.
           <p className="mt-4 rounded-lg bg-black/[0.04] p-3 text-sm">
