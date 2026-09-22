@@ -14,8 +14,21 @@ import { MASONRY_ROW_PX, masonryRowSpan } from "./photo-navigation";
 // only as far as each image differs from that.
 function MasonryTile({ photo, index, count, label, onOpen, onError, eager }) {
   const tileRef = useRef(null);
+  const imageRef = useRef(null);
   const [span, setSpan] = useState(() => masonryRowSpan(0));
   const [aspectRatio, setAspectRatio] = useState("4 / 5");
+
+  function applyImageSize(image) {
+    if (image?.naturalWidth > 0 && image.naturalHeight > 0) {
+      setAspectRatio(`${image.naturalWidth} / ${image.naturalHeight}`);
+    }
+  }
+
+  // An image that finished loading before hydration (cached, or very fast)
+  // never fires React's onLoad, so read its size once mounted.
+  useEffect(() => {
+    if (imageRef.current?.complete) applyImageSize(imageRef.current);
+  }, []);
 
   useEffect(() => {
     const tile = tileRef.current;
@@ -46,12 +59,8 @@ function MasonryTile({ photo, index, count, label, onOpen, onError, eager }) {
           loading={eager ? "eager" : "lazy"}
           decoding="async"
           draggable={false}
-          onLoad={(event) => {
-            const { naturalWidth, naturalHeight } = event.currentTarget;
-            if (naturalWidth > 0 && naturalHeight > 0) {
-              setAspectRatio(`${naturalWidth} / ${naturalHeight}`);
-            }
-          }}
+          ref={imageRef}
+          onLoad={(event) => applyImageSize(event.currentTarget)}
           onError={() => onError(photo)}
           style={{ aspectRatio }}
           className="block w-full object-cover"
