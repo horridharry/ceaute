@@ -350,19 +350,17 @@ test("an add-on's links to archived treatments are shown kept, not offered", () 
   assert.match(html, /Links to archived treatments are kept when you save/);
 });
 
-test("the add-on form's Archive action is the destructive button", () => {
+test("the add-on form only edits; archive, restore and delete live in the list", () => {
   const html = render(
     h(TreatmentAddOnForm, {
       action: async () => "",
-      archiveAction: async () => "",
-      restoreAction: async () => "",
       mode: "edit",
       treatments: [],
       addOn: { addOnId: "a1", name: "Nail art", additional_price: 5, additional_duration_minutes: 10, is_active: true, compatibleTreatmentIds: [] },
     }),
   );
-  assert.ok(findTag(html, "button", { type: "submit", class: /text-destructive.* w-max$/, "aria-disabled": "false" }));
-  assert.match(html, /<button [^>]*text-destructive[^>]*>Archive<\/button>/);
+  assert.doesNotMatch(html, />(Archive|Restore|Delete)</);
+  assert.equal(count(html, /type="submit"/g), 1);
   assert.doesNotMatch(html, /role="alert"/, "a valid add-on shows no form error");
 });
 
@@ -389,7 +387,8 @@ test("representative pages render exactly one main landmark through PageContaine
   ]) {
     const source = read(file);
     assert.doesNotMatch(source, /<main/, `${file} has no hand-written <main>`);
-    assert.equal(count(source, /<PageContainer[\s>]/g), 1, `${file} renders one PageContainer`);
+    // Dashboard screens reach PageContainer through DashboardPage.
+    assert.equal(count(source, /<(PageContainer|DashboardPage)[\s>]/g), 1, `${file} renders one PageContainer`);
   }
   const reviews = read("src/app/(public-provider)/[username]/(storefront)/reviews/page.jsx");
   assert.match(reviews, /<PageContainer width="column">/, "the storefront column width is kept");

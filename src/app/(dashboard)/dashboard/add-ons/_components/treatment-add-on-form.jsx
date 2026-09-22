@@ -10,42 +10,10 @@ import { Input } from "@/components/ui/input";
 import { PageContainer } from "@/components/ui/page-container";
 import { FocusedTaskHeader } from "../../_components/focused-task-header";
 
-function ArchiveButton({ addOn, archiveAction, restoreAction, pending }) {
-  const [message, formAction, archivePending] = useActionState(
-    addOn.is_active ? archiveAction : restoreAction,
-    "",
-  );
-  const isPending = pending || archivePending;
-  const isArchived = !addOn.is_active;
-
-  return (
-    <form action={formAction} className="mr-auto">
-      <input type="hidden" name="addOnId" value={addOn.addOnId} />
-      <input type="hidden" name="addOnName" value={addOn.name} />
-      <Button
-        type="submit"
-        variant="destructive"
-        className="w-max"
-        aria-disabled={isPending}
-        disabled={isPending}
-      >
-        {archivePending
-          ? isArchived
-            ? "Restoring..."
-            : "Archiving..."
-          : isArchived
-            ? "Restore"
-            : "Archive"}
-      </Button>
-      <FormError className="mt-2">{message}</FormError>
-    </form>
-  );
-}
-
+// Archive, restore and delete live in the add-on list's menu, so the form
+// only edits.
 export function TreatmentAddOnForm({
   action,
-  archiveAction,
-  restoreAction,
   addOn,
   mode,
   treatments,
@@ -242,16 +210,6 @@ export function TreatmentAddOnForm({
         </FormActions>
       </form>
 
-      {!isCreate ? (
-        <div className="mt-8 flex items-center">
-          <ArchiveButton
-            addOn={addOn}
-            archiveAction={archiveAction}
-            restoreAction={restoreAction}
-            pending={pending}
-          />
-        </div>
-      ) : null}
     </PageContainer>
   );
 }

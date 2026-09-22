@@ -173,24 +173,3 @@ async function runAddOnTransition(formData) {
 export async function transitionAddOn(_currentState, formData) {
   return runAddOnTransition(formData);
 }
-
-// The edit form's Archive and Restore button keeps its old contract (a
-// message on failure, back to the list on success).
-async function transitionFromEditForm(formData, transition) {
-  formData.set("transition", transition);
-  const result = await runAddOnTransition(formData);
-
-  if (result.status !== "done") {
-    return result.message;
-  }
-
-  redirect("/dashboard/add-ons");
-}
-
-export async function archiveAddOn(_currentState, formData) {
-  return transitionFromEditForm(formData, "archive");
-}
-
-export async function restoreAddOn(_currentState, formData) {
-  return transitionFromEditForm(formData, "restore");
-}

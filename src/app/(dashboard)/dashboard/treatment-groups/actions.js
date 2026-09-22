@@ -197,27 +197,3 @@ async function runGroupTransition(formData) {
 export async function transitionTreatmentGroup(_currentState, formData) {
   return runGroupTransition(formData);
 }
-
-// The list's Archive and Restore buttons keep their old contract (one message).
-async function transitionFromListButton(formData, transition) {
-  formData.set("transition", transition);
-  const result = await runGroupTransition(formData);
-
-  if (result.status === "blocked") {
-    return "Move treatments to another group or No group before archiving this group.";
-  }
-
-  if (result.status !== "done") {
-    return result.message;
-  }
-
-  return transition === "archive" ? "Group archived." : "Group restored.";
-}
-
-export async function archiveTreatmentGroup(_currentState, formData) {
-  return transitionFromListButton(formData, "archive");
-}
-
-export async function restoreTreatmentGroup(_currentState, formData) {
-  return transitionFromListButton(formData, "restore");
-}

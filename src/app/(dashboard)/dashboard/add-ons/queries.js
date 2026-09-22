@@ -39,38 +39,48 @@ export async function getAddOnFormOptions({ next = "/dashboard/add-ons" } = {}) 
   return { treatments: treatments ?? [] };
 }
 
+// Every add-on the provider can see: active and archived (deleted add-ons are
+// hidden by row-level security). "Works with" counts links to active
+// treatments only; links kept to archived treatments are not bookable.
 export async function getAllAddOns() {
   const { supabase, providerPage } = await getSignedInProvider({
     next: "/dashboard/add-ons",
   });
 
-  const [addOnsResult, compatibilityResult] = await Promise.all([
+  const [addOnsResult, compatibilityResult, treatmentsResult] = await Promise.all([
     supabase
       .schema("ceaute")
       .from("treatment_add_on")
       .select(addOnSelect)
       .eq("provider_page_id", providerPage.id)
-      .order("is_active", { ascending: false })
       .order("display_order", { ascending: true })
       .order("name", { ascending: true }),
     supabase
       .schema("ceaute")
       .from("treatment_add_on_compatibility")
-      .select("treatment_add_on_id")
+      .select("treatment_add_on_id, treatment_id")
       .eq("provider_page_id", providerPage.id),
+    supabase
+      .schema("ceaute")
+      .from("treatment")
+      .select("id")
+      .eq("provider_page_id", providerPage.id)
+      .eq("is_active", true),
   ]);
 
   if (addOnsResult.error) {
     throw new Error("Could not load add-ons.");
   }
 
-  if (compatibilityResult.error) {
+  if (compatibilityResult.error || treatmentsResult.error) {
     throw new Error("Could not load add-on compatibility.");
   }
 
+  const activeTreatmentIds = new Set((treatmentsResult.data ?? []).map((treatment) => treatment.id));
   const treatmentCounts = new Map();
 
   for (const compatibility of compatibilityResult.data ?? []) {
+    if (!activeTreatmentIds.has(compatibility.treatment_id)) continue;
     treatmentCounts.set(
       compatibility.treatment_add_on_id,
       (treatmentCounts.get(compatibility.treatment_add_on_id) ?? 0) + 1,
