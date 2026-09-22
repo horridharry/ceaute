@@ -51,8 +51,8 @@ test("the owner preview renders the storefront without booking entry or All trea
   );
   assert.match(
     storefrontPage,
-    /\{username && hasMoreTreatments\(sections\) \? \(\s*<Link\s+href=\{treatmentsHref\(username\)\}/,
-    "See all treatments appears only on the public page, and only above three",
+    /\{username \? \(\s*<Link\s+href=\{treatmentsHref\(username\)\}/,
+    "See all treatments appears on every public page with a treatment",
   );
 });
 

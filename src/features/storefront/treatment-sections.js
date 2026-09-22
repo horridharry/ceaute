@@ -100,10 +100,6 @@ export function treatmentPreview(sections, count = TREATMENT_PREVIEW_COUNT) {
   return treatmentsInOrder(sections).slice(0, count);
 }
 
-export function hasMoreTreatments(sections, count = TREATMENT_PREVIEW_COUNT) {
-  return treatmentsInOrder(sections).length > count;
-}
-
 // Section headings on the All treatments page: the group's name, and
 // "Other treatments" for treatments without a group when groups are shown
 // above them. A page whose treatments have no groups shows no headings.

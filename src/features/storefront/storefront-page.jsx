@@ -8,11 +8,7 @@ import { TreatmentSelectionList } from "./treatment-selection-list";
 import { HeroCarousel, ProviderPhoto } from "./hero-carousel";
 import { BentoHero } from "./bento-hero";
 import { galleryHref } from "@/features/photo-viewing/photo-navigation";
-import {
-  hasMoreTreatments,
-  treatmentPreview,
-  treatmentsHref,
-} from "./treatment-sections";
+import { treatmentPreview, treatmentsHref } from "./treatment-sections";
 
 // Average rating and review count, or a "New" pill before the first review.
 function RatingSummary({ rating }) {
@@ -131,7 +127,7 @@ function TreatmentCard({ treatment }) {
         <div>
           <h3 className="font-medium">{treatment.name}</h3>
           {treatment.description ? (
-            <p className="mt-1 text-sm text-black/60">
+            <p className="mt-1 line-clamp-2 text-sm text-black/60">
               {treatment.description}
             </p>
           ) : null}
@@ -149,9 +145,11 @@ function TreatmentCard({ treatment }) {
 }
 
 // The first treatments in page order, with no group headings, and "See all
-// treatments" when there are more. The owner's preview (no username) shows
-// the same treatments without booking or the link, because the All
-// treatments page, like booking, exists only for published pages.
+// treatments" beside the heading: every published page with a treatment can
+// reach the full list, including one with exactly three. The owner's preview
+// (no username) shows the same treatments without booking or the link,
+// because the All treatments page, like booking, exists only for published
+// pages.
 function TreatmentsPreview({ sections, username }) {
   const treatments = treatmentPreview(sections);
   const previewSections = [{ key: "preview", treatments }];
@@ -160,7 +158,7 @@ function TreatmentsPreview({ sections, username }) {
     <section className="flex flex-col gap-3">
       <div className="flex items-center justify-between gap-4">
         <h2 className="text-lg font-semibold">Treatments</h2>
-        {username && hasMoreTreatments(sections) ? (
+        {username ? (
           <Link
             href={treatmentsHref(username)}
             className="inline-flex min-h-11 items-center text-sm font-semibold text-pink-600"
