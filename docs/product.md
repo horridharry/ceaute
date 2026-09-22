@@ -73,8 +73,11 @@ purpose) with "See all photos", then a Treatments preview, booking terms and
 visible reviews. The exact appointment address is not public.
 
 The Treatments preview shows the first three active treatments in page order,
-across groups and without group headings, with "See all treatments" when there
-are more than three; with none, the section is left out. `/@[username]/treatments`
+across groups and without group headings, with "See all treatments" whenever
+the page has at least one; with none, the section is left out. On a card a
+description is clamped to two lines, and the details sheet shows all of it.
+The customer-facing action on a card reads "Book"; in the details sheet it
+reads "Book", or "Choose a time" once add-ons are on offer. `/@[username]/treatments`
 (All treatments) lists every active treatment under its group's name, groups
 in order and treatments without an active group last (headed "Other
 treatments" when other groups are shown). When at least two groups have
