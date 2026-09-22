@@ -6,7 +6,23 @@ import { getPublishedProviderPageByUsername } from "./_lib/public-provider-data"
 import {
   hasPublicUsernamePrefix,
   normalizePublicUsername,
+  storefrontMetadata,
 } from "@/features/storefront/format";
+
+export async function generateMetadata({ params }) {
+  const { username } = await params;
+
+  if (!hasPublicUsernamePrefix(username)) {
+    notFound();
+  }
+
+  // Shares the layout's cached lookup, so this adds no query.
+  const providerPage = await getPublishedProviderPageByUsername(
+    normalizePublicUsername(username),
+  );
+
+  return storefrontMetadata(providerPage);
+}
 
 export default async function UsernamePage({ params }) {
   const { username } = await params;
