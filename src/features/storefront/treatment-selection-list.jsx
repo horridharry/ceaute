@@ -20,16 +20,27 @@ import {
 // add-ons page (`book/[treatmentId]/page.jsx`) and the time page's "Change
 // add-ons" link already produce and revalidate server-side, so nothing
 // downstream of that link needs to know a sheet exists.
+//
+// The card has two actions: its name opens the details sheet and Select
+// books. The name's button sits inside the heading (a heading inside a
+// button loses its heading role) and its ::after stretches over the whole
+// card, so tapping anywhere on the card still opens the details. Select is
+// raised above that layer and named after the treatment, because every card
+// has one.
 function TreatmentRow({ treatment, onOpenDetails, onSelect }) {
   return (
-    <article className="rounded-xl border p-4">
-      <button
-        type="button"
-        onClick={() => onOpenDetails(treatment)}
-        className="flex w-full items-start justify-between gap-4 text-left"
-      >
+    <article className="relative rounded-xl border p-4">
+      <div className="flex items-start justify-between gap-4">
         <div>
-          <h3 className="font-medium">{treatment.name}</h3>
+          <h3 className="font-medium">
+            <button
+              type="button"
+              onClick={() => onOpenDetails(treatment)}
+              className="text-left after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-pink-600"
+            >
+              {treatment.name}
+            </button>
+          </h3>
           {treatment.description ? (
             <p className="mt-1 text-sm text-black/60">
               {treatment.description}
@@ -42,12 +53,13 @@ function TreatmentRow({ treatment, onOpenDetails, onSelect }) {
             {formatDurationMinutes(treatment.duration_minutes)}
           </p>
         </div>
-      </button>
+      </div>
       <div className="mt-3 flex justify-end">
         <button
           type="button"
           onClick={() => onSelect(treatment)}
-          className="rounded-lg bg-pink-700 px-4 py-2 text-sm font-semibold text-white duration-200 hover:bg-pink-800"
+          aria-label={`Select ${treatment.name}`}
+          className="relative rounded-lg bg-pink-700 px-4 py-2 text-sm font-semibold text-white duration-200 hover:bg-pink-800"
         >
           Select
         </button>
