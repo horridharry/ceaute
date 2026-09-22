@@ -274,6 +274,7 @@ export function bookingToDisplayBooking(booking, paymentAttempt = null) {
     date_label: dateTime.date,
     time_label: dateTime.time,
     duration_label: formatDurationMinutes(service.duration_minutes),
+    duration_minutes: service.duration_minutes ?? null,
     total_price_label: formatMoneyFromPence(service.total_price_pence),
     amount_paid_online_label: formatMoneyFromPence(
       paymentAttempt?.amount_charged_pence,
@@ -352,6 +353,7 @@ export function bookingToDisplayBooking(booking, paymentAttempt = null) {
       name: addOn.name ?? BOOKING_FALLBACK_LABEL,
       price_label: formatMoneyFromPence(addOn.additional_price_pence),
       duration_label: formatDurationMinutes(addOn.additional_duration_minutes),
+      duration_minutes: addOn.additional_duration_minutes ?? null,
     })),
   };
 }

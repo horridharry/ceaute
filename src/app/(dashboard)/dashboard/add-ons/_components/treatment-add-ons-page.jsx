@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ActionMenu } from "@/components/ui/action-menu";
 import { buttonClassName } from "@/components/ui/button-classes";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -46,6 +46,11 @@ export function TreatmentAddOnsPage({ addOns, status, transitionAction }) {
   const [confirming, setConfirming] = useState(null); // { addOn, transition }
   const [confirmError, setConfirmError] = useState("");
   const statusRef = useRef(null);
+  // After the render that closes any dialog: focus inside an open modal
+  // fails, and the row that opened it may be about to leave the list.
+  useEffect(() => {
+    if (outcome) statusRef.current?.focus();
+  }, [outcome]);
   const { active, archived } = splitByState(addOns);
   const shown = status === "archived" ? archived : active;
 
@@ -60,7 +65,6 @@ export function TreatmentAddOnsPage({ addOns, status, transitionAction }) {
     setConfirming(null);
     setConfirmError("");
     setOutcome(result);
-    statusRef.current?.focus();
   };
 
   const ask = (addOn, transition) => {

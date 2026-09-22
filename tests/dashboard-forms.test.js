@@ -92,3 +92,12 @@ test("saving a treatment keeps an archived group only when it is unchanged", () 
   assert.match(actions, /treatmentGroupId && treatmentGroupId !== currentGroupId/);
   assert.match(actions, /currentGroupId: current\.treatment_group_id/);
 });
+
+test("a refused group name stays in the field, with the reason linked to it", () => {
+  const form = readFileSync("src/app/(dashboard)/dashboard/treatment-groups/_components/treatment-group-form.jsx", "utf8");
+  assert.match(form, /value=\{name\}/, "controlled, so React's form reset cannot clear it");
+  assert.doesNotMatch(form, /defaultValue/);
+  assert.match(form, /error=\{message\}/, "the refusal is the name field's error");
+  const html = render(h(TreatmentGroupForm, { action: noop, group: { id: "g1", name: "Manicures" } }));
+  assert.match(html, /id="group_name"[^>]*value="Manicures"|value="Manicures"[^>]*id="group_name"/);
+});

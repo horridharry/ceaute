@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ActionMenu } from "@/components/ui/action-menu";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -26,10 +26,14 @@ export function LocationsPage({ locations, makePrimaryAction, deleteAction }) {
   const [makePrimary] = useServerAction(makePrimaryAction);
   const [removeLocation, deletePending] = useServerAction(deleteAction);
   const statusRef = useRef(null);
+  // After the render that closes any dialog: focus inside an open modal
+  // fails, and the row that opened it may be about to leave the list.
+  useEffect(() => {
+    if (outcome) statusRef.current?.focus();
+  }, [outcome]);
 
   const report = (result) => {
     setOutcome(result);
-    statusRef.current?.focus();
   };
 
   const confirmDelete = async () => {

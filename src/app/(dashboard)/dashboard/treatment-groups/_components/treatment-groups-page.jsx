@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ActionMenu } from "@/components/ui/action-menu";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -68,6 +68,11 @@ export function TreatmentGroupsPage({ groups, status, transitionAction }) {
   const [blocked, setBlocked] = useState(null); // { group, transition, treatments }
   const [confirmError, setConfirmError] = useState("");
   const statusRef = useRef(null);
+  // After the render that closes any dialog: focus inside an open modal
+  // fails, and the row that opened it may be about to leave the list.
+  useEffect(() => {
+    if (outcome) statusRef.current?.focus();
+  }, [outcome]);
   const { active, archived } = splitByState(groups);
   const shown = status === "archived" ? archived : active;
 
@@ -84,7 +89,6 @@ export function TreatmentGroupsPage({ groups, status, transitionAction }) {
       setConfirming(null);
       setConfirmError("");
       setOutcome(result);
-      statusRef.current?.focus();
       return;
     }
 
@@ -92,7 +96,6 @@ export function TreatmentGroupsPage({ groups, status, transitionAction }) {
       setConfirmError(result.message);
     } else {
       setOutcome(result);
-      statusRef.current?.focus();
     }
   };
 

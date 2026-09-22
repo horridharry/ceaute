@@ -5,6 +5,7 @@ import { Disclosure } from "@/components/ui/disclosure";
 import { BOOKING_FALLBACK_LABEL, providerBookingView } from "@/lib/bookings/booking-display";
 import { DashboardPage } from "../../_components/dashboard-page";
 import { formatShortDate, formatTimeRange, treatmentLine } from "../../_lib/booking-format";
+import { formatShortDuration } from "../../_lib/price-duration";
 import { cancelProviderBooking } from "../actions";
 import { getProviderBooking } from "../queries";
 import { CancelBooking } from "./_components/cancel-booking";
@@ -15,6 +16,31 @@ const canShowExactAddress = (booking) =>
   (booking.status === "confirmed" || booking.status === "completed");
 
 const known = (value) => value && value !== BOOKING_FALLBACK_LABEL;
+
+const isMinutes = (value) => Number.isInteger(value) && value > 0;
+
+// The snapshot's duration is the whole appointment, add-ons included.
+function treatmentMinutes(booking) {
+  const addOnMinutes = booking.selected_add_ons.map((addOn) => addOn.duration_minutes);
+  if (!isMinutes(booking.duration_minutes) || !addOnMinutes.every(isMinutes)) return null;
+  const minutes = booking.duration_minutes - addOnMinutes.reduce((sum, value) => sum + value, 0);
+  return isMinutes(minutes) ? minutes : null;
+}
+
+function ContactIcon({ kind }) {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      {kind === "phone" ? (
+        <path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2Z" />
+      ) : (
+        <>
+          <rect x="2" y="4" width="20" height="16" rx="2" />
+          <path d="m22 7-10 6L2 7" />
+        </>
+      )}
+    </svg>
+  );
+}
 
 function StatusLine({ booking }) {
   const view = providerBookingView(booking);
@@ -45,7 +71,9 @@ function WhenAndWhere({ booking }) {
       <p className="text-base font-semibold tabular-nums">
         {formatShortDate(booking.start_at)} · {formatTimeRange(booking.start_at, booking.end_at)}
       </p>
-      <p className="text-ink-muted">{booking.duration_label}</p>
+      <p className="text-ink-muted">
+        {isMinutes(booking.duration_minutes) ? formatShortDuration(booking.duration_minutes) : booking.duration_label}
+      </p>
       {addressLines.length ? (
         <p className="mt-2 whitespace-pre-line">{addressLines.join("\n")}</p>
       ) : (
@@ -67,11 +95,13 @@ function Contact({ booking }) {
     <div className="mt-5 flex gap-2">
       {phone ? (
         <a href={`tel:${phone.replace(/\s+/g, "")}`} className={buttonClassName({ variant: "secondary", className: "flex-1" })}>
+          <ContactIcon kind="phone" />
           Call<span className="sr-only"> {booking.customer_name}</span>
         </a>
       ) : null}
       {email ? (
         <a href={`mailto:${email}`} className={buttonClassName({ variant: "secondary", className: "flex-1" })}>
+          <ContactIcon kind="email" />
           Email<span className="sr-only"> {booking.customer_name}</span>
         </a>
       ) : null}
@@ -159,8 +189,11 @@ export default async function BookingDetailPage({ params }) {
       <Section title="Treatment" id="treatment">
         <Rows
           rows={[
-            [booking.treatment_name, "", false],
-            ...booking.selected_add_ons.map((addOn) => [addOn.name, `+${addOn.price_label} · +${addOn.duration_label}`]),
+            [booking.treatment_name, treatmentMinutes(booking) ? formatShortDuration(treatmentMinutes(booking)) : "", false],
+            ...booking.selected_add_ons.map((addOn) => [
+              addOn.name,
+              `+${addOn.price_label} · +${isMinutes(addOn.duration_minutes) ? formatShortDuration(addOn.duration_minutes) : addOn.duration_label}`,
+            ]),
           ]}
         />
       </Section>

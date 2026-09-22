@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ActionMenu } from "@/components/ui/action-menu";
 import { Button } from "@/components/ui/button";
 import { buttonClassName } from "@/components/ui/button-classes";
@@ -50,6 +50,11 @@ export function PortfolioManager({ images, isLive, actions }) {
   const [captionText, setCaptionText] = useState("");
   const [dialogError, setDialogError] = useState("");
   const statusRef = useRef(null);
+  // After the render that closes any dialog: focus inside an open modal
+  // fails, and the row that opened it may be about to leave the list.
+  useEffect(() => {
+    if (outcome) statusRef.current?.focus();
+  }, [outcome]);
   const fileRef = useRef(null);
   const [upload] = useServerAction(actions.upload);
   const [move, moving] = useServerAction(actions.move);
@@ -63,7 +68,6 @@ export function PortfolioManager({ images, isLive, actions }) {
 
   const report = (result) => {
     setOutcome(result);
-    statusRef.current?.focus();
   };
 
   const addFiles = async (fileList) => {
@@ -323,7 +327,7 @@ export function PortfolioManager({ images, isLive, actions }) {
         confirmLabel="Delete photo"
         pendingLabel="Deleting…"
         pending={removing}
-        error={dialogError}
+        error={confirmDelete ? dialogError : ""}
         onConfirm={async () => {
           const result = await remove({ image_id: confirmDelete.id });
           if (result.status === "done") {
@@ -351,7 +355,18 @@ export function PortfolioManager({ images, isLive, actions }) {
         onCancel={() => setBlocked(null)}
         fallbackFocusRef={statusRef}
       >
-        <p className="mt-3">
+        <p className="mt-3 flex flex-col items-start gap-2">
+          <button
+            type="button"
+            className={buttonClassName({ variant: "secondary", size: "compact" })}
+            onClick={() => {
+              // Still inside the click, so the browser lets the picker open.
+              setBlocked(null);
+              fileRef.current?.click();
+            }}
+          >
+            Add photos
+          </button>
           <Link href="/dashboard/settings/publication" className={buttonClassName({ variant: "secondary", size: "compact" })}>
             Go to Publication
           </Link>
@@ -366,7 +381,7 @@ export function PortfolioManager({ images, isLive, actions }) {
         pendingLabel="Saving…"
         tone="primary"
         pending={captionPending}
-        error={dialogError}
+        error={captioning ? dialogError : ""}
         onConfirm={async () => {
           const result = await saveCaption({ image_id: captioning.id, caption: captionText });
           if (result.status === "done") {

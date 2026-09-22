@@ -4,6 +4,7 @@ import { LinkFilterPills } from "@/components/ui/filter-pills";
 import { providerBookingViewFromParam } from "@/lib/bookings/booking-display";
 import { DashboardPage } from "../_components/dashboard-page";
 import { BookingRow } from "../_components/booking-row";
+import { formatShortDate } from "../_lib/booking-format";
 import { getAllBookings } from "./queries";
 
 // Filters by what the booking is, not only when it is: Upcoming (confirmed),
@@ -19,7 +20,7 @@ const VIEWS = [
 function bookingsByDay(bookings) {
   const days = [];
   for (const booking of bookings) {
-    const date = booking.date_label || "Date unavailable";
+    const date = formatShortDate(booking.start_at) || "Date unavailable";
     const day = days.at(-1);
     if (day?.date === date) day.entries.push(booking);
     else days.push({ date, entries: [booking] });
