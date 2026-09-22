@@ -1,14 +1,19 @@
 import Link from "next/link";
 import {
-  formatDurationMinutes,
   formatPricePence,
+  pluralCount,
   shouldShowReviewsSection,
+  treatmentMetaLine,
 } from "@/features/storefront/format";
 import { TreatmentSelectionList } from "./treatment-selection-list";
 import { HeroCarousel, ProviderPhoto } from "./hero-carousel";
 import { BentoHero } from "./bento-hero";
 import { galleryHref } from "@/features/photo-viewing/photo-navigation";
-import { treatmentPreview, treatmentsHref } from "./treatment-sections";
+import {
+  treatmentPreview,
+  treatmentsHref,
+  treatmentsInOrder,
+} from "./treatment-sections";
 
 // Average rating and review count, or a "New" pill before the first review.
 function RatingSummary({ rating }) {
@@ -94,79 +99,41 @@ function PaymentTerms({ terms }) {
   );
 }
 
-function TreatmentAddOns({ addOns }) {
-  if (addOns.length === 0) {
-    return null;
-  }
-
-  return (
-    <div className="mt-3 border-t border-black/10 pt-3">
-      <p className="text-xs font-semibold uppercase tracking-wide text-black/50">
-        Compatible add-ons
-      </p>
-      <ul className="mt-2 flex flex-col gap-2">
-        {addOns.map((addOn) => (
-          <li key={addOn.name} className="text-sm">
-            <span className="font-medium">{addOn.name}</span>
-            <span className="text-black/60">
-              {" "}
-              +{formatPricePence(addOn.additional_price_pence)} · +
-              {formatDurationMinutes(addOn.additional_duration_minutes)}
-            </span>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
+// The owner's preview of a card: the same layout as the bookable one
+// without Book, because their preview never books.
 function TreatmentCard({ treatment }) {
   return (
     <article className="rounded-xl border border-black/10 p-4">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h3 className="font-medium">{treatment.name}</h3>
-          {treatment.description ? (
-            <p className="mt-1 line-clamp-2 text-sm text-black/60">
-              {treatment.description}
-            </p>
-          ) : null}
-        </div>
-        <div className="shrink-0 text-right text-sm font-medium">
-          <p>{formatPricePence(treatment.price_pence)}</p>
-          <p className="text-black/60">
-            {formatDurationMinutes(treatment.duration_minutes)}
-          </p>
-        </div>
-      </div>
-      <TreatmentAddOns addOns={treatment.add_ons} />
+      <h3 className="font-medium [overflow-wrap:anywhere]">{treatment.name}</h3>
+      {treatment.description ? (
+        <p className="mt-2 line-clamp-2 text-sm text-black/60">
+          {treatment.description}
+        </p>
+      ) : null}
+      <p className="mt-2 text-sm text-black/60">{treatmentMetaLine(treatment)}</p>
     </article>
   );
 }
 
-// The first treatments in page order, with no group headings, and "See all
-// treatments" beside the heading: every published page with a treatment can
+// Treatments and Reviews end with the same full-width outlined button.
+const SECONDARY_BUTTON =
+  "inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-black/15 bg-white px-4 text-sm font-semibold text-black transition hover:bg-black/[0.03] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pink-600";
+
+// The first treatments in page order, with no group headings, and a
+// full-width "See all N treatments" button below them counting every active
+// treatment, not the three shown: every published page with a treatment can
 // reach the full list, including one with exactly three. The owner's preview
-// (no username) shows the same treatments without booking or the link,
+// (no username) shows the same treatments without booking or the button,
 // because the All treatments page, like booking, exists only for published
 // pages.
 function TreatmentsPreview({ sections, username }) {
   const treatments = treatmentPreview(sections);
   const previewSections = [{ key: "preview", treatments }];
+  const total = treatmentsInOrder(sections).length;
 
   return (
     <section className="flex flex-col gap-3">
-      <div className="flex items-center justify-between gap-4">
-        <h2 className="text-lg font-semibold">Treatments</h2>
-        {username ? (
-          <Link
-            href={treatmentsHref(username)}
-            className="inline-flex min-h-11 items-center text-sm font-semibold text-pink-600"
-          >
-            See all treatments
-          </Link>
-        ) : null}
-      </div>
+      <h2 className="text-lg font-semibold">Treatments</h2>
       {username ? (
         <TreatmentSelectionList sections={previewSections} username={username} />
       ) : (
@@ -176,14 +143,23 @@ function TreatmentsPreview({ sections, username }) {
           ))}
         </div>
       )}
+      {username ? (
+        <Link href={treatmentsHref(username)} className={`mt-2 ${SECONDARY_BUTTON}`}>
+          {`See all ${pluralCount(total, "treatment")}`}
+        </Link>
+      ) : null}
     </section>
   );
 }
 
+const REVIEWS_PREVIEW_COUNT = 3;
+
+// The newest reviews only. There is no all-reviews page yet, so the preview
+// has no "See all reviews" button; adding one needs that route first.
 function Reviews({ reviews }) {
   return (
     <div className="flex flex-col gap-3">
-      {reviews.map((review) => (
+      {reviews.slice(0, REVIEWS_PREVIEW_COUNT).map((review) => (
         <article
           key={`${review.created_at}-${review.reviewer_name}`}
           className="rounded-xl border border-black/10 p-4 text-sm"
@@ -232,7 +208,7 @@ function PortfolioPreview({ photos, username }) {
             href={galleryHref(username)}
             className="inline-flex min-h-11 items-center text-sm font-semibold text-pink-600"
           >
-            See all photos
+            {`See all ${pluralCount(photos.length, "photo")}`}
           </Link>
         ) : null}
       </div>

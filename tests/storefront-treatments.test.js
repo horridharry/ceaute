@@ -184,22 +184,60 @@ test("treatment rules stay pure; the filter UI reaches data only through props",
   assert.match(filterUi, /role="group"[\s\S]*aria-label="Filter treatments by group"/);
 });
 
-test("the customer action reads Book, and card descriptions are clamped to two lines", () => {
+test("the card reads: name with Book beside it, then a clamped description, then its line", () => {
   const list = read("src/features/storefront/treatment-selection-list.jsx");
   const storefront = read("src/features/storefront/storefront-page.jsx");
-  assert.match(list, /aria-label=\{`Book \$\{treatment\.name\}`\}/);
-  assert.match(list, /\n\s*Book\n/, "the card's action reads Book");
-  assert.match(list, /hasAddOns \? "Choose a time" : "Book"/, "the sheet's straight-to-booking action reads Book too");
-  assert.doesNotMatch(list, />\s*Select\s*</, "no Select left on a customer-facing control");
-  // The card clamps; the sheet keeps the whole description.
   const card = list.slice(list.indexOf("function TreatmentRow"), list.indexOf("function TreatmentDetailsSheet"));
   const sheet = list.slice(list.indexOf("function TreatmentDetailsSheet"));
-  assert.match(card, /line-clamp-2[^"]*text-sm text-black\/60">\s*\{treatment\.description\}/);
-  assert.match(storefront, /line-clamp-2[^"]*text-sm text-black\/60">\s*\{treatment\.description\}/, "the owner preview's cards clamp too");
-  assert.doesNotMatch(sheet, /line-clamp/, "the details sheet shows the whole description");
-  for (const source of [card, sheet, storefront]) {
+  const ownerCard = storefront.slice(storefront.indexOf("function TreatmentCard"), storefront.indexOf("const SECONDARY_BUTTON"));
+
+  // Top row: the heading and Book, in that order, with Book unable to shrink.
+  assert.match(card, /<div className="flex items-start justify-between gap-3">\s*<h3[\s\S]*?<\/h3>\s*<button[\s\S]*?aria-label=\{`Book \$\{treatment\.name\}`\}/);
+  assert.match(card, /shrink-0/, "Book keeps its width beside a long name");
+  assert.match(card, /min-h-11/, "Book stays comfortably tappable");
+  assert.match(card, /\[overflow-wrap:anywhere\]/, "a long name wraps instead of overlapping Book");
+  assert.match(card, /\n\s*Book\n/);
+  assert.doesNotMatch(list, />\s*Select\s*</, "no Select left on a customer-facing control");
+  assert.match(list, /hasAddOns \? "Choose a time" : "Book"/, "the sheet's straight-to-booking action reads Book too");
+
+  // Description clamped on both cards, whole in the sheet, absent when empty.
+  for (const source of [card, ownerCard]) {
+    assert.match(source, /line-clamp-2[^"]*text-sm text-black\/60">\s*\{treatment\.description\}/);
     assert.match(source, /\{treatment\.description \? \(/, "a treatment without a description renders nothing");
+    assert.match(source, /\{treatmentMetaLine\(treatment\)\}/, "duration, price and add-ons come from one rule");
   }
+  assert.doesNotMatch(sheet, /line-clamp/, "the details sheet shows the whole description");
+  assert.doesNotMatch(ownerCard, /aria-label=\{`Book/, "the owner preview cannot book");
+});
+
+test("See all buttons count everything, not the preview, and Portfolio stays a text link", () => {
+  const storefront = read("src/features/storefront/storefront-page.jsx");
+  const preview = storefront.slice(storefront.indexOf("function TreatmentsPreview"), storefront.indexOf("const REVIEWS_PREVIEW_COUNT"));
+
+  // The treatments button comes after the list, full width, counting them all.
+  assert.match(preview, /const total = treatmentsInOrder\(sections\)\.length;/);
+  assert.ok(
+    preview.indexOf("TreatmentSelectionList") < preview.indexOf("treatmentsHref(username)"),
+    "the button sits below the cards",
+  );
+  assert.match(preview, /className=\{`mt-2 \$\{SECONDARY_BUTTON\}`\}[\s\S]*?See all \$\{pluralCount\(total, "treatment"\)\}/);
+  assert.match(storefront, /const SECONDARY_BUTTON =\s*\n\s*"inline-flex min-h-11 w-full/, "Treatments and Reviews share one button style");
+  assert.match(preview, /\{username \? \(\s*<Link href=\{treatmentsHref\(username\)\}/, "the owner preview has no button");
+
+  // Portfolio keeps its text link beside the heading, now with its count.
+  const portfolio = storefront.slice(storefront.indexOf("function PortfolioPreview"), storefront.indexOf("export function StorefrontPage"));
+  assert.match(portfolio, /className="inline-flex min-h-11 items-center text-sm font-semibold text-pink-600"\s*>\s*\{`See all \$\{pluralCount\(photos\.length, "photo"\)\}`\}/);
+  assert.doesNotMatch(portfolio, /SECONDARY_BUTTON/, "Portfolio stays a text link, not a button");
+});
+
+test("the storefront shows at most three reviews and claims no all-reviews page", () => {
+  const storefront = read("src/features/storefront/storefront-page.jsx");
+  assert.match(storefront, /const REVIEWS_PREVIEW_COUNT = 3;/);
+  assert.match(storefront, /reviews\.slice\(0, REVIEWS_PREVIEW_COUNT\)\.map\(/);
+  assert.match(storefront, /shouldShowReviewsSection\(viewModel\.reviews\)/, "no reviews, no section");
+  // There is no all-reviews route yet, so nothing may link to one.
+  assert.doesNotMatch(storefront, /See all \$\{pluralCount\(.*review/);
+  assert.doesNotMatch(storefront, /\/reviews/);
 });
 
 test("both pages book through the same selection list and link", () => {
