@@ -43,7 +43,7 @@ function ProviderIdentity({ provider }) {
       <div className="flex items-center gap-4">
         <ProviderPhoto src={provider.display_photo_url} />
         <div className="min-w-0">
-          <h1 className="text-3xl font-bold tracking-tighter">
+          <h1 className="text-2xl font-bold tracking-tighter [overflow-wrap:anywhere]">
             {provider.business_name || "Untitled provider page"}
           </h1>
           {handleAndArea.length ? (
