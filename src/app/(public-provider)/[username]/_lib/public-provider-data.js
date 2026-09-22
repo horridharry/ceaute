@@ -16,7 +16,7 @@ export const getPublishedProviderPageByUsername = cache(async (username) => {
     .schema("ceaute")
     .from("provider_page")
     .select(
-      "id, username, display_name, provider_category, biography, status",
+      "id, username, display_name, provider_category, biography, status, display_photo_path",
     )
     .eq("username", normalizedUsername)
     .eq("status", "published")

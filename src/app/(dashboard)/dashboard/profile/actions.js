@@ -1,5 +1,11 @@
 "use server";
+import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
+import {
+  DISPLAY_PHOTO_BUCKET,
+  displayPhotoStoragePath,
+  displayPhotoUploadError,
+} from "@/lib/providers/display-photo";
 import { getSignedInProvider } from "../_lib/provider-data";
 import { usernameRequiredError } from "@/lib/providers/username";
 import {
@@ -153,4 +159,93 @@ export const unpublishPage = async () => {
   revalidatePath("/", "layout");
   revalidatePath("/dashboard/profile");
   return publicationSuccess("unpublish");
+};
+
+// Adds or replaces the optional display photo. The new object is stored
+// first and the page then points at it; the previous photo is removed only
+// after that succeeds, so a failure never leaves the page without the photo
+// it had.
+export const uploadDisplayPhoto = async (_currentState, formData) => {
+  const { supabase, providerPage } = await getSignedInProvider({
+    next: "/dashboard/profile",
+  });
+  const file = formData.get("display_photo");
+
+  if (!(file instanceof File)) {
+    return "Choose a photo to upload.";
+  }
+
+  const headBytes = new Uint8Array(await file.slice(0, 12).arrayBuffer());
+  const uploadError = displayPhotoUploadError({
+    type: file.type,
+    size: file.size,
+    headBytes,
+  });
+
+  if (uploadError) {
+    return uploadError;
+  }
+
+  const storagePath = displayPhotoStoragePath({
+    providerPageId: providerPage.id,
+    photoId: randomUUID(),
+    type: file.type,
+  });
+  const storage = supabase.storage.from(DISPLAY_PHOTO_BUCKET);
+  const { error: storeError } = await storage.upload(storagePath, file, {
+    contentType: file.type,
+    upsert: false,
+  });
+
+  if (storeError) {
+    return "Could not upload that photo.";
+  }
+
+  const { error: updateError } = await supabase
+    .schema("ceaute")
+    .from("provider_page")
+    .update({ display_photo_path: storagePath })
+    .eq("id", providerPage.id);
+
+  if (updateError) {
+    await storage.remove([storagePath]);
+    return "Could not save your photo.";
+  }
+
+  if (
+    providerPage.display_photo_path &&
+    providerPage.display_photo_path !== storagePath
+  ) {
+    await storage.remove([providerPage.display_photo_path]);
+  }
+
+  revalidatePath("/dashboard/profile");
+  return "Photo saved.";
+};
+
+export const removeDisplayPhoto = async () => {
+  const { supabase, providerPage } = await getSignedInProvider({
+    next: "/dashboard/profile",
+  });
+
+  if (!providerPage.display_photo_path) {
+    return "Photo removed.";
+  }
+
+  const { error } = await supabase
+    .schema("ceaute")
+    .from("provider_page")
+    .update({ display_photo_path: null })
+    .eq("id", providerPage.id);
+
+  if (error) {
+    return "Could not remove your photo.";
+  }
+
+  await supabase.storage
+    .from(DISPLAY_PHOTO_BUCKET)
+    .remove([providerPage.display_photo_path]);
+
+  revalidatePath("/dashboard/profile");
+  return "Photo removed.";
 };

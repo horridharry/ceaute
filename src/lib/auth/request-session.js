@@ -15,7 +15,7 @@ export const getRequestSession = cache(async () => {
 });
 
 const OWNED_PROVIDER_PAGE_SELECT =
-  "id, owner_profile_id, username, display_name, provider_category, biography, status";
+  "id, owner_profile_id, username, display_name, provider_category, biography, status, display_photo_path";
 
 // The provider page owned by the signed-in user, or null when they have not
 // created one. A failed lookup throws rather than returning null so callers

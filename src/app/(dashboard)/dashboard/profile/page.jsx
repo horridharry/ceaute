@@ -2,15 +2,18 @@ import Link from "next/link";
 import { getProviderPage } from "./queries";
 import {
   publishPage,
+  removeDisplayPhoto,
   unpublishPage,
   updateProviderPage,
+  uploadDisplayPhoto,
 } from "./actions";
+import { DisplayPhotoForm } from "./_components/display-photo-form";
 import { ProviderPageForm } from "./_components/provider-page-form";
 import { PublicationActions } from "./_components/publication-actions";
 import { SectionHeading } from "../_components/section-heading";
 
 export default async function DashboardProfilePage() {
-  const { providerPage, publication } = await getProviderPage();
+  const { providerPage, publication, displayPhotoUrl } = await getProviderPage();
 
   return (
     <>
@@ -59,6 +62,12 @@ export default async function DashboardProfilePage() {
             unpublishPage={unpublishPage}
           />
         </section>
+
+        <DisplayPhotoForm
+          photoUrl={displayPhotoUrl}
+          uploadDisplayPhoto={uploadDisplayPhoto}
+          removeDisplayPhoto={removeDisplayPhoto}
+        />
       </main>
       <ProviderPageForm
         providerPage={providerPage}
