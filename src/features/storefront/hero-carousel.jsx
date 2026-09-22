@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
+import Link from "next/link";
+import { galleryHref, isTap } from "@/features/photo-viewing/photo-navigation";
 import { paginationDots } from "./hero-pagination";
 
 const DOT_CLASS_BY_SIZE = {
@@ -20,13 +22,17 @@ function prefersReducedMotion() {
 // a native horizontal swipe with scroll snapping; the pagination dots follow
 // the image in view and are also buttons, and the arrow keys work once the
 // images have focus. With many images the dots are a compact window of at
-// most five (see paginationDots), so the row never overflows. A single image gets no controls. An image that fails to
-// load is dropped, and with none left the hero is not shown.
+// most five (see paginationDots), so the row never overflows. A single image
+// gets no controls. An image that fails to load is dropped, and with none
+// left the hero is not shown.
 //
-// This is the phone presentation, also used on wider screens until the
-// desktop photo grid arrives with the portfolio gallery (Stage 3).
-export function HeroCarousel({ images, providerName, className = "" }) {
+// With a `username`, tapping the image in view opens the gallery at that
+// photo. A pointer that moved, or a track that scrolled while it was down,
+// was a swipe, so the link is not followed (see isTap). This is the phone and
+// tablet presentation; wide screens show the Bento grid instead.
+export function HeroCarousel({ images, providerName, username, className = "" }) {
   const trackRef = useRef(null);
+  const pointerRef = useRef(null);
   const [failedUrls, setFailedUrls] = useState(() => new Set());
   const [index, setIndex] = useState(0);
   const slides = images.filter((image) => !failedUrls.has(image.image_url));
@@ -48,6 +54,23 @@ export function HeroCarousel({ images, providerName, className = "" }) {
 
   const hasControls = count > 1;
   const label = providerName ? `${providerName}'s work` : "Portfolio";
+
+  function slideImage(image, slideIndex) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element -- Short-lived signed storage URLs.
+      <img
+        src={image.image_url}
+        alt={image.caption || `${label}, image ${slideIndex + 1}`}
+        loading={slideIndex === 0 ? "eager" : "lazy"}
+        fetchPriority={slideIndex === 0 ? "high" : undefined}
+        draggable={false}
+        onError={() =>
+          setFailedUrls((failed) => new Set(failed).add(image.image_url))
+        }
+        className="aspect-[4/3] w-full bg-black/5 object-cover"
+      />
+    );
+  }
 
   return (
     <section
@@ -72,6 +95,13 @@ export function HeroCarousel({ images, providerName, className = "" }) {
             goTo(current - 1);
           }
         }}
+        onPointerDown={(event) => {
+          pointerRef.current = {
+            x: event.clientX,
+            y: event.clientY,
+            scrollLeft: event.currentTarget.scrollLeft,
+          };
+        }}
         onScroll={(event) => {
           const track = event.currentTarget;
           if (track.clientWidth > 0) {
@@ -88,18 +118,33 @@ export function HeroCarousel({ images, providerName, className = "" }) {
             aria-label={`${slideIndex + 1} of ${count}`}
             className="w-full shrink-0 snap-center"
           >
-            {/* eslint-disable-next-line @next/next/no-img-element -- Short-lived signed storage URLs. */}
-            <img
-              src={image.image_url}
-              alt={image.caption || `${label}, image ${slideIndex + 1}`}
-              loading={slideIndex === 0 ? "eager" : "lazy"}
-              fetchPriority={slideIndex === 0 ? "high" : undefined}
-              draggable={false}
-              onError={() =>
-                setFailedUrls((failed) => new Set(failed).add(image.image_url))
-              }
-              className="aspect-[4/3] w-full bg-black/5 object-cover"
-            />
+            {username ? (
+              <Link
+                href={galleryHref(username, image.id)}
+                tabIndex={slideIndex === current ? undefined : -1}
+                aria-label={`Open photo ${slideIndex + 1} of ${count} in the gallery`}
+                draggable={false}
+                onClick={(event) => {
+                  const start = pointerRef.current;
+                  pointerRef.current = null;
+                  // A keyboard activation has no pointer; always follow it.
+                  if (event.detail === 0 || !start) return;
+                  const tap = isTap({
+                    startX: start.x,
+                    startY: start.y,
+                    endX: event.clientX,
+                    endY: event.clientY,
+                    scrollDelta: (trackRef.current?.scrollLeft ?? 0) - start.scrollLeft,
+                  });
+                  if (!tap) event.preventDefault();
+                }}
+                className="block focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-white"
+              >
+                {slideImage(image, slideIndex)}
+              </Link>
+            ) : (
+              slideImage(image, slideIndex)
+            )}
           </div>
         ))}
       </div>

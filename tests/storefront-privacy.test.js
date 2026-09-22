@@ -41,7 +41,8 @@ test("the storefront reads only visible portfolio images, through the shared que
 
 test("the owner preview renders the storefront without booking entry", () => {
   assert.match(previewPage, /<StorefrontPage[\s\S]*backHref="\/dashboard\/profile"/);
-  assert.match(storefrontPage, /bookingEnabled=\{!backHref\}/);
+  assert.match(storefrontPage, /const publicView = !backHref;/);
+  assert.match(storefrontPage, /bookingEnabled=\{publicView\}/);
   assert.match(
     storefrontPage,
     /if \(bookingEnabled\) \{\s*return <TreatmentSelectionList/,
@@ -54,4 +55,20 @@ test("public photo queries read only the id, storage path and caption, and the b
   const gallery = read("src/app/(public-provider)/[username]/(storefront)/photos/page.jsx");
   assert.doesNotMatch(gallery, /storage_path|address|postcode/i);
   assert.match(gallery, /loadVisiblePortfolioPhotos\(/);
+});
+
+test("the owner preview has no gallery links; the public page links every hero and preview photo", () => {
+  assert.match(storefrontPage, /const galleryUsername = publicView \? provider\.username : null;/);
+  // Every gallery entry point takes its username from galleryUsername.
+  for (const component of ["HeroCarousel", "BentoHero", "PortfolioPreview"]) {
+    assert.match(
+      storefrontPage,
+      new RegExp(`<${component}[\\s\\S]*?username=\\{galleryUsername\\}`),
+      `${component} links only on the public page`,
+    );
+  }
+  for (const file of ["hero-carousel.jsx", "bento-hero.jsx"]) {
+    const source = read(`src/features/storefront/${file}`);
+    assert.match(source, /username \?/, `${file} renders links only with a username`);
+  }
 });

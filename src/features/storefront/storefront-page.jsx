@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {
   formatDurationMinutes,
   formatPricePence,
@@ -5,6 +6,8 @@ import {
 } from "@/features/storefront/format";
 import { TreatmentSelectionList } from "./treatment-selection-list";
 import { HeroCarousel, ProviderPhoto } from "./hero-carousel";
+import { BentoHero } from "./bento-hero";
+import { galleryHref } from "@/features/photo-viewing/photo-navigation";
 
 // Average rating and review count, or a "New" pill before the first review.
 function RatingSummary({ rating }) {
@@ -208,24 +211,93 @@ function Reviews({ reviews }) {
 const SECTION_STACK =
   "flex flex-col divide-y divide-black/[0.07] [&>*]:py-8 [&>*:first-child]:pt-0 [&>*:last-child]:pb-0";
 
+const PORTFOLIO_PREVIEW_COUNT = 3;
+
+// The first photos of the portfolio (the first one repeats the hero on
+// purpose) and a way into the gallery. Without a username (the owner's
+// unpublished preview) nothing links, because the gallery is public-only.
+function PortfolioPreview({ photos, username }) {
+  const preview = photos.slice(0, PORTFOLIO_PREVIEW_COUNT);
+
+  return (
+    <section className="flex flex-col gap-3">
+      <div className="flex items-center justify-between gap-4">
+        <h2 className="text-lg font-semibold">Portfolio</h2>
+        {username ? (
+          <Link
+            href={galleryHref(username)}
+            className="inline-flex min-h-11 items-center text-sm font-semibold text-pink-600"
+          >
+            See all photos
+          </Link>
+        ) : null}
+      </div>
+      <ul className="grid grid-cols-3 gap-2">
+        {preview.map((photo, index) => {
+          const img = (
+            // eslint-disable-next-line @next/next/no-img-element -- Portfolio previews use short-lived signed storage URLs.
+            <img
+              src={photo.image_url}
+              alt={photo.caption || `Portfolio photo ${index + 1}`}
+              loading="lazy"
+              decoding="async"
+              className="aspect-square w-full rounded-xl bg-black/5 object-cover"
+            />
+          );
+
+          return (
+            <li key={photo.id} className="min-w-0">
+              {username ? (
+                <Link
+                  href={galleryHref(username, photo.id)}
+                  aria-label={`Open portfolio photo ${index + 1} in the gallery`}
+                  className="block rounded-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pink-600"
+                >
+                  {img}
+                </Link>
+              ) : (
+                img
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
 export function StorefrontPage({ viewModel, backHref, showBackLink = true }) {
   const { provider, portfolio, treatment_sections: treatmentSections } =
     viewModel;
+  // The owner's preview (backHref) is neither bookable nor linked to the
+  // gallery, which exists only for published pages.
+  const publicView = !backHref;
+  const galleryUsername = publicView ? provider.username : null;
 
-  // The hero sits flush under the header on phones and as a rounded image
-  // in the centred column on wider screens.
+  // Phones and tablets: the swipeable hero, flush under the header on phones
+  // and rounded in the column from sm. Wide screens: the Bento grid, wider
+  // than the centred content column below it.
   return (
-    <main className="container mx-auto max-w-md pb-5 sm:px-5 sm:pt-5">
+    <main className="container mx-auto max-w-md pb-5 sm:px-5 sm:pt-5 lg:max-w-5xl">
       {portfolio.length ? (
-        <HeroCarousel
-          images={portfolio}
-          providerName={provider.business_name}
-          className="sm:mt-6"
-        />
+        <>
+          <HeroCarousel
+            images={portfolio}
+            providerName={provider.business_name}
+            username={galleryUsername}
+            className="sm:mt-6 lg:hidden"
+          />
+          <BentoHero
+            images={portfolio}
+            providerName={provider.business_name}
+            username={galleryUsername}
+            className="hidden lg:mt-6 lg:block"
+          />
+        </>
       ) : null}
       <div
-        className={`${SECTION_STACK} px-5 sm:px-0 ${
-          portfolio.length ? "mt-6" : "mt-11 sm:mt-6"
+        className={`${SECTION_STACK} px-5 sm:px-0 lg:mx-auto lg:max-w-[25.5rem] ${
+          portfolio.length ? "mt-6 lg:mt-10" : "mt-11 sm:mt-6"
         }`}
       >
         {backHref && showBackLink ? (
@@ -239,26 +311,7 @@ export function StorefrontPage({ viewModel, backHref, showBackLink = true }) {
         <ProviderIdentity provider={provider} />
 
         {portfolio.length ? (
-          <section className="flex flex-col gap-3">
-            <h2 className="text-lg font-semibold">Portfolio</h2>
-            <div className="grid grid-cols-2 gap-3">
-              {portfolio.map((image, index) => (
-                <figure key={`${image.image_url}-${index}`} className="min-w-0">
-                  {/* eslint-disable-next-line @next/next/no-img-element -- Portfolio previews use short-lived signed storage URLs. */}
-                  <img
-                    src={image.image_url}
-                    alt={image.caption || "Portfolio image"}
-                    className="aspect-square w-full rounded-xl object-cover"
-                  />
-                  {image.caption ? (
-                    <figcaption className="mt-1 truncate text-xs text-black/60">
-                      {image.caption}
-                    </figcaption>
-                  ) : null}
-                </figure>
-              ))}
-            </div>
-          </section>
+          <PortfolioPreview photos={portfolio} username={galleryUsername} />
         ) : null}
 
         <section className="flex flex-col gap-3">
@@ -266,7 +319,7 @@ export function StorefrontPage({ viewModel, backHref, showBackLink = true }) {
           <TreatmentSections
             sections={treatmentSections}
             username={provider.username}
-            bookingEnabled={!backHref}
+            bookingEnabled={publicView}
           />
         </section>
 
