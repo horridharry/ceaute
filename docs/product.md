@@ -70,8 +70,10 @@ with review count (or a "New" pill before the first visible review). The
 provider category is not shown publicly there. Below that it shows a Portfolio
 preview of the first three visible photos (the first repeats the hero on
 purpose) with a "See all N photos" text link beside the heading, then a
-Treatments preview, booking terms and the three newest visible reviews. The
-exact appointment address is not public.
+Treatments preview, the three newest visible reviews and, last, Availability.
+The storefront has no Booking terms section: a customer sees the payment,
+cancellation window, late-cancellation outcome and written policy at booking
+review, before paying. The exact appointment address is not public.
 
 The Treatments preview shows the first three active treatments in page order,
 across groups and without group headings, followed by a full-width "See all N
@@ -100,9 +102,8 @@ Availability screen ("9 am to 5 pm"). Closed days, blocked dates, holiday
 exceptions, a today marker and any explanation of bookable times are all left
 out, and the section disappears when the provider has no open days. These
 hours describe when the provider works, not which appointments are free: the
-booking journey remains the only source of bookable times. The storefront's
-Booking terms section is unchanged and still sits above Reviews; decision 9
-moves it in a later stage. `/@[username]/treatments`
+booking journey remains the only source of bookable times.
+`/@[username]/treatments`
 (All treatments) lists every active treatment under its group's name, groups
 in order and treatments without an active group last (headed "Other
 treatments" when other groups are shown). When at least two groups have
@@ -143,7 +144,9 @@ flows; historical bookings keep their snapshots.
 Discovery at `/discover` filters published providers by public-area text and/or
 an active Ceaute discovery category. It is a simple category and area search,
 not distance search, ranking, recommendations, or a standalone treatment
-catalogue.
+catalogue. There is no landing page: `/` redirects (temporarily) to
+`/discover`, and the header logo leads to Discover everywhere except the
+provider workspace, where it leads to the dashboard.
 
 ## Where a provider works
 
