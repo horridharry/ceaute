@@ -1,11 +1,11 @@
 "use server";
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
+import { displayPhotoUploadError } from "@/lib/providers/display-photo";
 import {
-  DISPLAY_PHOTO_BUCKET,
-  displayPhotoStoragePath,
-  displayPhotoUploadError,
-} from "@/lib/providers/display-photo";
+  clearDisplayPhoto,
+  saveDisplayPhoto,
+} from "@/lib/providers/display-photo-storage";
 import { getSignedInProvider } from "../_lib/provider-data";
 import { usernameRequiredError } from "@/lib/providers/username";
 import {
@@ -161,10 +161,10 @@ export const unpublishPage = async () => {
   return publicationSuccess("unpublish");
 };
 
-// Adds or replaces the optional display photo. The new object is stored
-// first and the page then points at it; the previous photo is removed only
-// after that succeeds, so a failure never leaves the page without the photo
-// it had.
+// Adds or replaces the optional display photo. The new file is stored and
+// the page pointed at it before anything is deleted, so a failure keeps the
+// existing photo; see lib/providers/display-photo-storage.js for how
+// overlapping saves and leftover files are handled.
 export const uploadDisplayPhoto = async (_currentState, formData) => {
   const { supabase, providerPage } = await getSignedInProvider({
     next: "/dashboard/profile",
@@ -186,66 +186,34 @@ export const uploadDisplayPhoto = async (_currentState, formData) => {
     return uploadError;
   }
 
-  const storagePath = displayPhotoStoragePath({
+  const result = await saveDisplayPhoto({
+    supabase,
     providerPageId: providerPage.id,
+    previousPath: providerPage.display_photo_path,
+    file,
     photoId: randomUUID(),
-    type: file.type,
-  });
-  const storage = supabase.storage.from(DISPLAY_PHOTO_BUCKET);
-  const { error: storeError } = await storage.upload(storagePath, file, {
-    contentType: file.type,
-    upsert: false,
   });
 
-  if (storeError) {
-    return "Could not upload that photo.";
+  if (result.ok) {
+    revalidatePath("/dashboard/profile");
   }
 
-  const { error: updateError } = await supabase
-    .schema("ceaute")
-    .from("provider_page")
-    .update({ display_photo_path: storagePath })
-    .eq("id", providerPage.id);
-
-  if (updateError) {
-    await storage.remove([storagePath]);
-    return "Could not save your photo.";
-  }
-
-  if (
-    providerPage.display_photo_path &&
-    providerPage.display_photo_path !== storagePath
-  ) {
-    await storage.remove([providerPage.display_photo_path]);
-  }
-
-  revalidatePath("/dashboard/profile");
-  return "Photo saved.";
+  return result.message;
 };
 
 export const removeDisplayPhoto = async () => {
   const { supabase, providerPage } = await getSignedInProvider({
     next: "/dashboard/profile",
   });
+  const result = await clearDisplayPhoto({
+    supabase,
+    providerPageId: providerPage.id,
+    previousPath: providerPage.display_photo_path,
+  });
 
-  if (!providerPage.display_photo_path) {
-    return "Photo removed.";
+  if (result.ok) {
+    revalidatePath("/dashboard/profile");
   }
 
-  const { error } = await supabase
-    .schema("ceaute")
-    .from("provider_page")
-    .update({ display_photo_path: null })
-    .eq("id", providerPage.id);
-
-  if (error) {
-    return "Could not remove your photo.";
-  }
-
-  await supabase.storage
-    .from(DISPLAY_PHOTO_BUCKET)
-    .remove([providerPage.display_photo_path]);
-
-  revalidatePath("/dashboard/profile");
-  return "Photo removed.";
+  return result.message;
 };
