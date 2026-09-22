@@ -65,7 +65,7 @@ function ProviderIdentity({ provider }) {
 
 function EmptyState({ children }) {
   return (
-    <div className="rounded-xl border border-dashed p-4 text-sm text-black/60">
+    <div className="rounded-xl border border-dashed border-black/15 p-4 text-sm text-black/60">
       {children}
     </div>
   );
@@ -83,7 +83,7 @@ function PaymentTerms({ terms }) {
   return (
     <section className="flex flex-col gap-3">
       <h2 className="text-lg font-semibold">Booking terms</h2>
-      <div className="rounded-xl border p-4 text-sm">
+      <div className="rounded-xl border border-black/10 p-4 text-sm">
         <p>{paymentText}</p>
         {terms.cancellation_window_hours ? (
           <p className="mt-2 text-black/60">
@@ -104,7 +104,7 @@ function TreatmentAddOns({ addOns }) {
   }
 
   return (
-    <div className="mt-3 border-t pt-3">
+    <div className="mt-3 border-t border-black/10 pt-3">
       <p className="text-xs font-semibold uppercase tracking-wide text-black/50">
         Compatible add-ons
       </p>
@@ -126,7 +126,7 @@ function TreatmentAddOns({ addOns }) {
 
 function TreatmentCard({ treatment }) {
   return (
-    <article className="rounded-xl border p-4">
+    <article className="rounded-xl border border-black/10 p-4">
       <div className="flex items-start justify-between gap-4">
         <div>
           <h3 className="font-medium">{treatment.name}</h3>
@@ -179,7 +179,7 @@ function Reviews({ reviews }) {
       {reviews.map((review) => (
         <article
           key={`${review.created_at}-${review.reviewer_name}`}
-          className="rounded-xl border p-4 text-sm"
+          className="rounded-xl border border-black/10 p-4 text-sm"
         >
           <div className="flex items-center justify-between gap-4">
             <p className="font-semibold">{review.rating}/5</p>
@@ -202,6 +202,12 @@ function Reviews({ reviews }) {
   );
 }
 
+// Storefront sections are separated by thin, low-contrast rules with even
+// spacing. The rules are provisional: to drop them, replace this with
+// "flex flex-col gap-10".
+const SECTION_STACK =
+  "flex flex-col divide-y divide-black/[0.07] [&>*]:py-8 [&>*:first-child]:pt-0 [&>*:last-child]:pb-0";
+
 export function StorefrontPage({ viewModel, backHref, showBackLink = true }) {
   const { provider, portfolio, treatment_sections: treatmentSections } =
     viewModel;
@@ -218,7 +224,7 @@ export function StorefrontPage({ viewModel, backHref, showBackLink = true }) {
         />
       ) : null}
       <div
-        className={`flex flex-col gap-10 px-5 sm:px-0 ${
+        className={`${SECTION_STACK} px-5 sm:px-0 ${
           portfolio.length ? "mt-6" : "mt-11 sm:mt-6"
         }`}
       >

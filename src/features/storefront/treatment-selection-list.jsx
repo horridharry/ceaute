@@ -29,7 +29,7 @@ import {
 // has one.
 function TreatmentRow({ treatment, onOpenDetails, onSelect }) {
   return (
-    <article className="relative rounded-xl border p-4">
+    <article className="relative rounded-xl border border-black/10 p-4">
       <div className="flex items-start justify-between gap-4">
         <div>
           <h3 className="font-medium">
@@ -141,7 +141,7 @@ function TreatmentDetailsSheet({
         </p>
 
         {hasAddOns ? (
-          <div className="mt-5 border-t pt-4">
+          <div className="mt-5 border-t border-black/10 pt-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-black/50">
               Add-ons
             </p>
@@ -179,7 +179,7 @@ function TreatmentDetailsSheet({
           type="button"
           onClick={onContinue}
           disabled={isNavigating}
-          className="mt-6 w-full rounded-lg bg-pink-700 p-3 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-pink-800 disabled:cursor-not-allowed disabled:opacity-60"
+          className="mt-6 w-full rounded-lg bg-pink-700 p-3 text-sm font-semibold text-white duration-200 hover:bg-pink-800 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isNavigating ? "Continuing..." : hasAddOns ? "Choose a time" : "Select"}
         </button>
