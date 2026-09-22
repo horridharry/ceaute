@@ -15,6 +15,7 @@ const read = (relativePath) =>
   readFileSync(path.join(REPO_ROOT, relativePath), "utf8").replace(/\/\/.*$/gm, "");
 
 const viewModel = read("src/features/storefront/storefront-view-model.js");
+const portfolioPhotos = read("src/features/storefront/portfolio-photos.js");
 const storefrontPage = read("src/features/storefront/storefront-page.jsx");
 const previewPage = read("src/app/(dashboard)/dashboard/profile/preview/page.jsx");
 
@@ -30,18 +31,44 @@ test("the storefront reads only the public area of the working location", () => 
   assert.doesNotMatch(viewModel, /address|postcode|street|access_instructions|latitude|longitude/i);
 });
 
-test("the storefront reads only visible portfolio images", () => {
-  const start = viewModel.indexOf('.from("portfolio_image")');
-  const query = viewModel.slice(start, viewModel.indexOf(".order(", start));
+test("the storefront reads only visible portfolio images, through the shared query", () => {
+  const start = portfolioPhotos.indexOf('.from("portfolio_image")');
+  const query = portfolioPhotos.slice(start, portfolioPhotos.indexOf(".order(", start));
   assert.match(query, /\.eq\("is_visible", true\)/);
+  assert.match(viewModel, /visiblePortfolioQuery\(supabase, providerPage\.id\)/);
+  assert.doesNotMatch(viewModel, /\.from\("portfolio_image"\)/, "no second, divergent portfolio query");
 });
 
 test("the owner preview renders the storefront without booking entry", () => {
   assert.match(previewPage, /<StorefrontPage[\s\S]*backHref="\/dashboard\/profile"/);
-  assert.match(storefrontPage, /bookingEnabled=\{!backHref\}/);
+  assert.match(storefrontPage, /const publicView = !backHref;/);
+  assert.match(storefrontPage, /bookingEnabled=\{publicView\}/);
   assert.match(
     storefrontPage,
     /if \(bookingEnabled\) \{\s*return <TreatmentSelectionList/,
     "only the bookable variant renders the selection list that links into booking",
   );
+});
+
+test("public photo queries read only the id, storage path and caption, and the browser gets no path", () => {
+  assert.equal(querySelecting(portfolioPhotos, "portfolio_image"), "id, storage_path, caption");
+  const gallery = read("src/app/(public-provider)/[username]/(storefront)/photos/page.jsx");
+  assert.doesNotMatch(gallery, /storage_path|address|postcode/i);
+  assert.match(gallery, /loadVisiblePortfolioPhotos\(/);
+});
+
+test("the owner preview has no gallery links; the public page links every hero and preview photo", () => {
+  assert.match(storefrontPage, /const galleryUsername = publicView \? provider\.username : null;/);
+  // Every gallery entry point takes its username from galleryUsername.
+  for (const component of ["HeroCarousel", "BentoHero", "PortfolioPreview"]) {
+    assert.match(
+      storefrontPage,
+      new RegExp(`<${component}[\\s\\S]*?username=\\{galleryUsername\\}`),
+      `${component} links only on the public page`,
+    );
+  }
+  for (const file of ["hero-carousel.jsx", "bento-hero.jsx"]) {
+    const source = read(`src/features/storefront/${file}`);
+    assert.match(source, /username \?/, `${file} renders links only with a username`);
+  }
 });

@@ -147,3 +147,22 @@ test("Stripe returns to the checkout hold path", () => {
   assert.match(paths, /searchParams\.set\("hold",\s*holdId\)/);
   assert.match(paths, /\/checkout\?\$\{searchParams\.toString\(\)\}/);
 });
+
+test("the gallery lives in the storefront group, under its published check", () => {
+  const galleryDir = path.join(STOREFRONT_DIR, "photos");
+  const page = routeFile(galleryDir, "page");
+
+  assert.ok(page, "(storefront)/photos/page exists");
+  assert.ok(
+    wrappingFiles(galleryDir, "layout").includes(routeFile(STOREFRONT_DIR, "layout")),
+    "the (storefront) layout wraps the gallery",
+  );
+  assert.deepEqual(
+    wrappingFiles(galleryDir, "loading")
+      .map((file) => path.relative(REPO_ROOT, file))
+      .filter((file) => !file.includes("(storefront)")),
+    [],
+    "no loading boundary above the published check",
+  );
+  assert.match(withoutComments(read(page)), /loadVisiblePortfolioPhotos\(/);
+});

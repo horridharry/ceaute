@@ -2,33 +2,16 @@ import { DISPLAY_PHOTO_BUCKET } from "@/lib/providers/display-photo";
 import { logSupabaseError } from "@/lib/supabase/log-error";
 import { signStoragePaths } from "@/lib/supabase/signed-urls";
 import { ratingSummary } from "./format";
+import {
+  portfolioImagesWithSignedUrls,
+  signPortfolioImages,
+  visiblePortfolioQuery,
+} from "./portfolio-photos";
 
-const PORTFOLIO_BUCKET = "portfolio-images";
 const SIGNED_IMAGE_SECONDS = 60 * 60;
 
-// Pairs each portfolio row with its signed URL, in the rows' order. A row
-// whose path could not be signed is left out rather than rendered as an
-// <img> with an empty src.
-export function portfolioImagesWithSignedUrls(images, signedUrlByPath) {
-  return images.flatMap((image) => {
-    const imageUrl = signedUrlByPath.get(image.storage_path);
-
-    return imageUrl
-      ? [{ image_url: imageUrl, caption: image.caption ?? "" }]
-      : [];
-  });
-}
-
-async function signedPortfolioImages(supabase, images) {
-  const signedUrlByPath = await signStoragePaths(
-    supabase,
-    PORTFOLIO_BUCKET,
-    images.map((image) => image.storage_path),
-    SIGNED_IMAGE_SECONDS,
-  );
-
-  return portfolioImagesWithSignedUrls(images, signedUrlByPath);
-}
+// Kept for existing callers; the rules live in ./portfolio-photos.
+export { portfolioImagesWithSignedUrls };
 
 function mapBookingTerms(settings) {
   if (!settings) {
@@ -140,14 +123,7 @@ export async function buildStorefrontViewModel({ supabase, providerPage }) {
       // returns to the public booking journey.
       .eq("is_primary", true)
       .maybeSingle(),
-    supabase
-      .schema("ceaute")
-      .from("portfolio_image")
-      .select("storage_path, caption, display_order, created_at")
-      .eq("provider_page_id", providerPage.id)
-      .eq("is_visible", true)
-      .order("display_order", { ascending: true })
-      .order("created_at", { ascending: true }),
+    visiblePortfolioQuery(supabase, providerPage.id),
     supabase
       .schema("ceaute")
       .from("treatment_group")
@@ -219,7 +195,7 @@ export async function buildStorefrontViewModel({ supabase, providerPage }) {
   }
 
   const [portfolio, signedPhotoUrls] = await Promise.all([
-    signedPortfolioImages(supabase, portfolioResult.data ?? []),
+    signPortfolioImages(supabase, portfolioResult.data ?? []),
     signStoragePaths(
       supabase,
       DISPLAY_PHOTO_BUCKET,
