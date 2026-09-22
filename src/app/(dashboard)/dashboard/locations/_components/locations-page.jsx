@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
-import { PageSectionNav } from "../../_components/page-section-nav";
 
 function ActionMessage({ message }) {
   return message ? (
@@ -113,11 +112,8 @@ export function LocationsPage({ locations, makePrimaryAction, deleteAction }) {
   return (
     <main className="container max-w-md p-5">
       <div className="mt-6 flex flex-col">
-        <PageSectionNav />
         <div className="flex items-end justify-between gap-4">
-          <h2 className="mt-8 text-2xl font-semibold tracking-tighter">
-            Locations
-          </h2>
+          <h1 className="text-3xl font-bold tracking-tighter">Locations</h1>
           <div className="flex items-center gap-2">
             <Link
               href="/dashboard/locations/new"

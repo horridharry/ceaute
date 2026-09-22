@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
-import { SectionSwitcher } from "../../_components/section-switcher";
+import { SectionHeading } from "../../_components/section-heading";
 
 function ActionMessage({ message }) {
   return message ? <p className="mt-2 text-sm text-black/60">{message}</p> : null;
@@ -95,7 +95,10 @@ export function TreatmentGroupsPage({
   return (
     <main className="container max-w-md p-5">
       <div className="mt-6 flex flex-col">
-        <SectionSwitcher />
+        <SectionHeading
+          title="Treatment groups"
+          newHref="/dashboard/treatment-groups/new"
+        />
 
         <GroupList
           title="Active groups"

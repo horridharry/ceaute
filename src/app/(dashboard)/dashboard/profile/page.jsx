@@ -7,7 +7,7 @@ import {
 } from "./actions";
 import { ProviderPageForm } from "./_components/provider-page-form";
 import { PublicationActions } from "./_components/publication-actions";
-import { PageSectionNav } from "../_components/page-section-nav";
+import { SectionHeading } from "../_components/section-heading";
 
 export default async function DashboardProfilePage() {
   const { providerPage, publication } = await getProviderPage();
@@ -16,7 +16,7 @@ export default async function DashboardProfilePage() {
     <>
       <main className="container max-w-md p-5">
         <div className="mt-6">
-          <PageSectionNav />
+          <SectionHeading title="Profile" />
         </div>
 
         <section className="mt-8 rounded-xl border border-black/10 p-4 text-sm">

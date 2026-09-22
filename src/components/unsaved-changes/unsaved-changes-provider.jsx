@@ -81,13 +81,22 @@ export function UnsavedChangesProvider({ children }) {
     [],
   );
 
-  const value = useMemo(
+  // The functions keep their identity for the provider's lifetime: guards
+  // re-register whenever they change, which would drop a pending navigation.
+  const actions = useMemo(
     () => ({
       register: (id) => getController().register(id),
       unregister: (id, options) => getController().unregister(id, options),
       navigate: (href) => getController().navigate(href),
     }),
     [getController],
+  );
+  const isConfirming = pending !== null;
+  const value = useMemo(
+    // isConfirming: the discard confirmation is open, so other overlays (the
+    // provider menu) can step aside for it.
+    () => ({ ...actions, isConfirming }),
+    [actions, isConfirming],
   );
 
   return (

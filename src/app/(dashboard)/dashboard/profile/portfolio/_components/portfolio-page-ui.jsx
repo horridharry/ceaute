@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { PageSectionNav } from "../../../_components/page-section-nav";
+import { SectionHeading } from "../../../_components/section-heading";
 
 const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
@@ -165,10 +165,7 @@ export function PortfolioPageUI({
   return (
     <main className="container max-w-md p-5">
       <div className="mt-6 flex flex-col">
-        <PageSectionNav />
-        <h2 className="mt-8 text-2xl font-semibold tracking-tighter">
-          Portfolio
-        </h2>
+        <SectionHeading title="Portfolio" />
 
         <UploadForm uploadPortfolioImage={uploadPortfolioImage} />
 
