@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   formatDurationMinutes,
   formatPricePence,
+  treatmentMetaLine,
 } from "@/features/storefront/format";
 import {
   buildTreatmentTimeHref,
@@ -13,7 +14,7 @@ import {
 
 // The approved customer interaction (docs/product.md "Booking and
 // availability"): tapping a treatment always opens its details bottom
-// sheet; tapping Select goes straight to availability when the treatment
+// sheet; tapping Book goes straight to availability when the treatment
 // has no add-ons, or opens the same sheet when it does, so a description
 // alone never forces an extra step. The sheet itself only ever navigates to
 // the existing `/book/[treatmentId]/time?add_on=...` URL, which is what the
@@ -21,49 +22,42 @@ import {
 // add-ons" link already produce and revalidate server-side, so nothing
 // downstream of that link needs to know a sheet exists.
 //
-// The card has two actions: its name opens the details sheet and Select
-// books. The name's button sits inside the heading (a heading inside a
-// button loses its heading role) and its ::after stretches over the whole
-// card, so tapping anywhere on the card still opens the details. Select is
-// raised above that layer and named after the treatment, because every card
-// has one.
+// The card reads: name with Book beside it, then the description clamped to
+// two lines, then duration, price and whether add-ons can be chosen. The
+// name's button sits inside the heading (a heading inside a button loses its
+// heading role) and its ::after stretches over the whole card, so tapping
+// anywhere on the card still opens the details. Book is raised above that
+// layer, named after the treatment because every card has one, and stays a
+// full 44px tall next to a name that wraps.
 function TreatmentRow({ treatment, onOpenDetails, onSelect }) {
   return (
     <article className="relative rounded-xl border border-black/10 p-4">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h3 className="font-medium">
-            <button
-              type="button"
-              onClick={() => onOpenDetails(treatment)}
-              className="text-left after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-pink-600"
-            >
-              {treatment.name}
-            </button>
-          </h3>
-          {treatment.description ? (
-            <p className="mt-1 text-sm text-black/60">
-              {treatment.description}
-            </p>
-          ) : null}
-        </div>
-        <div className="shrink-0 text-right text-sm font-medium">
-          <p>{formatPricePence(treatment.price_pence)}</p>
-          <p className="text-black/60">
-            {formatDurationMinutes(treatment.duration_minutes)}
-          </p>
-        </div>
-      </div>
-      <div className="mt-3 flex justify-end">
+      <div className="flex items-start justify-between gap-3">
+        <h3 className="min-w-0 font-medium">
+          <button
+            type="button"
+            onClick={() => onOpenDetails(treatment)}
+            className="text-left [overflow-wrap:anywhere] after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-pink-600"
+          >
+            {treatment.name}
+          </button>
+        </h3>
         <button
           type="button"
           onClick={() => onSelect(treatment)}
-          aria-label={`Select ${treatment.name}`}
-          className="relative rounded-lg bg-pink-700 px-4 py-2 text-sm font-semibold text-white duration-200 hover:bg-pink-800"
+          aria-label={`Book ${treatment.name}`}
+          className="relative -my-1 inline-flex min-h-11 shrink-0 items-center rounded-lg bg-pink-700 px-4 text-sm font-semibold text-white duration-200 hover:bg-pink-800"
         >
-          Select
+          Book
         </button>
       </div>
+      {/* Two lines on the card; the details sheet has the whole text. */}
+      {treatment.description ? (
+        <p className="mt-2 line-clamp-2 text-sm text-black/60">
+          {treatment.description}
+        </p>
+      ) : null}
+      <p className="mt-2 text-sm text-black/60">{treatmentMetaLine(treatment)}</p>
     </article>
   );
 }
@@ -181,13 +175,15 @@ function TreatmentDetailsSheet({
           disabled={isNavigating}
           className="mt-6 w-full rounded-lg bg-pink-700 p-3 text-sm font-semibold text-white duration-200 hover:bg-pink-800 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {isNavigating ? "Continuing..." : hasAddOns ? "Choose a time" : "Select"}
+          {isNavigating ? "Continuing..." : hasAddOns ? "Choose a time" : "Book"}
         </button>
       </div>
     </div>
   );
 }
 
+// `sections` are { key, heading?, treatments }; a section without a heading
+// (the storefront preview) lists its treatments with no group heading.
 export function TreatmentSelectionList({ sections, username }) {
   const router = useRouter();
   const [isNavigating, startTransition] = useTransition();
@@ -256,9 +252,9 @@ export function TreatmentSelectionList({ sections, username }) {
     <>
       <div className="flex flex-col gap-6">
         {sections.map((section) => (
-          <section key={section.name ?? "ungrouped"} className="flex flex-col gap-3">
-            {section.name ? (
-              <h2 className="text-lg font-semibold">{section.name}</h2>
+          <section key={section.key} className="flex flex-col gap-3">
+            {section.heading ? (
+              <h2 className="text-lg font-semibold">{section.heading}</h2>
             ) : null}
             {section.treatments.map((treatment) => (
               <TreatmentRow

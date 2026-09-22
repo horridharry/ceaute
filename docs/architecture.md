@@ -152,6 +152,15 @@ its neighbours, and a failure after most of an hour refreshes the page once
 for new URLs. Smaller variants would need Supabase image transformations,
 which are not used (a metered feature; production availability unconfirmed).
 
+Public treatment views (the storefront preview and All treatments) read
+through `treatmentQueries` in `src/features/storefront/treatment-queries.js`
+(active rows only, ordered with an id tie-breaker) and group them with
+`buildTreatmentSections`. The preview, headings and group filter are pure
+rules in `src/features/storefront/treatment-sections.js`, which imports
+nothing, so the client filter shares them with the server pages; the preview
+is always the top of the All treatments order. The browser receives only the
+fields the cards, details sheet and booking link use.
+
 ## Where rules are enforced
 
 Application code validates forms, prepares view models, presents useful error
