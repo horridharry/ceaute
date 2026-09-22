@@ -15,6 +15,7 @@ const read = (relativePath) =>
   readFileSync(path.join(REPO_ROOT, relativePath), "utf8").replace(/\/\/.*$/gm, "");
 
 const viewModel = read("src/features/storefront/storefront-view-model.js");
+const portfolioPhotos = read("src/features/storefront/portfolio-photos.js");
 const storefrontPage = read("src/features/storefront/storefront-page.jsx");
 const previewPage = read("src/app/(dashboard)/dashboard/profile/preview/page.jsx");
 
@@ -30,10 +31,12 @@ test("the storefront reads only the public area of the working location", () => 
   assert.doesNotMatch(viewModel, /address|postcode|street|access_instructions|latitude|longitude/i);
 });
 
-test("the storefront reads only visible portfolio images", () => {
-  const start = viewModel.indexOf('.from("portfolio_image")');
-  const query = viewModel.slice(start, viewModel.indexOf(".order(", start));
+test("the storefront reads only visible portfolio images, through the shared query", () => {
+  const start = portfolioPhotos.indexOf('.from("portfolio_image")');
+  const query = portfolioPhotos.slice(start, portfolioPhotos.indexOf(".order(", start));
   assert.match(query, /\.eq\("is_visible", true\)/);
+  assert.match(viewModel, /visiblePortfolioQuery\(supabase, providerPage\.id\)/);
+  assert.doesNotMatch(viewModel, /\.from\("portfolio_image"\)/, "no second, divergent portfolio query");
 });
 
 test("the owner preview renders the storefront without booking entry", () => {
@@ -44,4 +47,11 @@ test("the owner preview renders the storefront without booking entry", () => {
     /if \(bookingEnabled\) \{\s*return <TreatmentSelectionList/,
     "only the bookable variant renders the selection list that links into booking",
   );
+});
+
+test("public photo queries read only the id, storage path and caption, and the browser gets no path", () => {
+  assert.equal(querySelecting(portfolioPhotos, "portfolio_image"), "id, storage_path, caption");
+  const gallery = read("src/app/(public-provider)/[username]/(storefront)/photos/page.jsx");
+  assert.doesNotMatch(gallery, /storage_path|address|postcode/i);
+  assert.match(gallery, /loadVisiblePortfolioPhotos\(/);
 });
