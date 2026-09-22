@@ -1,5 +1,11 @@
 "use server";
+import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
+import { displayPhotoUploadError } from "@/lib/providers/display-photo";
+import {
+  clearDisplayPhoto,
+  saveDisplayPhoto,
+} from "@/lib/providers/display-photo-storage";
 import { getSignedInProvider } from "../_lib/provider-data";
 import { usernameRequiredError } from "@/lib/providers/username";
 import {
@@ -153,4 +159,61 @@ export const unpublishPage = async () => {
   revalidatePath("/", "layout");
   revalidatePath("/dashboard/profile");
   return publicationSuccess("unpublish");
+};
+
+// Adds or replaces the optional display photo. The new file is stored and
+// the page pointed at it before anything is deleted, so a failure keeps the
+// existing photo; see lib/providers/display-photo-storage.js for how
+// overlapping saves and leftover files are handled.
+export const uploadDisplayPhoto = async (_currentState, formData) => {
+  const { supabase, providerPage } = await getSignedInProvider({
+    next: "/dashboard/profile",
+  });
+  const file = formData.get("display_photo");
+
+  if (!(file instanceof File)) {
+    return "Choose a photo to upload.";
+  }
+
+  const headBytes = new Uint8Array(await file.slice(0, 12).arrayBuffer());
+  const uploadError = displayPhotoUploadError({
+    type: file.type,
+    size: file.size,
+    headBytes,
+  });
+
+  if (uploadError) {
+    return uploadError;
+  }
+
+  const result = await saveDisplayPhoto({
+    supabase,
+    providerPageId: providerPage.id,
+    previousPath: providerPage.display_photo_path,
+    file,
+    photoId: randomUUID(),
+  });
+
+  if (result.ok) {
+    revalidatePath("/dashboard/profile");
+  }
+
+  return result.message;
+};
+
+export const removeDisplayPhoto = async () => {
+  const { supabase, providerPage } = await getSignedInProvider({
+    next: "/dashboard/profile",
+  });
+  const result = await clearDisplayPhoto({
+    supabase,
+    providerPageId: providerPage.id,
+    previousPath: providerPage.display_photo_path,
+  });
+
+  if (result.ok) {
+    revalidatePath("/dashboard/profile");
+  }
+
+  return result.message;
 };

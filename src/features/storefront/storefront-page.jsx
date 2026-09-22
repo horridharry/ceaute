@@ -4,10 +4,68 @@ import {
   shouldShowReviewsSection,
 } from "@/features/storefront/format";
 import { TreatmentSelectionList } from "./treatment-selection-list";
+import { HeroCarousel, ProviderPhoto } from "./hero-carousel";
+
+// Average rating and review count, or a "New" pill before the first review.
+function RatingSummary({ rating }) {
+  if (!rating) {
+    return (
+      <p>
+        <span className="inline-flex items-center rounded-full border border-black/10 px-2.5 py-0.5 text-xs font-semibold text-black/70">
+          New
+        </span>
+      </p>
+    );
+  }
+
+  return (
+    <p className="text-sm font-medium text-black">
+      <span aria-hidden="true">★ </span>
+      <span className="sr-only">Rated </span>
+      {rating.average}
+      <span className="sr-only"> out of 5</span>{" "}
+      <span className="font-normal text-black/60">({rating.countLabel})</span>
+    </p>
+  );
+}
+
+// Name first, then @username with the public area (never the exact
+// address), then the rating. The display photo is optional and absent
+// entirely when there is none.
+function ProviderIdentity({ provider }) {
+  const handleAndArea = [
+    provider.username ? `@${provider.username}` : "",
+    provider.public_area,
+  ].filter(Boolean);
+
+  return (
+    <header>
+      <div className="flex items-center gap-4">
+        <ProviderPhoto src={provider.display_photo_url} />
+        <div className="min-w-0">
+          <h1 className="text-2xl font-bold tracking-tighter [overflow-wrap:anywhere]">
+            {provider.business_name || "Untitled provider page"}
+          </h1>
+          {handleAndArea.length ? (
+            <p className="mt-1 text-sm text-black/60">
+              {handleAndArea.join(" · ")}
+            </p>
+          ) : null}
+        </div>
+      </div>
+      <div className="mt-3">
+        <RatingSummary rating={provider.rating} />
+      </div>
+      {provider.biography ? (
+        <p className="mt-5 whitespace-pre-wrap text-sm">{provider.biography}</p>
+      ) : null}
+    </header>
+  );
+}
 
 function EmptyState({ children }) {
   return (
-    <div className="rounded-xl border border-dashed p-4 text-sm text-black/60">
+    <div className="rounded-xl border border-dashed border-black/15 p-4 text-sm text-black/60">
       {children}
     </div>
   );
@@ -25,7 +83,7 @@ function PaymentTerms({ terms }) {
   return (
     <section className="flex flex-col gap-3">
       <h2 className="text-lg font-semibold">Booking terms</h2>
-      <div className="rounded-xl border p-4 text-sm">
+      <div className="rounded-xl border border-black/10 p-4 text-sm">
         <p>{paymentText}</p>
         {terms.cancellation_window_hours ? (
           <p className="mt-2 text-black/60">
@@ -46,7 +104,7 @@ function TreatmentAddOns({ addOns }) {
   }
 
   return (
-    <div className="mt-3 border-t pt-3">
+    <div className="mt-3 border-t border-black/10 pt-3">
       <p className="text-xs font-semibold uppercase tracking-wide text-black/50">
         Compatible add-ons
       </p>
@@ -68,7 +126,7 @@ function TreatmentAddOns({ addOns }) {
 
 function TreatmentCard({ treatment }) {
   return (
-    <article className="rounded-xl border p-4">
+    <article className="rounded-xl border border-black/10 p-4">
       <div className="flex items-start justify-between gap-4">
         <div>
           <h3 className="font-medium">{treatment.name}</h3>
@@ -121,7 +179,7 @@ function Reviews({ reviews }) {
       {reviews.map((review) => (
         <article
           key={`${review.created_at}-${review.reviewer_name}`}
-          className="rounded-xl border p-4 text-sm"
+          className="rounded-xl border border-black/10 p-4 text-sm"
         >
           <div className="flex items-center justify-between gap-4">
             <p className="font-semibold">{review.rating}/5</p>
@@ -144,36 +202,41 @@ function Reviews({ reviews }) {
   );
 }
 
+// Storefront sections are separated by thin, low-contrast rules with even
+// spacing. The rules are provisional: to drop them, replace this with
+// "flex flex-col gap-10".
+const SECTION_STACK =
+  "flex flex-col divide-y divide-black/[0.07] [&>*]:py-8 [&>*:first-child]:pt-0 [&>*:last-child]:pb-0";
+
 export function StorefrontPage({ viewModel, backHref, showBackLink = true }) {
   const { provider, portfolio, treatment_sections: treatmentSections } =
     viewModel;
 
+  // The hero sits flush under the header on phones and as a rounded image
+  // in the centred column on wider screens.
   return (
-    <main className="container mx-auto max-w-md p-5">
-      <div className="mt-6 flex flex-col gap-10">
-        <header>
-          {backHref && showBackLink ? (
-            <a
-              href={backHref}
-              className="mb-8 inline-flex text-sm font-semibold text-pink-600"
-            >
-              Back to page settings
-            </a>
-          ) : null}
-          <h1 className="text-3xl font-bold tracking-tighter">
-            {provider.business_name || "Untitled provider page"}
-          </h1>
-          <div className="mt-2 flex flex-wrap gap-2 text-sm text-black/60">
-            {provider.username ? <p>/@{provider.username}</p> : null}
-            {provider.provider_category ? <p>{provider.provider_category}</p> : null}
-            {provider.public_area ? <p>{provider.public_area}</p> : null}
-          </div>
-          {provider.biography ? (
-            <p className="mt-5 whitespace-pre-wrap text-sm">
-              {provider.biography}
-            </p>
-          ) : null}
-        </header>
+    <main className="container mx-auto max-w-md pb-5 sm:px-5 sm:pt-5">
+      {portfolio.length ? (
+        <HeroCarousel
+          images={portfolio}
+          providerName={provider.business_name}
+          className="sm:mt-6"
+        />
+      ) : null}
+      <div
+        className={`${SECTION_STACK} px-5 sm:px-0 ${
+          portfolio.length ? "mt-6" : "mt-11 sm:mt-6"
+        }`}
+      >
+        {backHref && showBackLink ? (
+          <a
+            href={backHref}
+            className="inline-flex text-sm font-semibold text-pink-600"
+          >
+            Back to page settings
+          </a>
+        ) : null}
+        <ProviderIdentity provider={provider} />
 
         {portfolio.length ? (
           <section className="flex flex-col gap-3">

@@ -82,3 +82,64 @@ export function storefrontMetadata({ display_name, username, biography } = {}) {
 
   return { title: `${name} | Ceaute`, description };
 }
+
+// storefrontMetadata plus link-preview (Open Graph and Twitter) fields. The
+// preview image is the provider's hero image, served at a stable URL by
+// /@username/og-image; `heroImageId` versions that URL so a new hero image is
+// not hidden behind a cached old one. With no hero image or no known site
+// origin there is no image, rather than a broken one.
+export function storefrontPageMetadata({ providerPage, origin, heroImageId }) {
+  const { title, description } = storefrontMetadata(providerPage);
+  const username = String(providerPage?.username ?? "");
+  const siteOrigin = String(origin ?? "").replace(/\/+$/, "");
+  const pageUrl = siteOrigin && username ? `${siteOrigin}/@${username}` : null;
+  const image =
+    pageUrl && heroImageId
+      ? {
+          url: `${pageUrl}/og-image?v=${encodeURIComponent(heroImageId)}`,
+          alt: `Work by ${String(providerPage?.display_name ?? "").trim() || `@${username}`}`,
+        }
+      : null;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      type: "profile",
+      siteName: "Ceaute",
+      title,
+      description,
+      ...(pageUrl ? { url: pageUrl } : {}),
+      ...(image ? { images: [image] } : {}),
+    },
+    twitter: {
+      card: image ? "summary_large_image" : "summary",
+      title,
+      description,
+      ...(image ? { images: [image.url] } : {}),
+    },
+  };
+}
+
+// Average rating and count for the reviews the storefront may show (the
+// visible ones; every review belongs to a completed booking). Null when there
+// are none, which the page shows as "New". The average is rounded to one
+// decimal place.
+export function ratingSummary(reviews) {
+  const ratings = (reviews ?? [])
+    .map((review) => Number(review?.rating))
+    .filter((rating) => Number.isInteger(rating) && rating >= 1 && rating <= 5);
+
+  if (ratings.length === 0) {
+    return null;
+  }
+
+  const total = ratings.reduce((sum, rating) => sum + rating, 0);
+  const average = Math.round((total / ratings.length) * 10) / 10;
+
+  return {
+    average: average.toFixed(1),
+    count: ratings.length,
+    countLabel: `${ratings.length} ${ratings.length === 1 ? "review" : "reviews"}`,
+  };
+}

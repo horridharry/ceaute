@@ -58,10 +58,18 @@ dashboard if they have a provider page and to the account area otherwise.
 
 ## The public page, treatments, treatment groups and add-ons
 
-A published provider is available at `/@[username]`. The page shows the public
-business identity, public area, visible portfolio images, booking terms, active
-treatments, compatible add-ons, and visible reviews. The exact appointment
-address is not public.
+A published provider is available at `/@[username]`. It opens with a hero
+carousel of every visible portfolio image in portfolio order (swipe, with
+pagination dots), followed by the
+identity: the optional display photo, business name, `@username` with the
+public area, and the average rating with review count (or a "New" pill before
+the first visible review). The provider category is not shown publicly there. Below that it shows the visible
+portfolio images, booking terms, active treatments, compatible add-ons, and
+visible reviews. The exact appointment address is not public. The display photo
+is managed in Profile, is stored separately from Portfolio, and is not a
+publication requirement; the page leaves it out when there is none. Link
+previews use the hero's first image, served at `/@[username]/og-image` only for
+a published page.
 
 A treatment is the canonical internal name for the offering a customer books.
 Customer prose may say “service”, but code, routes, and domain documentation use

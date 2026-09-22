@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { calculateAvailableAppointmentTimes } from "../book/_lib/appointment-availability";
 import { normalizePublicUsername } from "@/features/storefront/format";
+import { logSupabaseError } from "@/lib/supabase/log-error";
+import { findPublishedHeroImage } from "@/features/storefront/hero-image";
 
 export const getPublishedProviderPageByUsername = cache(async (username) => {
   const normalizedUsername = normalizePublicUsername(username);
@@ -16,14 +18,15 @@ export const getPublishedProviderPageByUsername = cache(async (username) => {
     .schema("ceaute")
     .from("provider_page")
     .select(
-      "id, username, display_name, provider_category, biography, status",
+      "id, username, display_name, provider_category, biography, status, display_photo_path",
     )
     .eq("username", normalizedUsername)
     .eq("status", "published")
     .maybeSingle();
 
   if (error) {
-    throw new Error("Could not load provider page.");
+    logSupabaseError("published provider page lookup", error);
+    throw new Error("Could not load provider page.", { cause: error });
   }
 
   if (!providerPage) {
@@ -32,6 +35,15 @@ export const getPublishedProviderPageByUsername = cache(async (username) => {
 
   return providerPage;
 });
+
+// The hero image used for link previews (see findPublishedHeroImage). Unlike
+// the lookup above, this never calls notFound().
+export const getPublishedHeroImage = cache(async (username) =>
+  findPublishedHeroImage(
+    createServiceRoleClient(),
+    normalizePublicUsername(username),
+  ),
+);
 
 export const getPublicTreatmentForProvider = cache(
   async (providerPageId, treatmentId) => {
