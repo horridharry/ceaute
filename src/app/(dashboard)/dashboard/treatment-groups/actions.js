@@ -7,13 +7,16 @@
 
 import { revalidatePath } from "next/cache";
 import { getString, normalizeName } from "../_lib/form-values";
+import { groupTransitionOutcome, isTransition } from "../_lib/lifecycle-outcome";
 import { getSignedInProvider } from "../_lib/provider-data";
 
-// Group names appear in the provider's own treatment picker, so both pages are
-// stale once a group changes.
+// Group names appear in the provider's own treatment picker and head the
+// sections of the public treatments page, so all of them are stale once a
+// group changes.
 function refreshTreatmentGroupPages() {
   revalidatePath("/dashboard/treatments");
   revalidatePath("/dashboard/treatment-groups");
+  revalidatePath("/[username]", "layout");
 }
 
 // PostgreSQL already rejects a duplicate name through
@@ -130,63 +133,86 @@ export async function renameTreatmentGroup(_currentState, formData) {
   return "Group renamed.";
 }
 
-// Archiving is deliberately blocked while treatments still reference the group,
-// so the provider tidies the treatments first. This is a message, not an
-// invariant: nothing breaks if a treatment ends up in an archived group,
-// because the storefront lists such a treatment as ungrouped.
-export async function archiveTreatmentGroup(_currentState, formData) {
+// Archive, restore and delete go through ceaute.transition_treatment_group
+// (202609220002), the only writer of is_active and deleted_at. PostgreSQL
+// refuses to archive or delete a group while any treatment, active or
+// archived, is still filed under it (CE011); nothing moves treatments
+// automatically. When that happens the provider gets the list of treatments
+// to move.
+async function listGroupTreatments(supabase, providerPageId, groupId) {
+  const { data, error } = await supabase
+    .schema("ceaute")
+    .from("treatment")
+    .select("id, name, is_active")
+    .eq("provider_page_id", providerPageId)
+    .eq("treatment_group_id", groupId)
+    .order("is_active", { ascending: false })
+    .order("name", { ascending: true });
+
+  return error ? [] : (data ?? []);
+}
+
+async function runGroupTransition(formData) {
   const groupId = getString(formData, "groupId");
+  const transition = getString(formData, "transition");
+  const name = getString(formData, "groupName") || "The group";
   const { supabase, providerPage } = await getSignedInProvider({
     next: "/dashboard/treatment-groups",
   });
 
-  const { count, error: treatmentError } = await supabase
-    .schema("ceaute")
-    .from("treatment")
-    .select("id", { count: "exact", head: true })
-    .eq("provider_page_id", providerPage.id)
-    .eq("treatment_group_id", groupId);
-
-  if (treatmentError) {
-    return "Could not check whether this group is in use.";
+  if (!groupId || !isTransition(transition)) {
+    return { status: "error", message: "Choose a group to change.", id: groupId };
   }
 
-  if (count) {
+  const { error } = await supabase
+    .schema("ceaute")
+    .rpc("transition_treatment_group", {
+      target_group_id: groupId,
+      requested_transition: transition,
+    });
+
+  const outcome = groupTransitionOutcome({ transition, name, error });
+
+  if (outcome.status === "blocked") {
+    return {
+      ...outcome,
+      id: groupId,
+      transition,
+      treatments: await listGroupTreatments(supabase, providerPage.id, groupId),
+    };
+  }
+
+  if (outcome.status === "done") {
+    refreshTreatmentGroupPages();
+  }
+
+  return { ...outcome, id: groupId, transition };
+}
+
+export async function transitionTreatmentGroup(_currentState, formData) {
+  return runGroupTransition(formData);
+}
+
+// The list's Archive and Restore buttons keep their old contract (one message).
+async function transitionFromListButton(formData, transition) {
+  formData.set("transition", transition);
+  const result = await runGroupTransition(formData);
+
+  if (result.status === "blocked") {
     return "Move treatments to another group or No group before archiving this group.";
   }
 
-  const { error } = await supabase
-    .schema("ceaute")
-    .from("treatment_group")
-    .update({ is_active: false })
-    .eq("id", groupId)
-    .eq("provider_page_id", providerPage.id);
-
-  if (error) {
-    return "Could not archive the treatment group.";
+  if (result.status !== "done") {
+    return result.message;
   }
 
-  refreshTreatmentGroupPages();
-  return "Group archived.";
+  return transition === "archive" ? "Group archived." : "Group restored.";
+}
+
+export async function archiveTreatmentGroup(_currentState, formData) {
+  return transitionFromListButton(formData, "archive");
 }
 
 export async function restoreTreatmentGroup(_currentState, formData) {
-  const groupId = getString(formData, "groupId");
-  const { supabase, providerPage } = await getSignedInProvider({
-    next: "/dashboard/treatment-groups",
-  });
-
-  const { error } = await supabase
-    .schema("ceaute")
-    .from("treatment_group")
-    .update({ is_active: true })
-    .eq("id", groupId)
-    .eq("provider_page_id", providerPage.id);
-
-  if (error) {
-    return "Could not restore the treatment group.";
-  }
-
-  refreshTreatmentGroupPages();
-  return "Group restored.";
+  return transitionFromListButton(formData, "restore");
 }

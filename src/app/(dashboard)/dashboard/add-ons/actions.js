@@ -12,13 +12,15 @@ import {
   durationToMinutes,
   nonNegativePriceToPence,
 } from "../_lib/price-duration";
+import { addOnTransitionOutcome, isTransition } from "../_lib/lifecycle-outcome";
 import { getSignedInProvider } from "../_lib/provider-data";
 
-// An add-on is shown on its own page and against every treatment that accepts
-// it, so a change makes both provider pages stale.
+// An add-on is shown on its own page, against every treatment that accepts it
+// and on the provider's public pages, so a change makes all of them stale.
 function refreshAddOnPages() {
   revalidatePath("/dashboard/treatments");
   revalidatePath("/dashboard/add-ons");
+  revalidatePath("/[username]", "layout");
 }
 
 function parseAddOnForm(formData) {
@@ -139,46 +141,56 @@ export async function updateAddOnWithCompatibility(_currentState, formData) {
   redirect("/dashboard/add-ons");
 }
 
-// Archiving and restoring leave compatibility alone: an archived add-on keeps
-// its treatments so restoring it returns the provider to where they were.
-export async function archiveAddOn(_currentState, formData) {
+// Archive, restore and delete go through ceaute.transition_treatment_add_on
+// (202609220002), the only writer of is_active and deleted_at. PostgreSQL
+// checks ownership and refuses invalid transitions (deleting an active
+// add-on, touching a deleted one); a repeated request is harmless. Archiving
+// and deleting leave the add-on's treatment links in place.
+async function runAddOnTransition(formData) {
   const addOnId = getString(formData, "addOnId");
-  const { supabase, providerPage } = await getSignedInProvider({
-    next: `/dashboard/add-ons/${addOnId}/edit`,
-  });
+  const transition = getString(formData, "transition");
+  const name = getString(formData, "addOnName") || "The add-on";
+  const { supabase } = await getSignedInProvider({ next: "/dashboard/add-ons" });
+
+  if (!addOnId || !isTransition(transition)) {
+    return { status: "error", message: "Choose an add-on to change.", id: addOnId };
+  }
 
   const { error } = await supabase
     .schema("ceaute")
-    .from("treatment_add_on")
-    .update({ is_active: false })
-    .eq("id", addOnId)
-    .eq("provider_page_id", providerPage.id);
+    .rpc("transition_treatment_add_on", {
+      target_add_on_id: addOnId,
+      requested_transition: transition,
+    });
 
-  if (error) {
-    return "Could not archive the add-on.";
+  if (!error) {
+    refreshAddOnPages();
   }
 
-  refreshAddOnPages();
+  return { ...addOnTransitionOutcome({ transition, name, error }), id: addOnId, transition };
+}
+
+export async function transitionAddOn(_currentState, formData) {
+  return runAddOnTransition(formData);
+}
+
+// The edit form's Archive and Restore button keeps its old contract (a
+// message on failure, back to the list on success).
+async function transitionFromEditForm(formData, transition) {
+  formData.set("transition", transition);
+  const result = await runAddOnTransition(formData);
+
+  if (result.status !== "done") {
+    return result.message;
+  }
+
   redirect("/dashboard/add-ons");
 }
 
+export async function archiveAddOn(_currentState, formData) {
+  return transitionFromEditForm(formData, "archive");
+}
+
 export async function restoreAddOn(_currentState, formData) {
-  const addOnId = getString(formData, "addOnId");
-  const { supabase, providerPage } = await getSignedInProvider({
-    next: `/dashboard/add-ons/${addOnId}/edit`,
-  });
-
-  const { error } = await supabase
-    .schema("ceaute")
-    .from("treatment_add_on")
-    .update({ is_active: true })
-    .eq("id", addOnId)
-    .eq("provider_page_id", providerPage.id);
-
-  if (error) {
-    return "Could not restore the add-on.";
-  }
-
-  refreshAddOnPages();
-  redirect("/dashboard/add-ons");
+  return transitionFromEditForm(formData, "restore");
 }

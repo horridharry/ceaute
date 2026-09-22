@@ -3,6 +3,8 @@
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { getSignedInProvider } from "../../_lib/provider-data";
+import { deleteRowThenFile } from "./_lib/portfolio-deletion";
+import { describePortfolioChangeError } from "./_lib/portfolio-messages";
 import { BUCKET_NAME } from "./_lib/portfolio-storage";
 
 const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
@@ -167,7 +169,7 @@ export const setPortfolioImageVisibility = async (_currentState, formData) => {
     .eq("id", imageId);
 
   if (error) {
-    return "Could not update that image.";
+    return describePortfolioChangeError(error, "Could not update that image.");
   }
 
   revalidatePath("/dashboard/profile/portfolio");
@@ -238,6 +240,7 @@ export const movePortfolioImage = async (_currentState, formData) => {
   return "Moved.";
 };
 
+// Row first, then file: see _lib/portfolio-deletion.js.
 export const deletePortfolioImage = async (_currentState, formData) => {
   const { supabase, providerPage } = await getSignedInProvider({
     next: "/dashboard/profile/portfolio",
@@ -254,23 +257,24 @@ export const deletePortfolioImage = async (_currentState, formData) => {
     return "Could not find that image.";
   }
 
-  const { error: removeError } = await supabase.storage
-    .from(BUCKET_NAME)
-    .remove([image.storage_path]);
+  const result = await deleteRowThenFile({
+    deleteRow: () =>
+      supabase
+        .schema("ceaute")
+        .from("portfolio_image")
+        .delete()
+        .eq("provider_page_id", providerPage.id)
+        .eq("id", image.id),
+    removeFile: () => supabase.storage.from(BUCKET_NAME).remove([image.storage_path]),
+    onOrphan: (fileError) =>
+      console.error("[portfolio] stored file left after its image was deleted", {
+        imageId: image.id,
+        message: fileError.message,
+      }),
+  });
 
-  if (removeError) {
-    return "Could not delete the stored image.";
-  }
-
-  const { error: deleteError } = await supabase
-    .schema("ceaute")
-    .from("portfolio_image")
-    .delete()
-    .eq("provider_page_id", providerPage.id)
-    .eq("id", image.id);
-
-  if (deleteError) {
-    return "The file was removed, but the image record could not be deleted.";
+  if (result.status === "refused") {
+    return describePortfolioChangeError(result.error, "Could not delete that image.");
   }
 
   revalidatePath("/dashboard/profile/portfolio");

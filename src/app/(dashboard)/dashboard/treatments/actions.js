@@ -12,6 +12,15 @@ import { durationToMinutes } from "../_lib/price-duration";
 import { getSignedInProvider } from "../_lib/provider-data";
 import { priceToPence } from "./_lib/treatment-values";
 
+// ceaute.ensure_treatment_group_assignable (202609220002) refuses to file a
+// treatment under an archived or deleted group, even if the group changed
+// state after the check above.
+const GROUP_UNAVAILABLE = "Please choose one of your active treatment groups.";
+
+function describeTreatmentSaveError(error, fallbackMessage) {
+  return error.code === "CE014" ? GROUP_UNAVAILABLE : fallbackMessage;
+}
+
 function refreshTreatmentPages() {
   revalidatePath("/dashboard/treatments");
   revalidatePath("/[username]", "layout");
@@ -84,7 +93,7 @@ async function validateTreatmentForm({ formData, supabase, providerPage }) {
     }
 
     if (!treatmentGroup) {
-      return { error: "Please choose one of your active treatment groups." };
+      return { error: GROUP_UNAVAILABLE };
     }
   }
 
@@ -119,7 +128,7 @@ export async function createTreatment(_currentState, formData) {
     });
 
   if (error) {
-    return "Could not create the treatment.";
+    return describeTreatmentSaveError(error, "Could not create the treatment.");
   }
 
   refreshTreatmentPages();
@@ -146,7 +155,7 @@ export async function updateTreatment(_currentState, formData) {
     .eq("provider_page_id", providerPage.id);
 
   if (error) {
-    return "Could not update the treatment.";
+    return describeTreatmentSaveError(error, "Could not update the treatment.");
   }
 
   refreshTreatmentPages();
