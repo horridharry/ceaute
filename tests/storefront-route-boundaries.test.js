@@ -166,3 +166,22 @@ test("the gallery lives in the storefront group, under its published check", () 
   );
   assert.match(withoutComments(read(page)), /loadVisiblePortfolioPhotos\(/);
 });
+
+test("All treatments lives in the storefront group, under its published check", () => {
+  const treatmentsDir = path.join(STOREFRONT_DIR, "treatments");
+  const page = routeFile(treatmentsDir, "page");
+
+  assert.ok(page, "(storefront)/treatments/page exists");
+  assert.ok(
+    wrappingFiles(treatmentsDir, "layout").includes(routeFile(STOREFRONT_DIR, "layout")),
+    "the (storefront) layout wraps All treatments",
+  );
+  assert.deepEqual(
+    wrappingFiles(treatmentsDir, "loading")
+      .map((file) => path.relative(REPO_ROOT, file))
+      .filter((file) => !file.includes("(storefront)")),
+    [],
+    "no loading boundary above the published check",
+  );
+  assert.match(withoutComments(read(page)), /getPublishedProviderPageByUsername\(/);
+});
