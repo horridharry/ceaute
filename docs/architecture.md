@@ -137,6 +137,20 @@ other platform-managed one. Display-photo cleanup
 (`src/lib/providers/display-photo-storage.js`) deletes only files nothing can
 reference, so it can never remove the current photo.
 
+Public photo views (hero, Bento, Portfolio preview, gallery) read through one
+query, `visiblePortfolioQuery` in `src/features/storefront/portfolio-photos.js`
+(visible only, portfolio order), and send the browser `{ id, image_url,
+caption }` only. The viewer and masonry grid live in
+`src/features/photo-viewing`, which imports nothing app-, dashboard- or
+data-specific so the gallery and the provider's Portfolio page can share it.
+The masonry grid uses small fixed CSS grid rows and tiles that measure
+themselves and span whole rows, so grid auto-placement keeps portfolio order
+without stored image sizes. Images are full-size originals behind one-hour
+signed URLs; the gallery lazy-loads, the viewer loads only the photo in view and
+its neighbours, and a failure after most of an hour refreshes the page once
+for new URLs. Smaller variants would need Supabase image transformations,
+which are not used (a metered feature; production availability unconfirmed).
+
 ## Where rules are enforced
 
 Application code validates forms, prepares view models, presents useful error
