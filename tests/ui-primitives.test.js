@@ -73,9 +73,11 @@ test("every primitive forwards native props and the caller's className", () => {
     );
   }
 
+  // Button composes through buttonClassName, which buttons and button-styled
+  // links share (tested in design-system-primitives.test.js).
   for (const name of SERVER_PRIMITIVES) {
     assert.ok(
-      primitiveSource(name).includes("composeClassName"),
+      /composeClassName|buttonClassName/.test(primitiveSource(name)),
       `${name}.jsx must compose className rather than replace it`,
     );
   }
