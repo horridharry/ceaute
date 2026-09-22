@@ -33,6 +33,11 @@ export const PROVIDER_MENU = [
     href: "/dashboard/settings/booking",
   },
   { id: "payments", label: "Payments", href: "/dashboard/settings/payments" },
+  {
+    id: "publication",
+    label: "Publication",
+    href: "/dashboard/settings/publication",
+  },
 ];
 
 export const PROVIDER_PREVIEW_HREF = "/dashboard/profile/preview";

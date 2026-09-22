@@ -29,8 +29,16 @@ export const getPortfolioImages = async () => {
     60 * 60,
   );
 
-  return (images ?? []).map((image) => ({
-    ...image,
-    signed_url: signedUrlByPath.get(image.storage_path) ?? "",
-  }));
+  return {
+    // Whether the page is live decides what the screen allows for the last
+    // visible photo (the database enforces it too, 202609220003).
+    pageStatus: providerPage.status,
+    images: (images ?? []).map((image) => ({
+      id: image.id,
+      caption: image.caption ?? "",
+      display_order: image.display_order,
+      is_visible: image.is_visible,
+      signed_url: signedUrlByPath.get(image.storage_path) ?? "",
+    })),
+  };
 };

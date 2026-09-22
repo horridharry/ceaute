@@ -14,6 +14,8 @@ const ALLOWED_IMAGE_TYPES = new Map([
   ["image/webp", "webp"],
 ]);
 
+// Every action returns { status: "done" | "error", message } so the screen can
+// announce a result as a status and a failure as an error.
 const cleanCaption = (value) => {
   const caption = String(value ?? "").trim();
   return caption || null;
@@ -63,19 +65,19 @@ export const uploadPortfolioImage = async (_currentState, formData) => {
   const caption = cleanCaption(formData.get("caption"));
 
   if (!(file instanceof File) || file.size === 0) {
-    return "Choose an image to upload.";
+    return { status: "error", message: "Choose an image to upload." };
   }
 
   if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
-    return "Upload a JPEG, PNG, or WebP image.";
+    return { status: "error", message: "Upload a JPEG, PNG, or WebP image." };
   }
 
   if (file.size > MAX_FILE_SIZE_BYTES) {
-    return "Image must be 5 MB or smaller.";
+    return { status: "error", message: "Image must be 5 MB or smaller." };
   }
 
   if (caption && caption.length > 250) {
-    return "Caption must be 250 characters or fewer.";
+    return { status: "error", message: "Caption must be 250 characters or fewer." };
   }
 
   const imageId = randomUUID();
@@ -90,7 +92,7 @@ export const uploadPortfolioImage = async (_currentState, formData) => {
     });
 
   if (uploadError) {
-    return "Could not upload that image.";
+    return { status: "error", message: "Could not upload that image." };
   }
 
   try {
@@ -109,15 +111,16 @@ export const uploadPortfolioImage = async (_currentState, formData) => {
 
     if (insertError) {
       await supabase.storage.from(BUCKET_NAME).remove([storagePath]);
-      return "Could not save that portfolio image.";
+      return { status: "error", message: "Could not save that portfolio image." };
     }
   } catch {
     await supabase.storage.from(BUCKET_NAME).remove([storagePath]);
-    return "Could not save that portfolio image.";
+    return { status: "error", message: "Could not save that portfolio image." };
   }
 
   revalidatePath("/dashboard/profile/portfolio");
-  return "Uploaded.";
+  revalidatePath("/[username]", "layout");
+  return { status: "done", message: "Photo added." };
 };
 
 export const updatePortfolioImageCaption = async (_currentState, formData) => {
@@ -128,11 +131,11 @@ export const updatePortfolioImageCaption = async (_currentState, formData) => {
   const caption = cleanCaption(formData.get("caption"));
 
   if (!imageId) {
-    return "Choose an image to update.";
+    return { status: "error", message: "Choose an image to update." };
   }
 
   if (caption && caption.length > 250) {
-    return "Caption must be 250 characters or fewer.";
+    return { status: "error", message: "Caption must be 250 characters or fewer." };
   }
 
   const { error } = await supabase
@@ -143,11 +146,12 @@ export const updatePortfolioImageCaption = async (_currentState, formData) => {
     .eq("id", imageId);
 
   if (error) {
-    return "Could not update that caption.";
+    return { status: "error", message: "Could not update that caption." };
   }
 
   revalidatePath("/dashboard/profile/portfolio");
-  return "Saved.";
+  revalidatePath("/[username]", "layout");
+  return { status: "done", message: "Caption saved." };
 };
 
 export const setPortfolioImageVisibility = async (_currentState, formData) => {
@@ -158,7 +162,7 @@ export const setPortfolioImageVisibility = async (_currentState, formData) => {
   const isVisible = String(formData.get("is_visible") ?? "") === "true";
 
   if (!imageId) {
-    return "Choose an image to update.";
+    return { status: "error", message: "Choose an image to update." };
   }
 
   const { error } = await supabase
@@ -169,11 +173,18 @@ export const setPortfolioImageVisibility = async (_currentState, formData) => {
     .eq("id", imageId);
 
   if (error) {
-    return describePortfolioChangeError(error, "Could not update that image.");
+    return {
+      status: "error",
+      message: describePortfolioChangeError(error, "Could not update that image."),
+    };
   }
 
   revalidatePath("/dashboard/profile/portfolio");
-  return isVisible ? "Image shown." : "Image hidden.";
+  revalidatePath("/[username]", "layout");
+  return {
+    status: "done",
+    message: isVisible ? "Photo shown on your page." : "Photo hidden. Only you can see it.",
+  };
 };
 
 export const movePortfolioImage = async (_currentState, formData) => {
@@ -184,7 +195,7 @@ export const movePortfolioImage = async (_currentState, formData) => {
   const direction = String(formData.get("direction") ?? "");
 
   if (!imageId || !["up", "down"].includes(direction)) {
-    return "Choose an image to move.";
+    return { status: "error", message: "Choose an image to move." };
   }
 
   const { data: images, error } = await supabase
@@ -196,7 +207,7 @@ export const movePortfolioImage = async (_currentState, formData) => {
     .order("created_at", { ascending: true });
 
   if (error) {
-    return "Could not reorder portfolio images.";
+    return { status: "error", message: "Could not reorder portfolio images." };
   }
 
   const currentIndex = (images ?? []).findIndex((image) => image.id === imageId);
@@ -205,7 +216,7 @@ export const movePortfolioImage = async (_currentState, formData) => {
   const targetImage = images?.[targetIndex];
 
   if (!currentImage || !targetImage) {
-    return "That image cannot move further.";
+    return { status: "error", message: "That image cannot move further." };
   }
 
   const firstUpdate = await supabase
@@ -216,7 +227,7 @@ export const movePortfolioImage = async (_currentState, formData) => {
     .eq("id", currentImage.id);
 
   if (firstUpdate.error) {
-    return "Could not reorder portfolio images.";
+    return { status: "error", message: "Could not reorder portfolio images." };
   }
 
   const secondUpdate = await supabase
@@ -233,11 +244,15 @@ export const movePortfolioImage = async (_currentState, formData) => {
       .update({ display_order: currentImage.display_order })
       .eq("provider_page_id", providerPage.id)
       .eq("id", currentImage.id);
-    return "Could not reorder portfolio images.";
+    return { status: "error", message: "Could not reorder portfolio images." };
   }
 
   revalidatePath("/dashboard/profile/portfolio");
-  return "Moved.";
+  revalidatePath("/[username]", "layout");
+  return {
+    status: "done",
+    message: `Moved to position ${targetIndex + 1} of ${images.length}.`,
+  };
 };
 
 // Row first, then file: see _lib/portfolio-deletion.js.
@@ -248,13 +263,13 @@ export const deletePortfolioImage = async (_currentState, formData) => {
   const imageId = String(formData.get("image_id") ?? "");
 
   if (!imageId) {
-    return "Choose an image to delete.";
+    return { status: "error", message: "Choose an image to delete." };
   }
 
   const image = await getPortfolioImage(supabase, providerPage.id, imageId);
 
   if (!image) {
-    return "Could not find that image.";
+    return { status: "error", message: "Could not find that image." };
   }
 
   const result = await deleteRowThenFile({
@@ -274,9 +289,13 @@ export const deletePortfolioImage = async (_currentState, formData) => {
   });
 
   if (result.status === "refused") {
-    return describePortfolioChangeError(result.error, "Could not delete that image.");
+    return {
+      status: "error",
+      message: describePortfolioChangeError(result.error, "Could not delete that image."),
+    };
   }
 
   revalidatePath("/dashboard/profile/portfolio");
-  return "Deleted.";
+  revalidatePath("/[username]", "layout");
+  return { status: "done", message: "Photo deleted." };
 };

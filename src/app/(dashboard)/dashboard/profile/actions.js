@@ -12,9 +12,8 @@ import {
   isProviderCategory,
   providerPageValuesFromFormData,
 } from "./_lib/provider-page-form-values";
-import { getProviderPagePublicationReadiness } from "../_lib/publication-readiness";
-import { publicationFailure, publicationSuccess } from "../_lib/publication-outcome";
 
+// Returns { status: "saved" | "error", message }.
 export const updateProviderPage = async (_currentState, formData) => {
   const { supabase, providerPage } = await getSignedInProvider({
     next: "/dashboard/profile",
@@ -29,11 +28,11 @@ export const updateProviderPage = async (_currentState, formData) => {
   } = providerPageValuesFromFormData(formData);
 
   if (displayName && displayName.length < 2) {
-    return "Business name must be at least 2 characters long.";
+    return { status: "error", message: "Business name must be at least 2 characters long." };
   }
 
   if (username && (username.length < 3 || username.length > 30)) {
-    return "Username must be between 3 and 30 characters long.";
+    return { status: "error", message: "Username must be between 3 and 30 characters long." };
   }
 
   const usernameError = usernameRequiredError({
@@ -42,15 +41,15 @@ export const updateProviderPage = async (_currentState, formData) => {
   });
 
   if (usernameError) {
-    return usernameError;
+    return { status: "error", message: usernameError };
   }
 
   if (providerCategory && !isProviderCategory(providerCategory)) {
-    return "Choose one of the available provider categories.";
+    return { status: "error", message: "Choose one of the available provider categories." };
   }
 
   if (biography.length > 500) {
-    return "Biography must be 500 characters or fewer.";
+    return { status: "error", message: "Biography must be 500 characters or fewer." };
   }
 
   if (username) {
@@ -63,11 +62,11 @@ export const updateProviderPage = async (_currentState, formData) => {
       .maybeSingle();
 
     if (usernameError) {
-      return "Could not check that username.";
+      return { status: "error", message: "Could not check that username." };
     }
 
     if (existingPage) {
-      return "That username is already taken.";
+      return { status: "error", message: "That username is already taken." };
     }
   }
 
@@ -79,7 +78,7 @@ export const updateProviderPage = async (_currentState, formData) => {
 
   if (error) {
     if (error.code === "23505") {
-      return "That username is already taken.";
+      return { status: "error", message: "That username is already taken." };
     }
 
     if (
@@ -88,77 +87,22 @@ export const updateProviderPage = async (_currentState, formData) => {
         "provider_page_published_requires_username",
       )
     ) {
-      return usernameRequiredError({ username: "", status: "published" });
+      return {
+        status: "error",
+        message: usernameRequiredError({ username: "", status: "published" }),
+      };
     }
 
     if (error.code === "23514") {
-      return "Check the details and try again.";
+      return { status: "error", message: "Check the details and try again." };
     }
 
-    return "Could not save your page details.";
+    return { status: "error", message: "Could not save your page details." };
   }
 
   revalidatePath("/", "layout");
   revalidatePath("/dashboard/profile");
-  return "Saved.";
-};
-
-// Both publication actions return { error, message } so the screen can show
-// the outcome; PostgreSQL's publish_provider_page re-checks every requirement
-// and its rejection reason is what the provider needs to see.
-export const publishPage = async () => {
-  const { supabase, providerPage } = await getSignedInProvider({
-    next: "/dashboard/profile",
-  });
-
-  if (providerPage.status === "suspended") {
-    return publicationFailure(
-      { message: "Suspended pages cannot be published." },
-      "publish",
-    );
-  }
-
-  const publication = await getProviderPagePublicationReadiness({
-    supabase,
-    providerPage,
-  });
-
-  if (!publication.ready) {
-    return publicationFailure(
-      { message: "Publication requirements are incomplete." },
-      "publish",
-    );
-  }
-
-  const { error } = await supabase.schema("ceaute").rpc(
-    "publish_provider_page",
-  );
-
-  if (error) {
-    return publicationFailure(error, "publish");
-  }
-
-  revalidatePath("/", "layout");
-  revalidatePath("/dashboard/profile");
-  return publicationSuccess("publish");
-};
-
-export const unpublishPage = async () => {
-  const { supabase } = await getSignedInProvider({
-    next: "/dashboard/profile",
-  });
-
-  const { error } = await supabase.schema("ceaute").rpc(
-    "unpublish_provider_page",
-  );
-
-  if (error) {
-    return publicationFailure(error, "unpublish");
-  }
-
-  revalidatePath("/", "layout");
-  revalidatePath("/dashboard/profile");
-  return publicationSuccess("unpublish");
+  return { status: "saved", message: "Saved." };
 };
 
 // Adds or replaces the optional display photo. The new file is stored and

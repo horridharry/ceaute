@@ -30,13 +30,14 @@ test("the shared photo-viewing module depends on nothing app-, dashboard- or dat
 test("the gallery and the provider's portfolio both use the shared viewer", () => {
   assert.match(read("src/features/storefront/photo-gallery.jsx"), /from "@\/features\/photo-viewing\/photo-viewer"/);
   assert.match(
-    read("src/app/(dashboard)/dashboard/profile/portfolio/_components/portfolio-page-ui.jsx"),
+    read("src/app/(dashboard)/dashboard/profile/portfolio/_components/portfolio-manager.jsx"),
     /from "@\/features\/photo-viewing\/photo-viewer"/,
   );
 });
 
 test("portfolio management stays in the dashboard and out of the shared viewer", () => {
-  const dashboard = read("src/app/(dashboard)/dashboard/profile/portfolio/_components/portfolio-page-ui.jsx");
+  // The page wires every portfolio action into the dashboard's manager.
+  const dashboard = read("src/app/(dashboard)/dashboard/profile/portfolio/page.jsx");
   for (const action of ["uploadPortfolioImage", "movePortfolioImage", "setPortfolioImageVisibility", "deletePortfolioImage", "updatePortfolioImageCaption"]) {
     assert.match(dashboard, new RegExp(action), `${action} still wired in the dashboard`);
   }
