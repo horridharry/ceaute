@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { PhotoViewer } from "@/features/photo-viewing/photo-viewer";
 import { SectionHeading } from "../../../_components/section-heading";
 
 const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
@@ -162,6 +163,20 @@ export function PortfolioPageUI({
   setPortfolioImageVisibility,
   deletePortfolioImage,
 }) {
+  // Viewing uses the same full-screen viewer as the public gallery. It shows
+  // every photo that could be signed, hidden ones included, because this is
+  // the provider's own portfolio; management stays in the cards below.
+  const [viewing, setViewing] = useState(null);
+  const viewablePhotos = images
+    .filter((image) => image.signed_url)
+    .map((image) => ({
+      id: image.id,
+      image_url: image.signed_url,
+      caption: image.caption ?? "",
+    }));
+  const viewablePhotoIndex = (id) =>
+    viewablePhotos.findIndex((photo) => photo.id === id);
+
   return (
     <main className="container max-w-md p-5">
       <div className="mt-6 flex flex-col">
@@ -183,14 +198,18 @@ export function PortfolioPageUI({
               key={image.id}
               className="rounded-xl border border-black/10 p-3"
             >
-              <div
-                className="h-56 rounded-lg bg-black/5 bg-cover bg-center"
-                style={
-                  image.signed_url
-                    ? { backgroundImage: `url("${image.signed_url}")` }
-                    : undefined
-                }
-              />
+              {image.signed_url ? (
+                <button
+                  type="button"
+                  data-portfolio-image-id={image.id}
+                  aria-label={`View photo ${index + 1} of ${images.length}`}
+                  onClick={() => setViewing(viewablePhotoIndex(image.id))}
+                  className="block h-56 w-full rounded-lg bg-black/5 bg-cover bg-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pink-600"
+                  style={{ backgroundImage: `url("${image.signed_url}")` }}
+                />
+              ) : (
+                <div className="h-56 rounded-lg bg-black/5" />
+              )}
               <div className="mt-3 flex items-center justify-between gap-2">
                 <p className="text-sm font-medium">
                   {image.is_visible ? "Visible" : "Hidden"}
@@ -234,6 +253,20 @@ export function PortfolioPageUI({
         </div>
 
       </div>
+      <PhotoViewer
+        photos={viewablePhotos}
+        index={viewing}
+        label="Your portfolio"
+        onIndexChange={setViewing}
+        onClose={() => setViewing(null)}
+        onClosed={(closedIndex) => {
+          const photo = viewablePhotos[closedIndex];
+          if (!photo) return;
+          document
+            .querySelector(`[data-portfolio-image-id="${CSS.escape(photo.id)}"]`)
+            ?.focus();
+        }}
+      />
     </main>
   );
 }
