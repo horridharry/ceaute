@@ -14,6 +14,8 @@ import {
   treatmentsHref,
   treatmentsInOrder,
 } from "./treatment-sections";
+import { ReviewCard } from "./review-card";
+import { reviewsHref, reviewsPreview } from "./reviews";
 
 // Average rating and review count, or a "New" pill before the first review.
 function RatingSummary({ rating }) {
@@ -152,36 +154,45 @@ function TreatmentsPreview({ sections, username }) {
   );
 }
 
-const REVIEWS_PREVIEW_COUNT = 3;
-
-// The newest reviews only. There is no all-reviews page yet, so the preview
-// has no "See all reviews" button; adding one needs that route first.
-function Reviews({ reviews }) {
+// The newest reviews and a way into the full list. The rating average and
+// count live in the identity section above, from this same visible-review
+// list. Without a username (the owner's unpublished preview) the reviews
+// still show, but nothing links out, because the All reviews page exists
+// only for published pages.
+function ReviewsPreview({ reviews, username }) {
   return (
-    <div className="flex flex-col gap-3">
-      {reviews.slice(0, REVIEWS_PREVIEW_COUNT).map((review) => (
-        <article
-          key={`${review.created_at}-${review.reviewer_name}`}
-          className="rounded-xl border border-black/10 p-4 text-sm"
-        >
-          <div className="flex items-center justify-between gap-4">
-            <p className="font-semibold">{review.rating}/5</p>
-            <p className="text-xs text-black/50">Verified booking</p>
+    <section className="flex flex-col gap-3">
+      <h2 className="text-lg font-semibold">Reviews</h2>
+      <div className="flex flex-col gap-3">
+        {reviewsPreview(reviews).map((review, index) => (
+          <ReviewCard key={index} review={review} />
+        ))}
+      </div>
+      {username ? (
+        <Link href={reviewsHref(username)} className={`mt-2 ${SECONDARY_BUTTON}`}>
+          {`See all ${pluralCount(reviews.length, "review")}`}
+        </Link>
+      ) : null}
+    </section>
+  );
+}
+
+// The provider's normal weekly hours: the days they are open, Monday first.
+// Closed days, blocked dates and holidays are not shown, and these hours are
+// not a promise of free appointments - the booking journey decides that.
+function Availability({ hours }) {
+  return (
+    <section className="flex flex-col gap-3">
+      <h2 className="text-lg font-semibold">Availability</h2>
+      <dl className="flex flex-col gap-2 text-sm">
+        {hours.map((entry) => (
+          <div key={entry.weekday} className="flex justify-between gap-4">
+            <dt>{entry.day}</dt>
+            <dd className="text-black/60">{entry.hours}</dd>
           </div>
-          {review.comment ? (
-            <p className="mt-3 whitespace-pre-wrap">{review.comment}</p>
-          ) : null}
-          <p className="mt-3 text-xs text-black/50">
-            {review.reviewer_name} ·{" "}
-            {new Intl.DateTimeFormat("en-GB", {
-              day: "2-digit",
-              month: "short",
-              year: "numeric",
-            }).format(new Date(review.created_at))}
-          </p>
-        </article>
-      ))}
-    </div>
+        ))}
+      </dl>
+    </section>
   );
 }
 
@@ -247,8 +258,12 @@ function PortfolioPreview({ photos, username }) {
 }
 
 export function StorefrontPage({ viewModel, backHref, showBackLink = true }) {
-  const { provider, portfolio, treatment_sections: treatmentSections } =
-    viewModel;
+  const {
+    provider,
+    portfolio,
+    treatment_sections: treatmentSections,
+    opening_hours: openingHours = [],
+  } = viewModel;
   // The owner's preview (backHref) is neither bookable nor linked to the
   // gallery or All treatments, which exist only for published pages.
   const publicView = !backHref;
@@ -306,11 +321,10 @@ export function StorefrontPage({ viewModel, backHref, showBackLink = true }) {
         <PaymentTerms terms={viewModel.booking_terms} />
 
         {shouldShowReviewsSection(viewModel.reviews) ? (
-          <section className="flex flex-col gap-3">
-            <h2 className="text-lg font-semibold">Reviews</h2>
-            <Reviews reviews={viewModel.reviews} />
-          </section>
+          <ReviewsPreview reviews={viewModel.reviews} username={bookingUsername} />
         ) : null}
+
+        {openingHours.length ? <Availability hours={openingHours} /> : null}
       </div>
     </main>
   );

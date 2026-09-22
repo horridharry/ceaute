@@ -82,9 +82,27 @@ available" when it has any. The details sheet shows the whole description.
 The customer-facing action reads "Book" on the card and in the sheet, or
 "Choose a time" in the sheet once add-ons are on offer.
 
-Reviews show the three newest visible reviews and no more. There is no
-all-reviews page yet, so the section has no "See all reviews" button;
-decision 7 schedules that page for a later stage. `/@[username]/treatments`
+Reviews show the three newest publicly visible reviews in bordered cards,
+followed by a full-width "See all N reviews" button counting every visible
+one. With no visible reviews the section and its button are left out.
+`/@[username]/reviews` (All reviews) lists every visible review, newest
+first, under the same average rating and count the identity section shows,
+with no filters, sorting or pagination; unpublished and unknown providers
+have no All reviews page (a real 404). Reviews written in the same second are
+ordered by their id so the order never shifts between requests. A review
+carries only its rating, comment, date and the reviewer's first name, derived
+on the server; a reviewer with no name reads as "Verified customer". Hiding a
+review removes it from the page, the count and the average at once.
+
+Availability is the last section: the provider's normal weekly opening hours,
+open days only, Monday to Sunday, written the same way as on their own
+Availability screen ("9 am to 5 pm"). Closed days, blocked dates, holiday
+exceptions, a today marker and any explanation of bookable times are all left
+out, and the section disappears when the provider has no open days. These
+hours describe when the provider works, not which appointments are free: the
+booking journey remains the only source of bookable times. The storefront's
+Booking terms section is unchanged and still sits above Reviews; decision 9
+moves it in a later stage. `/@[username]/treatments`
 (All treatments) lists every active treatment under its group's name, groups
 in order and treatments without an active group last (headed "Other
 treatments" when other groups are shown). When at least two groups have

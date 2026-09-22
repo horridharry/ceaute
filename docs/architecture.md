@@ -152,6 +152,23 @@ its neighbours, and a failure after most of an hour refreshes the page once
 for new URLs. Smaller variants would need Supabase image transformations,
 which are not used (a metered feature; production availability unconfirmed).
 
+Public review views (the storefront preview, its rating summary and All
+reviews) read through `visibleReviewsQuery` in
+`src/features/storefront/review-queries.js` (visible only, newest first, with
+an id tie-breaker) and send the browser `{ rating, comment, created_at,
+reviewer_name }` only, so no customer identity, booking or review id leaves
+the server. `src/features/storefront/reviews.js` holds the pure preview and
+naming rules, and `review-card.jsx` is the one card both pages render.
+Opening hours read `availability_rule` through
+`src/features/storefront/availability-queries.js`; the (storefront) route
+group's published check decides who may see them, blocked dates are never
+read for display, and `opening-hours.js` turns the rows into open days in
+Monday-to-Sunday order. Times are written by `src/lib/time/clock-time.js`,
+which the provider's own Availability screen also uses, so both sides read
+alike. Neither area needed a migration or a new grant: service_role already
+had select on `availability_rule`, and an owner reads their own rows under
+the existing policy.
+
 Public treatment views (the storefront preview and All treatments) read
 through `treatmentQueries` in `src/features/storefront/treatment-queries.js`
 (active rows only, ordered with an id tie-breaker) and group them with
