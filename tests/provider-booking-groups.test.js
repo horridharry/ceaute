@@ -33,12 +33,12 @@ test("loadProviderBookingGroups calls get_provider_booking_summaries with no arg
   ]);
 });
 
-test("loadProviderBookingGroups groups an empty booking list into empty timing buckets", async () => {
+test("loadProviderBookingGroups groups an empty booking list into empty appointment filters", async () => {
   const supabase = fakeSupabase({ data: [] });
 
   const groups = await loadProviderBookingGroups(supabase);
 
-  assert.deepEqual(groups, { upcoming: [], previous: [], cancelled: [] });
+  assert.deepEqual(groups, { upcoming: [], completed: [], cancelled: [] });
 });
 
 test("loadProviderBookingGroups throws when the rpc call fails", async () => {

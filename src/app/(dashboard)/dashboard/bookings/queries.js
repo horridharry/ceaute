@@ -1,6 +1,6 @@
 import { getSignedInProvider } from "../_lib/provider-data";
 import { listBookingInspirationImages } from "@/lib/bookings/booking-inspiration-images";
-import { bookingToDisplayBooking } from "@/lib/bookings/booking-display";
+import { bookingToDisplayBooking, isProviderAppointment } from "@/lib/bookings/booking-display";
 import { getLatestPaymentAttemptsForBookings } from "@/lib/bookings/booking-payment-attempts";
 import { loadProviderBookingGroups } from "@/lib/bookings/provider-booking-groups";
 
@@ -29,7 +29,10 @@ export const getProviderBooking = async (bookingId) => {
 
   const booking = bookings?.[0];
 
-  if (!booking) {
+  // A hold (unpaid, expired, or paid late and refunded automatically) is not
+  // an appointment, so its detail URL is Not found like a missing booking.
+  // The row itself is kept.
+  if (!booking || !isProviderAppointment(booking)) {
     return null;
   }
 

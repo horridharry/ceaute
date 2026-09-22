@@ -4,10 +4,11 @@ function hasText(value) {
   return Boolean(String(value ?? "").trim());
 }
 
-function addMissing(missing, condition, label) {
-  if (!condition) {
-    missing.push(label);
-  }
+// Each requirement, whether it is met, and the section where the provider
+// meets it. The rules mirror provider_page_meets_publication_requirements,
+// which PostgreSQL checks again when publishing.
+function addRequirement(requirements, condition, label, href) {
+  requirements.push({ label, href, met: Boolean(condition) });
 }
 
 export async function getProviderPagePublicationReadiness({
@@ -84,60 +85,56 @@ export async function getProviderPagePublicationReadiness({
     throw new Error("Could not check publication readiness.");
   }
 
-  const missing = [];
+  const requirements = [];
   const location = locationResult.data;
   const bookingSettings = bookingSettingsResult.data;
   const paymentState = classifyStripePaymentAccount(paymentAccountResult.data);
 
-  addMissing(missing, hasText(providerPage.display_name), "Business name");
-  addMissing(missing, hasText(providerPage.username), "Username");
-  addMissing(
-    missing,
-    hasText(providerPage.provider_category),
+  addRequirement(requirements, hasText(providerPage.display_name), "Business name", "/dashboard/profile");
+  addRequirement(requirements, hasText(providerPage.username), "Username", "/dashboard/profile");
+  addRequirement(requirements, hasText(providerPage.provider_category),
     "Provider category",
+    "/dashboard/profile",
   );
-  addMissing(missing, hasText(providerPage.biography), "Biography");
-  addMissing(
-    missing,
-    location &&
+  addRequirement(requirements, hasText(providerPage.biography), "Biography", "/dashboard/profile");
+  addRequirement(requirements, location &&
       hasText(location.public_area) &&
       hasText(location.address_line_1) &&
       hasText(location.city) &&
       hasText(location.postcode),
     "Current location with public area and private address",
+    "/dashboard/locations",
   );
-  addMissing(
-    missing,
-    (availabilityResult.data ?? []).length > 0,
+  addRequirement(requirements, (availabilityResult.data ?? []).length > 0,
     "At least one enabled working day",
+    "/dashboard/availability",
   );
-  addMissing(
-    missing,
-    (treatmentResult.data ?? []).length > 0,
+  addRequirement(requirements, (treatmentResult.data ?? []).length > 0,
     "At least one active treatment with category, price and duration",
+    "/dashboard/treatments",
   );
-  addMissing(
-    missing,
-    bookingSettings &&
+  addRequirement(requirements, bookingSettings &&
       ["full", "fixed_deposit"].includes(bookingSettings.payment_mode) &&
       [12, 24, 48].includes(Number(bookingSettings.cancellation_window_hours)) &&
       Number.isInteger(Number(bookingSettings.commitment_amount_pence)) &&
       Number(bookingSettings.commitment_amount_pence) >= 0,
     "Booking settings with payment and cancellation terms",
+    "/dashboard/settings/booking",
   );
-  addMissing(
-    missing,
-    (portfolioResult.data ?? []).length > 0,
+  addRequirement(requirements, (portfolioResult.data ?? []).length > 0,
     "At least one visible portfolio image",
+    "/dashboard/profile/portfolio",
   );
-  addMissing(
-    missing,
-    paymentState.state === "ready",
+  addRequirement(requirements, paymentState.state === "ready",
     "Stripe payments ready",
+    "/dashboard/settings/payments",
   );
+
+  const missing = requirements.filter((requirement) => !requirement.met);
 
   return {
     ready: missing.length === 0,
-    missing,
+    missing: missing.map((requirement) => requirement.label),
+    requirements,
   };
 }

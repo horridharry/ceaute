@@ -1,93 +1,32 @@
-import Link from "next/link";
 import { unstable_rethrow } from "next/navigation";
+import { EmptyState } from "@/components/ui/empty-state";
+import { LinkFilterPills } from "@/components/ui/filter-pills";
+import { providerBookingViewFromParam } from "@/lib/bookings/booking-display";
+import { DashboardPage } from "../_components/dashboard-page";
+import { BookingRow } from "../_components/booking-row";
 import { getAllBookings } from "./queries";
-import { SectionTabs } from "@/features/navigation/section-tabs";
-import { StatusBadge } from "../_components/status-badge";
 
-const bookingTabs = [
-  { key: "upcoming", label: "Upcoming" },
-  { key: "previous", label: "Past" },
-  { key: "cancelled", label: "Cancelled" },
+// Filters by what the booking is, not only when it is: Upcoming (confirmed),
+// Completed (completed, or confirmed and over) and Cancelled (cancelled by a
+// customer or by the provider). Unpaid and expired holds are in none of them
+// and in no count; loadProviderBookingGroups leaves them out on the server.
+const VIEWS = [
+  { key: "upcoming", label: "Upcoming", empty: "No upcoming bookings." },
+  { key: "completed", label: "Completed", empty: "No completed bookings." },
+  { key: "cancelled", label: "Cancelled", empty: "No cancelled bookings." },
 ];
 
-const BookingsLoadFailed = () => (
-  <div className="mt-8 flex h-40 rounded-xl border border-black/10 p-4">
-    <p className="m-auto text-center text-sm text-black/60">
-      Could not load bookings. Refresh to try again.
-    </p>
-  </div>
-);
-
-function BookingItem({ booking }) {
-  return (
-    <Link
-      href={`/dashboard/bookings/${booking.booking_id}`}
-      className="block border-b border-black/10 py-4 last:border-b-0 hover:bg-black/[0.025]"
-    >
-      <article className="min-w-0 px-1">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0 flex-1">
-            <h3 className="truncate font-semibold">{booking.customer_name}</h3>
-            <p className="mt-1 truncate text-sm text-black/70">
-              {booking.treatment_name}
-            </p>
-          </div>
-          <StatusBadge tone="quiet" className="shrink-0">
-            {booking.status_label}
-          </StatusBadge>
-        </div>
-        <p className="mt-2 text-sm font-medium">
-          {booking.time_label} <span className="text-black/35">•</span>{" "}
-          {booking.duration_label}
-        </p>
-        <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-black/55">
-          <span>Total {booking.total_price_label}</span>
-          <span>Paid online {booking.amount_paid_online_label}</span>
-          <span>Due {booking.amount_due_at_appointment_label}</span>
-        </div>
-      </article>
-    </Link>
-  );
-}
-
 function bookingsByDay(bookings) {
-  const grouped = new Map();
-
+  const days = [];
   for (const booking of bookings) {
     const date = booking.date_label || "Date unavailable";
-    const entries = grouped.get(date) ?? [];
-    entries.push(booking);
-    grouped.set(date, entries);
+    const day = days.at(-1);
+    if (day?.date === date) day.entries.push(booking);
+    else days.push({ date, entries: [booking] });
   }
-
-  return Array.from(grouped, ([date, entries]) => ({ date, entries }));
+  return days;
 }
 
-function BookingList({ bookings }) {
-  if (bookings.length === 0) {
-    return (
-      <p className="mt-10 text-sm text-black/55">No bookings in this view.</p>
-    );
-  }
-
-  return (
-    <div className="mt-8">
-      {bookingsByDay(bookings).map((group) => (
-        <section key={group.date} className="mt-8 first:mt-0">
-          <h2 className="text-sm font-semibold text-black/55">{group.date}</h2>
-          <div className="mt-2">
-            {group.entries.map((booking) => (
-              <BookingItem key={booking.booking_id} booking={booking} />
-            ))}
-          </div>
-        </section>
-      ))}
-    </div>
-  );
-}
-
-// Loads bookings during the server render, like the customer bookings page.
-// The route-level loading state covers navigation while this request completes.
 async function loadBookingGroups() {
   try {
     return { bookingGroups: await getAllBookings(), failed: false };
@@ -100,37 +39,45 @@ async function loadBookingGroups() {
 
 export default async function DashboardBookingsPage({ searchParams }) {
   const params = await searchParams;
-  const requestedView = Array.isArray(params?.view)
-    ? params.view[0]
-    : params?.view;
-  const activeTab =
-    bookingTabs.find((tab) => tab.key === requestedView) ?? bookingTabs[0];
+  const requested = Array.isArray(params?.view) ? params.view[0] : params?.view;
+  const view = VIEWS.find((candidate) => candidate.key === providerBookingViewFromParam(requested));
   const { bookingGroups, failed } = await loadBookingGroups();
-  const bookings = failed ? [] : bookingGroups[activeTab.key];
+  const bookings = failed ? [] : bookingGroups[view.key];
 
   return (
-    <main className="container max-w-md p-5">
-      <div className="mt-6 min-w-0">
-        <h1 className="text-3xl font-bold tracking-tighter">Bookings</h1>
-        <SectionTabs
-          ariaLabel="Booking status"
-          showPendingHint={false}
-          items={bookingTabs.map((tab) => ({
-            label: tab.label,
-            href:
-              tab.key === "upcoming"
-                ? "/dashboard/bookings"
-                : `/dashboard/bookings?view=${tab.key}`,
-            active: tab.key === activeTab.key,
-          }))}
-        />
+    <DashboardPage title="Bookings">
+      <LinkFilterPills
+        label="Filter bookings"
+        value={view.key}
+        className="mt-6"
+        options={VIEWS.map((candidate) => ({
+          key: candidate.key,
+          label: candidate.label,
+          href: candidate.key === "upcoming" ? "/dashboard/bookings" : `/dashboard/bookings?view=${candidate.key}`,
+          count: failed ? undefined : bookingGroups[candidate.key].length,
+        }))}
+      />
 
-        {failed ? (
-          <BookingsLoadFailed />
-        ) : (
-          <BookingList bookings={bookings} />
-        )}
-      </div>
-    </main>
+      {failed ? (
+        <p role="alert" className="mt-6 text-sm text-danger">
+          Could not load bookings. Refresh to try again.
+        </p>
+      ) : bookings.length === 0 ? (
+        <EmptyState className="mt-6">{view.empty}</EmptyState>
+      ) : (
+        <div className="mt-2">
+          {bookingsByDay(bookings).map((day) => (
+            <section key={day.date} aria-label={day.date} className="mt-5">
+              <h2 className="text-[13px] font-semibold text-ink-muted">{day.date}</h2>
+              <ul className="mt-1">
+                {day.entries.map((booking) => (
+                  <BookingRow key={booking.booking_id} booking={booking} />
+                ))}
+              </ul>
+            </section>
+          ))}
+        </div>
+      )}
+    </DashboardPage>
   );
 }

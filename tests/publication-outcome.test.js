@@ -3,7 +3,7 @@ import test from "node:test";
 import {
   publicationFailure,
   publicationSuccess,
-} from "../src/app/(dashboard)/dashboard/profile/publication-outcome.js";
+} from "../src/app/(dashboard)/dashboard/_lib/publication-outcome.js";
 
 test("a database rejection reaches the provider as its reason, not as raw text", () => {
   assert.deepEqual(

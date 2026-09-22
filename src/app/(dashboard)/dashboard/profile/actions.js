@@ -12,8 +12,8 @@ import {
   isProviderCategory,
   providerPageValuesFromFormData,
 } from "./_lib/provider-page-form-values";
-import { getProviderPagePublicationReadiness } from "./publication-readiness";
-import { publicationFailure, publicationSuccess } from "./publication-outcome";
+import { getProviderPagePublicationReadiness } from "../_lib/publication-readiness";
+import { publicationFailure, publicationSuccess } from "../_lib/publication-outcome";
 
 export const updateProviderPage = async (_currentState, formData) => {
   const { supabase, providerPage } = await getSignedInProvider({
