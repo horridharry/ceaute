@@ -15,6 +15,13 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      // There is no landing page yet: the home page is Discover. Temporary, so
+      // a future landing page can take `/` back.
+      {
+        source: "/",
+        destination: "/discover",
+        permanent: false,
+      },
       {
         source: "/provider/onboarding",
         destination: "/dashboard/onboarding",

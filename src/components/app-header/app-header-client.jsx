@@ -156,7 +156,7 @@ export default function AppHeaderClient({ user, providerPage = null }) {
     <header className="sticky top-0 z-40 border-b border-black/10 bg-white/95 backdrop-blur">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
         <HomeLogo
-          href={isProviderWorkspace ? "/dashboard" : user ? "/discover" : "/"}
+          href={isProviderWorkspace ? "/dashboard" : "/discover"}
         />
 
         {user && !isProviderWorkspace ? (
