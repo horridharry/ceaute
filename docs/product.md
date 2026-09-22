@@ -59,10 +59,11 @@ dashboard if they have a provider page and to the account area otherwise.
 ## The public page, treatments, treatment groups and add-ons
 
 A published provider is available at `/@[username]`. It opens with a hero
-carousel of every visible portfolio image in portfolio order, followed by the
+carousel of every visible portfolio image in portfolio order (swipe, with
+pagination dots), followed by the
 identity: the optional display photo, business name, `@username` with the
-public area, the provider category, and the average rating with review count
-(or "New" before the first visible review). Below that it shows the visible
+public area, and the average rating with review count (or a "New" pill before
+the first visible review). The provider category is not shown publicly there. Below that it shows the visible
 portfolio images, booking terms, active treatments, compatible add-ons, and
 visible reviews. The exact appointment address is not public. The display photo
 is managed in Profile, is stored separately from Portfolio, and is not a
