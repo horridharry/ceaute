@@ -152,7 +152,7 @@ export function StorefrontPage({ viewModel, backHref, showBackLink = true }) {
     viewModel;
 
   return (
-    <main className="container max-w-md p-5">
+    <main className="container mx-auto max-w-md p-5">
       <div className="mt-6 flex flex-col gap-10">
         <header>
           {backHref && showBackLink ? (

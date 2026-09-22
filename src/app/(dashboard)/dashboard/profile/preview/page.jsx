@@ -22,7 +22,7 @@ export default async function DashboardProfilePreviewPage() {
 
   return (
     <>
-      <div className="container max-w-md p-5 pb-0">
+      <div className="container mx-auto max-w-md p-5 pb-0">
         <div className="mt-6 rounded-xl border border-black/10 bg-black/[0.03] px-4 py-3">
           <p className="text-sm font-semibold">Preview: not live yet</p>
           <p className="mt-1 text-sm text-black/60">
