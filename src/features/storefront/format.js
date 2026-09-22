@@ -82,3 +82,26 @@ export function storefrontMetadata({ display_name, username, biography } = {}) {
 
   return { title: `${name} | Ceaute`, description };
 }
+
+// Average rating and count for the reviews the storefront may show (the
+// visible ones; every review belongs to a completed booking). Null when there
+// are none, which the page shows as "New". The average is rounded to one
+// decimal place.
+export function ratingSummary(reviews) {
+  const ratings = (reviews ?? [])
+    .map((review) => Number(review?.rating))
+    .filter((rating) => Number.isInteger(rating) && rating >= 1 && rating <= 5);
+
+  if (ratings.length === 0) {
+    return null;
+  }
+
+  const total = ratings.reduce((sum, rating) => sum + rating, 0);
+  const average = Math.round((total / ratings.length) * 10) / 10;
+
+  return {
+    average: average.toFixed(1),
+    count: ratings.length,
+    countLabel: `${ratings.length} ${ratings.length === 1 ? "review" : "reviews"}`,
+  };
+}

@@ -4,6 +4,58 @@ import {
   shouldShowReviewsSection,
 } from "@/features/storefront/format";
 import { TreatmentSelectionList } from "./treatment-selection-list";
+import { HeroCarousel, ProviderPhoto } from "./hero-carousel";
+
+// Average rating and review count, or "New" before the first review.
+function RatingSummary({ rating }) {
+  if (!rating) {
+    return <p className="font-medium text-black">New</p>;
+  }
+
+  return (
+    <p className="font-medium text-black">
+      <span aria-hidden="true">★ </span>
+      <span className="sr-only">Rated </span>
+      {rating.average}
+      <span className="sr-only"> out of 5</span>{" "}
+      <span className="font-normal text-black/60">({rating.countLabel})</span>
+    </p>
+  );
+}
+
+function ProviderIdentity({ provider }) {
+  const handleAndArea = [
+    provider.username ? `@${provider.username}` : "",
+    provider.public_area,
+  ].filter(Boolean);
+
+  return (
+    <header>
+      <div className="flex items-center gap-4">
+        <ProviderPhoto src={provider.display_photo_url} />
+        <div className="min-w-0">
+          <h1 className="text-3xl font-bold tracking-tighter">
+            {provider.business_name || "Untitled provider page"}
+          </h1>
+          {handleAndArea.length ? (
+            <p className="mt-1 text-sm text-black/60">
+              {handleAndArea.join(" · ")}
+            </p>
+          ) : null}
+        </div>
+      </div>
+      <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+        {provider.provider_category ? (
+          <p className="text-black/60">{provider.provider_category}</p>
+        ) : null}
+        <RatingSummary rating={provider.rating} />
+      </div>
+      {provider.biography ? (
+        <p className="mt-5 whitespace-pre-wrap text-sm">{provider.biography}</p>
+      ) : null}
+    </header>
+  );
+}
 
 function EmptyState({ children }) {
   return (
@@ -148,32 +200,31 @@ export function StorefrontPage({ viewModel, backHref, showBackLink = true }) {
   const { provider, portfolio, treatment_sections: treatmentSections } =
     viewModel;
 
+  // The hero sits flush under the header on phones and as a rounded image
+  // in the centred column on wider screens.
   return (
-    <main className="container mx-auto max-w-md p-5">
-      <div className="mt-6 flex flex-col gap-10">
-        <header>
-          {backHref && showBackLink ? (
-            <a
-              href={backHref}
-              className="mb-8 inline-flex text-sm font-semibold text-pink-600"
-            >
-              Back to page settings
-            </a>
-          ) : null}
-          <h1 className="text-3xl font-bold tracking-tighter">
-            {provider.business_name || "Untitled provider page"}
-          </h1>
-          <div className="mt-2 flex flex-wrap gap-2 text-sm text-black/60">
-            {provider.username ? <p>/@{provider.username}</p> : null}
-            {provider.provider_category ? <p>{provider.provider_category}</p> : null}
-            {provider.public_area ? <p>{provider.public_area}</p> : null}
-          </div>
-          {provider.biography ? (
-            <p className="mt-5 whitespace-pre-wrap text-sm">
-              {provider.biography}
-            </p>
-          ) : null}
-        </header>
+    <main className="container mx-auto max-w-md pb-5 sm:px-5 sm:pt-5">
+      {portfolio.length ? (
+        <HeroCarousel
+          images={portfolio}
+          providerName={provider.business_name}
+          className="sm:mt-6"
+        />
+      ) : null}
+      <div
+        className={`flex flex-col gap-10 px-5 sm:px-0 ${
+          portfolio.length ? "mt-6" : "mt-11 sm:mt-6"
+        }`}
+      >
+        {backHref && showBackLink ? (
+          <a
+            href={backHref}
+            className="inline-flex text-sm font-semibold text-pink-600"
+          >
+            Back to page settings
+          </a>
+        ) : null}
+        <ProviderIdentity provider={provider} />
 
         {portfolio.length ? (
           <section className="flex flex-col gap-3">

@@ -1,4 +1,6 @@
+import { DISPLAY_PHOTO_BUCKET } from "@/lib/providers/display-photo";
 import { signStoragePaths } from "@/lib/supabase/signed-urls";
+import { ratingSummary } from "./format";
 
 const PORTFOLIO_BUCKET = "portfolio-images";
 const SIGNED_IMAGE_SECONDS = 60 * 60;
@@ -208,10 +210,21 @@ export async function buildStorefrontViewModel({ supabase, providerPage }) {
     throw new Error("Could not load provider page preview.");
   }
 
-  const portfolio = await signedPortfolioImages(
-    supabase,
-    portfolioResult.data ?? [],
-  );
+  const [portfolio, signedPhotoUrls] = await Promise.all([
+    signedPortfolioImages(supabase, portfolioResult.data ?? []),
+    signStoragePaths(
+      supabase,
+      DISPLAY_PHOTO_BUCKET,
+      [providerPage.display_photo_path],
+      SIGNED_IMAGE_SECONDS,
+    ),
+  ]);
+  const reviews = (reviewsResult.data ?? []).map((review) => ({
+    rating: review.rating,
+    comment: review.comment ?? "",
+    created_at: review.created_at,
+    reviewer_name: reviewerDisplayName(review.profile),
+  }));
 
   return {
     provider: {
@@ -220,6 +233,11 @@ export async function buildStorefrontViewModel({ supabase, providerPage }) {
       provider_category: providerPage.provider_category ?? "",
       biography: providerPage.biography ?? "",
       public_area: locationResult.data?.public_area ?? "",
+      // Null when there is no photo or it could not be signed; the page then
+      // leaves it out rather than showing a placeholder.
+      display_photo_url:
+        signedPhotoUrls.get(providerPage.display_photo_path) ?? null,
+      rating: ratingSummary(reviews),
     },
     portfolio,
     treatment_sections: buildTreatmentSections({
@@ -229,11 +247,6 @@ export async function buildStorefrontViewModel({ supabase, providerPage }) {
       compatibility: compatibilityResult.data ?? [],
     }),
     booking_terms: mapBookingTerms(bookingSettingsResult.data),
-    reviews: (reviewsResult.data ?? []).map((review) => ({
-      rating: review.rating,
-      comment: review.comment ?? "",
-      created_at: review.created_at,
-      reviewer_name: reviewerDisplayName(review.profile),
-    })),
+    reviews,
   };
 }
