@@ -2,6 +2,8 @@ import { DISPLAY_PHOTO_BUCKET } from "@/lib/providers/display-photo";
 import { logSupabaseError } from "@/lib/supabase/log-error";
 import { signStoragePaths } from "@/lib/supabase/signed-urls";
 import { ratingSummary } from "./format";
+import { buildTreatmentSections } from "./treatment-sections";
+import { treatmentQueries } from "./treatment-queries";
 import {
   portfolioImagesWithSignedUrls,
   signPortfolioImages,
@@ -31,22 +33,6 @@ function mapBookingTerms(settings) {
   };
 }
 
-function mapTreatment(treatment, compatibleAddOns) {
-  return {
-    id: treatment.id,
-    name: treatment.name,
-    description: treatment.description ?? "",
-    price_pence: treatment.price_pence,
-    duration_minutes: treatment.duration_minutes,
-    add_ons: compatibleAddOns.map((addOn) => ({
-      id: addOn.id,
-      name: addOn.name,
-      additional_price_pence: addOn.additional_price_pence,
-      additional_duration_minutes: addOn.additional_duration_minutes,
-    })),
-  };
-}
-
 function reviewerDisplayName(profile) {
   const fullName = String(profile?.full_name ?? "").trim();
 
@@ -57,52 +43,8 @@ function reviewerDisplayName(profile) {
   return fullName.split(/\s+/)[0] || "Verified customer";
 }
 
-function buildTreatmentSections({ treatments, groups, addOns, compatibility }) {
-  const activeGroupById = new Map(groups.map((group) => [group.id, group]));
-  const activeAddOnById = new Map(addOns.map((addOn) => [addOn.id, addOn]));
-  const addOnIdsByTreatmentId = new Map();
-
-  for (const item of compatibility) {
-    if (!activeAddOnById.has(item.treatment_add_on_id)) {
-      continue;
-    }
-
-    const ids = addOnIdsByTreatmentId.get(item.treatment_id) ?? [];
-    ids.push(item.treatment_add_on_id);
-    addOnIdsByTreatmentId.set(item.treatment_id, ids);
-  }
-
-  const sections = groups.map((group) => ({
-    name: group.name,
-    display_order: group.display_order,
-    treatments: [],
-  }));
-  const sectionByGroupId = new Map(
-    groups.map((group, index) => [group.id, sections[index]]),
-  );
-  const ungroupedSection = {
-    name: null,
-    display_order: Number.MAX_SAFE_INTEGER,
-    treatments: [],
-  };
-
-  for (const treatment of treatments) {
-    const compatibleAddOns = (addOnIdsByTreatmentId.get(treatment.id) ?? [])
-      .map((addOnId) => activeAddOnById.get(addOnId))
-      .filter(Boolean);
-    const section = activeGroupById.has(treatment.treatment_group_id)
-      ? sectionByGroupId.get(treatment.treatment_group_id)
-      : ungroupedSection;
-
-    section.treatments.push(mapTreatment(treatment, compatibleAddOns));
-  }
-
-  return [...sections, ungroupedSection].filter(
-    (section) => section.treatments.length > 0,
-  );
-}
-
 export async function buildStorefrontViewModel({ supabase, providerPage }) {
+  const treatmentQuery = treatmentQueries(supabase, providerPage.id);
   const [
     locationResult,
     portfolioResult,
@@ -124,39 +66,10 @@ export async function buildStorefrontViewModel({ supabase, providerPage }) {
       .eq("is_primary", true)
       .maybeSingle(),
     visiblePortfolioQuery(supabase, providerPage.id),
-    supabase
-      .schema("ceaute")
-      .from("treatment_group")
-      .select("id, name, display_order")
-      .eq("provider_page_id", providerPage.id)
-      .eq("is_active", true)
-      .order("display_order", { ascending: true })
-      .order("name", { ascending: true }),
-    supabase
-      .schema("ceaute")
-      .from("treatment")
-      .select(
-        "id, name, description, duration_minutes, price_pence, display_order, treatment_group_id, updated_at",
-      )
-      .eq("provider_page_id", providerPage.id)
-      .eq("is_active", true)
-      .order("display_order", { ascending: true })
-      .order("updated_at", { ascending: false }),
-    supabase
-      .schema("ceaute")
-      .from("treatment_add_on")
-      .select(
-        "id, name, additional_price_pence, additional_duration_minutes, display_order",
-      )
-      .eq("provider_page_id", providerPage.id)
-      .eq("is_active", true)
-      .order("display_order", { ascending: true })
-      .order("name", { ascending: true }),
-    supabase
-      .schema("ceaute")
-      .from("treatment_add_on_compatibility")
-      .select("treatment_id, treatment_add_on_id")
-      .eq("provider_page_id", providerPage.id),
+    treatmentQuery.groups,
+    treatmentQuery.treatments,
+    treatmentQuery.addOns,
+    treatmentQuery.compatibility,
     supabase
       .schema("ceaute")
       .from("provider_booking_setting")
