@@ -65,6 +65,13 @@ export async function resolve(specifier, context, nextResolve) {
     }
   }
 
+  // Next's entry points ("next/link", "next/navigation") are extensionless
+  // CommonJS files without an exports map, which the bundler resolves and
+  // plain Node's ESM resolver does not.
+  if (/^next\/[\w-]+$/.test(specifier)) {
+    return nextResolve(`${specifier}.js`, context);
+  }
+
   return nextResolve(specifier, context);
 }
 
@@ -73,7 +80,27 @@ export async function resolve(specifier, context, nextResolve) {
 // module syntax detection and needs no flag on versions that have it. Fixing
 // the format here keeps `npm test` independent of that flag, which newer Node
 // releases reject.
+//
+// JSX files are compiled with the TypeScript compiler the project already
+// uses for typechecking, so a test can render a component with
+// react-dom/server and assert on its markup instead of its source text.
 export async function load(url, context, nextLoad) {
+  if (/\.(jsx|tsx)$/.test(url) && !url.includes("/node_modules/")) {
+    const { readFile } = await import("node:fs/promises");
+    const { default: ts } = await import("typescript");
+    const source = await readFile(fileURLToPath(url), "utf8");
+    const { outputText } = ts.transpileModule(source, {
+      fileName: fileURLToPath(url),
+      compilerOptions: {
+        jsx: ts.JsxEmit.ReactJSX,
+        module: ts.ModuleKind.ESNext,
+        target: ts.ScriptTarget.ES2022,
+      },
+    });
+
+    return { format: "module", source: outputText, shortCircuit: true };
+  }
+
   if (url.endsWith(".js") && !url.includes("/node_modules/")) {
     const result = await nextLoad(url, { ...context, format: "module" });
     return { ...result, format: "module" };
