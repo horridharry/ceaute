@@ -2,6 +2,7 @@ import {
   APPOINTMENT_GRID_MINUTES,
   isOnAppointmentGrid,
 } from "@/lib/bookings/appointment-grid";
+import { formatClockRange, formatClockTime } from "@/lib/time/clock-time";
 import { weekdayNameToNumber, weekdayNumberToName } from "./weekdays";
 
 export const DAYS_OF_WEEK = [
@@ -139,25 +140,16 @@ export function scheduleToFormData(days) {
   return formData;
 }
 
-// "09:00" → "9 am", "19:30" → "7:30 pm", "00:00" → "12 am".
-export function formatSummaryTime(time) {
-  const [hours, minutes] = String(time).split(":").map(Number);
-  const period = hours < 12 ? "am" : "pm";
-  const displayHours = hours % 12 === 0 ? 12 : hours % 12;
-
-  if (minutes === 0) {
-    return `${displayHours} ${period}`;
-  }
-
-  return `${displayHours}:${String(minutes).padStart(2, "0")} ${period}`;
-}
+// The shared way of writing a time of day; kept exported here because the
+// availability screens already import it from this module.
+export const formatSummaryTime = formatClockTime;
 
 export function formatDaySummary(day) {
   if (!day.enabled) {
     return "Closed";
   }
 
-  return `${formatSummaryTime(day.openTime)} to ${formatSummaryTime(day.closeTime)}`;
+  return formatClockRange(day.openTime, day.closeTime);
 }
 
 // Times remembered on a closed day don't count, so ticking a day open and
