@@ -69,15 +69,22 @@ photo, business name, `@username` with the public area, and the average rating
 with review count (or a "New" pill before the first visible review). The
 provider category is not shown publicly there. Below that it shows a Portfolio
 preview of the first three visible photos (the first repeats the hero on
-purpose) with "See all photos", then a Treatments preview, booking terms and
-visible reviews. The exact appointment address is not public.
+purpose) with a "See all N photos" text link beside the heading, then a
+Treatments preview, booking terms and the three newest visible reviews. The
+exact appointment address is not public.
 
 The Treatments preview shows the first three active treatments in page order,
-across groups and without group headings, with "See all treatments" whenever
-the page has at least one; with none, the section is left out. On a card a
-description is clamped to two lines, and the details sheet shows all of it.
-The customer-facing action on a card reads "Book"; in the details sheet it
-reads "Book", or "Choose a time" once add-ons are on offer. `/@[username]/treatments`
+across groups and without group headings, followed by a full-width "See all N
+treatments" button counting every active treatment; with none, the section is
+left out. A treatment card reads: its name with Book beside it, then the
+description clamped to two lines, then duration, price and "Add-ons
+available" when it has any. The details sheet shows the whole description.
+The customer-facing action reads "Book" on the card and in the sheet, or
+"Choose a time" in the sheet once add-ons are on offer.
+
+Reviews show the three newest visible reviews and no more. There is no
+all-reviews page yet, so the section has no "See all reviews" button;
+decision 7 schedules that page for a later stage. `/@[username]/treatments`
 (All treatments) lists every active treatment under its group's name, groups
 in order and treatments without an active group last (headed "Other
 treatments" when other groups are shown). When at least two groups have
