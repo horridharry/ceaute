@@ -58,6 +58,24 @@ export function addMinutes(date, minutes) {
 
 // A provider page with no visible reviews yet should not advertise that fact;
 // the whole section, heading included, is omitted rather than shown empty.
+// "3 photos", "1 photo": the noun with its count, for "See all ..." labels.
+export function pluralCount(count, noun, plural = `${noun}s`) {
+  const safe = Number.isFinite(count) ? Math.max(Math.trunc(count), 0) : 0;
+  return `${safe} ${safe === 1 ? noun : plural}`;
+}
+
+// The line under a treatment card: how long it takes, what it costs, and
+// whether add-ons can be chosen with it.
+export function treatmentMetaLine(treatment) {
+  return [
+    formatDurationMinutes(treatment?.duration_minutes),
+    formatPricePence(treatment?.price_pence),
+    treatment?.add_ons?.length ? "Add-ons available" : null,
+  ]
+    .filter(Boolean)
+    .join(" \u00b7 ");
+}
+
 export function shouldShowReviewsSection(reviews) {
   return Array.isArray(reviews) && reviews.length > 0;
 }

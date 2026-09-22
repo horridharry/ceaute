@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   formatDurationMinutes,
   formatPricePence,
+  treatmentMetaLine,
 } from "@/features/storefront/format";
 import {
   buildTreatmentTimeHref,
@@ -21,50 +22,42 @@ import {
 // add-ons" link already produce and revalidate server-side, so nothing
 // downstream of that link needs to know a sheet exists.
 //
-// The card has two actions: its name opens the details sheet and Book
-// books. The name's button sits inside the heading (a heading inside a
-// button loses its heading role) and its ::after stretches over the whole
-// card, so tapping anywhere on the card still opens the details. Book is
-// raised above that layer and named after the treatment, because every card
-// has one.
+// The card reads: name with Book beside it, then the description clamped to
+// two lines, then duration, price and whether add-ons can be chosen. The
+// name's button sits inside the heading (a heading inside a button loses its
+// heading role) and its ::after stretches over the whole card, so tapping
+// anywhere on the card still opens the details. Book is raised above that
+// layer, named after the treatment because every card has one, and stays a
+// full 44px tall next to a name that wraps.
 function TreatmentRow({ treatment, onOpenDetails, onSelect }) {
   return (
     <article className="relative rounded-xl border border-black/10 p-4">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h3 className="font-medium">
-            <button
-              type="button"
-              onClick={() => onOpenDetails(treatment)}
-              className="text-left after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-pink-600"
-            >
-              {treatment.name}
-            </button>
-          </h3>
-          {/* Two lines on the card; the details sheet has the whole text. */}
-          {treatment.description ? (
-            <p className="mt-1 line-clamp-2 text-sm text-black/60">
-              {treatment.description}
-            </p>
-          ) : null}
-        </div>
-        <div className="shrink-0 text-right text-sm font-medium">
-          <p>{formatPricePence(treatment.price_pence)}</p>
-          <p className="text-black/60">
-            {formatDurationMinutes(treatment.duration_minutes)}
-          </p>
-        </div>
-      </div>
-      <div className="mt-3 flex justify-end">
+      <div className="flex items-start justify-between gap-3">
+        <h3 className="min-w-0 font-medium">
+          <button
+            type="button"
+            onClick={() => onOpenDetails(treatment)}
+            className="text-left [overflow-wrap:anywhere] after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-pink-600"
+          >
+            {treatment.name}
+          </button>
+        </h3>
         <button
           type="button"
           onClick={() => onSelect(treatment)}
           aria-label={`Book ${treatment.name}`}
-          className="relative rounded-lg bg-pink-700 px-4 py-2 text-sm font-semibold text-white duration-200 hover:bg-pink-800"
+          className="relative -my-1 inline-flex min-h-11 shrink-0 items-center rounded-lg bg-pink-700 px-4 text-sm font-semibold text-white duration-200 hover:bg-pink-800"
         >
           Book
         </button>
       </div>
+      {/* Two lines on the card; the details sheet has the whole text. */}
+      {treatment.description ? (
+        <p className="mt-2 line-clamp-2 text-sm text-black/60">
+          {treatment.description}
+        </p>
+      ) : null}
+      <p className="mt-2 text-sm text-black/60">{treatmentMetaLine(treatment)}</p>
     </article>
   );
 }

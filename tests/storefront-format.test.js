@@ -8,7 +8,9 @@ import {
   formatTimeLabel,
   hasPublicUsernamePrefix,
   normalizePublicUsername,
+  pluralCount,
   shouldShowReviewsSection,
+  treatmentMetaLine,
 } from "../src/features/storefront/format.js";
 
 test("hasPublicUsernamePrefix recognises a leading @, including URL-encoded", () => {
@@ -119,4 +121,24 @@ test("a provider with one or more visible reviews shows the reviews section", ()
     ]),
     true,
   );
+});
+
+test("counts read naturally in singular and plural", () => {
+  assert.equal(pluralCount(0, "photo"), "0 photos");
+  assert.equal(pluralCount(1, "photo"), "1 photo");
+  assert.equal(pluralCount(18, "photo"), "18 photos");
+  assert.equal(pluralCount(1, "treatment"), "1 treatment");
+  assert.equal(pluralCount(3, "review"), "3 reviews");
+  assert.equal(pluralCount(-2, "review"), "0 reviews", "a nonsense count never reads negative");
+  assert.equal(pluralCount(undefined, "review"), "0 reviews");
+});
+
+test("a treatment card's line is duration, price, and add-ons only when it has them", () => {
+  const treatment = { duration_minutes: 150, price_pence: 12000, add_ons: [] };
+  assert.equal(treatmentMetaLine(treatment), "2 hr 30 min \u00b7 \u00a3120.00");
+  assert.equal(
+    treatmentMetaLine({ ...treatment, add_ons: [{ id: "o1" }] }),
+    "2 hr 30 min \u00b7 \u00a3120.00 \u00b7 Add-ons available",
+  );
+  assert.doesNotMatch(treatmentMetaLine({ ...treatment, add_ons: undefined }), /Add-ons/);
 });
