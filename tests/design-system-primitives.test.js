@@ -122,7 +122,7 @@ test("nothing stops people zooming the page", () => {
 // --- Button -----------------------------------------------------------------
 
 test("every button variant has a visible keyboard focus ring and disabled styling", () => {
-  assert.deepEqual(BUTTON_VARIANTS, ["primary", "primary-strong", "secondary", "outline", "destructive", "text"]);
+  assert.deepEqual(BUTTON_VARIANTS, ["primary", "primary-strong", "secondary", "outline", "destructive-strong", "destructive", "text"]);
   for (const variant of BUTTON_VARIANTS) {
     const classes = buttonClassName({ variant });
     assert.match(classes, /focus-visible:outline-2 focus-visible:outline-offset-2/, variant);
@@ -264,7 +264,9 @@ test("PageHeading renders one h1 at the requested size, with a descriptive back 
 test("SectionHeading is PageHeading with its + New action", () => {
   const html = render(h(SectionHeading, { title: "Add-ons", newHref: "/dashboard/add-ons/new" }));
   assert.equal(count(html, /<h1/g), 1);
-  assert.match(html, /<h1 class="text-3xl font-bold tracking-tighter">Add-ons<\/h1><a class="[^"]*text-accent[^"]*" href="\/dashboard\/add-ons\/new">\+ New/);
+  // The "+" is decoration; the link's accessible name is "New".
+  assert.match(html, /<h1 class="text-3xl font-bold tracking-tighter">Add-ons<\/h1><a class="[^"]*text-accent[^"]*" href="\/dashboard\/add-ons\/new"><span aria-hidden="true">\+<\/span>New/);
+  assert.match(html, /<header class="min-w-0 pt-6">/);
 });
 
 test("Card keeps the bordered look; CardLink is one focusable link around one card", () => {

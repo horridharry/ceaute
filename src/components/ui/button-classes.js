@@ -24,6 +24,10 @@ const VARIANT_CLASSES = {
   // Outlined, neutral text: the storefront's full-width "See all" buttons.
   outline:
     "rounded-lg border border-ink/15 bg-surface font-semibold text-ink hover:bg-ink/[0.03] active:bg-surface-subtle disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-60",
+  // The confirm button of an irreversible action inside a dialog (delete,
+  // cancel and refund). Filled so the consequence is unmistakable.
+  "destructive-strong":
+    "rounded-lg bg-destructive font-semibold text-white shadow-sm hover:bg-destructive/90 active:bg-destructive/90 disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-60",
   // Archive and remove actions.
   destructive:
     "rounded-lg font-semibold text-destructive hover:bg-destructive-surface/80 active:bg-destructive active:text-white disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-60",
