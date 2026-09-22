@@ -1,6 +1,13 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
+import { paginationDots } from "./hero-pagination";
+
+const DOT_CLASS_BY_SIZE = {
+  active: "h-1.5 w-3.5 bg-white",
+  regular: "h-1.5 w-1.5 bg-white/60",
+  small: "h-1 w-1 bg-white/50",
+};
 
 function prefersReducedMotion() {
   return (
@@ -12,7 +19,8 @@ function prefersReducedMotion() {
 // Every visible portfolio image, in portfolio order. Moving between images is
 // a native horizontal swipe with scroll snapping; the pagination dots follow
 // the image in view and are also buttons, and the arrow keys work once the
-// images have focus. A single image gets no controls. An image that fails to
+// images have focus. With many images the dots are a compact window of at
+// most five (see paginationDots), so the row never overflows. A single image gets no controls. An image that fails to
 // load is dropped, and with none left the hero is not shown.
 //
 // This is the phone presentation, also used on wider screens until the
@@ -100,22 +108,18 @@ export function HeroCarousel({ images, providerName, className = "" }) {
         <>
           <div className="absolute inset-x-0 bottom-2 flex justify-center">
             <div className="flex items-center rounded-full bg-black/25 px-1 backdrop-blur-sm">
-              {slides.map((image, slideIndex) => (
+              {paginationDots({ count, current }).map(({ index: dotIndex, size }) => (
                 <button
-                  key={image.image_url}
+                  key={dotIndex}
                   type="button"
-                  aria-label={`Show image ${slideIndex + 1} of ${count}`}
-                  aria-current={slideIndex === current ? "true" : undefined}
-                  onClick={() => goTo(slideIndex)}
+                  aria-label={`Show image ${dotIndex + 1} of ${count}`}
+                  aria-current={size === "active" ? "true" : undefined}
+                  onClick={() => goTo(dotIndex)}
                   className="group grid h-6 w-6 place-items-center focus-visible:outline-none"
                 >
                   <span
                     aria-hidden="true"
-                    className={`block h-1.5 rounded-full transition-all group-focus-visible:ring-2 group-focus-visible:ring-white ${
-                      slideIndex === current
-                        ? "w-3.5 bg-white"
-                        : "w-1.5 bg-white/60"
-                    }`}
+                    className={`block rounded-full transition-all group-focus-visible:ring-2 group-focus-visible:ring-white ${DOT_CLASS_BY_SIZE[size]}`}
                   />
                 </button>
               ))}
