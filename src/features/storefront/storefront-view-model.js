@@ -18,24 +18,6 @@ const SIGNED_IMAGE_SECONDS = 60 * 60;
 // Kept for existing callers; the rules live in ./portfolio-photos.
 export { portfolioImagesWithSignedUrls };
 
-function mapBookingTerms(settings) {
-  if (!settings) {
-    return {
-      payment_mode: "full",
-      commitment_amount_pence: null,
-      cancellation_window_hours: null,
-      written_policy: "",
-    };
-  }
-
-  return {
-    payment_mode: settings.payment_mode,
-    commitment_amount_pence: settings.commitment_amount_pence,
-    cancellation_window_hours: settings.cancellation_window_hours,
-    written_policy: settings.written_policy ?? "",
-  };
-}
-
 export async function buildStorefrontViewModel({ supabase, providerPage }) {
   const treatmentQuery = treatmentQueries(supabase, providerPage.id);
   const [
@@ -45,7 +27,6 @@ export async function buildStorefrontViewModel({ supabase, providerPage }) {
     treatmentsResult,
     addOnsResult,
     compatibilityResult,
-    bookingSettingsResult,
     reviewsResult,
     openingHoursResult,
   ] = await Promise.all([
@@ -64,14 +45,6 @@ export async function buildStorefrontViewModel({ supabase, providerPage }) {
     treatmentQuery.treatments,
     treatmentQuery.addOns,
     treatmentQuery.compatibility,
-    supabase
-      .schema("ceaute")
-      .from("provider_booking_setting")
-      .select(
-        "payment_mode, commitment_amount_pence, cancellation_window_hours, written_policy",
-      )
-      .eq("provider_page_id", providerPage.id)
-      .maybeSingle(),
     visibleReviewsQuery(supabase, providerPage.id),
     openingHoursQuery(supabase, providerPage.id),
   ]);
@@ -83,7 +56,6 @@ export async function buildStorefrontViewModel({ supabase, providerPage }) {
     treatments: treatmentsResult,
     add_ons: addOnsResult,
     add_on_compatibility: compatibilityResult,
-    booking_settings: bookingSettingsResult,
     reviews: reviewsResult,
     opening_hours: openingHoursResult,
   }).filter(([, result]) => result.error);
@@ -128,7 +100,6 @@ export async function buildStorefrontViewModel({ supabase, providerPage }) {
       addOns: addOnsResult.data ?? [],
       compatibility: compatibilityResult.data ?? [],
     }),
-    booking_terms: mapBookingTerms(bookingSettingsResult.data),
     reviews,
     opening_hours: openingHours(openingHoursResult.data),
   };
