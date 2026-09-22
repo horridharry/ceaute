@@ -13,7 +13,7 @@ import {
 
 // The approved customer interaction (docs/product.md "Booking and
 // availability"): tapping a treatment always opens its details bottom
-// sheet; tapping Select goes straight to availability when the treatment
+// sheet; tapping Book goes straight to availability when the treatment
 // has no add-ons, or opens the same sheet when it does, so a description
 // alone never forces an extra step. The sheet itself only ever navigates to
 // the existing `/book/[treatmentId]/time?add_on=...` URL, which is what the
@@ -21,10 +21,10 @@ import {
 // add-ons" link already produce and revalidate server-side, so nothing
 // downstream of that link needs to know a sheet exists.
 //
-// The card has two actions: its name opens the details sheet and Select
+// The card has two actions: its name opens the details sheet and Book
 // books. The name's button sits inside the heading (a heading inside a
 // button loses its heading role) and its ::after stretches over the whole
-// card, so tapping anywhere on the card still opens the details. Select is
+// card, so tapping anywhere on the card still opens the details. Book is
 // raised above that layer and named after the treatment, because every card
 // has one.
 function TreatmentRow({ treatment, onOpenDetails, onSelect }) {
@@ -41,8 +41,9 @@ function TreatmentRow({ treatment, onOpenDetails, onSelect }) {
               {treatment.name}
             </button>
           </h3>
+          {/* Two lines on the card; the details sheet has the whole text. */}
           {treatment.description ? (
-            <p className="mt-1 text-sm text-black/60">
+            <p className="mt-1 line-clamp-2 text-sm text-black/60">
               {treatment.description}
             </p>
           ) : null}
@@ -58,10 +59,10 @@ function TreatmentRow({ treatment, onOpenDetails, onSelect }) {
         <button
           type="button"
           onClick={() => onSelect(treatment)}
-          aria-label={`Select ${treatment.name}`}
+          aria-label={`Book ${treatment.name}`}
           className="relative rounded-lg bg-pink-700 px-4 py-2 text-sm font-semibold text-white duration-200 hover:bg-pink-800"
         >
-          Select
+          Book
         </button>
       </div>
     </article>
@@ -181,7 +182,7 @@ function TreatmentDetailsSheet({
           disabled={isNavigating}
           className="mt-6 w-full rounded-lg bg-pink-700 p-3 text-sm font-semibold text-white duration-200 hover:bg-pink-800 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {isNavigating ? "Continuing..." : hasAddOns ? "Choose a time" : "Select"}
+          {isNavigating ? "Continuing..." : hasAddOns ? "Choose a time" : "Book"}
         </button>
       </div>
     </div>

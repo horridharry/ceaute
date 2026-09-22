@@ -9,7 +9,6 @@ import {
   UNGROUPED_SECTION_KEY,
   buildTreatmentSections,
   filterTreatmentSections,
-  hasMoreTreatments,
   sectionHeading,
   treatmentFilterOptions,
   treatmentPreview,
@@ -50,21 +49,18 @@ test("the preview is the first three treatments in page order, across groups", (
   // Group order first (g1 then g2, then ungrouped), query order within each.
   assert.deepEqual(ids(treatmentsInOrder(built)), ["b", "d", "a", "c", "e"]);
   assert.deepEqual(ids(treatmentPreview(built)), ["b", "d", "a"]);
-  assert.equal(hasMoreTreatments(built), true);
   // Preview entries are plain treatments: no group heading travels with them.
   for (const item of treatmentPreview(built)) {
     assert.deepEqual(Object.keys(item).sort(), ["add_ons", "description", "duration_minutes", "id", "name", "price_pence"]);
   }
 });
 
-test("zero to three treatments show as they are, with no See all", () => {
-  for (const count of [0, 1, 2, 3]) {
+test("the preview never exceeds three, and no treatments means no sections", () => {
+  for (const count of [0, 1, 2, 3, 4, 10]) {
     const built = sections({ treatments: Array.from({ length: count }, (_, index) => treatment(`t${index}`)) });
-    assert.equal(treatmentPreview(built).length, count);
-    assert.equal(hasMoreTreatments(built), false, `${count} treatments`);
+    assert.equal(treatmentPreview(built).length, Math.min(count, 3), `${count} treatments`);
   }
   assert.deepEqual(sections({}), [], "no treatments, no sections");
-  assert.equal(hasMoreTreatments(sections({ treatments: ["a", "b", "c", "d"].map((id) => treatment(id)) })), true);
 });
 
 test("sections: active groups only, empty groups dropped, inactive-group treatments ungrouped", () => {
@@ -186,6 +182,24 @@ test("treatment rules stay pure; the filter UI reaches data only through props",
     "the filter is page state, not a query parameter");
   assert.match(filterUi, /aria-pressed=\{selected\}/, "pills expose their selected state");
   assert.match(filterUi, /role="group"[\s\S]*aria-label="Filter treatments by group"/);
+});
+
+test("the customer action reads Book, and card descriptions are clamped to two lines", () => {
+  const list = read("src/features/storefront/treatment-selection-list.jsx");
+  const storefront = read("src/features/storefront/storefront-page.jsx");
+  assert.match(list, /aria-label=\{`Book \$\{treatment\.name\}`\}/);
+  assert.match(list, /\n\s*Book\n/, "the card's action reads Book");
+  assert.match(list, /hasAddOns \? "Choose a time" : "Book"/, "the sheet's straight-to-booking action reads Book too");
+  assert.doesNotMatch(list, />\s*Select\s*</, "no Select left on a customer-facing control");
+  // The card clamps; the sheet keeps the whole description.
+  const card = list.slice(list.indexOf("function TreatmentRow"), list.indexOf("function TreatmentDetailsSheet"));
+  const sheet = list.slice(list.indexOf("function TreatmentDetailsSheet"));
+  assert.match(card, /line-clamp-2[^"]*text-sm text-black\/60">\s*\{treatment\.description\}/);
+  assert.match(storefront, /line-clamp-2[^"]*text-sm text-black\/60">\s*\{treatment\.description\}/, "the owner preview's cards clamp too");
+  assert.doesNotMatch(sheet, /line-clamp/, "the details sheet shows the whole description");
+  for (const source of [card, sheet, storefront]) {
+    assert.match(source, /\{treatment\.description \? \(/, "a treatment without a description renders nothing");
+  }
 });
 
 test("both pages book through the same selection list and link", () => {
