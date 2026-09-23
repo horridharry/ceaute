@@ -11,6 +11,7 @@ import {
   describeDisputeEvent,
   isDisputeEventType,
 } from '@/lib/payments/disputes';
+import { isForeignFailureEvent } from '@/lib/payments/foreign-payment-events';
 import { eventMatchesStripeMode, resolveStripeMode } from '@/lib/stripe/mode';
 import { getStripe } from '@/lib/stripe/server';
 
@@ -68,13 +69,13 @@ async function checkedRpc(
   return result.data;
 }
 
-async function claimEvent(event: Stripe.Event) {
+async function claimEvent(event: Stripe.Event, paymentAttemptId: string | null) {
   const rows = await checkedRpc(
     'claim_stripe_payment_event',
     {
       target_event_id: event.id,
       target_event_type: event.type,
-      target_payment_attempt_id: getAttemptIdFromEvent(event),
+      target_payment_attempt_id: paymentAttemptId,
       target_stripe_payment_intent_id: getPaymentIntentIdFromEvent(event),
     },
     'Could not claim Stripe payment event.',
@@ -88,10 +89,13 @@ async function claimEvent(event: Stripe.Event) {
   return claim;
 }
 
-async function completeEvent(eventId: string) {
+async function completeEvent(
+  eventId: string,
+  finalStatus: 'completed' | 'ignored' = 'completed',
+) {
   await checkedRpc(
     'complete_stripe_payment_event',
-    { target_event_id: eventId, target_final_status: 'completed' },
+    { target_event_id: eventId, target_final_status: finalStatus },
     'Could not complete Stripe payment event.',
   );
 }
@@ -263,7 +267,18 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const claim = await claimEvent(event);
+    // A failure event for an attempt another environment created (see
+    // foreign-payment-events.js) is recorded without its unknown attempt ID
+    // and acknowledged, instead of failing the foreign key on every retry.
+    const foreignAttempt = await isForeignFailureEvent({
+      supabase: createServiceRoleClient(),
+      eventType: event.type,
+      paymentAttemptId: getAttemptIdFromEvent(event),
+    });
+    const claim = await claimEvent(
+      event,
+      foreignAttempt ? null : getAttemptIdFromEvent(event),
+    );
 
     if (claim.action === 'complete') {
       return NextResponse.json({ received: true });
@@ -274,6 +289,11 @@ export async function POST(request: NextRequest) {
         { error: 'Event is already processing.' },
         { status: 409 },
       );
+    }
+
+    if (foreignAttempt) {
+      await completeEvent(event.id, 'ignored');
+      return NextResponse.json({ received: true, ignored: true });
     }
 
     await processEvent(event);

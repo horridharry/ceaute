@@ -372,7 +372,12 @@ amount that differs from the snapshot and a provider without the current
 agreement or with a balance owed; Stripe's configuration is checked before the
 claim so a missing key never holds a time. A paid event that arrives too late or duplicates
 another successful attempt creates a full refund entitlement rather than
-forcing a stale booking into confirmation.
+forcing a stale booking into confirmation. Every non-production environment
+shares the Stripe test account whose webhook points at Preview, so an expired
+session or failed PaymentIntent for a payment attempt another environment
+created is recorded as `ignored` and acknowledged
+(`src/lib/payments/foreign-payment-events.js`); a completed payment or refund
+for an unknown attempt is still an error.
 
 Cancellation first records the authorised booking transition and calculated
 refund entitlement in PostgreSQL. Stripe refund creation is then idempotent and
