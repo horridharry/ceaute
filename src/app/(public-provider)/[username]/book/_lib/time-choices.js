@@ -26,14 +26,12 @@ export function partOfDay(localTime) {
   return "Evening";
 }
 
-// "9:15 am", "12:00 pm", "5:30 pm".
+// 24-hour times with two-digit hours, the usual UK form (approved
+// 23 September 2026): "09:15", "12:00", "17:30".
 export function formatSlotTime(localTime) {
-  const [hourText, minute] = String(localTime).split(":");
-  const hour = Number(hourText);
-  const suffix = hour < 12 ? "am" : "pm";
-  const twelveHour = hour % 12 === 0 ? 12 : hour % 12;
+  const [hourText = "", minute = "00"] = String(localTime).split(":");
 
-  return `${twelveHour}:${minute} ${suffix}`;
+  return `${hourText.padStart(2, "0")}:${minute.slice(0, 2)}`;
 }
 
 export function groupSlotsByPartOfDay(slots) {
@@ -48,13 +46,10 @@ export function groupSlotsByPartOfDay(slots) {
 export function buildDayStrip(availableDates) {
   const firstUseful = availableDates.findIndex((date) => date.unavailable_reason !== "notice");
   const dates = firstUseful === -1 ? [] : availableDates.slice(firstUseful);
-  let previousMonth = "";
 
   return dates.map((date) => {
     const when = dateFromLocal(date.local_date);
     const month = monthName.format(when);
-    const startsMonth = month !== previousMonth;
-    previousMonth = month;
     const status = date.slots.length > 0 ? "available" : date.unavailable_reason ?? "full";
     const fullDate = `${longWeekday.format(when)} ${when.getUTCDate()} ${month}`;
     const statusLabel =
@@ -67,7 +62,6 @@ export function buildDayStrip(availableDates) {
       day: String(when.getUTCDate()),
       month,
       monthShort: shortMonth.format(when),
-      startsMonth,
       fullDate,
       label: `${fullDate}${statusLabel}`,
       status,
@@ -106,6 +100,26 @@ export function unavailableDayMessage(day, providerName) {
   }
 
   return `There are no times on ${day.fullDate}.`;
+}
+
+// The word under the date on a day card, so a closed day and a fully booked
+// day read differently without relying on style. Available days say nothing.
+export function dayStatusWord(day) {
+  if (day.status === "available") return "";
+  if (day.status === "closed") return "Closed";
+  if (day.status === "full") return "Full";
+  return "No times";
+}
+
+// The heading above the day cards: the month of the cards in view, or both
+// months when the strip spans two ("September – October").
+export function monthRangeLabel(days, firstIndex, lastIndex) {
+  const first = days[Math.max(0, firstIndex)];
+  const last = days[Math.min(days.length - 1, Math.max(firstIndex, lastIndex))];
+
+  if (!first) return "";
+  if (!last || last.month === first.month) return first.month;
+  return `${first.month} – ${last.month}`;
 }
 
 // "Tue 6 Oct" for the Next available button.

@@ -54,11 +54,6 @@ export default async function TreatmentBookingTimePage({ params, searchParams })
   const takingBookings = await getProviderAcceptsBookings(providerPage.id);
   const addOnIds = selectedAddOns.map((addOn) => addOn.id);
   const notice = firstSearchValue(resolvedSearchParams?.notice);
-  const summary = [
-    [treatment.name, ...selectedAddOns.map((addOn) => addOn.name)].join(" + "),
-    formatDurationMinutes(totalDurationMinutes),
-    formatPricePence(totalPricePence),
-  ].join(" · ");
 
   return (
     <PageContainer>
@@ -66,20 +61,30 @@ export default async function TreatmentBookingTimePage({ params, searchParams })
         back={{ href: `/@${providerPage.username}`, label: providerPage.display_name || `@${providerPage.username}` }}
         title="When suits you?"
       />
-      <p className="mt-2 text-sm text-ink-muted">
-        {summary}
-        {compatibleAddOns.length ? (
-          <>
-            {" "}
+      {/* The treatment summary card (approved 23 September 2026). */}
+      <section aria-label="Your treatment" className="mt-4 rounded-xl border border-line p-4 text-sm">
+        <div className="flex items-start justify-between gap-3">
+          <p className="min-w-0 text-base font-semibold [overflow-wrap:anywhere]">{treatment.name}</p>
+          {compatibleAddOns.length ? (
             <Link
               href={addOnsPath({ username: providerPage.username, treatmentId: treatment.id, addOnIds })}
-              className="font-semibold text-accent underline-offset-2 hover:underline"
+              className="inline-flex min-h-11 shrink-0 items-center -my-3 font-semibold text-accent underline-offset-2 hover:underline"
             >
               Change add-ons
             </Link>
-          </>
+          ) : null}
+        </div>
+        {selectedAddOns.length ? (
+          <p className="mt-0.5 text-ink-muted">
+            {selectedAddOns.map((addOn) => `+ ${addOn.name}`).join(", ")}
+          </p>
         ) : null}
-      </p>
+        <p className="mt-1 tabular-nums text-ink-muted">
+          <span className="font-semibold text-ink">{formatPricePence(totalPricePence)}</span>
+          {" · "}
+          {formatDurationMinutes(totalDurationMinutes)}
+        </p>
+      </section>
 
       {notice === "taken" ? (
         <Notice role="alert" className="mt-5">
