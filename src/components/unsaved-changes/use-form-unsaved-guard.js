@@ -30,20 +30,9 @@ export function useFormUnsavedGuard({ pending }) {
 
   useEffect(() => {
     const form = formRef.current;
-    if (!form) return undefined;
+    if (!form) return;
     initialRef.current = formSnapshot(new FormData(form));
-    // React resets uncontrolled fields after an action; re-measure once the
-    // reset has happened.
-    const onReset = () => setTimeout(measure, 0);
-    form.addEventListener("input", measure);
-    form.addEventListener("change", measure);
-    form.addEventListener("reset", onReset);
-    return () => {
-      form.removeEventListener("input", measure);
-      form.removeEventListener("change", measure);
-      form.removeEventListener("reset", onReset);
-    };
-  }, [measure]);
+  }, []);
 
   const { allowNextNavigation } = useUnsavedChanges(changed && !released);
 
@@ -63,5 +52,15 @@ export function useFormUnsavedGuard({ pending }) {
     setReleased(true);
   }, [allowNextNavigation]);
 
-  return { formProps: { ref: formRef, onSubmit }, changed };
+  // Measured from React's own change events (which bubble to the form), not
+  // native listeners: a native listener re-rendered the form before a
+  // controlled field's onChange ran, so the keystroke that first made the
+  // form "changed" was lost (found in browser acceptance, 23 September 2026).
+  // React resets uncontrolled fields after an action; re-measure once the
+  // reset has happened.
+  const onReset = useCallback(() => {
+    setTimeout(measure, 0);
+  }, [measure]);
+
+  return { formProps: { ref: formRef, onSubmit, onChange: measure, onReset }, changed };
 }

@@ -76,14 +76,14 @@ export function BookingCard({ booking, variant = "list" }) {
       <Link
         href={`/dashboard/bookings/${booking.booking_id}`}
         className={`grid items-start gap-3 rounded-xl border border-line bg-surface p-3.5 transition-colors hover:border-line-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus motion-reduce:transition-none ${
-          isList ? "grid-cols-[1fr_auto]" : "grid-cols-[4.5rem_1fr]"
+          isList ? "grid-cols-[1fr_auto]" : "grid-cols-[5.5rem_1fr]"
         } ${booking.status === "cancelled" ? "text-ink-muted" : ""}`}
       >
         {isList ? null : (
           <span className="flex flex-col">
-            <span className="font-semibold tabular-nums">{formatClockTime(booking.start_at)}</span>
+            <span className="whitespace-nowrap font-semibold tabular-nums">{formatClockTime(booking.start_at)}</span>
             {variant === "upcoming" ? (
-              <span className="text-[13px] text-ink-muted">{formatShortDate(booking.start_at)}</span>
+              <span className="whitespace-nowrap text-[13px] text-ink-muted">{formatShortDate(booking.start_at)}</span>
             ) : null}
           </span>
         )}
