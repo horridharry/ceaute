@@ -10,7 +10,7 @@ import {
   normalizePublicUsername,
   pluralCount,
   shouldShowReviewsSection,
-  treatmentMetaLine,
+  addOnCountLabel,
 } from "../src/features/storefront/format.js";
 
 test("hasPublicUsernamePrefix recognises a leading @, including URL-encoded", () => {
@@ -133,12 +133,11 @@ test("counts read naturally in singular and plural", () => {
   assert.equal(pluralCount(undefined, "review"), "0 reviews");
 });
 
-test("a treatment card's line is duration, price, and add-ons only when it has them", () => {
-  const treatment = { duration_minutes: 150, price_pence: 12000, add_ons: [] };
-  assert.equal(treatmentMetaLine(treatment), "2 hr 30 min \u00b7 \u00a3120.00");
-  assert.equal(
-    treatmentMetaLine({ ...treatment, add_ons: [{ id: "o1" }] }),
-    "2 hr 30 min \u00b7 \u00a3120.00 \u00b7 Add-ons available",
-  );
-  assert.doesNotMatch(treatmentMetaLine({ ...treatment, add_ons: undefined }), /Add-ons/);
+// Approved 23 September 2026: the card shows an add-on count pill instead of
+// duration, and nothing when there are none.
+test("a treatment card's pill counts its add-ons, and is absent without them", () => {
+  assert.equal(addOnCountLabel({ add_ons: [{ id: "o1" }] }), "1 add-on");
+  assert.equal(addOnCountLabel({ add_ons: [{ id: "o1" }, { id: "o2" }] }), "2 add-ons");
+  assert.equal(addOnCountLabel({ add_ons: [] }), "");
+  assert.equal(addOnCountLabel({}), "");
 });

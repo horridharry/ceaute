@@ -8,7 +8,8 @@ import { FormActions } from "@/components/ui/form-actions";
 import { FormError } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { PageContainer } from "@/components/ui/page-container";
-import { FocusedTaskHeader } from "../../_components/focused-task-header";
+import { useFormUnsavedGuard } from "@/components/unsaved-changes/use-form-unsaved-guard";
+import { SectionHeading } from "../../_components/section-heading";
 
 // Archive, restore and delete live in the add-on list's menu, so the form
 // only edits.
@@ -19,6 +20,7 @@ export function TreatmentAddOnForm({
   treatments,
 }) {
   const [stateMessage, formAction, pending] = useActionState(action, "");
+  const { formProps } = useFormUnsavedGuard({ pending });
   const [name, setName] = useState(addOn?.name ?? "");
   const [additionalPrice, setAdditionalPrice] = useState(
     addOn ? String(addOn.additional_price) : "0",
@@ -57,12 +59,13 @@ export function TreatmentAddOnForm({
 
   return (
     <PageContainer>
-      <FocusedTaskHeader
-        backHref="/dashboard/add-ons"
+      <SectionHeading
+        back={{ href: "/dashboard/add-ons", label: "Add-ons" }}
         title={isCreate ? "New add-on" : "Edit add-on"}
       />
 
       <form
+        {...formProps}
         id="treatment_add_on_form"
         action={formAction}
         className="mt-8 flex flex-col gap-5"
@@ -199,7 +202,7 @@ export function TreatmentAddOnForm({
         </fieldset>
 
         <FormError>{stateMessage}</FormError>
-        <FormActions>
+        <FormActions discardHref="/dashboard/add-ons">
           <Button
             type="submit"
             disabled={pending || hasClientError}

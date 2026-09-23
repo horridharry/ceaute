@@ -1,9 +1,9 @@
 import { unstable_rethrow } from "next/navigation";
 import { EmptyState } from "@/components/ui/empty-state";
-import { LinkFilterPills } from "@/components/ui/filter-pills";
+import { HistoryFilterViews } from "@/components/history-filter-views";
 import { providerBookingViewFromParam } from "@/lib/bookings/booking-display";
 import { DashboardPage } from "../_components/dashboard-page";
-import { BookingRow } from "../_components/booking-row";
+import { BookingCard } from "../_components/booking-card";
 import { formatShortDate } from "../_lib/booking-format";
 import { getAllBookings } from "./queries";
 
@@ -38,46 +38,62 @@ async function loadBookingGroups() {
   }
 }
 
+function BookingList({ bookings, empty }) {
+  if (bookings.length === 0) {
+    return <EmptyState className="mt-6">{empty}</EmptyState>;
+  }
+
+  return (
+    <div className="mt-2">
+      {bookingsByDay(bookings).map((day) => (
+        <section key={day.date} aria-label={day.date} className="mt-5">
+          <h2 className="text-[13px] font-semibold text-ink-muted">{day.date}</h2>
+          <ul className="mt-2 flex flex-col gap-2">
+            {day.entries.map((booking) => (
+              <BookingCard key={booking.booking_id} booking={booking} />
+            ))}
+          </ul>
+        </section>
+      ))}
+    </div>
+  );
+}
+
+// Every view is rendered once and switched on the device (approved
+// 23 September 2026): the counts need all three groups anyway, so a filter
+// tap costs no server round trip. The URL still carries ?view= for sharing,
+// reloads and Back.
 export default async function DashboardBookingsPage({ searchParams }) {
   const params = await searchParams;
   const requested = Array.isArray(params?.view) ? params.view[0] : params?.view;
   const view = VIEWS.find((candidate) => candidate.key === providerBookingViewFromParam(requested));
   const { bookingGroups, failed } = await loadBookingGroups();
-  const bookings = failed ? [] : bookingGroups[view.key];
 
   return (
     <DashboardPage title="Bookings">
-      <LinkFilterPills
-        label="Filter bookings"
-        value={view.key}
-        className="mt-6"
-        options={VIEWS.map((candidate) => ({
-          key: candidate.key,
-          label: candidate.label,
-          href: candidate.key === "upcoming" ? "/dashboard/bookings" : `/dashboard/bookings?view=${candidate.key}`,
-          count: failed ? undefined : bookingGroups[candidate.key].length,
-        }))}
-      />
-
       {failed ? (
         <p role="alert" className="mt-6 text-sm text-danger">
           Could not load bookings. Refresh to try again.
         </p>
-      ) : bookings.length === 0 ? (
-        <EmptyState className="mt-6">{view.empty}</EmptyState>
       ) : (
-        <div className="mt-2">
-          {bookingsByDay(bookings).map((day) => (
-            <section key={day.date} aria-label={day.date} className="mt-5">
-              <h2 className="text-[13px] font-semibold text-ink-muted">{day.date}</h2>
-              <ul className="mt-1">
-                {day.entries.map((booking) => (
-                  <BookingRow key={booking.booking_id} booking={booking} />
-                ))}
-              </ul>
-            </section>
-          ))}
-        </div>
+        <HistoryFilterViews
+          label="Filter bookings"
+          className="mt-6"
+          defaultKey="upcoming"
+          serverKey={view.key}
+          options={VIEWS.map((candidate) => ({
+            key: candidate.key,
+            label: candidate.label,
+            href: candidate.key === "upcoming" ? "/dashboard/bookings" : `/dashboard/bookings?view=${candidate.key}`,
+            count: bookingGroups[candidate.key].length,
+          }))}
+          panels={Object.fromEntries(
+            VIEWS.map((candidate) => [
+              candidate.key,
+              <BookingList key={candidate.key} bookings={bookingGroups[candidate.key]} empty={candidate.empty} />,
+            ]),
+          )}
+        />
       )}
     </DashboardPage>
   );

@@ -11,7 +11,7 @@ import {
   providerBookingView,
   providerBookingViewFromParam,
 } from "../src/lib/bookings/booking-display.js";
-import { BookingRow } from "../src/app/(dashboard)/dashboard/_components/booking-row.jsx";
+import { BookingCard } from "../src/app/(dashboard)/dashboard/_components/booking-card.jsx";
 import {
   formatClockTime,
   formatShortDate,
@@ -126,36 +126,61 @@ test("booking times are 12-hour London times", () => {
   assert.equal(treatmentLine({ treatment_name: "BIAB overlay", selected_add_ons: [{}] }), "BIAB overlay · 1 add-on");
 });
 
+// Far in the future so it stays an upcoming appointment whenever this runs.
 const displayBooking = {
   booking_id: "b1",
   status: "confirmed",
   cancelled_by: null,
-  start_at: "2026-09-22T09:00:00Z",
-  end_at: "2026-09-22T10:15:00Z",
+  start_at: "2030-09-24T09:00:00Z",
+  end_at: "2030-09-24T10:15:00Z",
   customer_name: "Priya Shah",
   treatment_name: "BIAB overlay",
   selected_add_ons: [{ id: "a1" }],
   inspiration_image_count: 2,
+  amount_paid_online_pence: 1200,
   amount_due_at_appointment_pence: 3800,
   amount_due_at_appointment_label: "£38.00",
+  total_price_pence: 5000,
 };
+const card = (booking, variant) => renderToStaticMarkup(h("ul", null, h(BookingCard, { booking, variant })));
 
-test("a booking row links to the appointment and shows what the provider needs", () => {
-  const list = renderToStaticMarkup(h("ul", null, h(BookingRow, { booking: displayBooking })));
-  assert.match(list, /href="\/dashboard\/bookings\/b1"/);
+test("a booking card links to the appointment and leads with time and customer", () => {
+  const list = card(displayBooking);
+  assert.match(list, /<li><a[^>]*href="\/dashboard\/bookings\/b1"/);
+  assert.match(list, /<li><a[^>]*class="[^"]*rounded-xl border border-line/);
   assert.match(list, /10:00 am – 11:15 am/);
   assert.match(list, /Priya Shah/);
   assert.match(list, /BIAB overlay · 1 add-on/);
   assert.match(list, /2 inspiration photos/);
   assert.match(list, /To collect<span[^>]*>£38\.00/);
 
-  const cancelled = renderToStaticMarkup(h("ul", null, h(BookingRow, { booking: { ...displayBooking, status: "cancelled", cancelled_by: "provider" } })));
-  assert.match(cancelled, />By you</);
-  assert.doesNotMatch(cancelled, /To collect/);
-
-  const today = renderToStaticMarkup(h("ul", null, h(BookingRow, { booking: displayBooking, variant: "today" })));
+  const today = card(displayBooking, "today");
   assert.match(today, /10:00 am/);
-  assert.doesNotMatch(today, /To collect/);
+  assert.doesNotMatch(today, /To collect|Paid in full/, "Today's cards carry no money");
+});
+
+// Approved 23 September 2026: money on cards only where accurate, and the
+// real refund state on cancelled cards.
+test("a booking paid online in full says so; a completed one says nothing about money", () => {
+  const paidInFull = { ...displayBooking, amount_paid_online_pence: 5000, amount_due_at_appointment_pence: 0 };
+  assert.match(card(paidInFull), />Paid in full</);
+  const ended = { ...paidInFull, start_at: "2020-09-24T09:00:00Z", end_at: "2020-09-24T10:15:00Z" };
+  assert.doesNotMatch(card(ended), /Paid in full|To collect/);
+});
+
+test("a cancelled card shows who cancelled and the refund's actual state", () => {
+  const cancelled = { ...displayBooking, status: "cancelled", cancelled_by: "provider", amount_paid_online_pence: 1200, refund_amount_pence: 1200 };
+  assert.match(card({ ...cancelled, payment_status: "refunded" }), />By you<[\s\S]*>Refunded £12\.00</);
+  assert.match(card({ ...cancelled, payment_status: "refund_required" }), />Refund pending</);
+  assert.match(card({ ...cancelled, payment_status: "refund_failed" }), />Refund failed</);
+  for (const payment_status of ["refund_required", "refund_failed", "succeeded"]) {
+    assert.doesNotMatch(card({ ...cancelled, payment_status }), /Refunded/);
+  }
+  assert.match(
+    card({ ...cancelled, cancelled_by: "customer", refund_amount_pence: 0, payment_status: "succeeded" }),
+    />By customer<[\s\S]*>No refund</,
+  );
+  assert.doesNotMatch(card({ ...cancelled, payment_status: "refunded" }), /To collect/);
 });
 
 test("every publication requirement opens the section where it is met", () => {

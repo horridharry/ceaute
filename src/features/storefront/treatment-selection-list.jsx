@@ -2,10 +2,11 @@
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { buttonClassName } from "@/components/ui/button-classes";
 import {
+  addOnCountLabel,
   formatDurationMinutes,
   formatPricePence,
-  treatmentMetaLine,
 } from "@/features/storefront/format";
 import {
   buildTreatmentTimeHref,
@@ -13,53 +14,72 @@ import {
 } from "./treatment-selection";
 
 // The approved customer interaction (docs/product.md "Booking and
-// availability"): tapping a treatment always opens its details bottom
-// sheet; tapping Book goes straight to availability when the treatment
-// has no add-ons, or opens the same sheet when it does, so a description
-// alone never forces an extra step. The sheet itself only ever navigates to
-// the existing `/book/[treatmentId]/time?add_on=...` URL, which is what the
-// add-ons page (`book/[treatmentId]/page.jsx`) and the time page's "Change
-// add-ons" link already produce and revalidate server-side, so nothing
-// downstream of that link needs to know a sheet exists.
+// availability"; revised 23 September 2026): tapping a treatment, or its
+// Book button, always opens its details bottom sheet, so the customer reads
+// the full description, duration, price and add-ons before choosing a time.
+// The sheet itself only ever navigates to the existing
+// `/book/[treatmentId]/time?add_on=...` URL, which is what the add-ons page
+// (`book/[treatmentId]/page.jsx`) and the time page's "Change add-ons" link
+// already produce and revalidate server-side, so nothing downstream of that
+// link needs to know a sheet exists.
 //
-// The card reads: name with Book beside it, then the description clamped to
-// two lines, then duration, price and whether add-ons can be chosen. The
-// name's button sits inside the heading (a heading inside a button loses its
-// heading role) and its ::after stretches over the whole card, so tapping
-// anywhere on the card still opens the details. Book is raised above that
-// layer, named after the treatment because every card has one, and stays a
-// full 44px tall next to a name that wraps.
-function TreatmentRow({ treatment, onOpenDetails, onSelect, bookable }) {
+// The card reads: the name, the description on one line, then the price and
+// an add-on count, with Book at the end of that row so it sits in the same
+// place on every card. The name's button sits inside the heading (a heading
+// inside a button loses its heading role) and its ::after stretches over the
+// whole card, so tapping anywhere on the card still opens the details. Book
+// is raised above that layer and named after the treatment because every
+// card has one.
+export function TreatmentCardFacts({ treatment, action = null }) {
+  const addOns = addOnCountLabel(treatment);
+
   return (
-    <article className="relative rounded-xl border border-black/10 p-4">
-      <div className="flex items-start justify-between gap-3">
-        <h3 className="min-w-0 font-medium">
-          <button
-            type="button"
-            onClick={() => onOpenDetails(treatment)}
-            className="text-left [overflow-wrap:anywhere] after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-pink-600"
-          >
-            {treatment.name}
-          </button>
-        </h3>
-        {bookable ? (
-          <button
-            type="button"
-            onClick={() => onSelect(treatment)}
-            aria-label={`Book ${treatment.name}`}
-            className="relative -my-1 inline-flex min-h-11 shrink-0 items-center rounded-lg bg-pink-700 px-4 text-sm font-semibold text-white duration-200 hover:bg-pink-800"
-          >
-            Book
-          </button>
+    <div className="mt-3 flex items-center justify-between gap-3">
+      <p className="flex min-w-0 flex-wrap items-center gap-2 text-sm">
+        <span className="font-semibold tabular-nums">{formatPricePence(treatment.price_pence)}</span>
+        {addOns ? (
+          <span className="rounded-full border border-line-strong px-2 py-0.5 text-xs text-ink-muted">{addOns}</span>
         ) : null}
-      </div>
-      {/* Two lines on the card; the details sheet has the whole text. */}
+      </p>
+      {action}
+    </div>
+  );
+}
+
+function TreatmentRow({ treatment, onOpenDetails, bookable }) {
+  return (
+    <article className="relative rounded-xl border border-line-strong p-4">
+      <h3 className="min-w-0 font-medium">
+        <button
+          type="button"
+          onClick={() => onOpenDetails(treatment)}
+          className="text-left [overflow-wrap:anywhere] after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-pink-600"
+        >
+          {treatment.name}
+        </button>
+      </h3>
+      {/* One line on the card; the details sheet has the whole text. */}
       {treatment.description ? (
-        <p className="mt-2 line-clamp-2 text-sm text-black/60">
+        <p className="mt-1 truncate text-sm text-black/60">
           {treatment.description}
         </p>
       ) : null}
-      <p className="mt-2 text-sm text-black/60">{treatmentMetaLine(treatment)}</p>
+      <TreatmentCardFacts
+        treatment={treatment}
+        action={
+          bookable ? (
+            <button
+              type="button"
+              onClick={() => onOpenDetails(treatment)}
+              aria-label={`Book ${treatment.name}`}
+              aria-haspopup="dialog"
+              className={buttonClassName({ variant: "ink", className: "relative shrink-0" })}
+            >
+              Book
+            </button>
+          ) : null
+        }
+      />
     </article>
   );
 }
@@ -177,9 +197,9 @@ function TreatmentDetailsSheet({
             type="button"
             onClick={onContinue}
             disabled={isNavigating}
-            className="mt-6 w-full rounded-lg bg-pink-700 p-3 text-sm font-semibold text-white duration-200 hover:bg-pink-800 disabled:cursor-not-allowed disabled:opacity-60"
+            className={buttonClassName({ variant: "ink", className: "mt-6 w-full" })}
           >
-            {isNavigating ? "Continuing..." : hasAddOns ? "Choose a time" : "Book"}
+            {isNavigating ? "Continuing..." : "Choose a time"}
           </button>
         ) : (
           <p className="mt-6 text-sm text-ink-muted">Not taking online bookings right now.</p>
@@ -234,15 +254,6 @@ export function TreatmentSelectionList({ sections, username, bookable = true }) 
     setOpenTreatmentId(treatment.id);
   }
 
-  function handleSelect(treatment) {
-    if (treatment.add_ons.length === 0) {
-      goToTime(treatment, []);
-      return;
-    }
-
-    setOpenTreatmentId(treatment.id);
-  }
-
   function handleToggleAddOn(addOnId) {
     setSelectionsByTreatmentId((current) => {
       const currentIds = current[openTreatmentId] ?? [];
@@ -271,7 +282,6 @@ export function TreatmentSelectionList({ sections, username, bookable = true }) 
                 key={treatment.id}
                 treatment={treatment}
                 onOpenDetails={handleOpenDetails}
-                onSelect={handleSelect}
                 bookable={bookable}
               />
             ))}

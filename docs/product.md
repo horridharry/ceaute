@@ -66,11 +66,13 @@ its unlabelled dividers are scanning aids, not groups, and URL nesting
 View your page opens the live `/@username` page once published, otherwise
 `/dashboard/profile/preview`, which is marked as not live, links to
 Publication, and redirects to the live page after publishing. `/dashboard/settings` redirects to `/dashboard`.
-The personal control is the person rather than the business: Account, My
-bookings (bookings they made as a customer) and Discover inside the workspace;
-Your business, Discover, My bookings and Account outside it; Discover, My
-bookings, Account and Start your business page for someone without a page. Its
-initial comes from the profile name. Signed out, the header's Log in returns to
+The personal control is the person rather than the business. For every
+signed-in account it lists, in constant positions, Account, My bookings
+(bookings they made as a customer) and Discover, then one business slot (Your
+business, or Start your business page for someone without a page), then Log
+out; the row for the area you are in is marked (approved 23 September 2026).
+Provider pages show a quiet "Business" label beside the logo; the header is
+otherwise the same. Its initial comes from the profile name. Signed out, the header's Log in returns to
 the page it was pressed on. Customers' bookings are "My bookings"; the
 provider's are "Bookings". `/dashboard/treatment-groups`
 is the canonical group route. `/dashboard/onboarding` is the intentional exception to the normal
@@ -78,6 +80,18 @@ guard which redirects dashboard users without a provider page into onboarding.
 
 The provider's Bookings section shows appointments only, under Upcoming,
 Completed (finished, whether or not the completion job has run) and Cancelled.
+Each appointment is a card (on Home too, without money): time and customer
+first, then the treatment and inspiration photo count. A card states money only
+where the booking's figures prove it: "To collect £X", or "Paid in full" when
+the online payment is the whole price; a cancelled card shows who cancelled and
+the refund's actual state (Refunded £X only once refunded, otherwise Refund
+pending, Refund failed or No refund). The filter pills switch views instantly
+on the device; each choice is a browser history entry, so `?view=` links,
+reloads, Back and Forward work. My bookings works the same way in customer
+wording. Booking details, for both sides, open with the appointment (when,
+what, where and the one amount that matters now) and its actions; the full
+breakdown of prices, payment, amount to collect and refund state follows in
+Payment. There is no Get directions action.
 Unpaid holds, expired holds and holds whose late payment was refunded are left
 out of every list and count, and their detail URLs are Not found, decided on the
 server; the records are kept. Availability's count of payments in progress is
@@ -123,11 +137,11 @@ review, before paying. The exact appointment address is not public.
 The Treatments preview shows the first three active treatments in page order,
 across groups and without group headings, followed by a full-width "See all N
 treatments" button counting every active treatment; with none, the section is
-left out. A treatment card reads: its name with Book beside it, then the
-description clamped to two lines, then duration, price and "Add-ons
-available" when it has any. The details sheet shows the whole description.
-The customer-facing action reads "Book" on the card and in the sheet, or
-"Choose a time" in the sheet once add-ons are on offer.
+left out. A treatment card (revised 23 September 2026) reads: its name, the
+description on one line, then the price and an add-on count ("2 add-ons") with
+a filled black Book at the end of that row on every card. Book, like tapping
+the card, opens the details sheet for every treatment: the whole description,
+duration, price and any add-ons, then "Choose a time".
 
 Reviews show the three newest publicly visible reviews in bordered cards,
 followed by a full-width "See all N reviews" button counting every visible
@@ -170,7 +184,8 @@ there is none. Link previews use the hero's first image, served at
 
 `/@[username]/photos` is the gallery: every visible portfolio photo in
 portfolio order in a Bento grid, and a full-screen viewer (swipe,
-Previous/Next, arrow keys, Escape) opened at a photo with `?photo=<id>`.
+Previous/Next, arrow keys, Escape) opened at a photo with `?photo=<id>`, which
+changes through browser history without a server round trip.
 Unpublished and unknown providers have no gallery (a real 404). The owner's
 unpublished preview has no gallery links. On the provider's Portfolio page,
 each photo opens the same viewer; managing photos stays there. Every photo
@@ -205,10 +220,13 @@ add-on keeps its links to archived treatments and cannot create new ones.
 Discovery at `/discover` lists every published provider with a current
 location and an active treatment, alphabetically, 24 at a time ("Show more"
 adds 24 through `?shown=`, without JavaScript), and filters them by public-area
-text and/or an active Ceaute discovery category. Each card (variant B, chosen
-23 September 2026) is one link: up to three portfolio photos, then the display
-photo, business name, public area and the storefront's rating (average of
-visible reviews to one decimal with the count, or "New"). It is a simple
+text and/or an active Ceaute discovery category. Each card (revised
+23 September 2026) shows up to three portfolio photos as one large swipeable
+photo (4:5, provisional) with dots, then the display photo, business name,
+public area and the storefront's rating (average of visible reviews to one
+decimal with the count, or the plain word "New"). The business name is the
+card's link; each photo also opens the storefront on a tap, never on a swipe,
+and the previous and next buttons are separate controls. It is a simple
 category and area search, not distance search, ranking, recommendations, or a
 standalone treatment catalogue. There is no landing page: `/` redirects (temporarily) to
 `/discover`, and the header logo leads to Discover everywhere except the
@@ -257,9 +275,14 @@ staleness is an accepted MVP trade-off, not a bug to design around.
 The public journey starts on the provider page. Selecting a treatment goes
 directly into its booking flow; there is no separate public `/services`
 catalogue or detail route. Compatible add-ons can be selected, then the customer
-chooses a time on "When suits you?": a strip of days (abbreviated weekday and
-date; closed and fully booked days look and read differently) and the chosen
-day's times grouped Morning, Afternoon and Evening. Review and pay is readable
+chooses a time on "When suits you?" (revised 23 September 2026): a treatment
+summary card, the month as a heading, a strip of day cards (abbreviated weekday
+and date; closed and fully booked days look different and say "Closed" or
+"Full"), the chosen day ("Friday 25"), and its times in two columns, 24-hour,
+grouped Morning, Afternoon and Evening. The days and times are the
+calculator's, which mirrors the hold rules: 24 hours' notice, a fixed 60-day
+window (the unused `booking_window_days` column never drives it) and the
+15-minute start grid. Review and pay is readable
 before signing in: the summary, what is paid now and at the appointment (from
 PostgreSQL's quote), the cancellation deadline and what a late cancellation
 keeps, the written policy, and the customer's saved contact details as one line

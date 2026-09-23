@@ -68,20 +68,13 @@ Provide an action to see all Treatments.
 
 Selecting the Treatment itself opens its details.
 
-The Book action should minimise unnecessary booking steps.
-
-### Treatment without Add-ons
-
-Book
-→ Choose time
-
-### Treatment with Add-ons
+Decided 23 September 2026 by the product owner: Book opens the full Treatment
+details sheet for every Treatment, so the customer reads the full description,
+duration, price and Add-ons before choosing a time.
 
 Book
-→ Treatment/Add-on selection
+→ Treatment details (with Add-on selection where available)
 → Choose time
-
-Do not force every customer through Treatment details when there is no booking decision to make there.
 
 ## Reviews
 

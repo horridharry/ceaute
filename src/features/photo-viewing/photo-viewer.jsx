@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import {
+  isSnappedTo,
   shouldLoadViewerPhoto,
   stepPhotoIndex,
   viewerKeyAction,
@@ -167,6 +168,11 @@ export function PhotoViewer({
                 settleTimer.current = setTimeout(() => {
                   if (track.clientWidth === 0) return;
                   const settled = Math.round(track.scrollLeft / track.clientWidth);
+                  // Only a track that has come to rest on a photo counts. A
+                  // smooth scroll that pauses part-way (a background tab)
+                  // must not pull the viewer back to the photo it was
+                  // leaving.
+                  if (!isSnappedTo(track.scrollLeft, settled, track.clientWidth)) return;
                   if (settled !== lastIndexRef.current) onIndexChange(settled);
                 }, 120);
               }}

@@ -2,11 +2,12 @@ import Link from "next/link";
 import { buttonClassName } from "@/components/ui/button-classes";
 import { Card, CardLink } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { LinkFilterPills } from "@/components/ui/filter-pills";
+import { HistoryFilterViews } from "@/components/history-filter-views";
 import { PageContainer } from "@/components/ui/page-container";
 import { PageHeading } from "@/components/ui/page-heading";
 import { PendingButton } from "@/components/ui/pending-button";
 import { customerBookingViewFromParam } from "@/lib/bookings/booking-display";
+import { cancellationRefund, upcomingMoney } from "@/lib/bookings/booking-card-money";
 import { formatPounds } from "@/lib/bookings/booking-money";
 import { formatShortDateTime, formatTimeLabel } from "@/features/storefront/format";
 import { continueHoldPayment } from "./actions";
@@ -45,10 +46,14 @@ function refundState(booking, refundPence) {
   }
 }
 
+// One money fact per card (approved 23 September 2026), only where the
+// booking's own figures prove it; see booking-card-money.js.
 function statusLine(booking, view) {
   if (view === "upcoming") {
+    const money = upcomingMoney(booking);
+    if (money?.kind === "paid_in_full") return "Paid in full";
     const paid = Number(booking.amount_paid_online_pence) || 0;
-    const later = Number(booking.amount_due_at_appointment_pence) || 0;
+    const later = money?.kind === "collect" ? money.pence : 0;
     return [paid > 0 ? `Paid ${formatPounds(paid)}` : "", later > 0 ? `${formatPounds(later)} at the appointment` : ""]
       .filter(Boolean)
       .join(" · ");
@@ -65,9 +70,11 @@ function statusLine(booking, view) {
     return paid?.payment_status === "refunded" ? "Payment refunded" : `Late payment · ${refundState(booking, refund)}`;
   }
 
-  const refund = Number(booking.refund_amount_pence) || 0;
   const by = booking.cancelled_by === "provider" ? `Cancelled by ${booking.provider_name}` : "Cancelled by you";
-  return refund > 0 ? `${by} · ${refundState(booking, refund)}` : by;
+  const refund = cancellationRefund(booking);
+  if (!refund) return by;
+  if (refund.kind === "none") return `${by} · No refund`;
+  return `${by} · ${refund.kind === "refunded" ? `${formatPounds(refund.pence)} refunded` : refund.kind === "failed" ? `refund of ${formatPounds(refund.pence)} failed` : `${formatPounds(refund.pence)} refund pending`}`;
 }
 
 function HoldCard({ booking }) {
@@ -106,7 +113,6 @@ export default async function CustomerBookingsPage({ searchParams }) {
   const view = VIEWS.find((candidate) => candidate.key === customerBookingViewFromParam(requested));
   const groups = await getCustomerBookings();
   const hasAny = groups.hold.length + groups.upcoming.length + groups.past.length + groups.cancelled.length > 0;
-  const bookings = groups[view.key];
 
   return (
     <PageContainer>
@@ -133,31 +139,36 @@ export default async function CustomerBookingsPage({ searchParams }) {
             </section>
           ) : null}
 
-          <LinkFilterPills
+          <HistoryFilterViews
             label="Filter bookings"
-            value={view.key}
             className="mt-6"
+            defaultKey="upcoming"
+            serverKey={view.key}
             options={VIEWS.map((candidate) => ({
               key: candidate.key,
               label: candidate.label,
               href: candidate.key === "upcoming" ? "/account/bookings" : `/account/bookings?view=${candidate.key}`,
               count: groups[candidate.key].length,
             }))}
+            panels={Object.fromEntries(
+              VIEWS.map((candidate) => [
+                candidate.key,
+                groups[candidate.key].length === 0 ? (
+                  <EmptyState key={candidate.key} className="mt-6" action={candidate.key === "upcoming" ? discoverLink : null}>
+                    {candidate.empty}
+                  </EmptyState>
+                ) : (
+                  <ul key={candidate.key} className="mt-4 flex flex-col gap-3">
+                    {groups[candidate.key].map((booking) => (
+                      <li key={booking.booking_id}>
+                        <BookingCard booking={booking} view={candidate.key} />
+                      </li>
+                    ))}
+                  </ul>
+                ),
+              ]),
+            )}
           />
-
-          {bookings.length === 0 ? (
-            <EmptyState className="mt-6" action={view.key === "upcoming" ? discoverLink : null}>
-              {view.empty}
-            </EmptyState>
-          ) : (
-            <ul className="mt-4 flex flex-col gap-3">
-              {bookings.map((booking) => (
-                <li key={booking.booking_id}>
-                  <BookingCard booking={booking} view={view.key} />
-                </li>
-              ))}
-            </ul>
-          )}
         </>
       )}
     </PageContainer>

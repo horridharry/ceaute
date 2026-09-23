@@ -70,6 +70,7 @@ to the caller. For a link that looks like a button, use
 | --- | --- |
 | `primary` | The main action of a form or screen (pink-700 fill) |
 | `primary-strong` | A standalone page action: error pages, sign-in (pink-800 fill) |
+| `ink` | The storefront's Book and Choose a time: filled black, so provider photos carry the colour |
 | `secondary` | A second action beside a primary one (outlined, pink text) |
 | `outline` | A neutral full-width "See all" style action (outlined, dark text) |
 | `destructive` | Archive, remove, cancel-this-thing |
@@ -160,6 +161,16 @@ Added by the provider dashboard redesign; tested in
   filtered list already shows.
 - `FormActions` ends every create and edit form: one right-aligned primary
   submit (the Booking settings pattern) and an optional neutral `FormStatus`.
+  `discardHref` adds Discard (an outline link back to the list) before the
+  submit. Pair it with `useFormUnsavedGuard({ pending })`
+  (`components/unsaved-changes`), whose `formProps` go on the `<form>`: the
+  guard asks "Discard changes?" only when the form's values differ from what
+  it loaded, and it steps aside on submit.
+- `HistoryFilterViews` (`components/history-filter-views.jsx`) is filter pills
+  over views already rendered on the page: switching is instant, and each
+  choice is a `pushState` history entry so the URL, Back and Forward work.
+  Bookings and My bookings use it; other URL filters still use
+  `LinkFilterPills`.
 - `Disclosure` is a styled `<details>` for secondary content: archived
   treatments, the cancellation policy, and payment fees.
 - Button `destructive-strong` is the filled confirm of an irreversible action.

@@ -1,3 +1,7 @@
+// The create and edit screens of treatments, treatment groups, add-ons and
+// locations. Since 23 September 2026 they keep the app header (with a back
+// link, a heading and Discard beside the save action); the list is still
+// used to keep the setup guide off them.
 export const focusedTaskRoutePatterns = [
   /^\/dashboard\/treatments\/(?:new|[^/]+\/edit)$/,
   /^\/dashboard\/treatment-groups\/(?:new|[^/]+\/edit)$/,

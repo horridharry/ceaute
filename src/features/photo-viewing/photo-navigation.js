@@ -58,10 +58,17 @@ export function isTap({ startX, startY, endX, endY, scrollDelta = 0 }) {
   );
 }
 
-// Which photos the viewer gives a real src: the one in view and its
-// neighbours. The rest wait, so opening the viewer never downloads every
-// full-size image at once.
-export const VIEWER_PRELOAD_RADIUS = 1;
+// Which photos the viewer gives a real src: the one in view and two either
+// side (raised from one on 23 September 2026, so a quick second swipe finds
+// its photo already loaded). The rest wait, so opening the viewer never
+// downloads every full-size image at once.
+export const VIEWER_PRELOAD_RADIUS = 2;
+
+// True when a scroll position rests on a photo (within 2px), rather than
+// part-way between two.
+export function isSnappedTo(scrollLeft, index, width) {
+  return Number.isFinite(scrollLeft) && width > 0 && Math.abs(scrollLeft - index * width) <= 2;
+}
 
 export function shouldLoadViewerPhoto(index, current, radius = VIEWER_PRELOAD_RADIUS) {
   return Math.abs(index - current) <= radius;

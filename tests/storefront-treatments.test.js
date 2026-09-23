@@ -188,29 +188,40 @@ test("treatment rules stay pure; the filter UI reaches data only through props",
   assert.match(pills, /role="group" aria-label=\{label\}/);
 });
 
-test("the card reads: name with Book beside it, then a clamped description, then its line", () => {
+// Approved 23 September 2026: a stronger border, the name, a one-line
+// description, then the price and an add-on count with a filled black Book at
+// the end of that row; Book opens the full details sheet like the card does.
+test("the card reads: name, one-line description, then price, add-ons and Book", () => {
   const list = read("src/features/storefront/treatment-selection-list.jsx");
   const storefront = read("src/features/storefront/storefront-page.jsx");
   const card = list.slice(list.indexOf("function TreatmentRow"), list.indexOf("function TreatmentDetailsSheet"));
+  const facts = list.slice(list.indexOf("export function TreatmentCardFacts"), list.indexOf("function TreatmentRow"));
   const sheet = list.slice(list.indexOf("function TreatmentDetailsSheet"));
   const ownerCard = storefront.slice(storefront.indexOf("function TreatmentCard"), storefront.indexOf("const SECONDARY_BUTTON"));
 
-  // Top row: the heading and Book, in that order, with Book unable to shrink.
-  assert.match(card, /<div className="flex items-start justify-between gap-3">\s*<h3[\s\S]*?<\/h3>\s*\{bookable \? \(\s*<button[\s\S]*?aria-label=\{`Book \$\{treatment\.name\}`\}/);
-  assert.match(card, /shrink-0/, "Book keeps its width beside a long name");
-  assert.match(card, /min-h-11/, "Book stays comfortably tappable");
-  assert.match(card, /\[overflow-wrap:anywhere\]/, "a long name wraps instead of overlapping Book");
+  assert.match(card, /border border-line-strong/);
+  assert.match(card, /<h3 className="min-w-0 font-medium">/, "the name is medium weight");
+  assert.match(facts, /<span className="font-semibold tabular-nums">\{formatPricePence\(treatment\.price_pence\)\}<\/span>/, "the price is semibold");
+  assert.match(facts, /\{addOns \? \(/, "the pill only when there are add-ons");
+  assert.match(card, /\[overflow-wrap:anywhere\]/, "a long name wraps");
+  assert.match(card, /aria-label=\{`Book \$\{treatment\.name\}`\}/);
+  assert.match(card, /variant: "ink"/, "Book is filled black");
   assert.match(card, /\n\s*Book\n/);
   assert.doesNotMatch(list, />\s*Select\s*</, "no Select left on a customer-facing control");
-  assert.match(list, /hasAddOns \? "Choose a time" : "Book"/, "the sheet's straight-to-booking action reads Book too");
 
-  // Description clamped on both cards, whole in the sheet, absent when empty.
+  // Book opens the details sheet for every treatment.
+  assert.equal((card.match(/onClick=\{\(\) => onOpenDetails\(treatment\)\}/g) ?? []).length, 2);
+  assert.doesNotMatch(list, /handleSelect|onSelect/);
+  assert.match(sheet, /\{isNavigating \? "Continuing\.\.\." : "Choose a time"\}/);
+  assert.match(sheet, /formatDurationMinutes\(treatment\.duration_minutes\)/, "the sheet still shows duration");
+
+  // Description on one line on both cards, whole in the sheet, absent when empty.
   for (const source of [card, ownerCard]) {
-    assert.match(source, /line-clamp-2[^"]*text-sm text-black\/60">\s*\{treatment\.description\}/);
+    assert.match(source, /truncate text-sm text-black\/60">\s*\{treatment\.description\}/);
     assert.match(source, /\{treatment\.description \? \(/, "a treatment without a description renders nothing");
-    assert.match(source, /\{treatmentMetaLine\(treatment\)\}/, "duration, price and add-ons come from one rule");
   }
-  assert.doesNotMatch(sheet, /line-clamp/, "the details sheet shows the whole description");
+  assert.match(ownerCard, /<TreatmentCardFacts treatment=\{treatment\} \/>/);
+  assert.doesNotMatch(sheet, /line-clamp|truncate/, "the details sheet shows the whole description");
   assert.doesNotMatch(ownerCard, /aria-label=\{`Book/, "the owner preview cannot book");
 });
 

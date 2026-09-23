@@ -16,6 +16,12 @@ const SIGNED_URL_REFRESH_AFTER_MS = 50 * 60 * 1000;
 // entry, so Back closes the viewer; moving between photos replaces it, so Back
 // does not step through every photo. A direct link opens the viewer at that
 // photo, and an unknown id is dropped from the URL.
+//
+// The URL changes through the browser's own history (pushState and
+// replaceState, which Next keeps in sync with useSearchParams), not through
+// the router: a router navigation re-rendered the page on the server for
+// every swipe and re-signed every photo URL, so each swipe waited on the
+// server and downloaded every photo again (measured 23 September 2026).
 export function PhotoGallery({ photos, label }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -56,20 +62,20 @@ export function PhotoGallery({ photos, label }) {
 
   useEffect(() => {
     if (requestedId && index === null) {
-      router.replace(hrefWithPhoto(null), { scroll: false });
+      window.history.replaceState(null, "", hrefWithPhoto(null));
     }
-  }, [requestedId, index, hrefWithPhoto, router]);
+  }, [requestedId, index, hrefWithPhoto]);
 
   const showPhoto = useCallback(
     (nextIndex, mode) => {
       const href = hrefWithPhoto(photos[nextIndex].id);
       if (mode === "push") {
-        router.push(href, { scroll: false });
+        window.history.pushState(null, "", href);
       } else {
-        router.replace(href, { scroll: false });
+        window.history.replaceState(null, "", href);
       }
     },
-    [hrefWithPhoto, photos, router],
+    [hrefWithPhoto, photos],
   );
 
   function close() {
@@ -79,9 +85,9 @@ export function PhotoGallery({ photos, label }) {
     closing.current = true;
     if (openedHere.current) {
       openedHere.current = false;
-      router.back();
+      window.history.back();
     } else {
-      router.replace(hrefWithPhoto(null), { scroll: false });
+      window.history.replaceState(null, "", hrefWithPhoto(null));
     }
   }
 

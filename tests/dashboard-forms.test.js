@@ -4,7 +4,7 @@ import test from "node:test";
 import { createElement as h } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
-import { FocusedTaskHeader } from "../src/app/(dashboard)/dashboard/_components/focused-task-header.jsx";
+import { UnsavedChangesContext } from "../src/components/unsaved-changes/unsaved-changes-provider.jsx";
 import { TreatmentAddOnForm } from "../src/app/(dashboard)/dashboard/add-ons/_components/treatment-add-on-form.jsx";
 import { LocationFormUI } from "../src/app/(dashboard)/dashboard/locations/_components/location-form-ui.jsx";
 import { TreatmentGroupForm } from "../src/app/(dashboard)/dashboard/treatment-groups/_components/treatment-group-form.jsx";
@@ -12,7 +12,11 @@ import { TreatmentForm } from "../src/app/(dashboard)/dashboard/treatments/_comp
 
 // Every create and edit form follows Booking settings: one submit, at the end
 // of the form, and no submit in the header.
-const render = (element) => renderToStaticMarkup(element);
+// The forms register an unsaved-changes guard, so they render inside the
+// provider's context (a stand-in: nothing navigates during a static render).
+const guardContext = { register() {}, unregister() {}, navigate() {}, isConfirming: false };
+const render = (element) =>
+  renderToStaticMarkup(h(UnsavedChangesContext.Provider, { value: guardContext }, element));
 const count = (html, pattern) => (html.match(pattern) ?? []).length;
 const noop = async () => "";
 
@@ -32,7 +36,7 @@ const forms = {
   "new treatment": h(TreatmentForm, { action: noop, mode: "create", discoveryCategories: [{ id: "c1", name: "Nails" }], treatmentGroups: [] }),
   "edit treatment": h(TreatmentForm, { action: noop, archiveAction: noop, restoreAction: noop, mode: "edit", treatment, discoveryCategories: [{ id: "c1", name: "Nails" }], treatmentGroups: [{ id: "g1", name: "Manicures" }, { id: "g6", name: "Bridal" }] }),
   "new group": h(TreatmentGroupForm, { action: noop }),
-  "rename group": h(TreatmentGroupForm, { action: noop, group: { id: "g1", name: "Manicures" } }),
+  "edit group": h(TreatmentGroupForm, { action: noop, group: { id: "g1", name: "Manicures" } }),
   "new add-on": h(TreatmentAddOnForm, { action: noop, mode: "create", treatments: [] }),
   "new location": h(LocationFormUI, { action: noop }),
   "edit location": h(LocationFormUI, { action: noop, location: { id: "l1", public_area: "Peckham, London", city: "London", postcode: "SE15 4RF" } }),
@@ -45,16 +49,38 @@ for (const [name, element] of Object.entries(forms)) {
     assert.equal(count(html, /<h1/g), 1);
     const mainForm = html.slice(html.indexOf("<form"), html.indexOf("</form>") + 7);
     assert.equal(count(mainForm, /type="submit"/g), 1);
-    assert.match(mainForm, /justify-end[^>]*>(<p[^>]*>[^<]*<\/p>)?<button[^>]*type="submit"/);
+    assert.match(mainForm, /justify-end[^>]*>(<p[^>]*>[^<]*<\/p>)?<a[^>]*>Discard<\/a><button[^>]*type="submit"/);
     assert.doesNotMatch(html.slice(0, html.indexOf("<form")), /type="submit"/, "no submit in the header");
   });
 }
 
-test("the focused-task header is Cancel and the title only", () => {
-  const html = render(h(FocusedTaskHeader, { backHref: "/dashboard/add-ons", title: "Edit add-on" }));
-  assert.match(html, /href="\/dashboard\/add-ons"[^>]*>Cancel/);
-  assert.match(html, /<h1[^>]*>Edit add-on<\/h1>/);
-  assert.doesNotMatch(html, /<button/);
+// Approved 23 September 2026: create and edit forms keep the app header and
+// show a back link, a clear heading, and Discard before the save action.
+const headings = {
+  "new treatment": ["/dashboard/treatments", "Treatments", "New treatment"],
+  "edit treatment": ["/dashboard/treatments", "Treatments", "Edit treatment"],
+  "new group": ["/dashboard/treatment-groups", "Treatment groups", "New treatment group"],
+  "edit group": ["/dashboard/treatment-groups", "Treatment groups", "Edit treatment group"],
+  "new add-on": ["/dashboard/add-ons", "Add-ons", "New add-on"],
+  "new location": ["/dashboard/locations", "Locations", "New location"],
+  "edit location": ["/dashboard/locations", "Locations", "Edit location"],
+};
+
+for (const [name, [listHref, listLabel, title]] of Object.entries(headings)) {
+  test(`${name}: back link to ${listLabel}, heading "${title}", Discard returns to the list`, () => {
+    const html = render(forms[name]);
+    assert.match(html, new RegExp(`<a[^>]*href="${listHref}"[^>]*>.*Back to </span>${listLabel}</a>`));
+    assert.match(html, new RegExp(`<h1[^>]*>${title}</h1>`));
+    assert.match(html, new RegExp(`<a[^>]*href="${listHref}"[^>]*>Discard</a>`));
+    assert.doesNotMatch(html, />Cancel</);
+  });
+}
+
+test("edit forms keep Save as the primary action; create forms keep their Add label", () => {
+  assert.match(render(forms["edit treatment"]), />Discard<\/a><button[^>]*type="submit"[^>]*>Save</);
+  assert.match(render(forms["edit group"]), />Discard<\/a><button[^>]*type="submit"[^>]*>Save</);
+  assert.match(render(forms["new treatment"]), />Discard<\/a><button[^>]*type="submit"[^>]*>Add treatment</);
+  assert.match(render(forms["new location"]), />Discard<\/a><button[^>]*type="submit"[^>]*>Add location</);
 });
 
 test("a treatment in an archived group shows that group, marked, and selected", () => {
