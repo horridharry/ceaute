@@ -150,6 +150,23 @@ test("a network failure while sending is recorded as retryable rather than lost"
   assert.equal(supabase.calls[1].parameters.target_error, "socket hang up");
 });
 
+// The database claim is the only gate: cancelled rows are never returned by
+// claim_pending_booking_emails (supabase/tests/database/booking_email_cancelled_state.test.sql),
+// so delivery must never reach Resend or the outbox beyond what was claimed.
+test("an empty claim, such as an outbox holding only cancelled emails, sends and records nothing", async () => {
+  const supabase = fakeSupabase([]);
+  const { requests, fetchImpl } = fakeFetch(() => okResponse({ id: "m" }));
+
+  const result = await deliverPendingBookingEmails({ supabase, fetchImpl, environment });
+
+  assert.deepEqual(result, { claimed: 0, sent: 0, failed: 0, skipped: 0, configured: true });
+  assert.equal(requests.length, 0);
+  assert.deepEqual(
+    supabase.calls.map((call) => call.functionName),
+    ["claim_pending_booking_emails"],
+  );
+});
+
 test("nothing is claimed when email delivery is not configured", async () => {
   const supabase = fakeSupabase([outboxEmail()]);
   const { requests, fetchImpl } = fakeFetch(() => okResponse({}));
