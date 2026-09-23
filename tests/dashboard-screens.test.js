@@ -24,11 +24,14 @@ test("locations: every card is white and the primary one carries a compact badge
   assert.doesNotMatch(html, /(?<!hover:)bg-pink-50|border-pink-200|Working here now/);
   assert.equal(count(html, /<li class="[^"]*border-line bg-surface/g), 2);
   assert.equal(count(html, />Primary<\/span>/g), 1);
-  assert.match(html, /Used for new bookings/);
+  // Shortened 23 September 2026: no "Used for new bookings", no footer line,
+  // and Primary is a plain badge without the attention dot.
+  assert.doesNotMatch(html, /Used for new bookings|Confirmed bookings keep their original address/);
+  assert.doesNotMatch(html, /rounded-full bg-action/);
   assert.match(html, /aria-label="Actions for Peckham, London"/);
   assert.match(html, /aria-label="Actions for Mile End, London"/);
   assert.equal(count(html, /<main/g), 1);
-  assert.match(html, /Customers see the area\. The full address is shared after they book\./);
+  assert.match(html, /Customers see the area until they book\./);
 });
 
 test("locations: the empty state says what to do", () => {
@@ -143,7 +146,8 @@ test("payments keeps every fee and refund fact, just collapsed", () => {
 
 test("availability only gains the shared page frame", () => {
   const form = read("src/app/(dashboard)/dashboard/availability/availability-form.jsx");
-  assert.match(form, /<DashboardPage title="Availability">/);
+  assert.match(form, /title="Availability"/);
+  assert.match(form, /description="Customers can book within these hours, except on dates you block\."/);
   assert.match(form, /<WeeklyScheduleForm/);
   assert.match(form, /<BlockedDatesForm/);
 });

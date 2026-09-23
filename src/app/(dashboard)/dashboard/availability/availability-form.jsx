@@ -13,7 +13,10 @@ export function AvailabilityForm({
   removeBlockedDate,
 }) {
   return (
-    <DashboardPage title="Availability">
+    <DashboardPage
+      title="Availability"
+      description="Customers can book within these hours, except on dates you block."
+    >
       <div className="flex flex-col">
         {schedule.length === 0 ? (
           // Driven by the saved week (no working days saved), not the draft.

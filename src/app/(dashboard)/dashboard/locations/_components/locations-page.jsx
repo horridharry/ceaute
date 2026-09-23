@@ -52,7 +52,7 @@ export function LocationsPage({ locations, makePrimaryAction, deleteAction }) {
   return (
     <DashboardPage
       title="Locations"
-      description="Customers see the area. The full address is shared after they book."
+      description="Customers see the area until they book."
       newHref="/dashboard/locations/new"
     >
       <p
@@ -75,11 +75,8 @@ export function LocationsPage({ locations, makePrimaryAction, deleteAction }) {
               key={location.id}
               href={`/dashboard/locations/${location.id}/edit`}
               name={nameOf(location)}
-              badge={location.is_primary ? <Badge tone="attention">Primary</Badge> : null}
-              meta={[
-                describeAddress(location) || "No address yet",
-                location.is_primary ? "Used for new bookings" : "",
-              ]}
+              badge={location.is_primary ? <Badge tone="neutral">Primary</Badge> : null}
+              meta={[describeAddress(location) || "No address yet"]}
               menu={
                 <ActionMenu
                   label={`Actions for ${nameOf(location)}`}
@@ -120,7 +117,6 @@ export function LocationsPage({ locations, makePrimaryAction, deleteAction }) {
           Add another location before replacing this one.
         </p>
       ) : null}
-      <p className="mt-4 text-sm text-ink-muted">Confirmed bookings keep their original address.</p>
 
       <ConfirmDialog
         open={Boolean(deleting)}
