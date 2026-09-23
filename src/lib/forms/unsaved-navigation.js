@@ -75,7 +75,7 @@ export function shouldGuardLinkClick(click, currentUrl) {
 // so Next's patched pushState passes it straight through without dispatching
 // anything). Pressing Back leaves the sentinel and lands on the original
 // entry, at the same URL, so nothing visible changes; the popstate listener
-// then asks. Keep editing pushes the sentinel again; Discard changes goes back
+// then asks. Keep editing pushes the sentinel again; Discard goes back
 // once more, to where the provider was heading.
 //
 // Ordering with Next: Next's App Router listens for popstate on window

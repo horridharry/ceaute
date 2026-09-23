@@ -6,13 +6,15 @@ import { Field } from "@/components/ui/field";
 import { FormActions } from "@/components/ui/form-actions";
 import { Input } from "@/components/ui/input";
 import { PageContainer } from "@/components/ui/page-container";
-import { FocusedTaskHeader } from "../../_components/focused-task-header";
+import { useFormUnsavedGuard } from "@/components/unsaved-changes/use-form-unsaved-guard";
+import { SectionHeading } from "../../_components/section-heading";
 
 // The name is the form's only field, so a refusal from the server (a name
 // already in use, a blank name) is shown as that field's error. The value is
 // controlled so it survives React resetting the form after the action.
 export function TreatmentGroupForm({ action, group = null }) {
   const [message, formAction, pending] = useActionState(action, "");
+  const { formProps } = useFormUnsavedGuard({ pending });
   const [name, setName] = useState(group?.name ?? "");
   const inputRef = useRef(null);
   const editing = Boolean(group);
@@ -23,11 +25,11 @@ export function TreatmentGroupForm({ action, group = null }) {
 
   return (
     <PageContainer>
-      <FocusedTaskHeader
-        backHref="/dashboard/treatment-groups"
-        title={editing ? "Rename group" : "New group"}
+      <SectionHeading
+        back={{ href: "/dashboard/treatment-groups", label: "Treatment groups" }}
+        title={editing ? "Edit treatment group" : "New treatment group"}
       />
-      <form id="treatment_group_form" action={formAction} className="mt-8 flex flex-col gap-5">
+      <form {...formProps} id="treatment_group_form" action={formAction} className="mt-8 flex flex-col gap-5">
         {editing ? <input type="hidden" name="groupId" value={group.id} /> : null}
         <Field
           label="Group name"
@@ -47,7 +49,7 @@ export function TreatmentGroupForm({ action, group = null }) {
             />
           )}
         </Field>
-        <FormActions>
+        <FormActions discardHref="/dashboard/treatment-groups">
           <Button type="submit" disabled={pending} aria-busy={pending || undefined}>
             {pending ? (editing ? "Saving…" : "Adding…") : editing ? "Save" : "Add group"}
           </Button>

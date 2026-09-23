@@ -9,7 +9,8 @@ import { Input } from "@/components/ui/input";
 import { PageContainer } from "@/components/ui/page-container";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { FocusedTaskHeader } from "../../_components/focused-task-header";
+import { useFormUnsavedGuard } from "@/components/unsaved-changes/use-form-unsaved-guard";
+import { SectionHeading } from "../../_components/section-heading";
 
 // Archive and Restore for a treatment stay on its edit screen, unchanged in
 // behaviour; they sit in their own section after the form.
@@ -63,6 +64,7 @@ export function TreatmentForm({
   treatment,
 }) {
   const [stateMessage, formAction, pending] = useActionState(action, "");
+  const { formProps } = useFormUnsavedGuard({ pending });
   const [name, setName] = useState(treatment?.name ?? "");
   const [description, setDescription] = useState(treatment?.description ?? "");
   const [price, setPrice] = useState(treatment?.price ? String(treatment.price) : "");
@@ -93,12 +95,12 @@ export function TreatmentForm({
 
   return (
     <PageContainer>
-      <FocusedTaskHeader
-        backHref="/dashboard/treatments"
+      <SectionHeading
+        back={{ href: "/dashboard/treatments", label: "Treatments" }}
         title={isCreate ? "New treatment" : "Edit treatment"}
       />
 
-      <form id="treatment_form" className="mt-8 flex flex-col gap-5" action={formAction}>
+      <form {...formProps} id="treatment_form" className="mt-8 flex flex-col gap-5" action={formAction}>
         {treatment ? (
           <input type="hidden" name="treatmentId" value={treatment.treatmentId} />
         ) : null}
@@ -219,7 +221,7 @@ export function TreatmentForm({
         </Field>
 
         <FormError>{stateMessage}</FormError>
-        <FormActions>
+        <FormActions discardHref="/dashboard/treatments">
           <Button type="submit" disabled={pending || hasClientError} aria-busy={pending || undefined}>
             {pending ? (isCreate ? "Adding…" : "Saving…") : isCreate ? "Add treatment" : "Save"}
           </Button>

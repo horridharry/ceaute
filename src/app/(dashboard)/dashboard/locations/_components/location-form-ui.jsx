@@ -8,7 +8,8 @@ import { FormError } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
 import { PageContainer } from "@/components/ui/page-container";
 import { Textarea } from "@/components/ui/textarea";
-import { FocusedTaskHeader } from "../../_components/focused-task-header";
+import { useFormUnsavedGuard } from "@/components/unsaved-changes/use-form-unsaved-guard";
+import { SectionHeading } from "../../_components/section-heading";
 
 const validateLength = (value, maxLength, label) =>
   value.length > maxLength ? `${label} must be ${maxLength} characters or fewer.` : "";
@@ -33,6 +34,7 @@ function LocationInput({ id, label, maxLength, optional = false, location, error
 
 export function LocationFormUI({ action, location = null }) {
   const [stateMessage, formAction, pending] = useActionState(action, "");
+  const { formProps } = useFormUnsavedGuard({ pending });
   const [errors, setErrors] = useState({});
   const editing = Boolean(location);
   const onCheck = (field, error) => setErrors((current) => ({ ...current, [field]: error }));
@@ -41,8 +43,8 @@ export function LocationFormUI({ action, location = null }) {
 
   return (
     <PageContainer>
-      <FocusedTaskHeader
-        backHref="/dashboard/locations"
+      <SectionHeading
+        back={{ href: "/dashboard/locations", label: "Locations" }}
         title={editing ? "Edit location" : "New location"}
       />
       <p className="mt-5 text-sm text-ink-muted">
@@ -50,7 +52,7 @@ export function LocationFormUI({ action, location = null }) {
         until a booking is confirmed.
       </p>
 
-      <form id="save_location" className="mt-6 flex flex-col gap-5" action={formAction}>
+      <form {...formProps} id="save_location" className="mt-6 flex flex-col gap-5" action={formAction}>
         {editing ? <input type="hidden" name="location_id" value={location.id} /> : null}
         <LocationInput id="public_area" label="Public area" maxLength={120} placeholder="Shoreditch, London" {...shared} />
         <LocationInput id="address_line_1" label="Address line 1" maxLength={160} {...shared} />
@@ -72,7 +74,7 @@ export function LocationFormUI({ action, location = null }) {
         </Field>
 
         <FormError>{stateMessage}</FormError>
-        <FormActions>
+        <FormActions discardHref="/dashboard/locations">
           <Button type="submit" disabled={pending || hasClientError} aria-busy={pending || undefined}>
             {pending ? (editing ? "Saving…" : "Adding…") : editing ? "Save" : "Add location"}
           </Button>

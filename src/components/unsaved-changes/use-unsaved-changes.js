@@ -37,7 +37,7 @@ export function useUnsavedChanges(isDirty) {
 }
 
 // navigate(href): client-side navigation that runs the same check as a link.
-// With unsaved changes it shows the dialog, and Discard changes continues to
+// With unsaved changes it shows the dialog, and Discard continues to
 // `href`; otherwise it navigates straight away.
 export function useUnsavedChangesNavigation() {
   const { navigate } = useUnsavedChangesContext("useUnsavedChangesNavigation");

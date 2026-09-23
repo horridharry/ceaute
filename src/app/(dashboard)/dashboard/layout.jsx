@@ -5,7 +5,6 @@ import {
   getOwnedProviderPage,
   getRequestSession,
 } from "@/lib/auth/request-session";
-import { FocusedTaskHeaderGate } from "./_components/focused-task-header-gate";
 import { SetupGuide } from "./_components/setup-guide";
 import { getSetupState } from "./_lib/publication-checks";
 
@@ -43,9 +42,7 @@ export default async function DashboardLayout({ children }) {
 
   return (
     <UnsavedChangesProvider>
-      <FocusedTaskHeaderGate>
-        <AppHeader />
-      </FocusedTaskHeaderGate>
+      <AppHeader />
       {children}
       <SetupGuide setup={setup} />
     </UnsavedChangesProvider>

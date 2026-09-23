@@ -164,10 +164,10 @@ function UnsavedChangesDialog({ open, onKeepEditing, onDiscard }) {
       className="m-auto w-[calc(100%-2.5rem)] max-w-[400px] rounded-2xl bg-white p-5 text-black shadow-xl backdrop:bg-black/40"
     >
       <h2 id={titleId} className="text-lg font-semibold tracking-tight">
-        Discard unsaved changes?
+        Discard changes?
       </h2>
       <p id={bodyId} className="mt-2 text-sm text-black/60">
-        You&apos;ve made changes on this page that haven&apos;t been saved.
+        What you&apos;ve entered on this page will be lost.
       </p>
       <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-end">
         <Button
@@ -185,7 +185,7 @@ function UnsavedChangesDialog({ open, onKeepEditing, onDiscard }) {
           className="min-h-11"
           onClick={onDiscard}
         >
-          Discard changes
+          Discard
         </Button>
       </div>
     </dialog>
