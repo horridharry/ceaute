@@ -9,6 +9,7 @@ import { PageContainer } from "@/components/ui/page-container";
 import { PageHeading } from "@/components/ui/page-heading";
 import { PendingButton } from "@/components/ui/pending-button";
 import { Select } from "@/components/ui/select";
+import { DiscoverPhotoHero } from "./_components/discover-photo-hero";
 import {
   DISCOVER_PAGE_SIZE,
   discoverProviders,
@@ -57,15 +58,11 @@ function SearchForm({ categories, search }) {
   );
 }
 
-// Average and count of visible reviews, or "New" before the first one: the
-// storefront's convention. Never invented.
+// Average and count of visible reviews, or the plain word "New" before the
+// first one (approved 23 September 2026). Never invented.
 function Rating({ rating }) {
   if (!rating) {
-    return (
-      <span className="inline-flex items-center rounded-full border border-line px-2.5 py-0.5 text-xs font-semibold text-ink-muted">
-        New
-      </span>
-    );
+    return <span className="text-sm font-medium text-ink-muted">New</span>;
   }
 
   return (
@@ -81,46 +78,19 @@ function Rating({ rating }) {
   );
 }
 
-const BENTO_LAYOUT = {
-  1: "grid-cols-1",
-  2: "grid-cols-2",
-  3: "grid-cols-[2fr_1fr] grid-rows-2",
-};
-
-// Discover card B (chosen 23 September 2026): up to three portfolio photos,
-// then the display photo, business name, public area and rating. The whole
-// card is one link; the photos are decoration for it.
+// A Discover card (approved 23 September 2026): a swipeable photo hero, then
+// the display photo, business name, public area and rating. The name is the
+// card's link and comes first for keyboards and screen readers; the photos
+// sit above it visually (order-first) and carry their own pointer links and
+// buttons, none nested inside another link.
 function ProviderCard({ provider }) {
-  const photos = provider.photo_urls;
+  const href = `/@${provider.username}`;
 
   return (
-    <Link
-      href={`/@${provider.username}`}
-      className="group flex flex-col gap-2 rounded-xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-focus"
-    >
-      {photos.length ? (
-        <span
-          aria-hidden="true"
-          className={`grid aspect-[4/3] max-w-full gap-[3px] overflow-hidden rounded-xl bg-surface-subtle ${BENTO_LAYOUT[photos.length]}`}
-        >
-          {photos.map((url, index) => (
-            // eslint-disable-next-line @next/next/no-img-element -- Supabase signed URLs are short-lived and not suitable for a static next/image host allowlist.
-            <img
-              key={url}
-              src={url}
-              alt=""
-              loading="lazy"
-              decoding="async"
-              className={`h-full w-full min-h-0 object-cover ${photos.length === 3 && index === 0 ? "row-span-2" : ""}`}
-            />
-          ))}
-        </span>
-      ) : (
-        <span aria-hidden="true" className="block aspect-[4/3] max-w-full rounded-xl bg-surface-subtle" />
-      )}
-      <span className="flex items-center gap-2.5">
+    <article className="flex flex-col gap-2">
+      <div className="flex items-center gap-2.5">
         {provider.display_photo_url ? (
-          // eslint-disable-next-line @next/next/no-img-element -- as above.
+          // eslint-disable-next-line @next/next/no-img-element -- Supabase signed URLs are short-lived and not suitable for a static next/image host allowlist.
           <img
             src={provider.display_photo_url}
             alt=""
@@ -129,15 +99,25 @@ function ProviderCard({ provider }) {
             className="h-9 w-9 shrink-0 rounded-full object-cover"
           />
         ) : null}
-        <span className="flex min-w-0 flex-1 flex-col">
-          <span className="font-semibold [overflow-wrap:anywhere] group-hover:underline">{provider.display_name}</span>
-          {provider.public_area ? <span className="text-sm text-ink-muted">{provider.public_area}</span> : null}
-        </span>
+        <div className="flex min-w-0 flex-1 flex-col">
+          <h2 className="text-base font-semibold [overflow-wrap:anywhere]">
+            <Link
+              href={href}
+              className="rounded-sm hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+            >
+              {provider.display_name}
+            </Link>
+          </h2>
+          {provider.public_area ? <p className="text-sm text-ink-muted">{provider.public_area}</p> : null}
+        </div>
         <span className="shrink-0">
           <Rating rating={provider.rating} />
         </span>
-      </span>
-    </Link>
+      </div>
+      <div className="order-first">
+        <DiscoverPhotoHero photos={provider.photo_urls} href={href} name={provider.display_name} />
+      </div>
+    </article>
   );
 }
 
