@@ -396,6 +396,10 @@ call `ceaute.invoke_cron_endpoint`, which queues an authenticated GET to
 Vault as `ceaute_cron_secret`. The secret is created per project in the Supabase
 Dashboard and never appears in a migration; without it the job logs a notice and
 sends nothing, so local resets and database tests need no production secret.
+A non-production project sets `ceaute_cron_base_url` to its Preview origin and,
+because Preview is behind Vercel Deployment Protection, stores a Protection
+Bypass for Automation secret as `ceaute_cron_protection_bypass`; when present it
+is sent as `x-vercel-protection-bypass` alongside the unchanged bearer token.
 Booking completion runs hourly; email delivery and refund recovery run every
 10 minutes. Refund recovery asks
 `list_retryable_booking_refund_operations` for operations whose synchronous

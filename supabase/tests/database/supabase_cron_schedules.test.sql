@@ -4,7 +4,7 @@ create extension if not exists pgtap with schema extensions;
 
 set local search_path = public, extensions, ceaute;
 
-select plan(14);
+select plan(21);
 
 select has_extension('pg_cron', 'pg_cron is installed for Supabase Cron');
 select has_extension('pg_net', 'pg_net is installed for outbound HTTP requests');
@@ -66,7 +66,7 @@ select is(
 -- The rest of this test controls Vault contents inside the transaction so it
 -- never depends on, or leaks, a real secret. Everything is rolled back.
 delete from vault.secrets
-where name in ('ceaute_cron_secret', 'ceaute_cron_base_url');
+where name in ('ceaute_cron_secret', 'ceaute_cron_base_url', 'ceaute_cron_protection_bypass');
 
 select is(
   ceaute.invoke_cron_endpoint('/api/cron/complete-bookings'),
@@ -108,6 +108,80 @@ select is(
   'The request carries the Vault secret as a bearer token'
 );
 
+select is(
+  (
+    select array_agg(header_name order by header_name)
+    from net.http_request_queue, jsonb_object_keys(headers) as header_name
+    where id = (select id from cron_request_id)
+  ),
+  array['Authorization'],
+  'Without a bypass secret the request sends no Vercel protection bypass header'
+);
+
+-- Vercel Deployment Protection: the bypass secret is optional and additive.
+select vault.create_secret('test-bypass-secret', 'ceaute_cron_protection_bypass');
+
+create temp table bypass_request_id as
+select ceaute.invoke_cron_endpoint('/api/cron/complete-bookings') as id;
+
+select is(
+  (
+    select url
+    from net.http_request_queue
+    where id = (select id from bypass_request_id)
+  ),
+  'http://127.0.0.1:9/api/cron/complete-bookings',
+  'With a bypass secret the endpoint URL is built exactly as before'
+);
+
+select is(
+  (
+    select headers ->> 'Authorization'
+    from net.http_request_queue
+    where id = (select id from bypass_request_id)
+  ),
+  'Bearer test-cron-secret',
+  'With a bypass secret the bearer token is unchanged'
+);
+
+select is(
+  (
+    select headers ->> 'x-vercel-protection-bypass'
+    from net.http_request_queue
+    where id = (select id from bypass_request_id)
+  ),
+  'test-bypass-secret',
+  'With a bypass secret the request carries it as x-vercel-protection-bypass'
+);
+
+select is(
+  (
+    select array_agg(header_name order by header_name)
+    from net.http_request_queue, jsonb_object_keys(headers) as header_name
+    where id = (select id from bypass_request_id)
+  ),
+  array['Authorization', 'x-vercel-protection-bypass'],
+  'With a bypass secret the request carries exactly the two expected headers'
+);
+
+select vault.update_secret(
+  (select id from vault.secrets where name = 'ceaute_cron_protection_bypass'),
+  '   '
+);
+
+create temp table blank_bypass_request_id as
+select ceaute.invoke_cron_endpoint('/api/cron/recover-booking-refunds') as id;
+
+select is(
+  (
+    select array_agg(header_name order by header_name)
+    from net.http_request_queue, jsonb_object_keys(headers) as header_name
+    where id = (select id from blank_bypass_request_id)
+  ),
+  array['Authorization'],
+  'A blank bypass secret is treated as absent'
+);
+
 select throws_matching(
   $$select ceaute.invoke_cron_endpoint('/../not-a-cron-endpoint')$$,
   'Unknown cron endpoint path',
@@ -121,6 +195,12 @@ select throws_matching(
   'Application roles cannot trigger cron endpoints'
 );
 reset role;
+
+select ok(
+  not has_function_privilege('service_role', 'ceaute.invoke_cron_endpoint(text)', 'execute')
+    and not has_function_privilege('anon', 'ceaute.invoke_cron_endpoint(text)', 'execute'),
+  'Only the database owner can run the cron invoker'
+);
 
 select * from finish();
 
