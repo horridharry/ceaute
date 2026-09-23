@@ -319,6 +319,9 @@ export function bookingToDisplayBooking(booking, paymentAttempt = null) {
     duration_label: formatDurationMinutes(service.duration_minutes),
     duration_minutes: service.duration_minutes ?? null,
     total_price_label: formatMoneyFromPence(service.total_price_pence),
+    total_price_pence: Number.isInteger(Number(service.total_price_pence))
+      ? Number(service.total_price_pence)
+      : null,
     // paymentAttempt is the attempt that took the money; without one nothing
     // was paid online.
     amount_paid_online_label: formatMoneyFromPence(

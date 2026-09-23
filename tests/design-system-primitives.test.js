@@ -26,6 +26,7 @@ import { PageSkeleton, Skeleton, SkeletonGroup } from "../src/components/ui/skel
 import { FormField } from "../src/app/(dashboard)/dashboard/_components/form-field.jsx";
 import { SectionHeading } from "../src/app/(dashboard)/dashboard/_components/section-heading.jsx";
 import { TreatmentAddOnForm } from "../src/app/(dashboard)/dashboard/add-ons/_components/treatment-add-on-form.jsx";
+import { UnsavedChangesContext } from "../src/components/unsaved-changes/unsaved-changes-provider.jsx";
 import NotFoundContent from "../src/components/not-found-content.tsx";
 import RouteError from "../src/components/route-error.tsx";
 
@@ -36,6 +37,11 @@ import RouteError from "../src/components/route-error.tsx";
 const REPO_ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const read = (relativePath) => readFileSync(path.join(REPO_ROOT, relativePath), "utf8");
 const render = (element) => renderToStaticMarkup(element);
+// Create and edit forms register an unsaved-changes guard; a stand-in context
+// lets them render statically.
+const guardContext = { register() {}, unregister() {}, navigate() {}, isConfirming: false };
+const renderForm = (element) =>
+  renderToStaticMarkup(h(UnsavedChangesContext.Provider, { value: guardContext }, element));
 const count = (html, pattern) => (html.match(pattern) ?? []).length;
 const classOf = (html, tag) => html.match(new RegExp(`<${tag}[^>]*class="([^"]*)"`))?.[1] ?? "";
 
@@ -300,7 +306,7 @@ test("skeletons announce loading once, hide their blocks, and only pulse without
 // --- representative screens -----------------------------------------------------
 
 test("the add-on form proves the form contract without saving anything", () => {
-  const html = render(
+  const html = renderForm(
     h(TreatmentAddOnForm, {
       action: async () => "",
       mode: "create",
@@ -328,7 +334,7 @@ test("the add-on form proves the form contract without saving anything", () => {
 });
 
 test("an add-on's links to archived treatments are shown kept, not offered", () => {
-  const html = render(
+  const html = renderForm(
     h(TreatmentAddOnForm, {
       action: async () => "",
       archiveAction: async () => "",
@@ -351,7 +357,7 @@ test("an add-on's links to archived treatments are shown kept, not offered", () 
 });
 
 test("the add-on form only edits; archive, restore and delete live in the list", () => {
-  const html = render(
+  const html = renderForm(
     h(TreatmentAddOnForm, {
       action: async () => "",
       mode: "edit",

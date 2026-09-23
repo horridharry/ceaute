@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Notice } from "@/components/ui/notice";
 import { legalIdentity } from "@/lib/legal/identity";
-import { BookingRow } from "../_components/booking-row";
+import { BookingCard } from "../_components/booking-card";
 import { DashboardPage } from "../_components/dashboard-page";
 import { getTodayOverview } from "./queries";
 
@@ -137,9 +137,9 @@ export default async function DashboardTodayPage() {
               Today
             </h2>
             {today.length ? (
-              <ul className="mt-2">
+              <ul className="mt-3 flex flex-col gap-2">
                 {today.map((booking) => (
-                  <BookingRow key={booking.booking_id} booking={booking} variant="today" />
+                  <BookingCard key={booking.booking_id} booking={booking} variant="today" />
                 ))}
               </ul>
             ) : (
@@ -152,9 +152,9 @@ export default async function DashboardTodayPage() {
               Upcoming
             </h2>
             {upcoming.length ? (
-              <ul className="mt-2">
+              <ul className="mt-3 flex flex-col gap-2">
                 {upcoming.map((booking) => (
-                  <BookingRow key={booking.booking_id} booking={booking} variant="upcoming" />
+                  <BookingCard key={booking.booking_id} booking={booking} variant="upcoming" />
                 ))}
               </ul>
             ) : (
