@@ -14,6 +14,7 @@ import {
   snapshotPriceLines,
   termsFromSnapshot,
 } from "@/lib/bookings/booking-money";
+import { cancellationRefund, upcomingMoney } from "@/lib/bookings/booking-card-money";
 import { heldBookingPath } from "@/lib/bookings/held-booking-path";
 import { legalIdentity } from "@/lib/legal/identity";
 import { formatAppointmentWhen, formatDurationMinutes } from "@/features/storefront/format";
@@ -45,8 +46,8 @@ function Section({ title, id, children }) {
 function Rows({ rows }) {
   return (
     <dl className="flex flex-col">
-      {rows.map(([label, value, strong]) => (
-        <div key={label} className="flex justify-between gap-4 border-b border-line py-2.5 tabular-nums last:border-b-0">
+      {rows.map(([label, value, strong], index) => (
+        <div key={`${label}-${index}`} className="flex justify-between gap-4 border-b border-line py-2.5 tabular-nums last:border-b-0">
           <dt className={strong ? "font-semibold" : "text-ink-muted"}>{label}</dt>
           <dd className={strong ? "font-semibold" : ""}>{value}</dd>
         </div>
@@ -71,15 +72,16 @@ function refundSentence(paymentStatus, refundPence) {
   }
 }
 
-function WhenAndWhere({ booking }) {
+function WhenAndWhere({ booking, treatment = "" }) {
   const addressLines = canShowExactAddress(booking)
     ? [booking.address_line_1, booking.address_line_2, [booking.city, booking.postcode].filter(Boolean).join(" ")].filter(Boolean)
     : [];
 
   return (
-    <section aria-label="When and where" className="mt-6 flex flex-col gap-1 text-sm">
+    <section aria-label="When and where" className={`${treatment ? "" : "mt-6 "}flex flex-col gap-1 text-sm`}>
       <p className="text-base font-semibold">{formatAppointmentWhen(booking.start_at, booking.end_at)}</p>
       <p className="text-ink-muted">{formatDurationMinutes(booking.duration_minutes)}</p>
+      {treatment ? <p className="mt-2 font-medium">{treatment}</p> : null}
       {addressLines.length ? (
         <p className="mt-2 whitespace-pre-line">{addressLines.join("\n")}</p>
       ) : (
@@ -172,6 +174,57 @@ function RefundedLatePayment({ booking }) {
   );
 }
 
+// The one amount that matters now (approved 23 September 2026), lifted into
+// the summary; Payment below keeps the whole breakdown.
+function LiveAmount({ booking, terms }) {
+  if (booking.view === "cancelled") {
+    const refund = cancellationRefund(booking);
+    if (!refund) return null;
+    return (
+      <p className={`mt-3 rounded-lg bg-surface-subtle px-3 py-2.5 ${refund.kind === "failed" ? "text-danger" : ""}`}>
+        {refund.kind === "none"
+          ? `No refund: ${booking.provider_name} keeps what you paid online.`
+          : refundSentence(booking.paid_attempt?.payment_status, refund.pence)}
+      </p>
+    );
+  }
+
+  if (booking.view !== "upcoming") return null;
+
+  if (terms.dueLaterPence > 0) {
+    return (
+      <p className="mt-3 flex justify-between gap-3 rounded-lg bg-surface-subtle px-3 py-2.5 tabular-nums">
+        <span>Pay {booking.provider_name} at the appointment</span>
+        <span className="font-semibold">{formatPounds(terms.dueLaterPence)}</span>
+      </p>
+    );
+  }
+
+  return upcomingMoney(booking)?.kind === "paid_in_full" ? (
+    <p className="mt-3 rounded-lg bg-surface-subtle px-3 py-2.5">Paid in full online</p>
+  ) : null;
+}
+
+// The appointment first: when, what, where and the live amount, then the one
+// action a customer takes before it (approved 23 September 2026).
+function Summary({ booking, terms }) {
+  const treatment = [booking.treatment_name, ...booking.selected_add_ons.map((addOn) => addOn.name)].join(" + ");
+
+  return (
+    <>
+      <div className="mt-5 rounded-xl border border-line p-4">
+        <WhenAndWhere booking={booking} treatment={treatment} />
+        <LiveAmount booking={booking} terms={terms} />
+      </div>
+      {booking.view === "upcoming" && booking.can_manage_inspiration_images ? (
+        <a href="#inspiration-heading" className={buttonClassName({ variant: "secondary", className: "mt-4 w-full" })}>
+          Add inspiration photos
+        </a>
+      ) : null}
+    </>
+  );
+}
+
 function StatusLine({ booking }) {
   const badge =
     booking.view === "cancelled" ? (
@@ -187,7 +240,14 @@ function StatusLine({ booking }) {
   return <p className="mt-2 flex flex-wrap items-center gap-2 text-[13px] text-ink-muted">{badge}</p>;
 }
 
+// The receipt: every price line, then what was paid and what is left, or on
+// a cancelled booking what was refunded and kept. Nothing here is hidden.
 function Payment({ booking, terms }) {
+  const priceRows = [
+    ...snapshotPriceLines(booking.service_snapshot).map((line) => [line.addOn ? `+ ${line.label}` : line.label, line.price]),
+    ["Total", booking.total_price_label, true],
+  ];
+
   if (booking.view === "cancelled") {
     const refundPence = Number(booking.refund_amount_pence) || 0;
     const refundState = refundPence > 0 ? refundSentence(booking.paid_attempt?.payment_status, refundPence) : "";
@@ -196,6 +256,7 @@ function Payment({ booking, terms }) {
       <Section title="Payment" id="payment">
         <Rows
           rows={[
+            ...priceRows,
             ["Paid online", booking.amount_paid_online_label],
             ["Refund", formatPounds(refundPence)],
             [`Kept by ${booking.provider_name}`, formatPounds(booking.retained_amount_pence)],
@@ -210,6 +271,7 @@ function Payment({ booking, terms }) {
     <Section title="Payment" id="payment">
       <Rows
         rows={[
+          ...priceRows,
           ["Paid online", formatPounds(terms.dueNowPence)],
           ...(terms.dueLaterPence > 0
             ? [[`Pay ${booking.provider_name} at the appointment`, formatPounds(terms.dueLaterPence), true]]
@@ -316,9 +378,7 @@ export default async function CustomerBookingPage({ params, searchParams }) {
         </>
       )}
 
-      <WhenAndWhere booking={booking} />
-      <Treatment booking={booking} />
-      <Payment booking={booking} terms={terms} />
+      <Summary booking={booking} terms={terms} />
 
       {booking.can_manage_inspiration_images || booking.inspiration_images.length ? (
         <BookingInspirationImages
@@ -336,6 +396,7 @@ export default async function CustomerBookingPage({ params, searchParams }) {
         />
       ) : null}
 
+      <Payment booking={booking} terms={terms} />
       <Cancellation booking={booking} terms={terms} />
       {/* Kept in the same place whatever the booking's state, so the outcome
           of cancelling stays on screen after the page refreshes. */}

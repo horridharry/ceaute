@@ -45,6 +45,7 @@ export const getProviderBooking = async (bookingId) => {
 
   return {
     ...bookingToDisplayBooking(booking, paidPaymentAttempts.get(booking.id)),
+    service_snapshot: booking.service_snapshot ?? {},
     inspiration_images: inspirationImages,
   };
 };
