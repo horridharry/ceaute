@@ -1,89 +1,161 @@
-import { CardLink } from "@/components/ui/card";
+import Link from "next/link";
+import { buttonClassName } from "@/components/ui/button-classes";
+import { Card, CardLink } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { LinkFilterPills } from "@/components/ui/filter-pills";
 import { PageContainer } from "@/components/ui/page-container";
 import { PageHeading } from "@/components/ui/page-heading";
+import { PendingButton } from "@/components/ui/pending-button";
+import { customerBookingViewFromParam } from "@/lib/bookings/booking-display";
+import { formatPounds } from "@/lib/bookings/booking-money";
+import { formatShortDateTime, formatTimeLabel } from "@/features/storefront/format";
+import { continueHoldPayment } from "./actions";
 import { getCustomerBookings } from "./queries";
 
-// These cards and empty states have always drawn their border in the text
-// colour (a bare `border` under Tailwind 4); border="current" keeps that.
-const NoBookings = () => (
-  <EmptyState as="div" variant="bounded" border="current">
-    You do not have any bookings yet.
-  </EmptyState>
+// My bookings (Specification §10). Holds still waiting for payment come
+// first; a hold that ended with nothing paid is in no list.
+const VIEWS = [
+  { key: "upcoming", label: "Upcoming", empty: "No upcoming bookings." },
+  { key: "past", label: "Past", empty: "No past bookings." },
+  { key: "cancelled", label: "Cancelled", empty: "No cancelled bookings." },
+];
+
+const discoverLink = (
+  <Link href="/discover" className={buttonClassName({ variant: "secondary" })}>
+    Discover providers
+  </Link>
 );
 
-const BookingItem = ({ booking }) => (
-  <CardLink
-    href={`/account/bookings/${booking.booking_id}`}
-    padding="sm"
-    border="current"
-  >
-    <h3 className="font-semibold">{booking.provider_name}</h3>
-    <p className="mt-3 text-sm">{booking.treatment_name}</p>
-    {booking.selected_add_ons.length ? (
-      <p className="mt-1 text-sm text-ink-muted">
-        Add-ons:{" "}
-        {booking.selected_add_ons.map((addOn) => addOn.name).join(", ")}
+function treatmentLine(booking) {
+  return [booking.treatment_name, ...booking.selected_add_ons.map((addOn) => addOn.name)].join(" + ");
+}
+
+function refundState(booking) {
+  switch (booking.paid_attempt?.payment_status) {
+    case "refund_required":
+      return "refund pending";
+    case "refunded":
+      return "refunded";
+    case "refund_failed":
+      return "refund failed";
+    default:
+      return "";
+  }
+}
+
+function statusLine(booking, view) {
+  if (view === "upcoming") {
+    const paid = Number(booking.amount_paid_online_pence) || 0;
+    const later = Number(booking.amount_due_at_appointment_pence) || 0;
+    return [paid > 0 ? `Paid ${formatPounds(paid)}` : "", later > 0 ? `${formatPounds(later)} at the appointment` : ""]
+      .filter(Boolean)
+      .join(" · ");
+  }
+
+  if (view === "past") {
+    return "Completed";
+  }
+
+  if (!booking.confirmed_at) {
+    const state = refundState(booking);
+    return state ? `Payment refunded · ${state}` : "Payment refunded";
+  }
+
+  const refund = Number(booking.refund_amount_pence) || 0;
+  const by = booking.cancelled_by === "provider" ? `Cancelled by ${booking.provider_name}` : "Cancelled by you";
+  return refund > 0 ? `${by} · ${formatPounds(refund)} refunded` : by;
+}
+
+function HoldCard({ booking }) {
+  return (
+    <Card as="article" padding="sm">
+      <h3 className="font-semibold">{booking.provider_name}</h3>
+      <p className="mt-1 text-sm">{treatmentLine(booking)}</p>
+      <p className="mt-1 text-sm font-semibold">{formatShortDateTime(booking.start_at)}</p>
+      <p className="mt-2 text-sm text-ink-muted">
+        Held until {formatTimeLabel(new Date(booking.hold_expires_at))}. Nothing has been charged yet.
       </p>
-    ) : null}
-    <p className="mt-3 text-sm font-semibold">
-      {booking.date_label}, {booking.time_label}
-    </p>
-    <p className="mt-2 text-sm">Total: {booking.total_price_label}</p>
-    <p className="text-sm text-ink-muted">
-      Paid online: {booking.amount_paid_online_label}
-    </p>
-    <p className="text-sm text-ink-muted">
-      Due at appointment: {booking.amount_due_at_appointment_label}
-    </p>
-    <p className="mt-2 text-xs text-ink-muted">{booking.status_label}</p>
-  </CardLink>
-);
+      <form action={continueHoldPayment} className="mt-3">
+        <input type="hidden" name="booking_id" value={booking.booking_id} />
+        <PendingButton pendingLabel="Opening payment…">Continue to payment</PendingButton>
+      </form>
+    </Card>
+  );
+}
 
-const BookingSection = ({ title, bookings }) => (
-  <section className="mt-8">
-    <h2 className="text-lg font-semibold">{title}</h2>
-    <ul className="mt-3 flex flex-col gap-4">
-      {bookings.map((booking) => (
-        <li key={booking.booking_id}>
-          <BookingItem booking={booking} />
-        </li>
-      ))}
-      {bookings.length === 0 ? (
-        <EmptyState as="li" variant="bounded" border="current">
-          No bookings.
-        </EmptyState>
-      ) : null}
-    </ul>
-  </section>
-);
+function BookingCard({ booking, view }) {
+  const status = statusLine(booking, view);
 
-export default async function CustomerBookingsPage() {
-  const bookingGroups = await getCustomerBookings();
-  const hasBookings =
-    bookingGroups.upcoming.length > 0 ||
-    bookingGroups.previous.length > 0 ||
-    bookingGroups.cancelled.length > 0;
+  return (
+    <CardLink href={`/account/bookings/${booking.booking_id}`} padding="sm">
+      <h3 className="font-semibold">{booking.provider_name}</h3>
+      <p className="mt-1 text-sm">{treatmentLine(booking)}</p>
+      <p className="mt-1 text-sm font-semibold">{formatShortDateTime(booking.start_at)}</p>
+      {status ? <p className="mt-2 text-sm text-ink-muted">{status}</p> : null}
+    </CardLink>
+  );
+}
+
+export default async function CustomerBookingsPage({ searchParams }) {
+  const params = await searchParams;
+  const requested = Array.isArray(params?.view) ? params.view[0] : params?.view;
+  const view = VIEWS.find((candidate) => candidate.key === customerBookingViewFromParam(requested));
+  const groups = await getCustomerBookings();
+  const hasAny = groups.hold.length + groups.upcoming.length + groups.past.length + groups.cancelled.length > 0;
+  const bookings = groups[view.key];
 
   return (
     <PageContainer>
-      <div className="mt-6 flex flex-col">
-        <PageHeading title="Bookings" />
+      <PageHeading title="My bookings" />
 
-        <div className="mt-8">
-          {!hasBookings ? <NoBookings /> : null}
-          {hasBookings ? (
-            <>
-              <BookingSection title="Upcoming" bookings={bookingGroups.upcoming} />
-              <BookingSection title="Previous" bookings={bookingGroups.previous} />
-              <BookingSection
-                title="Cancelled"
-                bookings={bookingGroups.cancelled}
-              />
-            </>
+      {!hasAny ? (
+        <EmptyState variant="bounded" className="mt-6" action={discoverLink}>
+          No bookings yet.
+        </EmptyState>
+      ) : (
+        <>
+          {groups.hold.length ? (
+            <section aria-labelledby="finish-heading" className="mt-6">
+              <h2 id="finish-heading" className="text-lg font-semibold tracking-tight">
+                Finish booking
+              </h2>
+              <ul className="mt-3 flex flex-col gap-3">
+                {groups.hold.map((booking) => (
+                  <li key={booking.booking_id}>
+                    <HoldCard booking={booking} />
+                  </li>
+                ))}
+              </ul>
+            </section>
           ) : null}
-        </div>
-      </div>
+
+          <LinkFilterPills
+            label="Filter bookings"
+            value={view.key}
+            className="mt-6"
+            options={VIEWS.map((candidate) => ({
+              key: candidate.key,
+              label: candidate.label,
+              href: candidate.key === "upcoming" ? "/account/bookings" : `/account/bookings?view=${candidate.key}`,
+              count: groups[candidate.key].length,
+            }))}
+          />
+
+          {bookings.length === 0 ? (
+            <EmptyState className="mt-6" action={view.key === "upcoming" ? discoverLink : null}>
+              {view.empty}
+            </EmptyState>
+          ) : (
+            <ul className="mt-4 flex flex-col gap-3">
+              {bookings.map((booking) => (
+                <li key={booking.booking_id}>
+                  <BookingCard booking={booking} view={view.key} />
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
+      )}
     </PageContainer>
   );
 }

@@ -1,18 +1,16 @@
 import { getSignedInProvider } from "../_lib/provider-data";
-import { getProviderPagePublicationReadiness } from "../_lib/publication-readiness";
+import { getSetupState } from "../_lib/publication-checks";
 import { loadProviderBookingGroups } from "@/lib/bookings/provider-booking-groups";
 
 // Today's working overview: the provider's appointments (holds already left
-// out on the server) and, while the page is still a draft, what is left
-// before it can be published.
+// out on the server) and the page's setup state, for the Ready to publish
+// card and the notice a live page shows when it cannot take bookings.
 export async function getTodayOverview() {
   const { supabase, providerPage } = await getSignedInProvider({ next: "/dashboard" });
-  const [groups, readiness] = await Promise.all([
+  const [groups, setup] = await Promise.all([
     loadProviderBookingGroups(supabase),
-    providerPage.status === "draft"
-      ? getProviderPagePublicationReadiness({ supabase, providerPage })
-      : Promise.resolve(null),
+    getSetupState({ supabase, providerPage }),
   ]);
 
-  return { groups, readiness };
+  return { groups, setup };
 }

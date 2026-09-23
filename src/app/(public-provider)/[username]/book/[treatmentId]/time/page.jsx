@@ -1,16 +1,24 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import BookingScheduler from "../../_components/booking-scheduler";
-import { BookingTreatmentSummary } from "../../_components/booking-treatment-summary";
-import { getPublicBookingPage } from "../../../_lib/public-provider-data";
+import { Notice } from "@/components/ui/notice";
+import { PageContainer } from "@/components/ui/page-container";
+import { PageHeading } from "@/components/ui/page-heading";
+import { WhenSuitsYou } from "../../_components/when-suits-you";
+import { buildDayStrip } from "../../_lib/time-choices";
+import {
+  getProviderAcceptsBookings,
+  getPublicBookingPage,
+} from "../../../_lib/public-provider-data";
 import {
   formatDurationMinutes,
+  formatPricePence,
   hasPublicUsernamePrefix,
   normalizePublicUsername,
 } from "@/features/storefront/format";
 import { normalizeAddOnSearch } from "@/features/storefront/add-on-search";
+import { firstSearchValue } from "../checkout/_lib/checkout-paths";
 
-function buildTreatmentPath({ username, treatmentId, addOnIds }) {
+function addOnsPath({ username, treatmentId, addOnIds }) {
   const searchParams = new URLSearchParams();
 
   for (const addOnId of addOnIds) {
@@ -21,6 +29,9 @@ function buildTreatmentPath({ username, treatmentId, addOnIds }) {
   return `/@${username}/book/${treatmentId}${query ? `?${query}` : ""}`;
 }
 
+// "When suits you?" (approved 23 September 2026). The times come from the
+// same calculator as before; PostgreSQL checks the chosen one again when the
+// hold is made.
 export default async function TreatmentBookingTimePage({ params, searchParams }) {
   const { username, treatmentId } = await params;
   const resolvedSearchParams = await searchParams;
@@ -34,58 +45,63 @@ export default async function TreatmentBookingTimePage({ params, searchParams })
   const {
     providerPage,
     treatment,
+    compatibleAddOns,
     selectedAddOns,
     totalDurationMinutes,
+    totalPricePence,
     availableDates,
-  } = await getPublicBookingPage(
-    decodedUsername,
-    treatmentId,
-    selectedAddOnIds,
-  );
+  } = await getPublicBookingPage(decodedUsername, treatmentId, selectedAddOnIds);
+  const takingBookings = await getProviderAcceptsBookings(providerPage.id);
+  const addOnIds = selectedAddOns.map((addOn) => addOn.id);
+  const notice = firstSearchValue(resolvedSearchParams?.notice);
+  const summary = [
+    [treatment.name, ...selectedAddOns.map((addOn) => addOn.name)].join(" + "),
+    formatDurationMinutes(totalDurationMinutes),
+    formatPricePence(totalPricePence),
+  ].join(" · ");
 
   return (
-    <main className="container max-w-md p-5">
-      <div className="mt-6 flex flex-col">
-        <h1 className="text-3xl font-bold tracking-tighter">Choose a time</h1>
-        <p className="mt-1 text-sm">{`Booking with @${providerPage.username}`}</p>
-
-        <div className="mt-8">
-          <BookingTreatmentSummary treatment={treatment} />
-        </div>
-
-        {selectedAddOns.length ? (
-          <ul className="mt-4 text-sm text-black/60">
-            {selectedAddOns.map((addOn) => (
-              <li key={addOn.id}>+ {addOn.name}</li>
-            ))}
-          </ul>
+    <PageContainer>
+      <PageHeading
+        back={{ href: `/@${providerPage.username}`, label: providerPage.display_name || `@${providerPage.username}` }}
+        title="When suits you?"
+      />
+      <p className="mt-2 text-sm text-ink-muted">
+        {summary}
+        {compatibleAddOns.length ? (
+          <>
+            {" "}
+            <Link
+              href={addOnsPath({ username: providerPage.username, treatmentId: treatment.id, addOnIds })}
+              className="font-semibold text-accent underline-offset-2 hover:underline"
+            >
+              Change add-ons
+            </Link>
+          </>
         ) : null}
+      </p>
 
-        <div className="mt-4 flex items-center justify-between gap-4">
-          <p className="text-sm font-medium">
-            Appointment duration: {formatDurationMinutes(totalDurationMinutes)}
-          </p>
-          <Link
-            href={buildTreatmentPath({
-              username: providerPage.username,
-              treatmentId: treatment.id,
-              addOnIds: selectedAddOns.map((addOn) => addOn.id),
-            })}
-            className="text-sm font-semibold text-pink-600"
-          >
-            Change add-ons
-          </Link>
-        </div>
+      {notice === "taken" ? (
+        <Notice role="alert" className="mt-5">
+          That time was just taken. Choose another time.
+        </Notice>
+      ) : null}
 
-        <div className="mt-4 flex flex-col gap-4 rounded-lg border border-black/10">
-          <BookingScheduler
-            username={providerPage.username}
-            treatment={treatment}
-            selectedAddOnIds={selectedAddOns.map((addOn) => addOn.id)}
-            availableDates={availableDates}
-          />
-        </div>
-      </div>
-    </main>
+      {takingBookings ? (
+        <WhenSuitsYou
+          days={buildDayStrip(availableDates)}
+          providerName={providerPage.display_name || `@${providerPage.username}`}
+          username={providerPage.username}
+          treatmentId={treatment.id}
+          addOnIds={addOnIds}
+          initialDate={firstSearchValue(resolvedSearchParams?.date)}
+        />
+      ) : (
+        <Notice tone="neutral" className="mt-6">
+          {providerPage.display_name || "This provider"} isn’t taking online bookings right
+          now. Nothing has been charged.
+        </Notice>
+      )}
+    </PageContainer>
   );
 }

@@ -27,7 +27,7 @@ function TreatmentGroupFilter({ options, value, onChange }) {
 // more than one group has treatments. The filter is page state only. Picking
 // a treatment opens the same details sheet and booking link as the
 // storefront.
-export function AllTreatments({ sections, username }) {
+export function AllTreatments({ sections, username, bookable = true }) {
   const [filter, setFilter] = useState(ALL_TREATMENTS_FILTER);
   const options = treatmentFilterOptions(sections);
   const shown = filterTreatmentSections(sections, filter).map((section) => ({
@@ -50,7 +50,7 @@ export function AllTreatments({ sections, username }) {
           </p>
         </>
       ) : null}
-      <TreatmentSelectionList sections={shown} username={username} />
+      <TreatmentSelectionList sections={shown} username={username} bookable={bookable} />
     </div>
   );
 }

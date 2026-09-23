@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { buttonClassName } from "@/components/ui/button-classes";
 import { Card } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Notice } from "@/components/ui/notice";
 import { useServerAction } from "../../../_lib/use-server-action";
 
 function StatusDot({ live }) {
@@ -14,7 +15,7 @@ function StatusDot({ live }) {
 
 // Whether customers can see the page. Publishing is always a deliberate
 // action; Ceaute never publishes or unpublishes a page by itself.
-export function PublicationPanel({ status, username, readiness, publishPage, unpublishPage }) {
+export function PublicationPanel({ status, username, setup, publishPage, unpublishPage }) {
   const [runPublish, publishing] = useServerAction(publishPage);
   const [runUnpublish, unpublishing] = useServerAction(unpublishPage);
   const [outcome, setOutcome] = useState(null);
@@ -23,6 +24,9 @@ export function PublicationPanel({ status, username, readiness, publishPage, unp
   const statusRef = useRef(null);
   const live = status === "published";
   const pageUrl = username ? `/@${username}` : "";
+  const ready = Boolean(setup?.readyToPublish);
+  const unmet = (setup?.tasks ?? []).filter((task) => !task.done);
+  const paused = live && !setup?.acceptsNewBookings ? (setup?.pausedReasons ?? []) : [];
 
   const report = (result) => {
     setOutcome(result);
@@ -55,6 +59,24 @@ export function PublicationPanel({ status, username, readiness, publishPage, unp
                 ceaute.com{pageUrl}
               </Link>
             ) : null}
+            {paused.length ? (
+              <Notice title="Not taking new bookings" role={null}>
+                <p>Your page is still live and confirmed bookings are not affected. To take new bookings:</p>
+                <ul className="mt-1">
+                  {paused.map((reason) => (
+                    <li key={reason.id}>
+                      {reason.href ? (
+                        <Link href={reason.href} className="inline-flex min-h-11 items-center font-semibold underline underline-offset-2">
+                          {reason.label}
+                        </Link>
+                      ) : (
+                        <span className="inline-flex min-h-11 items-center font-semibold">{reason.label}</span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </Notice>
+            ) : null}
             <div className="flex flex-wrap items-center justify-between gap-2">
               {pageUrl ? (
                 <Link href={pageUrl} className={buttonClassName({ variant: "secondary" })}>
@@ -75,36 +97,34 @@ export function PublicationPanel({ status, username, readiness, publishPage, unp
           </>
         ) : (
           <>
-            {readiness.ready ? (
+            {ready ? (
               <p className="text-ink-muted">Everything’s in place. Publishing makes your page visible and bookable.</p>
             ) : (
               <>
                 <p className="text-ink-muted">Before you publish:</p>
                 <ul>
-                  {readiness.requirements
-                    .filter((requirement) => !requirement.met)
-                    .map((requirement) => (
-                      <li key={requirement.label} className="border-b border-line last:border-b-0">
-                        <Link
-                          href={requirement.href}
-                          className="flex min-h-11 items-center justify-between gap-3 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-                        >
-                          {requirement.label}
-                          <span className="shrink-0 text-[13px] font-semibold text-accent">
-                            Set up<span className="sr-only"> {requirement.label}</span>
-                          </span>
-                        </Link>
-                      </li>
-                    ))}
+                  {unmet.map((task) => (
+                    <li key={task.id} className="border-b border-line last:border-b-0">
+                      <Link
+                        href={task.href}
+                        className="flex min-h-11 items-center justify-between gap-3 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+                      >
+                        {task.name}
+                        <span className="shrink-0 text-[13px] font-semibold text-accent">
+                          Set up<span className="sr-only"> {task.name}</span>
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
                 </ul>
               </>
             )}
             <div className="flex flex-wrap items-center gap-2">
               <Button
                 type="button"
-                disabled={!readiness.ready || publishing}
+                disabled={!ready || publishing}
                 aria-busy={publishing || undefined}
-                aria-describedby={readiness.ready ? undefined : "publish-unavailable"}
+                aria-describedby={ready ? undefined : "publish-unavailable"}
                 onClick={async () => report(await runPublish({}))}
               >
                 {publishing ? "Publishing…" : "Publish page"}
@@ -113,7 +133,7 @@ export function PublicationPanel({ status, username, readiness, publishPage, unp
                 Preview your page
               </Link>
             </div>
-            {readiness.ready ? null : (
+            {ready ? null : (
               <p id="publish-unavailable" className="text-[13px] text-ink-muted">
                 Publishing becomes available when everything above is done.
               </p>

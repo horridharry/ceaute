@@ -137,6 +137,13 @@ export function calculateAvailableAppointmentTimes({
   ) {
     const rule = rulesByWeekday.get(weekdayForLocalDate(localDate));
     const slots = [];
+    // Why a day has no times, for the day picker only; it never changes which
+    // starts are offered. "closed": no working hours that weekday, or a
+    // blocked date. "notice": every start that fits is inside the 24 hours'
+    // notice. "short": working, but this appointment does not fit the day.
+    // "full": starts fit and are far enough ahead, but all are taken.
+    let fittingStarts = 0;
+    let startsAfterNotice = 0;
 
     if (rule && !blockedDateSet.has(localDate)) {
       const openMinutes = timeToMinutes(rule.starts_at);
@@ -155,10 +162,17 @@ export function calculateAvailableAppointmentTimes({
           timeZone,
         });
 
-        if (!startAt || startAt < minimumStart) {
+        if (!startAt) {
           continue;
         }
 
+        fittingStarts += 1;
+
+        if (startAt < minimumStart) {
+          continue;
+        }
+
+        startsAfterNotice += 1;
         const endAt = new Date(startAt.getTime() + durationMinutes * 60_000);
 
         if (!overlapsExistingAppointment(startAt, endAt, appointments)) {
@@ -170,7 +184,20 @@ export function calculateAvailableAppointmentTimes({
       }
     }
 
-    dates.push({ local_date: localDate, slots });
+    const closed = !rule || blockedDateSet.has(localDate);
+    let unavailableReason = null;
+
+    if (slots.length === 0) {
+      unavailableReason = closed
+        ? "closed"
+        : fittingStarts === 0
+          ? "short"
+          : startsAfterNotice === 0
+            ? "notice"
+            : "full";
+    }
+
+    dates.push({ local_date: localDate, slots, unavailable_reason: unavailableReason });
   }
 
   return dates;

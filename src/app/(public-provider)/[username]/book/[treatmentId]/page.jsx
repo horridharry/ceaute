@@ -1,8 +1,15 @@
 import { notFound } from "next/navigation";
 import Form from "next/form";
-import { PendingButton } from "@/components/pending-button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Notice } from "@/components/ui/notice";
+import { PageContainer } from "@/components/ui/page-container";
+import { PageHeading } from "@/components/ui/page-heading";
+import { PendingButton } from "@/components/ui/pending-button";
 import { BookingTreatmentSummary } from "../_components/booking-treatment-summary";
-import { getPublicBookingPage } from "../../_lib/public-provider-data";
+import {
+  getProviderAcceptsBookings,
+  getPublicBookingPage,
+} from "../../_lib/public-provider-data";
 import {
   formatDurationMinutes,
   formatPricePence,
@@ -11,6 +18,8 @@ import {
 } from "@/features/storefront/format";
 import { normalizeAddOnSearch } from "@/features/storefront/add-on-search";
 
+// Add-ons for a treatment without JavaScript, and the time page's "Change
+// add-ons". The storefront's details sheet makes the same choice in place.
 export default async function TreatmentBookingPage({ params, searchParams }) {
   const { username, treatmentId } = await params;
   const resolvedSearchParams = await searchParams;
@@ -22,69 +31,56 @@ export default async function TreatmentBookingPage({ params, searchParams }) {
   const decodedUsername = normalizePublicUsername(username);
   const selectedAddOnIds = normalizeAddOnSearch(resolvedSearchParams);
   const { providerPage, treatment, compatibleAddOns, selectedAddOns } =
-    await getPublicBookingPage(
-      decodedUsername,
-      treatmentId,
-      selectedAddOnIds,
-    );
+    await getPublicBookingPage(decodedUsername, treatmentId, selectedAddOnIds);
+  const takingBookings = await getProviderAcceptsBookings(providerPage.id);
   const selectedAddOnIdSet = new Set(selectedAddOns.map((addOn) => addOn.id));
+  const providerName = providerPage.display_name || `@${providerPage.username}`;
 
   return (
-    <main className="container max-w-md p-5">
-      <div className="mt-6 flex flex-col">
-        <h1 className="text-3xl font-bold tracking-tighter">
-          Choose add-ons
-        </h1>
-        <p className="mt-1 text-sm">{`Booking with @${providerPage.username}`}</p>
+    <PageContainer>
+      <PageHeading back={{ href: `/@${providerPage.username}`, label: providerName }} title="Choose add-ons" />
 
-        <div className="mt-8">
-          <BookingTreatmentSummary treatment={treatment} />
-        </div>
+      <div className="mt-6">
+        <BookingTreatmentSummary treatment={treatment} />
+      </div>
 
-        <Form
-          action={`/@${providerPage.username}/book/${treatment.id}/time`}
-          className="mt-8 rounded-lg border border-black/10 p-4"
-        >
-          <h2 className="text-sm font-semibold">Add-ons</h2>
-          {compatibleAddOns.length ? (
-            <div className="mt-3 flex flex-col gap-3">
-              {compatibleAddOns.map((addOn) => (
-                <label
-                  key={addOn.id}
-                  className="flex items-center gap-3 text-sm"
-                  htmlFor={`add_on_${addOn.id}`}
-                >
-                  <input
-                    id={`add_on_${addOn.id}`}
-                    type="checkbox"
-                    name="add_on"
-                    value={addOn.id}
-                    defaultChecked={selectedAddOnIdSet.has(addOn.id)}
-                    className="h-4 w-4"
-                  />
-                  <span className="flex-1">{addOn.name}</span>
-                  <span className="text-black/60">
-                    +{formatPricePence(addOn.additional_price_pence)} · +
-                    {formatDurationMinutes(addOn.additional_duration_minutes)}
-                  </span>
-                </label>
-              ))}
-            </div>
-          ) : (
-            <p className="mt-3 text-sm text-black/60">
-              No add-ons are available for this treatment.
-            </p>
-          )}
-          <div className="mt-6 flex justify-end">
-            <PendingButton
-              pendingLabel="Continuing..."
-              className="w-max rounded-lg bg-pink-700 p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-pink-800 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              Continue
-            </PendingButton>
+      {takingBookings ? (
+        <Form action={`/@${providerPage.username}/book/${treatment.id}/time`} className="mt-8">
+          <fieldset>
+            <legend className="text-lg font-semibold tracking-tight">Add-ons</legend>
+            {compatibleAddOns.length ? (
+              <ul className="mt-3 flex flex-col">
+                {compatibleAddOns.map((addOn) => (
+                  <li key={addOn.id} className="border-b border-line last:border-b-0">
+                    <label htmlFor={`add_on_${addOn.id}`} className="flex min-h-13 cursor-pointer items-center gap-3 py-2 text-sm">
+                      <Checkbox
+                        id={`add_on_${addOn.id}`}
+                        name="add_on"
+                        value={addOn.id}
+                        defaultChecked={selectedAddOnIdSet.has(addOn.id)}
+                      />
+                      <span className="flex-1">{addOn.name}</span>
+                      <span className="text-ink-muted tabular-nums">
+                        +{formatPricePence(addOn.additional_price_pence)} · +
+                        {formatDurationMinutes(addOn.additional_duration_minutes)}
+                      </span>
+                    </label>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-3 text-sm text-ink-muted">No add-ons are available for this treatment.</p>
+            )}
+          </fieldset>
+          <div className="mt-6">
+            <PendingButton pendingLabel="Continuing…">Choose a time</PendingButton>
           </div>
         </Form>
-      </div>
-    </main>
+      ) : (
+        <Notice tone="neutral" className="mt-6">
+          {providerName} isn’t taking online bookings right now.
+        </Notice>
+      )}
+    </PageContainer>
   );
 }

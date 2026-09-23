@@ -23,6 +23,9 @@ function describeTreatmentSaveError(error, fallbackMessage) {
 
 function refreshTreatmentPages() {
   revalidatePath("/dashboard/treatments");
+  // A bookable treatment is a publication requirement: refresh the setup
+  // guide, Today and Publication with it.
+  revalidatePath("/dashboard", "layout");
   revalidatePath("/[username]", "layout");
 }
 
@@ -47,12 +50,19 @@ async function validateTreatmentForm({
     return { error: "Treatment name must be 140 characters or fewer." };
   }
 
-  if (!description) {
-    return { error: "Please add a treatment description." };
+  // A description is optional (approved 23 September 2026).
+  if (description.length > 2000) {
+    return { error: "Treatment description must be 2,000 characters or fewer." };
   }
 
   if (!pricePence) {
     return { error: "Please enter a valid price in pounds." };
+  }
+
+  // The minimum online payment is £1, so a treatment costs at least that.
+  // PostgreSQL refuses anything less (treatment_price_at_least_one_pound).
+  if (pricePence < 100) {
+    return { error: "A treatment costs at least £1.00." };
   }
 
   if (!Number.isInteger(durationMinutes) || durationMinutes <= 0) {
@@ -109,7 +119,7 @@ async function validateTreatmentForm({
   return {
     values: {
       name,
-      description,
+      description: description || null,
       price_pence: pricePence,
       duration_minutes: durationMinutes,
       discovery_category_id: discoveryCategoryId,

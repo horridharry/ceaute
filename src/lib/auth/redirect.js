@@ -26,3 +26,9 @@ export function validatedNextPath(value) {
 export function safeNextPath(value) {
   return validatedNextPath(value) ?? '/account';
 }
+
+// True when someone was sent to log in or sign up partway through booking, so
+// the form can say their choices are waiting.
+export function isBookingPath(next) {
+  return typeof next === 'string' && /^\/@[^/?#]+\/book\//.test(next);
+}

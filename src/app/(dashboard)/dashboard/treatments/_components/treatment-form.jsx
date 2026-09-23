@@ -75,7 +75,9 @@ export function TreatmentForm({
   const priceError =
     price.trim() && !/^\d+(\.\d{1,2})?$/.test(price.trim())
       ? "Use pounds and optional pennies, for example 35 or 35.50."
-      : "";
+      : price.trim() && Number(price.trim()) < 1
+        ? "A treatment costs at least £1.00."
+        : "";
   const durationError =
     durationMinutes.trim() &&
     (!Number.isInteger(Number(durationMinutes)) || Number(durationMinutes) <= 0)
@@ -113,12 +115,11 @@ export function TreatmentForm({
           )}
         </Field>
 
-        <Field label="Description" htmlFor="description">
+        <Field label="Description" optional htmlFor="description">
           {(control) => (
             <Textarea
               {...control}
               name="description"
-              required
               rows={4}
               className="resize-none"
               value={description}
