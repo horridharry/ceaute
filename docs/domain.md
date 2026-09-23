@@ -22,10 +22,21 @@ portfolio, terms, Stripe connection, and provider-side bookings. One profile can
 own at most one provider page. `providerPageId` always means the ID of this
 record, whose database name is `provider_page`.
 
+A provider page moves through separate states that are easy to conflate:
+**setup complete** (every publication requirement is met; the **setup guide**
+tracks these for a draft), **ready to publish** (a draft whose setup is
+complete), **published** (visible; changed only by the provider on
+Publication), **taking bookings** (published, and PostgreSQL agrees a new
+booking may start: complete terms, Stripe ready, the current **provider
+agreement** accepted, no balance owed) and **suspended** (set by Ceaute). A
+published page that is not taking bookings is **paused**: still visible, with
+no way to book.
+
 ## What a provider offers
 
-A **treatment** is the main bookable offering. It has a name, description,
-price, duration, active state, and one Ceaute discovery category. A treatment
+A **treatment** is the main bookable offering. It has a name, an optional
+description, a price of at least £1.00, a duration, active state, and one Ceaute
+discovery category. A treatment
 may belong to a provider-defined treatment group.
 
 A **treatment group** is optional storefront organisation such as “Full sets”
@@ -59,8 +70,17 @@ booking intervals.
 
 ## The booking contract
 
+**Booking terms** belong to the provider page: **Full payment** or **Deposit**,
+one **percentage**, and a **cancellation window** of 12, 24 or 48 hours, with
+an optional written policy. For a deposit the percentage is what is **paid
+now** (at least £1.00); for either mode it is what the provider **keeps** after
+a late customer cancellation, never more than was paid. The rest of a deposit
+booking is **due at the appointment**, outside Ceaute.
+
 A **booking** joins one customer profile to one provider page, treatment, and
-time interval. It begins as the temporary hold used during checkout. A paid hold
+time interval. It begins as the temporary **hold** made by "Continue to
+payment" (ten minutes, extended while Stripe Checkout is open); the **held
+page** is where Stripe returns and where a hold can be finished. A paid hold
 becomes confirmed, a past confirmed appointment becomes completed, and a
 customer or provider may cancel a future confirmed appointment. Expired and
 cancelled holds stop occupying the interval.
@@ -68,8 +88,11 @@ cancelled holds stop occupying the interval.
 The booking is also the historical contract. Its customer snapshot preserves
 the customer's contact details. Its service snapshot preserves the provider and
 treatment names, selected add-ons, duration, price, the public and private
-location the provider was working from when the hold was taken,
-payment mode, commitment amount, cancellation window, and written policy. Those
+location the provider was working from when the hold was taken, payment
+mode, percentage, the amount paid now and the amount kept after a late
+cancellation (stored as `commitment_amount_pence`), cancellation window, and
+written policy. Bookings made before percentage terms keep the fixed amounts
+they were made with. Those
 values remain meaningful after the current provider page or treatment changes.
 
 A **payment attempt** records one attempt to create and complete Stripe Checkout
@@ -83,8 +106,9 @@ from one payment attempt. It has stable identity and can move through requested,
 processing, pending, succeeded, failed, or manual-review states without losing
 the booking's cancellation decision.
 
-An **inspiration image** is a private reference picture the customer attaches to
-their own booking to show the provider the result they want. It belongs to the
+An **inspiration image** (an "inspiration photo" on screen) is a private
+reference picture the customer attaches to their own confirmed booking to show
+the provider the result they want. It belongs to the
 booking, not to either person's profile, and it is never public. A booking can
 carry up to five. They are optional: a booking with none is an ordinary booking.
 

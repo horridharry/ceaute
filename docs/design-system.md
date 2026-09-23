@@ -166,10 +166,27 @@ Added by the provider dashboard redesign; tested in
   PageContainer `medium` (`max-w-2xl`) is used only by the portfolio grid.
 - `Field` puts the label 6px above the control, the hint between them, and
   the error below the control, only when there is one.
+- `Notice` is a boxed message about the state of something, not about a form:
+  `attention` (amber) when the person has something to do, such as a paused
+  page or booking terms saved before percentages; `neutral` for a fact, such
+  as a provider not taking online bookings. It is a `status` by default; pass
+  `role="alert"` only for something that just happened (a time that was just
+  taken) and `role={null}` inside a region that is already announced.
 
 In the dashboard, `DashboardPage` (a centred container plus the heading with
 description and "New" link) frames every screen, and `ManagementRow` is an
 edit link with its `ActionMenu` beside it, never inside it.
+
+The setup guide (`dashboard/_components/setup-guide.jsx`) is the one floating
+element. Compact, it is pinned to the bottom on phones (with the safe-area
+inset) and floats 320px wide at the bottom right from 640px; the body is
+padded by `--guide-space` so it never covers the last control. Expanded, it is
+a full-screen modal `<dialog>` on phones and a non-modal 384px panel from 640px
+(Escape collapses both). It has no animation under reduced motion.
+
+Customer booking screens keep their one primary action in a bar stuck to the
+bottom of the screen on phones (Review and pay, the held page), padded by the
+safe-area inset, and in the page flow from 640px.
 
 ## Accessibility conventions
 
