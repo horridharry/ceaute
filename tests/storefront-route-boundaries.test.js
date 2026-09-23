@@ -117,8 +117,8 @@ test("checkout serves an existing hold or booking before any published-provider 
   assert.ok(holdBranch > 0, "checkout has an existing hold/booking branch");
   assert.match(
     source,
-    /resolvedSearchParams\?\.booking\s*\?\?\s*resolvedSearchParams\?\.hold/,
-    "the branch covers both ?booking= and ?hold=",
+    /searchValue\(query, "hold"\)\s*\|\|\s*searchValue\(query, "booking"\)/,
+    "the branch covers both ?hold= and ?booking=",
   );
 
   for (const lookup of PUBLISHED_LOOKUPS) {
@@ -129,21 +129,25 @@ test("checkout serves an existing hold or booking before any published-provider 
     );
   }
 
-  // The hold branch returns without reaching the published-provider lookup.
-  const branchBody = source.slice(holdBranch, source.indexOf("return (", holdBranch));
+  // The hold branch returns the held page, which never reaches the
+  // published-provider lookup: a booking outlives its provider's page.
+  const branchBody = source.slice(holdBranch, source.indexOf("return renderHeldBooking(", holdBranch));
+  const heldPage = source.slice(source.indexOf("async function renderHeldBooking("));
+  assert.ok(heldPage.length > 0, "the held page is rendered by renderHeldBooking");
   for (const lookup of PUBLISHED_LOOKUPS) {
     assert.ok(!branchBody.includes(lookup), `hold branch calls ${lookup}`);
+    assert.ok(!heldPage.includes(lookup), `the held page calls ${lookup}`);
   }
 });
 
 test("Stripe returns to the checkout hold path", () => {
-  const actions = withoutComments(read(path.join(BOOK_DIR, "actions.js")));
-  const paths = withoutComments(
-    read(path.join(BOOK_DIR, "[treatmentId]/checkout/_lib/checkout-paths.js")),
-  );
+  const session = withoutComments(read(path.join(REPO_ROOT, "src/lib/bookings/checkout-session.js")));
+  const paths = withoutComments(read(path.join(REPO_ROOT, "src/lib/bookings/held-booking-path.js")));
 
-  assert.match(actions, /successUrl\s*=\s*`\$\{origin\}\$\{returnPath\}&checkout=success/);
-  assert.match(actions, /cancelUrl\s*=\s*`\$\{origin\}\$\{returnPath\}&checkout=cancelled/);
+  assert.match(session, /successUrl\s*=\s*`\$\{origin\}\$\{withState\(returnPath, "checkout", "success"\)\}/);
+  assert.match(session, /cancelUrl\s*=\s*`\$\{origin\}\$\{withState\(returnPath, "checkout", "cancelled"\)\}/);
+  // The return path is built from the booking itself, never from the browser.
+  assert.match(session, /returnPath: heldPathForBooking\(booking\)/);
   assert.match(paths, /searchParams\.set\("hold",\s*holdId\)/);
   assert.match(paths, /\/checkout\?\$\{searchParams\.toString\(\)\}/);
 });

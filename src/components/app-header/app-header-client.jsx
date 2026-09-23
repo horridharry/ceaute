@@ -6,6 +6,7 @@ import Link from "next/link";
 import { logoutUser } from "@/features/auth/logout-action";
 import { LinkPendingHint } from "@/components/link-pending-hint";
 import { PendingButton } from "@/components/pending-button";
+import { personalMenuLinks, signInHref } from "./personal-menu";
 import { ProviderMenuSheet } from "./provider-menu-sheet";
 
 function HomeLogo({ href = "/" }) {
@@ -38,30 +39,6 @@ function HeaderLink({ href, children, exact = false }) {
 
 const menuItemClassName =
   "flex min-h-11 w-full items-center rounded-lg px-3 text-left text-sm font-medium hover:bg-black/[0.04]";
-
-// "Me": the signed-in person. The provider menu is "my business".
-function personalMenuLinks({ hasProviderPage, isProviderWorkspace }) {
-  if (hasProviderPage && isProviderWorkspace) {
-    return [
-      { label: "Account", href: "/account" },
-      { label: "My bookings", href: "/account/bookings" },
-      { label: "Discover", href: "/discover" },
-    ];
-  }
-
-  if (hasProviderPage) {
-    return [
-      { label: "Your business", href: "/dashboard" },
-      { label: "Bookings", href: "/account/bookings" },
-      { label: "Account", href: "/account" },
-    ];
-  }
-
-  return [
-    { label: "Bookings", href: "/account/bookings" },
-    { label: "Account", href: "/account" },
-  ];
-}
 
 function AccountMenu({ user, hasProviderPage, isProviderWorkspace }) {
   const [open, setOpen] = useState(false);
@@ -147,7 +124,7 @@ function AccountMenu({ user, hasProviderPage, isProviderWorkspace }) {
 export default function AppHeaderClient({ user, providerPage = null }) {
   const pathname = usePathname();
   const hasProviderPage = Boolean(user && providerPage);
-  // /account/settings is personal chrome, not the provider workspace.
+  // /account is personal chrome, not the provider workspace.
   const isProviderWorkspace =
     hasProviderPage &&
     (pathname === "/dashboard" || pathname.startsWith("/dashboard/"));
@@ -162,7 +139,7 @@ export default function AppHeaderClient({ user, providerPage = null }) {
         {user && !isProviderWorkspace ? (
           <nav aria-label="Main" className="hidden items-center gap-1 sm:flex">
             <HeaderLink href="/discover">Discover</HeaderLink>
-            <HeaderLink href="/account/bookings">Bookings</HeaderLink>
+            <HeaderLink href="/account/bookings">My bookings</HeaderLink>
             <HeaderLink href="/account" exact>
               Account
             </HeaderLink>
@@ -177,7 +154,7 @@ export default function AppHeaderClient({ user, providerPage = null }) {
               isProviderWorkspace={isProviderWorkspace}
             />
           ) : (
-            <HeaderLink href="/sign-in">Log in</HeaderLink>
+            <HeaderLink href={signInHref(pathname)}>Log in</HeaderLink>
           )}
           {isProviderWorkspace ? (
             <ProviderMenuSheet providerPage={providerPage} />

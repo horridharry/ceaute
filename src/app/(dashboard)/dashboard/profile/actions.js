@@ -7,7 +7,7 @@ import {
   saveDisplayPhoto,
 } from "@/lib/providers/display-photo-storage";
 import { getSignedInProvider } from "../_lib/provider-data";
-import { usernameRequiredError } from "@/lib/providers/username";
+import { usernameRequiredError, validateUsername } from "@/lib/providers/username";
 import {
   isProviderCategory,
   providerPageValuesFromFormData,
@@ -31,8 +31,10 @@ export const updateProviderPage = async (_currentState, formData) => {
     return { status: "error", message: "Business name must be at least 2 characters long." };
   }
 
-  if (username && (username.length < 3 || username.length > 30)) {
-    return { status: "error", message: "Username must be between 3 and 30 characters long." };
+  const usernameFormatError = validateUsername(username);
+
+  if (usernameFormatError) {
+    return { status: "error", message: usernameFormatError };
   }
 
   const usernameError = usernameRequiredError({

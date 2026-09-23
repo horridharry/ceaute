@@ -2,7 +2,7 @@ import {
   bookingToDisplayBooking,
   groupProviderBookings,
 } from "@/lib/bookings/booking-display";
-import { getLatestPaymentAttemptsForBookings } from "@/lib/bookings/booking-payment-attempts";
+import { getPaidPaymentAttemptsForBookings } from "@/lib/bookings/booking-payment-attempts";
 
 // The signed-in provider's appointments, grouped Upcoming / Completed /
 // Cancelled. get_provider_booking_summaries returns every booking row of the
@@ -18,13 +18,13 @@ export async function loadProviderBookingGroups(supabase) {
     throw new Error("Could not load bookings.");
   }
 
-  const latestPaymentAttempts = await getLatestPaymentAttemptsForBookings(
+  const paidPaymentAttempts = await getPaidPaymentAttemptsForBookings(
     (bookings ?? []).map((booking) => booking.id),
   );
 
   const groups = groupProviderBookings(
     (bookings ?? []).map((booking) =>
-      bookingToDisplayBooking(booking, latestPaymentAttempts.get(booking.id)),
+      bookingToDisplayBooking(booking, paidPaymentAttempts.get(booking.id)),
     ),
   );
 

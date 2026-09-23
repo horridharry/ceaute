@@ -29,7 +29,7 @@ import {
 // anywhere on the card still opens the details. Book is raised above that
 // layer, named after the treatment because every card has one, and stays a
 // full 44px tall next to a name that wraps.
-function TreatmentRow({ treatment, onOpenDetails, onSelect }) {
+function TreatmentRow({ treatment, onOpenDetails, onSelect, bookable }) {
   return (
     <article className="relative rounded-xl border border-black/10 p-4">
       <div className="flex items-start justify-between gap-3">
@@ -42,14 +42,16 @@ function TreatmentRow({ treatment, onOpenDetails, onSelect }) {
             {treatment.name}
           </button>
         </h3>
-        <button
-          type="button"
-          onClick={() => onSelect(treatment)}
-          aria-label={`Book ${treatment.name}`}
-          className="relative -my-1 inline-flex min-h-11 shrink-0 items-center rounded-lg bg-pink-700 px-4 text-sm font-semibold text-white duration-200 hover:bg-pink-800"
-        >
-          Book
-        </button>
+        {bookable ? (
+          <button
+            type="button"
+            onClick={() => onSelect(treatment)}
+            aria-label={`Book ${treatment.name}`}
+            className="relative -my-1 inline-flex min-h-11 shrink-0 items-center rounded-lg bg-pink-700 px-4 text-sm font-semibold text-white duration-200 hover:bg-pink-800"
+          >
+            Book
+          </button>
+        ) : null}
       </div>
       {/* Two lines on the card; the details sheet has the whole text. */}
       {treatment.description ? (
@@ -69,6 +71,7 @@ function TreatmentDetailsSheet({
   onClose,
   onContinue,
   isNavigating,
+  bookable,
 }) {
   const hasAddOns = treatment.add_ons.length > 0;
   const selectedAddOns = useMemo(
@@ -169,14 +172,18 @@ function TreatmentDetailsSheet({
           </div>
         ) : null}
 
-        <button
-          type="button"
-          onClick={onContinue}
-          disabled={isNavigating}
-          className="mt-6 w-full rounded-lg bg-pink-700 p-3 text-sm font-semibold text-white duration-200 hover:bg-pink-800 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {isNavigating ? "Continuing..." : hasAddOns ? "Choose a time" : "Book"}
-        </button>
+        {bookable ? (
+          <button
+            type="button"
+            onClick={onContinue}
+            disabled={isNavigating}
+            className="mt-6 w-full rounded-lg bg-pink-700 p-3 text-sm font-semibold text-white duration-200 hover:bg-pink-800 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isNavigating ? "Continuing..." : hasAddOns ? "Choose a time" : "Book"}
+          </button>
+        ) : (
+          <p className="mt-6 text-sm text-ink-muted">Not taking online bookings right now.</p>
+        )}
       </div>
     </div>
   );
@@ -184,7 +191,10 @@ function TreatmentDetailsSheet({
 
 // `sections` are { key, heading?, treatments }; a section without a heading
 // (the storefront preview) lists its treatments with no group heading.
-export function TreatmentSelectionList({ sections, username }) {
+// `bookable` is false while the provider is not taking bookings (see
+// provider_page_accepts_new_bookings): the treatments stay readable, without
+// Book.
+export function TreatmentSelectionList({ sections, username, bookable = true }) {
   const router = useRouter();
   const [isNavigating, startTransition] = useTransition();
   const [openTreatmentId, setOpenTreatmentId] = useState(null);
@@ -262,6 +272,7 @@ export function TreatmentSelectionList({ sections, username }) {
                 treatment={treatment}
                 onOpenDetails={handleOpenDetails}
                 onSelect={handleSelect}
+                bookable={bookable}
               />
             ))}
           </section>
@@ -275,6 +286,7 @@ export function TreatmentSelectionList({ sections, username }) {
           onClose={() => setOpenTreatmentId(null)}
           onContinue={handleContinue}
           isNavigating={isNavigating}
+          bookable={bookable}
         />
       ) : null}
     </>

@@ -16,11 +16,37 @@ stable database ID, which application code calls `providerPageId`, and at most
 one page belongs to an account. The database table remains `provider_page` even
 when customer-facing copy uses more natural language.
 
-Provider onboarding creates a draft page. Publishing is a PostgreSQL operation,
-not merely a UI state change. It requires a display name, username, category and
-biography; a complete current location; working hours; at least one active,
-categorised treatment; booking and cancellation settings; a visible portfolio
-image; and a Stripe recipient account able to receive transfers and payouts.
+Starting a business page ("Start your business page" in the account menu or
+Account → Your business) asks only for a business name and a username, creates
+a draft page and opens the dashboard; it never updates an existing page. A
+username is 3–30 lowercase letters, numbers, underscores and full stops; a full
+stop sits between characters (`studio.nala`), never first, last or twice in a
+row, and usernames are unique ignoring case. Existing usernames are never
+rewritten.
+
+Publishing is a PostgreSQL operation, not merely a UI state change. It requires
+eight things, read from one breakdown
+(`ceaute.get_provider_page_publication_checks`): a business profile (name,
+username, category; the bio is optional), an active categorised treatment priced
+at least £1.00, a visible portfolio photo, a complete current location, working
+hours, complete booking terms (a percentage, see Payments), a Stripe recipient
+account able to receive transfers and payouts, and acceptance of the current
+provider agreement. Treatment descriptions and treatment groups are optional.
+
+Setup completion, readiness, publication, taking bookings and suspension are
+separate. A draft with anything left to do shows the setup guide on every
+dashboard page except create and edit screens, onboarding and the preview:
+pinned to the bottom on phones, floating at the bottom right from 640px, "3 of
+8" with the next task, expanding to a full-screen sheet on phones or a panel on
+larger screens. It is derived on each request and never stored, disappears when
+setup is complete and returns if a requirement lapses on a draft. Today then
+shows a small Ready to publish card. Publishing stays deliberate, on
+Settings → Publication. A published page whose terms, Stripe account or
+agreement acceptance lapse, or whose owner owes Ceaute money, stays published
+and visible but takes no new bookings
+(`ceaute.provider_page_accepts_new_bookings`); Today, Booking settings and
+Publication say why, and the public page says it "isn't taking online bookings
+right now" and shows no Book buttons. Ceaute never unpublishes a page by itself.
 A published page keeps its username: the owner must unpublish before clearing
 it, and PostgreSQL rejects the change otherwise. The outcome of publishing or
 unpublishing, including the database's rejection reason, is shown on
@@ -41,8 +67,12 @@ View your page opens the live `/@username` page once published, otherwise
 `/dashboard/profile/preview`, which is marked as not live, links to
 Publication, and redirects to the live page after publishing. `/dashboard/settings` redirects to `/dashboard`.
 The personal control is the person rather than the business: Account, My
-bookings (bookings they made as a customer) and Discover inside the workspace,
-Your business, Bookings and Account outside it. `/dashboard/treatment-groups`
+bookings (bookings they made as a customer) and Discover inside the workspace;
+Your business, Discover, My bookings and Account outside it; Discover, My
+bookings, Account and Start your business page for someone without a page. Its
+initial comes from the profile name. Signed out, the header's Log in returns to
+the page it was pressed on. Customers' bookings are "My bookings"; the
+provider's are "Bookings". `/dashboard/treatment-groups`
 is the canonical group route. `/dashboard/onboarding` is the intentional exception to the normal
 guard which redirects dashboard users without a provider page into onboarding.
 
@@ -51,19 +81,24 @@ Completed (finished, whether or not the completion job has run) and Cancelled.
 Unpaid holds, expired holds and holds whose late payment was refunded are left
 out of every list and count, and their detail URLs are Not found, decided on the
 server; the records are kept. Availability's count of payments in progress is
-unchanged. Home (Today) lists the day's appointments and shows the publication
-checklist only while the page is a draft.
+unchanged. Home (Today) lists the day's appointments, a Ready to publish card
+when a draft's setup is complete, and a notice when a live page is not taking
+new bookings.
 
-Customer settings and booking history stay under `/account`, including
-`/account/bookings`. The settings screen edits the profile name and UK phone
-number that bookings snapshot; email is the sign-in identity and is not
-editable there, and there is no account deletion flow. Signing in and signing
+`/account` is the Account page (`/account/settings` redirects to it): Personal
+details (the profile name and UK phone number that bookings snapshot, saved
+with a neutral "Saved"), Signing in (the email, which is the sign-in identity
+and is not editable, and Log out), Your business (a way into the dashboard, or
+Start your business page) and Your data (requests are emailed to the legal
+contact address, as the Privacy Notice describes; there is no self-service
+deletion). My bookings is `/account/bookings`. Signing in and signing
 up both email a six-digit code which the person types into Ceaute; there is no
 link to click. Sign-in never creates an account, sign-up may, a new code can be
 requested once a minute, and requesting one cancels the previous code.
 Authentication is intentionally asymmetric: sign-in and
 sign-up accept a validated return path, which survives the code screen so an
-interrupted booking resumes at its checkout, while a user without one is sent to the
+interrupted booking resumes at Review and pay (the form says so when the
+return path is a booking), while a user without one is sent to the
 dashboard if they have a provider page and to the account area otherwise.
 
 ## The public page, treatments, treatment groups and add-ons
@@ -167,10 +202,15 @@ automatically. An archived group cannot be newly assigned, but a treatment
 already in one keeps it and its edit form shows the group as archived. Saving an
 add-on keeps its links to archived treatments and cannot create new ones.
 
-Discovery at `/discover` filters published providers by public-area text and/or
-an active Ceaute discovery category. It is a simple category and area search,
-not distance search, ranking, recommendations, or a standalone treatment
-catalogue. There is no landing page: `/` redirects (temporarily) to
+Discovery at `/discover` lists every published provider with a current
+location and an active treatment, alphabetically, 24 at a time ("Show more"
+adds 24 through `?shown=`, without JavaScript), and filters them by public-area
+text and/or an active Ceaute discovery category. Each card (variant B, chosen
+23 September 2026) is one link: up to three portfolio photos, then the display
+photo, business name, public area and the storefront's rating (average of
+visible reviews to one decimal with the count, or "New"). It is a simple
+category and area search, not distance search, ranking, recommendations, or a
+standalone treatment catalogue. There is no landing page: `/` redirects (temporarily) to
 `/discover`, and the header logo leads to Discover everywhere except the
 provider workspace, where it leads to the dashboard.
 
@@ -217,9 +257,27 @@ staleness is an accepted MVP trade-off, not a bug to design around.
 The public journey starts on the provider page. Selecting a treatment goes
 directly into its booking flow; there is no separate public `/services`
 catalogue or detail route. Compatible add-ons can be selected, then the customer
-chooses a time, signs in if necessary, supplies a name and UK phone number, and
-lands on the held booking, where they review the terms, optionally attach
-inspiration images, and continue to Stripe Checkout.
+chooses a time on "When suits you?": a strip of days (abbreviated weekday and
+date; closed and fully booked days look and read differently) and the chosen
+day's times grouped Morning, Afternoon and Evening. Review and pay is readable
+before signing in: the summary, what is paid now and at the appointment (from
+PostgreSQL's quote), the cancellation deadline and what a late cancellation
+keeps, the written policy, and the customer's saved contact details as one line
+with Change. Signing in returns to the same Review. "Continue to payment" is
+one server action: it saves changed details, continues with the customer's own
+matching live hold or makes a new one, checks the held amounts equal what was
+reviewed (stopping on "Check the updated price" if the provider changed
+something), and opens Stripe Checkout. A different hold of the customer's own
+at an overlapping time is linked, never silently replaced.
+
+Stripe returns to the held page, which only reads state: a confirmed booking
+opens its page with "You're booked" and the address; "Confirming your
+payment…" refreshes every 3 seconds for a minute and never offers to pay again;
+a payment that arrived after the hold ended reads "We couldn't book this time"
+with the full refund's state; a failed, cancelled or unfinished payment keeps
+"Continue to payment" while the time is held; an ended hold with nothing paid
+says so; a provider who stopped taking bookings is named and nothing is
+charged.
 
 Availability is derived rather than stored as slot rows. Each provider has at
 most one continuous working period per weekday plus whole blocked dates. A slot
@@ -252,19 +310,20 @@ complete, while no new hold can start on a blocked date. The screen shows
 confirmed bookings and payments in progress per date, read once when the page
 loads; the counts are advisory and the database rules decide what can be booked.
 
-Creating a booking first inserts an `awaiting_payment` booking with a five-minute
-hold. Starting Stripe Checkout durably records the request and extends the hold
-to the Checkout expiry, currently about 31 minutes. Expired holds no longer
+Creating a booking first inserts an `awaiting_payment` booking with a ten-minute
+hold, refused if the provider is not taking bookings. Starting Stripe Checkout
+durably records the request and extends the hold to the Checkout expiry,
+currently about 31 minutes; a rejected or unusable Session restores the
+original expiry. Expired holds no longer
 block the diary. PostgreSQL's exclusion constraint is the final protection
 against overlapping active bookings even when two requests race.
 
 ## Inspiration images
 
 A customer may attach private reference pictures to their own booking, to show
-the provider the result they are after. The step sits on the held-booking
-checkout screen between the summary and the payment button, and it is optional
-in the strongest sense: nothing about payment depends on it, and the payment
-button is there whether or not an image has been added.
+the provider the result they are after. They are added after the booking is
+confirmed, from the booking's page ("Add inspiration photos"), until the
+appointment starts; nothing about booking or paying depends on them.
 
 A booking carries at most five images, each a JPEG, PNG or WebP of no more than
 10 MB. The screen says so before an upload starts, but the limits that decide
@@ -280,24 +339,32 @@ they cannot add, remove or replace a customer's pictures. Nobody else sees them
 at all. The bucket is private and reached through short-lived signed URLs, so
 there is no permanent public address for an image.
 
-Images attached to a booking that is never paid for are temporary. When the hold
-runs out or the booking is cancelled before it was ever confirmed, the scheduled
-booking-lifecycle route deletes both the files and their records, so entering
-the booking flow and walking away leaves nothing behind. Images on a booking
+Images attached to a booking that is never paid for are temporary. The screens
+no longer offer them before confirmation, and the scheduled booking-lifecycle
+route still deletes the files and records of any hold that runs out or is
+cancelled before it was ever confirmed. Images on a booking
 that was paid for are kept with it; Ceaute has no retention or deletion policy
 for those yet, and that is deliberately deferred.
 
 ## Payments and booking history
 
 Providers connect a Stripe recipient account. Checkout uses a destination charge
-to transfer the booking payment to that account. A provider chooses either full
-payment or a fixed deposit and a 12-, 24-, or 48-hour cancellation window. The
-deposit or the configured commitment amount is the maximum retained after a
-late customer cancellation. Any balance after a fixed deposit is recorded as
-due later; collection of that offline balance is outside Ceaute. There is no
-pay-later option, so a deposit must be greater than £0; PostgreSQL rejects a
-deposit-mode setting without one. Checkout still requires the amount due online
-to be greater than zero.
+to transfer the booking payment to that account. Booking terms apply to the
+whole provider: Deposit or Full payment, one percentage (10–100% in steps of 5;
+a deposit 10–90%; never 0%) and a free-cancellation window of 12, 24 or 48
+hours, with an optional written policy. A deposit is that percentage of the
+whole booking price (treatment and add-ons), at least £1.00 and never more than
+the price; full payment is the whole price. After a late customer cancellation
+the provider keeps the same percentage, never more than was paid; an early
+cancellation or any provider cancellation refunds everything. The percentage is
+rounded to the nearest penny, halves up, once, by PostgreSQL when the hold is
+made, and stored on the booking ([decision 006](decisions/006-percentage-booking-terms.md)).
+Any balance after a deposit is due at the appointment; collection of that
+offline balance is outside Ceaute. There is no pay-later option. Settings saved
+before percentages are kept exactly and never converted: they count as
+incomplete, so a draft cannot publish and a live page takes no new bookings
+until a percentage is chosen, and bookings already made keep their terms,
+including £0 kept where an old full-payment setting left the amount blank.
 
 The customer pays the advertised price; the provider bears both deductions.
 Stripe's `application_fee_amount` is the only lever, so it carries Ceaute's 2%
@@ -321,9 +388,9 @@ booking. Late or duplicate successful payments are routed into a recorded refund
 operation. Webhook events and payment attempts are designed for replay because
 Stripe delivery and network outcomes are not exactly-once.
 
-Both checkout steps show the cancellation window, the amount the provider
-retains after a late cancellation, and any written policy, and both link to
-`/terms` and `/privacy`. There is no separate policy-version record or
+Review and pay and the held page show the cancellation deadline, what a late
+cancellation keeps, and any written policy; both link to `/terms` and
+`/privacy` and give the trader details. There is no separate policy-version record or
 acceptance checkbox: continuing to payment is the current acceptance
 interaction, and the displayed terms are preserved in the booking snapshot.
 
@@ -341,8 +408,18 @@ are implemented in database functions as well as presentation code.
 
 ## Cancellation, completion, and reviews
 
+My bookings lists a hold still waiting for payment first ("Finish booking",
+held until a time, with Continue to payment), then Upcoming (soonest first),
+Past and Cancelled (newest first). A hold that ended with nothing paid is in no
+list and its link says "This held time ended. Nothing was charged."; a payment
+that arrived too late is under Cancelled as "Payment refunded" with its
+refund's state. "Paid online" counts only a payment that went through.
+
 Only a future confirmed booking can be cancelled. The owning customer and the
-owner of the booked provider page have separate authorised paths. A provider
+owner of the booked provider page have separate authorised paths. The customer
+confirms in a dialog that says what happens to the money now ("Cancel and
+refund £x" only when something is refunded); the outcome, and a review's, is
+shown on the page rather than as an error page. A provider
 cancellation refunds the full online amount. An early customer cancellation
 also refunds the full online amount; a late cancellation retains at most the
 snapshotted commitment amount and refunds the rest. Cancellation immediately
@@ -359,13 +436,15 @@ appear on the public provider page. A database function lets the trusted
 backend hide or show a review, but no application or administration screen
 calls it yet, and nobody can delete a review.
 
-A provider must accept the current provider agreement before their page can
-take paid bookings, and an acceptance is recorded immutably against its version
-string. A provider carrying an outstanding liability is also blocked from new
-paid bookings until it is settled; existing confirmed bookings are unaffected.
-Both gates are evaluated where the Stripe-readiness gate already is, at the
-point Checkout would be created, and the customer sees the same neutral
-"cannot take online payments right now" notice either way.
+A provider must accept the current provider agreement (version in
+`ceaute.current_provider_agreement_version()`) before their page can be
+published or take a new booking, and an acceptance is recorded immutably
+against its version string. A provider carrying an outstanding liability is
+also blocked from new bookings until it is settled; existing confirmed bookings
+are unaffected. PostgreSQL checks both when a hold is made and again when
+Checkout is claimed; a Stripe Session already open when the gate closes can
+still be paid. The customer sees the same neutral "isn't taking online bookings
+right now" either way.
 
 A customer can dispute a payment with their bank. Ceaute records every
 `charge.dispute.*` event in `booking_dispute`, joined to the booking through
@@ -381,8 +460,10 @@ recorded as outstanding debt. Stripe's dispute fee is never recorded as
 provider debt. Responding happens by hand in Stripe —
 see [the dispute runbook](dispute-response.md).
 
-Transactional confirmation and cancellation email is written to a database
-outbox and delivered by a protected scheduled route through Resend. Delivery is
+Transactional confirmation and cancellation email, and the email telling a
+customer their late payment is being refunded in full (no address, no timing
+promise), is written to a database outbox and delivered by a protected
+scheduled route through Resend; the outbox's unique key sends each once. Delivery is
 claim-and-retry based. Appointment reminders, SMS, provider replies, distance
 search, mobile or virtual appointments, recurring availability exceptions, and
 an internal administration UI are not implemented product flows.

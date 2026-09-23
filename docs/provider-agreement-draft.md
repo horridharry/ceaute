@@ -1,15 +1,21 @@
 # Provider agreement — DRAFT, version 2026-09-18
 
 **For owner and legal review. Not legally approved.** No solicitor has read
-this. It is published to providers inside the product as the agreement they
-accept before taking paid bookings, so the sooner it is reviewed the better —
-but it must not be described as legally approved until it has been.
+this. Providers accept this version before they can publish or take bookings,
+but the product shows them only the summary in the Terms
+(`/terms#providers`), not this full text: showing the approved text before
+acceptance is a private-alpha blocker. It must not be described as legally
+approved until it has been.
 
 The version string above is the one recorded in
-`ceaute.provider_agreement_acceptance` and held in
-`PROVIDER_AGREEMENT_VERSION`. **Changing the substance below means bumping the
-version**, which makes every existing acceptance stale and re-gates paid
-bookings until each provider accepts again. Fixing a typo does not.
+`ceaute.provider_agreement_acceptance`. PostgreSQL's
+`ceaute.current_provider_agreement_version()` is the version that publication
+and new bookings require; `PROVIDER_AGREEMENT_VERSION` in
+`src/lib/payments/provider-liability.js` must match it
+(`tests/booking-terms.test.js` checks). **Changing the substance below means
+bumping the version in both**, which makes every existing acceptance stale:
+drafts cannot publish and live pages take no new bookings until each provider
+accepts again. Fixing a typo does not.
 
 Every clause below describes behaviour that is implemented and tested. Where
 something is a manual process, it says so rather than implying automation that

@@ -44,9 +44,9 @@ from ceaute.provider_page
 where provider_page.id::text like '18000000-%';
 
 insert into ceaute.provider_booking_setting (
-  provider_page_id, payment_mode, commitment_amount_pence, cancellation_window_hours, written_policy
+  provider_page_id, payment_mode, deposit_percent, cancellation_window_hours, written_policy
 )
-select provider_page.id, 'full', 1000, 24, 'Fixture policy'
+select provider_page.id, 'full', 20, 24, 'Fixture policy'
 from ceaute.provider_page
 where provider_page.id::text like '18000000-%';
 

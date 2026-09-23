@@ -9,6 +9,7 @@ export default async function AppHeader() {
   const userId = claims?.sub;
 
   let providerPage = null;
+  let profileName = "";
 
   if (userId) {
     try {
@@ -18,6 +19,20 @@ export default async function AppHeader() {
       providerPage = await getOwnedProviderPage(userId);
     } catch {
       providerPage = null;
+    }
+
+    try {
+      // The avatar's initial comes from the name the person gave us.
+      const { supabase } = await getRequestSession();
+      const { data } = await supabase
+        .schema("ceaute")
+        .from("profile")
+        .select("full_name")
+        .eq("id", userId)
+        .maybeSingle();
+      profileName = String(data?.full_name ?? "").trim();
+    } catch {
+      profileName = "";
     }
   }
 
@@ -30,9 +45,10 @@ export default async function AppHeader() {
               id: userId,
               email: claims.email ?? "",
               name:
-                claims.user_metadata?.full_name ??
-                claims.user_metadata?.name ??
-                claims.email ??
+                profileName ||
+                claims.user_metadata?.full_name ||
+                claims.user_metadata?.name ||
+                claims.email ||
                 "Account",
             }
           : null

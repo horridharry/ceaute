@@ -104,28 +104,70 @@ export function formatBookingActor(actor) {
   return labels[actor] ?? BOOKING_FALLBACK_LABEL;
 }
 
-export function categorizeBooking(booking, now = new Date()) {
-  if (booking.status === "cancelled" || booking.status === "expired") {
+// My bookings (Specification §10). What the customer sees of each booking:
+//   hold      — waiting for payment and not yet ended: "Finish booking";
+//   upcoming  — confirmed and not over (soonest first);
+//   past      — completed, or confirmed and over (newest first);
+//   cancelled — cancelled after it was confirmed, or a payment that arrived
+//               after the hold ended and was refunded (newest first);
+//   null      — a hold that ended with nothing paid: hidden from the lists
+//               (its link still explains it), its records kept.
+// `paidAttempt` is the attempt that took the money (selectPaidAttempt) and
+// `holdExpiresAt` when the hold ends; the booking summaries return neither.
+export const CUSTOMER_BOOKING_VIEWS = ["upcoming", "past", "cancelled"];
+
+export function customerBookingView(booking, { paidAttempt = null, holdExpiresAt = null } = {}, now = new Date()) {
+  if (booking.confirmed_at) {
+    if (booking.status === "cancelled") {
+      return "cancelled";
+    }
+
+    if (booking.status === "completed") {
+      return "past";
+    }
+
+    const endAt = new Date(booking.end_at).getTime();
+    return Number.isFinite(endAt) && endAt <= now.getTime() ? "past" : "upcoming";
+  }
+
+  if (paidAttempt) {
     return "cancelled";
   }
 
-  const endAt = new Date(booking.end_at);
+  const expiresAt = new Date(holdExpiresAt ?? "").getTime();
 
-  if (booking.status === "completed" || endAt.getTime() < now.getTime()) {
-    return "previous";
+  if (booking.status === "awaiting_payment" && Number.isFinite(expiresAt) && expiresAt > now.getTime()) {
+    return "hold";
   }
 
-  return "upcoming";
+  return null;
 }
 
-export function groupBookingsByTiming(bookings) {
-  return bookings.reduce(
-    (groups, booking) => {
-      groups[categorizeBooking(booking)].push(booking);
-      return groups;
-    },
-    { upcoming: [], previous: [], cancelled: [] },
-  );
+export function customerBookingViewFromParam(value) {
+  return CUSTOMER_BOOKING_VIEWS.includes(value) ? value : "upcoming";
+}
+
+// Holds soonest to end first; Upcoming soonest first; Past and Cancelled
+// newest first.
+export function groupCustomerBookings(bookings, now = new Date()) {
+  const groups = { hold: [], upcoming: [], past: [], cancelled: [] };
+
+  for (const booking of bookings) {
+    const view = customerBookingView(
+      booking,
+      { paidAttempt: booking.paid_attempt ?? null, holdExpiresAt: booking.hold_expires_at ?? null },
+      now,
+    );
+    if (view) groups[view].push(booking);
+  }
+
+  const byStart = (first, second) => String(first.start_at).localeCompare(String(second.start_at));
+  groups.hold.sort((first, second) => String(first.hold_expires_at).localeCompare(String(second.hold_expires_at)));
+  groups.upcoming.sort(byStart);
+  groups.past.sort((first, second) => byStart(second, first));
+  groups.cancelled.sort((first, second) => byStart(second, first));
+
+  return groups;
 }
 
 // The provider dashboard's appointment filters. A booking row is only an
@@ -268,6 +310,7 @@ export function bookingToDisplayBooking(booking, paymentAttempt = null) {
     customer_email: customer.email ?? BOOKING_FALLBACK_LABEL,
     customer_phone: customer.phone ?? BOOKING_FALLBACK_LABEL,
     provider_name: service.provider_display_name ?? BOOKING_FALLBACK_LABEL,
+    provider_username: service.provider_username ?? "",
     treatment_name: service.treatment_name ?? BOOKING_FALLBACK_LABEL,
     treatment_description:
       service.treatment_description ?? BOOKING_FALLBACK_LABEL,
@@ -276,12 +319,14 @@ export function bookingToDisplayBooking(booking, paymentAttempt = null) {
     duration_label: formatDurationMinutes(service.duration_minutes),
     duration_minutes: service.duration_minutes ?? null,
     total_price_label: formatMoneyFromPence(service.total_price_pence),
+    // paymentAttempt is the attempt that took the money; without one nothing
+    // was paid online.
     amount_paid_online_label: formatMoneyFromPence(
-      paymentAttempt?.amount_charged_pence,
+      paymentAttempt ? paymentAttempt.amount_charged_pence : 0,
     ),
-    amount_paid_online_pence: Number.isInteger(amountPaidPence)
-      ? amountPaidPence
-      : null,
+    amount_paid_online_pence: paymentAttempt
+      ? (Number.isInteger(amountPaidPence) ? amountPaidPence : null)
+      : 0,
     amount_due_at_appointment_label: formatMoneyFromPence(
       paymentAttempt?.amount_due_later_pence,
     ),

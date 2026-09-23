@@ -118,7 +118,7 @@ export const uploadPortfolioImage = async (_currentState, formData) => {
     return { status: "error", message: "Could not save that portfolio image." };
   }
 
-  revalidatePath("/dashboard/profile/portfolio");
+  revalidatePath("/dashboard", "layout");
   revalidatePath("/[username]", "layout");
   return { status: "done", message: "Photo added." };
 };
@@ -149,7 +149,7 @@ export const updatePortfolioImageCaption = async (_currentState, formData) => {
     return { status: "error", message: "Could not update that caption." };
   }
 
-  revalidatePath("/dashboard/profile/portfolio");
+  revalidatePath("/dashboard", "layout");
   revalidatePath("/[username]", "layout");
   return { status: "done", message: "Caption saved." };
 };
@@ -179,7 +179,7 @@ export const setPortfolioImageVisibility = async (_currentState, formData) => {
     };
   }
 
-  revalidatePath("/dashboard/profile/portfolio");
+  revalidatePath("/dashboard", "layout");
   revalidatePath("/[username]", "layout");
   return {
     status: "done",
@@ -247,7 +247,7 @@ export const movePortfolioImage = async (_currentState, formData) => {
     return { status: "error", message: "Could not reorder portfolio images." };
   }
 
-  revalidatePath("/dashboard/profile/portfolio");
+  revalidatePath("/dashboard", "layout");
   revalidatePath("/[username]", "layout");
   return {
     status: "done",
@@ -295,7 +295,7 @@ export const deletePortfolioImage = async (_currentState, formData) => {
     };
   }
 
-  revalidatePath("/dashboard/profile/portfolio");
+  revalidatePath("/dashboard", "layout");
   revalidatePath("/[username]", "layout");
   return { status: "done", message: "Photo deleted." };
 };

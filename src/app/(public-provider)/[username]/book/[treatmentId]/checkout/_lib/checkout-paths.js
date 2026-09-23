@@ -1,3 +1,5 @@
+import { heldBookingPath } from "@/lib/bookings/held-booking-path";
+
 export function firstSearchValue(value) {
   return Array.isArray(value) ? value[0] : value;
 }
@@ -34,22 +36,24 @@ export function buildCheckoutPath({
 }
 
 export function buildReturnPath({ username, treatmentId, startAt, addOnIds, holdId }) {
-  const searchParams = new URLSearchParams({ start_at: startAt });
+  return heldBookingPath({ username, treatmentId, startAt, addOnIds, holdId });
+}
+
+export function buildTimePath({ username, treatmentId, addOnIds, date = "", notice = "" }) {
+  const searchParams = new URLSearchParams();
 
   for (const addOnId of addOnIds) {
     searchParams.append("add_on", addOnId);
   }
 
-  searchParams.set("hold", holdId);
+  // The London date to open the picker on, and why the customer was sent
+  // back ("taken": the time was just taken).
+  if (date) {
+    searchParams.set("date", date);
+  }
 
-  return `/@${username}/book/${treatmentId}/checkout?${searchParams.toString()}`;
-}
-
-export function buildTimePath({ username, treatmentId, addOnIds }) {
-  const searchParams = new URLSearchParams();
-
-  for (const addOnId of addOnIds) {
-    searchParams.append("add_on", addOnId);
+  if (notice) {
+    searchParams.set("notice", notice);
   }
 
   const query = searchParams.toString();

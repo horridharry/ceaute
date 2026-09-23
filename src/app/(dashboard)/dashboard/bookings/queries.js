@@ -1,7 +1,7 @@
 import { getSignedInProvider } from "../_lib/provider-data";
 import { listBookingInspirationImages } from "@/lib/bookings/booking-inspiration-images";
 import { bookingToDisplayBooking, isProviderAppointment } from "@/lib/bookings/booking-display";
-import { getLatestPaymentAttemptsForBookings } from "@/lib/bookings/booking-payment-attempts";
+import { getPaidPaymentAttemptsForBookings } from "@/lib/bookings/booking-payment-attempts";
 import { loadProviderBookingGroups } from "@/lib/bookings/provider-booking-groups";
 
 export const getAllBookings = async () => {
@@ -36,15 +36,15 @@ export const getProviderBooking = async (bookingId) => {
     return null;
   }
 
-  const [latestPaymentAttempts, inspirationImages] = await Promise.all([
-    getLatestPaymentAttemptsForBookings([booking.id]),
+  const [paidPaymentAttempts, inspirationImages] = await Promise.all([
+    getPaidPaymentAttemptsForBookings([booking.id]),
     // Read only, and only for an appointment this provider was engaged for.
     // ceaute.can_view_booking_inspiration_images decides that, not this call.
     listBookingInspirationImages({ supabase, bookingId: booking.id }),
   ]);
 
   return {
-    ...bookingToDisplayBooking(booking, latestPaymentAttempts.get(booking.id)),
+    ...bookingToDisplayBooking(booking, paidPaymentAttempts.get(booking.id)),
     inspiration_images: inspirationImages,
   };
 };

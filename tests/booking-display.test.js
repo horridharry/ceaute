@@ -3,8 +3,10 @@ import test from "node:test";
 import {
   BOOKING_FALLBACK_LABEL,
   bookingToDisplayBooking,
+  customerBookingView,
+  customerBookingViewFromParam,
   formatSingleDateTime,
-  groupBookingsByTiming,
+  groupCustomerBookings,
   normalizeBookingSnapshots,
 } from "../src/lib/bookings/booking-display.js";
 
@@ -120,11 +122,70 @@ test("unpaid holds do not expose the private address", () => {
 });
 
 test("an empty booking list groups into empty sections", () => {
-  assert.deepEqual(groupBookingsByTiming([]), {
+  assert.deepEqual(groupCustomerBookings([]), {
+    hold: [],
     upcoming: [],
-    previous: [],
+    past: [],
     cancelled: [],
   });
+});
+
+// My bookings (Specification §10).
+const NOW = new Date("2026-10-10T12:00:00.000Z");
+const PAID = { attempt_number: 2, payment_status: "succeeded", amount_charged_pence: 1200 };
+
+test("a hold still waiting for payment is a Finish booking card until it ends", () => {
+  const hold = booking({ status: "awaiting_payment", confirmed_at: null });
+  assert.equal(customerBookingView(hold, { holdExpiresAt: "2026-10-10T12:05:00.000Z" }, NOW), "hold");
+  assert.equal(customerBookingView(hold, { holdExpiresAt: "2026-10-10T11:59:59.000Z" }, NOW), null, "an ended hold is hidden");
+  assert.equal(customerBookingView(hold, {}, NOW), null, "a hold without an end is not offered");
+});
+
+test("a hold that ended with nothing paid is in no list", () => {
+  for (const status of ["cancelled", "expired", "awaiting_payment"]) {
+    assert.equal(customerBookingView(booking({ status, confirmed_at: null }), {}, NOW), null, status);
+  }
+});
+
+test("a payment that arrived after the hold ended is listed under Cancelled", () => {
+  const late = booking({ status: "cancelled", confirmed_at: null });
+  const refunding = { ...PAID, payment_status: "refund_required" };
+  assert.equal(customerBookingView(late, { paidAttempt: refunding }, NOW), "cancelled");
+});
+
+test("confirmed bookings are Upcoming until they end, then Past; cancellations after confirming are Cancelled", () => {
+  assert.equal(customerBookingView(booking(), { paidAttempt: PAID }, NOW), "upcoming");
+  assert.equal(customerBookingView(booking({ end_at: "2026-10-10T11:00:00.000Z" }), { paidAttempt: PAID }, NOW), "past");
+  assert.equal(customerBookingView(booking({ status: "completed" }), { paidAttempt: PAID }, NOW), "past");
+  assert.equal(customerBookingView(booking({ status: "cancelled", cancelled_by: "provider" }), { paidAttempt: PAID }, NOW), "cancelled");
+});
+
+test("My bookings sorts holds by end, Upcoming soonest first, Past and Cancelled newest first", () => {
+  const upcomingLater = { ...booking({ id: "u2", start_at: "2026-10-22T10:00:00.000Z", end_at: "2026-10-22T11:00:00.000Z" }), paid_attempt: PAID };
+  const upcomingSooner = { ...booking({ id: "u1", start_at: "2026-10-12T10:00:00.000Z", end_at: "2026-10-12T11:00:00.000Z" }), paid_attempt: PAID };
+  const pastOlder = { ...booking({ id: "p1", status: "completed", start_at: "2026-09-01T10:00:00.000Z", end_at: "2026-09-01T11:00:00.000Z" }), paid_attempt: PAID };
+  const pastNewer = { ...booking({ id: "p2", status: "completed", start_at: "2026-10-01T10:00:00.000Z", end_at: "2026-10-01T11:00:00.000Z" }), paid_attempt: PAID };
+  const holdA = { ...booking({ id: "h1", status: "awaiting_payment", confirmed_at: null }), hold_expires_at: "2026-10-10T12:08:00.000Z" };
+  const holdB = { ...booking({ id: "h2", status: "awaiting_payment", confirmed_at: null }), hold_expires_at: "2026-10-10T12:03:00.000Z" };
+  const ended = { ...booking({ id: "x", status: "cancelled", confirmed_at: null }) };
+
+  const groups = groupCustomerBookings([upcomingLater, pastOlder, holdA, ended, upcomingSooner, pastNewer, holdB], NOW);
+  assert.deepEqual(groups.hold.map((entry) => entry.id), ["h2", "h1"]);
+  assert.deepEqual(groups.upcoming.map((entry) => entry.id), ["u1", "u2"]);
+  assert.deepEqual(groups.past.map((entry) => entry.id), ["p2", "p1"]);
+  assert.deepEqual(groups.cancelled, []);
+});
+
+test("an unknown ?view falls back to Upcoming", () => {
+  assert.equal(customerBookingViewFromParam("past"), "past");
+  assert.equal(customerBookingViewFromParam("previous"), "upcoming");
+  assert.equal(customerBookingViewFromParam(undefined), "upcoming");
+});
+
+test("an unpaid booking shows nothing paid online, never another attempt's amount", () => {
+  const display = bookingToDisplayBooking(booking({ status: "awaiting_payment", confirmed_at: null }), null);
+  assert.equal(display.amount_paid_online_pence, 0);
+  assert.equal(display.amount_paid_online_label, "£0.00");
 });
 
 // Money shown to the customer before they cancel must match what PostgreSQL

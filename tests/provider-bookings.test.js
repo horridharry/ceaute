@@ -5,7 +5,7 @@ import { createElement as h } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import {
-  categorizeBooking,
+  customerBookingView,
   groupProviderBookings,
   isProviderAppointment,
   providerBookingView,
@@ -73,9 +73,9 @@ test("upcoming appointments are soonest first", () => {
   assert.deepEqual(groupProviderBookings([later, sooner], NOW).upcoming.map((booking) => booking.id), ["sooner", "later"]);
 });
 
-test("the customer's own booking tabs are unchanged", () => {
-  assert.equal(categorizeBooking(expiredHold, NOW), "cancelled");
-  assert.equal(categorizeBooking(confirmedEnded, NOW), "previous");
+test("the customer's own tabs keep Past and hide an ended hold (Specification §10)", () => {
+  assert.equal(customerBookingView({ ...expiredHold, confirmed_at: null }, {}, NOW), null);
+  assert.equal(customerBookingView({ ...confirmedEnded, confirmed_at: "2026-09-20T10:00:00Z" }, {}, NOW), "past");
 });
 
 test("old ?view=previous links land on Completed; anything unknown on Upcoming", () => {
@@ -159,16 +159,23 @@ test("a booking row links to the appointment and shows what the provider needs",
 });
 
 test("every publication requirement opens the section where it is met", () => {
-  const readiness = readFileSync("src/app/(dashboard)/dashboard/_lib/publication-readiness.js", "utf8");
-  const hrefs = [...readiness.matchAll(/"(\/dashboard[^"]*)"/g)].map(([, href]) => href);
-  assert.equal(hrefs.length, 10);
-  assert.deepEqual([...new Set(hrefs)].sort(), [
-    "/dashboard/availability",
-    "/dashboard/locations",
+  const checks = readFileSync("src/app/(dashboard)/dashboard/_lib/publication-checks.js", "utf8");
+  const tasks = checks.slice(checks.indexOf("export const SETUP_TASKS"), checks.indexOf("// Why a live page"));
+  const hrefs = [...tasks.matchAll(/href: "(\/dashboard[^"]*)"/g)].map(([, href]) => href);
+  assert.equal(hrefs.length, 8);
+  assert.deepEqual(hrefs, [
     "/dashboard/profile",
+    "/dashboard/treatments",
     "/dashboard/profile/portfolio",
+    "/dashboard/locations",
+    "/dashboard/availability",
     "/dashboard/settings/booking",
     "/dashboard/settings/payments",
-    "/dashboard/treatments",
+    "/dashboard/settings/payments#provider-agreement",
   ]);
+  // The agreement link lands on the block that has the id.
+  assert.match(
+    readFileSync("src/app/(dashboard)/dashboard/settings/payments/page.jsx", "utf8"),
+    /id="provider-agreement"/,
+  );
 });

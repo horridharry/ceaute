@@ -4,96 +4,102 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { providerWorkspacePath } from '@/lib/providers/onboarding-path';
 import { createClient } from '@/lib/supabase/server';
-import {
-  USERNAME_MAX_LENGTH,
-  USERNAME_MIN_LENGTH,
-  normalizeUsername,
-} from '@/lib/providers/username';
+import { normalizeUsername, validateUsername } from '@/lib/providers/username';
 
+export type DraftFormState = {
+  businessName: string;
+  username: string;
+  fieldErrors: { business_name?: string; username?: string };
+  formError: string;
+};
+
+// Creates the provider draft from a business name and a username, then opens
+// the dashboard, where everything else is set up (approved 23 September 2026).
+// It never updates an existing page: someone who already has one is sent to
+// their dashboard.
 export async function startProviderOnboarding(
   nextValue: string | null,
-  _currentState: string,
+  _currentState: DraftFormState | null,
   formData: FormData,
-) {
+): Promise<DraftFormState> {
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
   const userId = data?.claims?.sub;
+  const workspace = providerWorkspacePath(nextValue) ?? '/dashboard';
 
   if (!userId) {
     redirect('/sign-in?next=/dashboard/onboarding');
   }
 
-  const displayName = String(formData.get('business_name') ?? '').trim();
+  const businessName = String(formData.get('business_name') ?? '').trim();
   const username = normalizeUsername(formData.get('username'));
-  const biography = String(formData.get('biography') ?? '').trim();
+  const state: DraftFormState = { businessName, username, fieldErrors: {}, formError: '' };
 
-  if (displayName.length < 2) {
-    return 'Please enter a business name.';
+  if (businessName.length < 2) {
+    state.fieldErrors.business_name = 'Enter a business name of at least 2 characters.';
+  } else if (businessName.length > 120) {
+    state.fieldErrors.business_name = 'Use 120 characters or fewer.';
   }
 
-  if (username.length < USERNAME_MIN_LENGTH || username.length > USERNAME_MAX_LENGTH) {
-    return `Username must be between ${USERNAME_MIN_LENGTH} and ${USERNAME_MAX_LENGTH} characters long.`;
+  const usernameError = username ? validateUsername(username) : 'Choose a username.';
+
+  if (usernameError) {
+    state.fieldErrors.username = usernameError;
   }
 
-  if (biography.length > 500) {
-    return 'Short bio must be 500 characters or fewer.';
+  if (state.fieldErrors.business_name || state.fieldErrors.username) {
+    return state;
   }
 
-  const { data: existingProviderPage, error: existingProviderPageError } = await supabase
+  const { data: existingPage, error: existingError } = await supabase
     .schema('ceaute')
     .from('provider_page')
     .select('id')
     .eq('owner_profile_id', userId)
     .maybeSingle();
 
-  if (existingProviderPageError) {
-    return 'Could not load your provider draft.';
+  if (existingError) {
+    return { ...state, formError: 'Couldn’t create your page. Try again.' };
   }
 
-  const providerPageValues = {
-    display_name: displayName,
-    username,
-    biography: biography || null,
-  };
+  if (existingPage) {
+    redirect(workspace);
+  }
 
-  // Username uniqueness is decided by PostgreSQL's partial unique index. RLS
-  // only lets this user see their own provider page, so a pre-check could
-  // never see another provider's username; the write is the authority.
-  const { error } = existingProviderPage
-    ? await supabase
-        .schema('ceaute')
-        .from('provider_page')
-        .update(providerPageValues)
-        .eq('id', existingProviderPage.id)
-    : await supabase
-        .schema('ceaute')
-        .rpc('create_provider_page_draft', {
-          target_display_name: displayName,
-          target_username: username,
-          target_biography: biography,
-        });
+  const { error } = await supabase.schema('ceaute').rpc('create_provider_page_draft', {
+    target_display_name: businessName,
+    target_username: username,
+    target_biography: '',
+  });
 
   if (error) {
+    const message = String(error.message ?? '');
+
+    // Uniqueness is decided by PostgreSQL: RLS only lets this user see their
+    // own page, so no pre-check could see another provider's username.
+    if (error.code === '23505' && message.includes('provider_page_username_unique')) {
+      return {
+        ...state,
+        fieldErrors: { username: 'That username is taken. Try another.' },
+      };
+    }
+
+    // A second submission of the same form: the first one created the page.
     if (error.code === '23505') {
-      return 'That username is already taken.';
+      redirect(workspace);
     }
 
     if (error.code === '23514') {
-      return 'Check the details and try again.';
+      return {
+        ...state,
+        fieldErrors: { username: validateUsername(username) ?? 'Check the username and try again.' },
+      };
     }
 
-    console.error('Provider onboarding save failed', {
-      userId,
-      existingProviderPageId: existingProviderPage?.id ?? null,
-      code: error.code,
-      message: error.message,
-      details: error.details,
-      hint: error.hint,
-    });
-
-    return 'Could not save provider onboarding.';
+    console.error('Provider draft creation failed', { userId, code: error.code });
+    return { ...state, formError: 'Couldn’t create your page. Try again.' };
   }
 
   revalidatePath('/', 'layout');
-  redirect(providerWorkspacePath(nextValue) ?? '/dashboard');
+  redirect(workspace);
 }

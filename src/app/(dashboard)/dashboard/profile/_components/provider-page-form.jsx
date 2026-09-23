@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { keepFormValuesOnSubmit } from "@/lib/forms/keep-form-values";
-import { normalizeUsername, validateUsername } from "@/lib/providers/username";
+import { normalizeUsername, suggestUsername, validateUsername } from "@/lib/providers/username";
 import { PROVIDER_CATEGORIES } from "../_lib/provider-page-form-values";
 
 export function ProviderPageForm({ providerPage, updateProviderPage }) {
@@ -34,7 +34,7 @@ export function ProviderPageForm({ providerPage, updateProviderPage }) {
     );
 
     if (!usernameWasEdited) {
-      const suggestedUsername = normalizeUsername(nextBusinessName);
+      const suggestedUsername = suggestUsername(nextBusinessName);
       setUsername(suggestedUsername);
       setUsernameError(validateUsername(suggestedUsername) ?? "");
     }
@@ -105,7 +105,7 @@ export function ProviderPageForm({ providerPage, updateProviderPage }) {
         )}
       </Field>
 
-      <Field label="Biography" htmlFor="biography" hint={`${biography.length} / 500`} error={biographyError}>
+      <Field label="Biography" optional htmlFor="biography" hint={`${biography.length} / 500`} error={biographyError}>
         {(control) => (
           <Textarea
             {...control}

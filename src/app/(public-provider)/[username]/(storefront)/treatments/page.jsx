@@ -7,7 +7,10 @@ import {
   hasPublicUsernamePrefix,
   normalizePublicUsername,
 } from "@/features/storefront/format";
-import { getPublishedProviderPageByUsername } from "../../_lib/public-provider-data";
+import {
+  getProviderAcceptsBookings,
+  getPublishedProviderPageByUsername,
+} from "../../_lib/public-provider-data";
 
 // All treatments: every active treatment, grouped, in the same order as the
 // storefront's preview. It sits in the (storefront) route group, so the
@@ -40,10 +43,10 @@ export async function generateMetadata({ params }) {
 
 export default async function ProviderTreatmentsPage({ params }) {
   const providerPage = await publishedPage(params);
-  const sections = await loadTreatmentSections(
-    createServiceRoleClient(),
-    providerPage.id,
-  );
+  const [sections, takingBookings] = await Promise.all([
+    loadTreatmentSections(createServiceRoleClient(), providerPage.id),
+    getProviderAcceptsBookings(providerPage.id),
+  ]);
 
   return (
     <main className="container mx-auto max-w-md px-5 pb-10 pt-6 lg:max-w-[25.5rem] lg:px-0">
@@ -56,7 +59,7 @@ export default async function ProviderTreatmentsPage({ params }) {
       </Link>
       <h1 className="mt-2 text-2xl font-bold tracking-tighter">All treatments</h1>
       <div className="mt-6">
-        <AllTreatments sections={sections} username={providerPage.username} />
+        <AllTreatments sections={sections} username={providerPage.username} bookable={takingBookings} />
       </div>
     </main>
   );

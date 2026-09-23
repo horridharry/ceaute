@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {
   acceptProviderAgreement,
   refreshPaymentStatus,
@@ -174,8 +175,13 @@ export default async function DashboardPaymentSettingsPage() {
             Provider agreement
           </h2>
           <p className="text-ink-muted">
-            Accept version {agreementVersion} before taking paid bookings. It
-            covers payouts, refunds and disputes.
+            Accept version {agreementVersion} before you publish and take
+            bookings. It covers payouts, refunds and disputes, and is
+            summarised in the{" "}
+            <Link href="/terms#providers" className="font-semibold text-accent underline underline-offset-2">
+              provider terms
+            </Link>
+            .
           </p>
           <form action={acceptProviderAgreement}>
             <PendingButton variant="secondary" pendingLabel="Recording…">

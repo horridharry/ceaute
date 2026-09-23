@@ -109,16 +109,18 @@ export default function TermsPage() {
       <section>
         <h2>Making a booking and when it is confirmed</h2>
         <p>
-          Choosing a time holds that slot for five minutes while you confirm
-          your details, and the hold is extended to about half an hour once
-          you open the Stripe payment page. If you do not finish paying before
-          the hold expires, the slot is released and someone else can take it.
+          When you continue to payment, the time is held for you for ten
+          minutes, and for as long as the Stripe payment page stays open
+          (about half an hour). If you do not finish paying before the hold
+          expires, the time is released and someone else can take it. If you
+          pay after that, the booking is not made and your payment is refunded
+          in full; we email you when that happens.
         </p>
         <p>
           <strong>A booking is only confirmed when payment succeeds.</strong>{" "}
           Returning from Stripe does not by itself confirm anything; Ceaute
           confirms the booking when Stripe tells us the payment went through.
-          You will then see the booking under Account &rarr; Bookings and
+          You will then see the booking under Account &rarr; My bookings and
           receive a confirmation email. If a payment is taken but cannot
           confirm the booking, it is refunded in full.
         </p>
@@ -135,8 +137,10 @@ export default function TermsPage() {
         <h2>Paying: full payment or a deposit</h2>
         <p>
           Each provider chooses whether customers pay the full price when
-          booking or a fixed deposit. Checkout shows which applies, how much
-          is due now, and how much is due at the appointment.
+          booking or a deposit: a percentage of the booking price, between 10%
+          and 90%, and at least £1. The percentage is worked out to the
+          nearest penny. Checkout shows which applies, how much is due now,
+          and how much is due at the appointment.
         </p>
         <p>
           Payment is taken through Stripe and transferred to the
@@ -164,13 +168,16 @@ export default function TermsPage() {
           </li>
           <li>
             <strong>Cancel after the deadline</strong> and the provider keeps
-            up to the commitment amount shown to you at checkout — the deposit
-            in deposit mode, or the amount the provider set in full-payment
-            mode. Anything you paid above that is refunded.
+            the percentage of the booking price shown to you at checkout,
+            never more than you paid online. With a deposit that is normally
+            the whole deposit; with full payment it is the percentage the
+            provider set. Anything you paid above that is refunded. Bookings
+            made before percentages were introduced keep the terms they were
+            made on.
           </li>
         </ul>
         <p>
-          You cancel under Account &rarr; Bookings. Only a confirmed booking
+          You cancel under Account &rarr; My bookings. Only a confirmed booking
           that has not yet started can be cancelled, so a booking cannot be
           cancelled once its start time has passed. Ceaute does not support
           rescheduling: changing an appointment means cancelling it, subject
@@ -223,7 +230,7 @@ export default function TermsPage() {
         </p>
       </section>
 
-      <section>
+      <section id="providers">
         <h2>If you offer treatments on Ceaute</h2>
         <p>
           You are an independent business. You are responsible for your own
@@ -240,7 +247,9 @@ export default function TermsPage() {
         </p>
         <p>
           Before your page can be published you must connect a Stripe account
-          able to receive payments and payouts. Stripe collects the identity
+          able to receive payments and payouts, and accept the current version
+          of the provider agreement. If a new version is issued, your page
+          stays published but takes no new bookings until you accept it. Stripe collects the identity
           information it needs from you directly and decides whether your
           account can be paid out; Ceaute cannot override that. Customer
           contact details you receive through Ceaute are for delivering that

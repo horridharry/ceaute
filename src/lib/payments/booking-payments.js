@@ -1,13 +1,3 @@
-// Ceaute has no pay-later option: in deposit mode the deposit is the whole
-// online payment, so it must be greater than £0. PostgreSQL enforces this with
-// provider_booking_setting_deposit_is_positive.
-export function meetsPositiveDepositRule({ paymentMode, commitmentAmountPence }) {
-  return (
-    paymentMode !== "fixed_deposit" ||
-    (Number.isInteger(commitmentAmountPence) && commitmentAmountPence > 0)
-  );
-}
-
 // --- How a booking payment is split -----------------------------------------
 //
 // The customer pays the advertised price. The provider bears Stripe's
@@ -134,20 +124,44 @@ export function calculateBookingFeeSplit({
   };
 }
 
+// What a booking charges online, read from its snapshot and never
+// recalculated. A hold made on percentage terms stores the amount PostgreSQL
+// worked out (ceaute.booking_payment_terms), and claim_booking_checkout refuses
+// any other; a snapshot from before percentage terms keeps the fixed-£ rule it
+// was made under.
+export function snapshotAmountDueNowPence(serviceSnapshot) {
+  const totalBookingValuePence = Math.max(
+    0,
+    Math.trunc(Number(serviceSnapshot?.total_price_pence ?? 0)) || 0,
+  );
+  const storedDueNow = serviceSnapshot?.amount_due_now_pence;
+
+  if (storedDueNow !== undefined && storedDueNow !== null && storedDueNow !== "") {
+    const amount = Math.trunc(Number(storedDueNow));
+
+    return Number.isFinite(amount)
+      ? Math.min(Math.max(0, amount), totalBookingValuePence)
+      : 0;
+  }
+
+  if (serviceSnapshot?.payment_mode === "fixed_deposit") {
+    const commitmentAmountPence = Math.max(
+      0,
+      Number(serviceSnapshot?.commitment_amount_pence ?? 0),
+    );
+
+    return Math.min(commitmentAmountPence, totalBookingValuePence);
+  }
+
+  return totalBookingValuePence;
+}
+
 export function calculateBookingPaymentAmounts(serviceSnapshot) {
   const totalBookingValuePence = Math.max(
     0,
-    Number(serviceSnapshot?.total_price_pence ?? 0),
+    Math.trunc(Number(serviceSnapshot?.total_price_pence ?? 0)) || 0,
   );
-  const commitmentAmountPence = Math.max(
-    0,
-    Number(serviceSnapshot?.commitment_amount_pence ?? 0),
-  );
-  const paymentMode = serviceSnapshot?.payment_mode;
-  const amountChargedPence =
-    paymentMode === "fixed_deposit"
-      ? Math.min(commitmentAmountPence, totalBookingValuePence)
-      : totalBookingValuePence;
+  const amountChargedPence = snapshotAmountDueNowPence(serviceSnapshot);
   const amountDueLaterPence = Math.max(
     0,
     totalBookingValuePence - amountChargedPence,

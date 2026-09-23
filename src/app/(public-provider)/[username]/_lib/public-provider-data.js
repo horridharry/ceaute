@@ -195,30 +195,44 @@ export const getPublicLocationForProvider = cache(async (providerPageId) => {
   return location?.[0] ?? { public_area: "" };
 });
 
-export const getPublicBookingSettingsForProvider = cache(
-  async (providerPageId) => {
-    const supabase = createServiceRoleClient();
-    const { data: settings, error } = await supabase.schema("ceaute").rpc(
-      "get_public_booking_settings",
-      {
-        target_provider_page_id: providerPageId,
-      },
-    );
+// Whether a published page can take a new booking now (PostgreSQL's
+// provider_page_accepts_new_bookings: complete percentage terms, Stripe ready,
+// the current agreement accepted, no balance owed). A page that cannot stays
+// visible; the booking pages say it is not taking bookings.
+export const getProviderAcceptsBookings = cache(async (providerPageId) => {
+  const supabase = createServiceRoleClient();
+  const { data, error } = await supabase.schema("ceaute").rpc(
+    "provider_page_accepts_new_bookings",
+    { target_provider_page_id: providerPageId },
+  );
 
-    if (error) {
-      throw new Error("Could not load booking settings.");
-    }
+  if (error) {
+    logSupabaseError("provider accepts bookings", error);
+    throw new Error("Could not check whether this provider is taking bookings.", { cause: error });
+  }
 
-    return (
-      settings?.[0] ?? {
-        payment_mode: "full",
-        commitment_amount_pence: null,
-        cancellation_window_hours: 24,
-        written_policy: "",
-      }
-    );
-  },
-);
+  return data === true;
+});
+
+// The Review quote: the booking terms and, for this price, the amounts from
+// the same PostgreSQL rule the hold will use (ceaute.booking_payment_terms).
+export const getPublicBookingTerms = cache(async (providerPageId, totalPricePence) => {
+  const supabase = createServiceRoleClient();
+  const { data, error } = await supabase.schema("ceaute").rpc(
+    "get_public_booking_terms",
+    {
+      target_provider_page_id: providerPageId,
+      target_total_price_pence: totalPricePence,
+    },
+  );
+
+  if (error) {
+    logSupabaseError("public booking terms", error);
+    throw new Error("Could not load booking terms.", { cause: error });
+  }
+
+  return data?.[0] ?? null;
+});
 
 export async function getPublicBookingPage(username, treatmentId, addOnIds = []) {
   const providerPage = await getPublishedProviderPageByUsername(username);
@@ -244,12 +258,20 @@ export async function getPublicBookingPage(username, treatmentId, addOnIds = [])
       0,
     );
 
+  const totalPricePence =
+    treatment.price_pence +
+    selectedAddOns.reduce(
+      (total, addOn) => total + Number(addOn.additional_price_pence ?? 0),
+      0,
+    );
+
   return {
     providerPage,
     treatment,
     compatibleAddOns,
     selectedAddOns,
     totalDurationMinutes,
+    totalPricePence,
     availabilityRules,
     availableDates: calculateAvailableAppointmentTimes({
       availabilityRules,
@@ -273,7 +295,6 @@ export async function getPublicBookingDetailsPage(
     blockedDates,
     occupiedPeriods,
     location,
-    bookingSettings,
   ] = await Promise.all([
     getPublicTreatmentForProvider(providerPage.id, treatmentId),
     getAvailabilityRulesForProvider(providerPage.id),
@@ -281,7 +302,6 @@ export async function getPublicBookingDetailsPage(
     getBlockedDatesForProvider(providerPage.id),
     getOccupiedPeriodsForProvider(providerPage.id),
     getPublicLocationForProvider(providerPage.id),
-    getPublicBookingSettingsForProvider(providerPage.id),
   ]);
   const totalDurationMinutes =
     treatment.duration_minutes +
@@ -301,6 +321,9 @@ export async function getPublicBookingDetailsPage(
     appointments: occupiedPeriods,
     durationMinutes: totalDurationMinutes,
   });
+  // The quote comes from PostgreSQL's own rule for this price, so Review and
+  // the hold can never round differently.
+  const terms = await getPublicBookingTerms(providerPage.id, totalPricePence);
 
   return {
     providerPage,
@@ -309,8 +332,7 @@ export async function getPublicBookingDetailsPage(
     totalDurationMinutes,
     totalPricePence,
     location,
-    bookingSettings,
+    terms,
     availableDates,
   };
 }
-

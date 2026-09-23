@@ -3,6 +3,7 @@ import {
   getOwnedProviderPage,
   getRequestSession,
 } from "@/lib/auth/request-session";
+import { providerOnboardingPath } from "@/lib/providers/onboarding-path";
 
 // Session verification and the provider-page lookup are memoised per render
 // (see request-session.js), so a page whose helpers each call this still pays
@@ -18,7 +19,8 @@ export async function getSignedInProvider({ next = "/dashboard" } = {}) {
   const providerPage = await getOwnedProviderPage(userId);
 
   if (!providerPage) {
-    redirect("/dashboard/onboarding");
+    // Keep where they were going, so creating the page lands them there.
+    redirect(providerOnboardingPath(next));
   }
 
   return {

@@ -1,30 +1,32 @@
 "use client";
 
-import { useActionState, useState } from "react";
 import Link from "next/link";
-import { normalizeUsername, validateUsername } from "@/lib/providers/username";
+import { useActionState, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { buttonClassName } from "@/components/ui/button-classes";
+import { Field } from "@/components/ui/field";
+import { FormError } from "@/components/ui/form-feedback";
+import { Input } from "@/components/ui/input";
+import { normalizeUsername, suggestUsername, validateUsername } from "@/lib/providers/username";
 
-export function ProviderOnboardingForm({ action, providerPage }) {
-  const [stateMessage, formAction, pending] = useActionState(action, "");
-  const [businessName, setBusinessName] = useState(providerPage.businessName);
-  const [username, setUsername] = useState(providerPage.username);
-  // A saved or hand-typed username belongs to the user; only an untouched one
-  // keeps following the business name.
-  const [usernameWasEdited, setUsernameWasEdited] = useState(
-    Boolean(providerPage.username),
-  );
-  const [usernameError, setUsernameError] = useState("");
-  // Controlled like the other fields so a failed submission does not reset it.
-  const [biography, setBiography] = useState(providerPage.biography);
+export function ProviderOnboardingForm({ action }) {
+  const [state, formAction, pending] = useActionState(action, null);
+  const [businessName, setBusinessName] = useState("");
+  const [username, setUsername] = useState("");
+  // A hand-typed username belongs to the person; an untouched one keeps
+  // following the business name.
+  const [usernameWasEdited, setUsernameWasEdited] = useState(false);
+  const [usernameHint, setUsernameHint] = useState("");
+  const fieldErrors = state?.fieldErrors ?? {};
+  const usernameError = usernameHint || fieldErrors.username || "";
 
   const updateBusinessName = (event) => {
     const value = event.target.value;
     setBusinessName(value);
 
     if (!usernameWasEdited) {
-      const suggestedUsername = normalizeUsername(value);
-      setUsername(suggestedUsername);
-      setUsernameError(validateUsername(suggestedUsername) ?? "");
+      setUsername(suggestUsername(value));
+      setUsernameHint("");
     }
   };
 
@@ -32,86 +34,63 @@ export function ProviderOnboardingForm({ action, providerPage }) {
     const value = normalizeUsername(event.target.value);
     setUsernameWasEdited(true);
     setUsername(value);
-    setUsernameError(validateUsername(value) ?? "");
+    // Say what is wrong only once there is enough to judge.
+    setUsernameHint(value.length >= 3 ? (validateUsername(value) ?? "") : "");
   };
 
   return (
-    <form className="mt-8 flex flex-col gap-4" action={formAction}>
-      <span className="field-set">
-        <label className="label" htmlFor="business_name">
-          Business Name
-        </label>
-        <input
-          id="business_name"
-          name="business_name"
-          required
-          value={businessName}
-          onChange={updateBusinessName}
-          className="field"
-        />
-      </span>
-
-      <span className="field-set">
-        <label className="label" htmlFor="username">
-          Ceaute Username
-        </label>
-        <p
-          className={
-            usernameError
-              ? "text-sm transition-opacity ease-in opacity-100 duration-500 text-red-600"
-              : "text-sm transition-opacity ease-in opacity-0 duration-500 text-red-600"
-          }
-        >
-          {usernameError || "Username is valid"}
-        </p>
-        <div className="relative flex items-center rounded-lg">
-          <span className="absolute z-40 ml-3 text-sm opacity-80">
-            ceaute.com /@
-          </span>
-          <input
-            id="username"
-            name="username"
-            autoComplete="username"
-            required
-            value={username}
-            onChange={updateUsername}
-            className="relative w-full appearance-none ring-1 ring-transparent rounded-lg border p-2.5 pl-28 outline-none duration-200 hover:border-black/25 focus:border-pink-600 focus:ring-pink-600"
+    <form className="mt-8 flex flex-col gap-5" action={formAction} noValidate>
+      <Field label="Business name" htmlFor="business_name" error={fieldErrors.business_name ?? ""}>
+        {(control) => (
+          <Input
+            {...control}
+            name="business_name"
+            autoComplete="organization"
+            maxLength={120}
+            value={businessName}
+            onChange={updateBusinessName}
           />
-        </div>
-      </span>
+        )}
+      </Field>
 
-      <span className="field-set">
-        <label className="label" htmlFor="biography">
-          Short bio
-        </label>
-        <textarea
-          id="biography"
-          name="biography"
-          value={biography}
-          onChange={(event) => setBiography(event.target.value)}
-          rows={4}
-          maxLength={500}
-          className="field resize-none"
-        />
-      </span>
+      <Field
+        label="Username"
+        htmlFor="username"
+        hint={`Your page will be ceaute.com/@${username || "yourname"}. You can change it later in Profile.`}
+        error={usernameError}
+      >
+        {(control) => (
+          <span className="relative block">
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-ink-muted"
+            >
+              /@
+            </span>
+            <Input
+              {...control}
+              name="username"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              maxLength={30}
+              value={username}
+              onChange={updateUsername}
+              className="w-full pl-9"
+            />
+          </span>
+        )}
+      </Field>
 
-      <p className="text-sm text-red-600">{stateMessage}</p>
+      <FormError>{state?.formError ?? ""}</FormError>
 
-      <div className="mt-4 flex items-center justify-end gap-2">
-        <Link
-          href="/account"
-          className="w-max rounded-lg font-semibold hover:border-black/20 border-black/10 text-pink-600 p-3 px-6 text-sm border duration-200 active:bg-pink-500/10 active:border-transparent active:text-pink-500"
-        >
-          Back
+      <div className="mt-2 flex items-center justify-between gap-3">
+        <Link href="/account" className={buttonClassName({ variant: "text", className: "text-ink-muted" })}>
+          Not now
         </Link>
-        <button
-          type="submit"
-          disabled={pending || Boolean(usernameError)}
-          aria-disabled={pending || Boolean(usernameError)}
-          className="w-max rounded-lg font-semibold bg-pink-700 p-3 px-4 text-sm text-white shadow-sm duration-200 hover:bg-pink-800 disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
-        >
-          {pending ? "Saving..." : "Save and continue"}
-        </button>
+        <Button type="submit" disabled={pending} aria-busy={pending || undefined}>
+          {pending ? "Creating…" : "Create page"}
+        </Button>
       </div>
     </form>
   );

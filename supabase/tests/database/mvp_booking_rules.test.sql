@@ -41,9 +41,19 @@ values (
 );
 
 insert into ceaute.provider_booking_setting (
-  provider_page_id, payment_mode, commitment_amount_pence, cancellation_window_hours
+  provider_page_id, payment_mode, deposit_percent, cancellation_window_hours
 )
-values ('15000000-0000-0000-0000-000000000001', 'full', 1000, 24);
+values ('15000000-0000-0000-0000-000000000001', 'full', 20, 24);
+
+insert into ceaute.provider_payment_account (
+  provider_page_id, stripe_account_id, recipient_applied, stripe_transfers_status, payouts_status
+)
+values ('15000000-0000-0000-0000-000000000001', 'acct_rules', true, 'active', 'active');
+
+insert into ceaute.provider_agreement_acceptance (
+  provider_page_id, agreement_version, accepted_by_profile_id
+)
+values ('15000000-0000-0000-0000-000000000001', ceaute.current_provider_agreement_version(), '05000000-0000-0000-0000-000000000002');
 
 insert into ceaute.availability_rule (provider_page_id, weekday, starts_at, ends_at)
 select '15000000-0000-0000-0000-000000000001', weekday, '09:00', '17:00'
@@ -133,34 +143,38 @@ select set_config('request.jwt.claim.sub', '05000000-0000-0000-0000-000000000002
 select set_config('request.jwt.claim.role', 'authenticated', true);
 
 insert into tap_results (result) select throws_matching(
-  $$insert into ceaute.provider_booking_setting (provider_page_id, payment_mode, commitment_amount_pence, cancellation_window_hours)
-    values ('15000000-0000-0000-0000-000000000001', 'fixed_deposit', 0, 24)
+  $$insert into ceaute.provider_booking_setting (provider_page_id, payment_mode, commitment_amount_pence, deposit_percent, cancellation_window_hours)
+    values ('15000000-0000-0000-0000-000000000001', 'fixed_deposit', 500, null, 24)
     on conflict (provider_page_id) do update
-    set payment_mode = excluded.payment_mode, commitment_amount_pence = excluded.commitment_amount_pence$$,
-  'provider_booking_setting_deposit_is_positive',
-  'A zero deposit is rejected'
+    set payment_mode = excluded.payment_mode, commitment_amount_pence = excluded.commitment_amount_pence,
+        deposit_percent = excluded.deposit_percent$$,
+  'provider_booking_setting_percentage_terms',
+  'A fixed-pound deposit can no longer be saved'
 );
 insert into tap_results (result) select throws_matching(
-  $$insert into ceaute.provider_booking_setting (provider_page_id, payment_mode, commitment_amount_pence, cancellation_window_hours)
-    values ('15000000-0000-0000-0000-000000000001', 'fixed_deposit', null, 24)
+  $$insert into ceaute.provider_booking_setting (provider_page_id, payment_mode, commitment_amount_pence, deposit_percent, cancellation_window_hours)
+    values ('15000000-0000-0000-0000-000000000001', 'full', null, null, 24)
     on conflict (provider_page_id) do update
-    set payment_mode = excluded.payment_mode, commitment_amount_pence = excluded.commitment_amount_pence$$,
-  'provider_booking_setting_deposit_is_positive',
-  'A missing deposit is rejected'
+    set payment_mode = excluded.payment_mode, commitment_amount_pence = excluded.commitment_amount_pence,
+        deposit_percent = excluded.deposit_percent$$,
+  'provider_booking_setting_percentage_terms',
+  'A blank percentage is rejected'
 );
 insert into tap_results (result) select lives_ok(
-  $$insert into ceaute.provider_booking_setting (provider_page_id, payment_mode, commitment_amount_pence, cancellation_window_hours)
-    values ('15000000-0000-0000-0000-000000000001', 'fixed_deposit', 500, 24)
+  $$insert into ceaute.provider_booking_setting (provider_page_id, payment_mode, commitment_amount_pence, deposit_percent, cancellation_window_hours)
+    values ('15000000-0000-0000-0000-000000000001', 'deposit', null, 30, 24)
     on conflict (provider_page_id) do update
-    set payment_mode = excluded.payment_mode, commitment_amount_pence = excluded.commitment_amount_pence$$,
-  'A positive deposit is accepted'
+    set payment_mode = excluded.payment_mode, commitment_amount_pence = excluded.commitment_amount_pence,
+        deposit_percent = excluded.deposit_percent$$,
+  'A 30% deposit is accepted'
 );
 insert into tap_results (result) select lives_ok(
-  $$insert into ceaute.provider_booking_setting (provider_page_id, payment_mode, commitment_amount_pence, cancellation_window_hours)
-    values ('15000000-0000-0000-0000-000000000001', 'full', 0, 24)
+  $$insert into ceaute.provider_booking_setting (provider_page_id, payment_mode, commitment_amount_pence, deposit_percent, cancellation_window_hours)
+    values ('15000000-0000-0000-0000-000000000001', 'full', null, 100, 24)
     on conflict (provider_page_id) do update
-    set payment_mode = excluded.payment_mode, commitment_amount_pence = excluded.commitment_amount_pence$$,
-  'Full payment with a zero late-cancellation amount is unaffected'
+    set payment_mode = excluded.payment_mode, commitment_amount_pence = excluded.commitment_amount_pence,
+        deposit_percent = excluded.deposit_percent$$,
+  'Full payment keeping 100% after a late cancellation is accepted'
 );
 
 -- Working-period boundaries, through the provider RPC and a direct table write.

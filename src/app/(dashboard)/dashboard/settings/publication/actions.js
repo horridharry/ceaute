@@ -1,16 +1,13 @@
 "use server";
 import { revalidatePath } from "next/cache";
 import { getSignedInProvider } from "../../_lib/provider-data";
-import { getProviderPagePublicationReadiness } from "../../_lib/publication-readiness";
+import { getSetupState } from "../../_lib/publication-checks";
 import { publicationFailure, publicationSuccess } from "../../_lib/publication-outcome";
 
-// Publishing and unpublishing, moved here from Profile. Behaviour is
-// unchanged: the requirements are checked here for a usable message, and
-// PostgreSQL's publish_provider_page checks every one of them again.
+// Publishing and unpublishing. The requirements are read here for a usable
+// message; PostgreSQL's publish_provider_page checks the same breakdown again.
 function refreshPublicationPages() {
   revalidatePath("/", "layout");
-  revalidatePath("/dashboard");
-  revalidatePath("/dashboard/settings/publication");
 }
 
 // Both return { error, message } so the screen can show the outcome.
@@ -23,9 +20,9 @@ export const publishPage = async () => {
     return publicationFailure({ message: "Suspended pages cannot be published." }, "publish");
   }
 
-  const publication = await getProviderPagePublicationReadiness({ supabase, providerPage });
+  const setup = await getSetupState({ supabase, providerPage });
 
-  if (!publication.ready) {
+  if (!setup?.readyToPublish) {
     return publicationFailure({ message: "Publication requirements are incomplete." }, "publish");
   }
 

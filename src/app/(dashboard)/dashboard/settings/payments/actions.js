@@ -51,7 +51,9 @@ export async function acceptProviderAgreement() {
     throw new Error("Could not record agreement acceptance.");
   }
 
-  revalidatePath(PAYMENTS_PATH);
+  // The agreement is a publication requirement and gates bookings, so the
+  // setup guide, Today and Publication all change with it.
+  revalidatePath("/dashboard", "layout");
   return success("Provider agreement accepted.");
 }
 
@@ -107,7 +109,7 @@ export async function refreshPaymentStatus() {
     account,
   });
 
-  revalidatePath(PAYMENTS_PATH);
+  revalidatePath("/dashboard", "layout");
   return success("Stripe status refreshed.");
 }
 
@@ -185,7 +187,7 @@ export async function startOrResumeOnboarding() {
       const state = classifyStripePaymentAccount(values);
 
       if (!state.canCreateOnboardingLink) {
-        revalidatePath(PAYMENTS_PATH);
+        revalidatePath("/dashboard", "layout");
         return failure(
           "Stripe onboarding is not currently available for this account.",
         );

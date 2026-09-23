@@ -39,24 +39,81 @@ test("locations: the empty state says what to do", () => {
 test("booking settings keeps its fields and ends in one right-aligned Save", () => {
   const html = render(
     h(BookingSettingsForm, {
-      settings: { payment_mode: "fixed_deposit", commitment_amount: "15.00", cancellation_window_hours: 24, written_policy: "" },
+      settings: {
+        payment_mode: "deposit",
+        deposit_percent: "30",
+        cancellation_window_hours: 24,
+        written_policy: "",
+        legacy: null,
+        pageStatus: "draft",
+      },
       updateBookingSettings: noop,
     }),
   );
 
-  for (const label of ["Payment mode", "Deposit amount", "Cancellation window", "Written booking policies"]) {
+  assert.match(html, /<legend[^>]*>Payment when booking<\/legend>/);
+  for (const label of ["Deposit percentage", "Free cancellation until"]) {
     assert.match(html, new RegExp(`>${label}</label>`), label);
   }
-  assert.match(html, /Customers pay £15\.00 when booking\. If they cancel late, that same amount is retained\./);
+  assert.match(html, />Written booking policy<span[^>]*> \(optional\)<\/span><\/label>/);
+  // Percentages step by 5 up to 90% for a deposit; there is no 0%.
+  assert.match(html, /<option value="10">10%<\/option>/);
+  assert.match(html, /<option value="90">90%<\/option>/);
+  assert.doesNotMatch(html, /<option value="95">|<option value="100">|<option value="0">/);
+  assert.match(html, /Customers pay 30% of the booking price when they book, and at least\s+£1\./);
+  assert.match(html, /On a £40\.00 booking: £12\.00 now, £28\.00 at the appointment\./);
   assert.equal(count(html, /type="submit"/g), 1);
-  assert.match(html, /justify-end[^>]*><button[^>]*type="submit"[^>]*>Save<\/button>/);
+  assert.match(html, /justify-end[\s\S]*<button[^>]*type="submit"[^>]*>Save<\/button>/);
   assert.doesNotMatch(html, /text-red-600/);
   assert.equal(count(html, /<h1/g), 1);
 });
 
+test("booking settings explains full payment with the amount kept after a late cancellation", () => {
+  const html = render(
+    h(BookingSettingsForm, {
+      settings: {
+        payment_mode: "full",
+        deposit_percent: "50",
+        cancellation_window_hours: 48,
+        written_policy: "",
+        legacy: null,
+        pageStatus: "draft",
+      },
+      updateBookingSettings: noop,
+    }),
+  );
+
+  assert.match(html, />Kept after a late cancellation<\/label>/);
+  assert.match(html, /<option value="100">100%<\/option>/);
+  assert.match(html, /Customers pay the full price when they book\. If they cancel less than\s*(<!-- -->)?48/);
+  assert.match(html, /a late cancellation keeps\s*(<!-- -->)?£20\.00(<!-- -->)? and refunds £20\.00/);
+});
+
+test("booking settings saved before percentages asks for one and says what is paused", () => {
+  const html = render(
+    h(BookingSettingsForm, {
+      settings: {
+        payment_mode: "full",
+        deposit_percent: "",
+        cancellation_window_hours: 24,
+        written_policy: "",
+        legacy: { paymentMode: "fixed_deposit", amountPence: 4500 },
+        pageStatus: "published",
+      },
+      updateBookingSettings: noop,
+    }),
+  );
+
+  assert.match(html, /Choose a percentage/);
+  assert.match(html, /Your old £45\.00 deposit(<!-- -->)? no longer\s+applies to new bookings/);
+  assert.match(html, /your page isn(’|&#x27;|')t taking new bookings until you save a percentage/);
+  assert.match(html, /Bookings already made keep their\s+terms\./);
+  assert.match(html, /Choose a percentage to see what customers pay\./);
+});
+
 test("booking settings reports success as a neutral status, not an error", () => {
   const actions = read("src/app/(dashboard)/dashboard/settings/booking/actions.js");
-  assert.match(actions, /return \{ status: "saved", message: "Saved\." \}/);
+  assert.match(actions, /return \{ status: "saved", message: "Saved\.", fieldErrors: \{\} \}/);
   const form = read("src/app/(dashboard)/dashboard/settings/booking/_components/booking-settings-form.jsx");
   assert.match(form, /<FormActions status=\{result\?\.status === "saved"/);
 });

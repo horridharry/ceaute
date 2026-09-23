@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Notice } from "@/components/ui/notice";
 import {
   pluralCount,
   shouldShowReviewsSection,
@@ -100,7 +101,7 @@ const SECONDARY_BUTTON =
 // (no username) shows the same treatments without booking or the button,
 // because the All treatments page, like booking, exists only for published
 // pages.
-function TreatmentsPreview({ sections, username }) {
+function TreatmentsPreview({ sections, username, bookable }) {
   const treatments = treatmentPreview(sections);
   const previewSections = [{ key: "preview", treatments }];
   const total = treatmentsInOrder(sections).length;
@@ -109,7 +110,7 @@ function TreatmentsPreview({ sections, username }) {
     <section className="flex flex-col gap-3">
       <h2 className="text-lg font-semibold">Treatments</h2>
       {username ? (
-        <TreatmentSelectionList sections={previewSections} username={username} />
+        <TreatmentSelectionList sections={previewSections} username={username} bookable={bookable} />
       ) : (
         <div className="flex flex-col gap-3">
           {treatments.map((treatment) => (
@@ -229,7 +230,9 @@ function PortfolioPreview({ photos, username }) {
   );
 }
 
-export function StorefrontPage({ viewModel, backHref, showBackLink = true }) {
+// `takingBookings` is false while a published provider cannot take a new
+// booking (paused terms, payments or agreement): the page stays up and says so.
+export function StorefrontPage({ viewModel, backHref, showBackLink = true, takingBookings = true }) {
   const {
     provider,
     portfolio,
@@ -279,6 +282,12 @@ export function StorefrontPage({ viewModel, backHref, showBackLink = true }) {
         ) : null}
         <ProviderIdentity provider={provider} />
 
+        {publicView && !takingBookings ? (
+          <Notice tone="neutral">
+            {provider.business_name || "This provider"} isn’t taking online bookings right now.
+          </Notice>
+        ) : null}
+
         {portfolio.length ? (
           <PortfolioPreview photos={portfolio} username={galleryUsername} />
         ) : null}
@@ -287,6 +296,7 @@ export function StorefrontPage({ viewModel, backHref, showBackLink = true }) {
           <TreatmentsPreview
             sections={treatmentSections}
             username={bookingUsername}
+            bookable={takingBookings}
           />
         ) : null}
 

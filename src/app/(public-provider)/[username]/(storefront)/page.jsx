@@ -4,6 +4,7 @@ import { StorefrontPage } from "@/features/storefront/storefront-page";
 import { buildStorefrontViewModel } from "@/features/storefront/storefront-view-model";
 import { resolveApplicationOrigin } from "@/lib/app/origin";
 import {
+  getProviderAcceptsBookings,
   getPublishedHeroImage,
   getPublishedProviderPageByUsername,
 } from "../_lib/public-provider-data";
@@ -54,7 +55,10 @@ export default async function UsernamePage({ params }) {
   const decodedUsername = normalizePublicUsername(username);
   const supabase = createServiceRoleClient();
   const providerPage = await getPublishedProviderPageByUsername(decodedUsername);
-  const viewModel = await buildStorefrontViewModel({ supabase, providerPage });
+  const [viewModel, takingBookings] = await Promise.all([
+    buildStorefrontViewModel({ supabase, providerPage }),
+    getProviderAcceptsBookings(providerPage.id),
+  ]);
 
-  return <StorefrontPage viewModel={viewModel} />;
+  return <StorefrontPage viewModel={viewModel} takingBookings={takingBookings} />;
 }

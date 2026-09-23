@@ -34,26 +34,28 @@ trade-offs behind this shape are in
 | --- | --- | --- | --- |
 | Sign in, sign up, email code | `src/app/(authenticate)/*` (`/verify` is the code screen) | `(authenticate)/actions.js`, `src/lib/auth/email-otp.js`, `src/lib/auth/redirect.js` | Supabase Auth generates and verifies the code; `profile` row created by trigger |
 | Session and ownership guard | `src/proxy.ts` | `src/lib/supabase/proxy.ts`, `src/lib/auth/request-session.js` | RLS on provider-owned tables |
-| Create provider page | `/dashboard/onboarding` | `onboarding/actions.ts` | `create_provider_page_draft` |
-| Identity, publish, unpublish | `/dashboard/profile` | `profile/queries.js`, `profile/actions.js`, `profile/publication-readiness.js` (screen hints only) | `publish_provider_page`, `unpublish_provider_page` |
+| Create provider page | `/dashboard/onboarding` | `onboarding/actions.ts`, `src/lib/providers/username.js` | `create_provider_page_draft`, `provider_page_username_format` |
+| Identity | `/dashboard/profile` | `profile/queries.js`, `profile/actions.js` | `provider_page` RLS and constraints |
+| Setup guide, readiness, publish, unpublish, taking bookings | every draft dashboard page (guide), `/dashboard` (Today), `/dashboard/settings/publication` | `dashboard/_lib/publication-checks.js` (one derived setup state), `dashboard/_components/setup-guide.jsx`, `settings/publication/actions.js` | `get_provider_page_publication_checks`, `provider_page_meets_publication_requirements`, `provider_page_accepts_new_bookings`, `publish_provider_page`, `unpublish_provider_page` |
 | Portfolio images | `/dashboard/profile/portfolio` | `portfolio/queries.js`, `portfolio/actions.js`, `src/lib/supabase/signed-urls.js` | `portfolio_image` RLS, private storage bucket |
 | Saved locations, the current one, private address | `/dashboard/locations` | `locations/queries.js`, `locations/actions.js` | `provider_location` RLS and constraints; `set_primary_provider_location` |
 | Working hours and blocked dates | `/dashboard/availability` | `availability/queries.js`, `availability/actions.js`, `availability/_lib/schedule-form.js`, `availability/_lib/booking-messages.js`, `src/lib/bookings/appointment-grid.js` | `replace_provider_availability_rules`, 15-minute grid checks, `blocked_date` RLS, `get_provider_booking_counts_by_local_date` (advisory counts) |
 | Treatments | `/dashboard/treatments` | `treatments/queries.js`, `treatments/actions.js`, `treatments/_lib/treatment-values.js` | `treatment` RLS |
 | Treatment Groups | `/dashboard/treatment-groups` | `treatment-groups/queries.js`, `treatment-groups/actions.js` | `treatment_group` RLS |
 | Add-ons | `/dashboard/add-ons` | `add-ons/queries.js`, `add-ons/actions.js` | table RLS; `create_add_on_with_compatibility`, `update_add_on_with_compatibility` |
-| Booking terms | `/dashboard/settings/booking` | `settings/booking/queries.js`, `settings/booking/actions.js`, `src/lib/payments/booking-payments.js` | `provider_booking_setting` constraints (positive deposit) |
+| Booking terms | `/dashboard/settings/booking` | `settings/booking/queries.js`, `settings/booking/actions.js`, `src/lib/payments/booking-terms.js` (form and example only) | `booking_terms_are_complete`, `provider_booking_setting_percentage_terms` (new writes), `booking_payment_terms` (the only rounding; [decision 006](decisions/006-percentage-booking-terms.md)) |
 | Stripe Connect onboarding | `/dashboard/settings/payments`, `POST /api/stripe/connect` | `settings/payments/queries.js`, `settings/payments/actions.js`, `src/lib/stripe/server.js` | `sync_provider_payment_account`, Connect event claims |
-| Public page and discovery | `/@[username]`, `/discover`, `/dashboard/profile/preview` | `src/features/storefront/*`, `[username]/_lib/public-provider-data.js`, `discover/queries.js` | `get_public_*` projections, `search_public_providers` (published only) |
-| Choose add-ons and time | `/@[username]/book/[treatmentId]`, `/time` | `[username]/_lib/public-provider-data.js`, `book/_lib/appointment-availability.js` | `get_public_availability_rules`, `get_public_blocked_dates`, `get_public_occupied_periods` |
-| Hold and Checkout | `/@[username]/book/[treatmentId]/checkout` | `book/queries.js`, `book/actions.js`, `checkout/_lib/*`, `checkout/_components/*` | `create_validated_booking_hold`, `claim_booking_checkout`, `record_booking_checkout_session`, exclusion constraint |
+| Public page and discovery | `/@[username]`, `/discover`, `/dashboard/profile/preview` | `src/features/storefront/*`, `[username]/_lib/public-provider-data.js`, `discover/queries.js` | `get_public_*` projections, `provider_page_accepts_new_bookings` (paused state), `discover_public_providers` (published only, paged; `search_public_providers` is kept for the previous deployment) |
+| Choose add-ons and time | `/@[username]/book/[treatmentId]`, `/time` | `[username]/_lib/public-provider-data.js`, `book/_lib/appointment-availability.js`, `book/_lib/time-choices.js` | `get_public_availability_rules`, `get_public_blocked_dates`, `get_public_occupied_periods` |
+| Review and pay, hold and Checkout | `/@[username]/book/[treatmentId]/checkout` (Review without `?hold`, the held page with it) | `book/actions.js` (`continueToPayment`, `resumeCheckout`), `src/lib/bookings/checkout-session.js` (hold reuse and the Checkout claim, shared with My bookings), `src/lib/bookings/booking-money.js` (formats stored pence), `checkout/_lib/checkout-display.js` (held-page states) | `get_public_booking_terms` (the quote), `create_validated_booking_hold`, `claim_booking_checkout`, `record_booking_checkout_session`, exclusion constraint |
 | Payment confirmation | `POST /api/stripe/payments` | `api/stripe/payments/route.ts`, `src/lib/payments/refunds.js` | `claim_stripe_payment_event`, `complete_booking_payment_attempt` |
 | Payment disputes | `POST /api/stripe/payments`, `GET /api/operator/disputes` | `src/lib/payments/disputes.js` (event mapping), `refund-settlement.js` (economics, off the live path) | `record_stripe_dispute`, `list_booking_disputes` |
-| Booking views | `/account/bookings`, `/dashboard/bookings`, `/dashboard` (Today) | each route's `queries.js` and `actions.js`, `src/lib/bookings/provider-booking-groups.js`, `booking-display.js`, `booking-payment-attempts.js` | `get_customer_booking_summaries`, `get_provider_booking_summaries` (redaction) |
+| Booking views | `/account/bookings`, `/dashboard/bookings`, `/dashboard` (Today) | each route's `queries.js` and `actions.js`, `src/lib/bookings/provider-booking-groups.js`, `booking-display.js` (`customerBookingView`, `providerBookingView`), `booking-payment-attempts.js` and `paid-attempt.js` (the attempt that took the money) | `get_customer_booking_summaries`, `get_provider_booking_summaries` (redaction) |
 | Cancellation and refund | same booking routes, `GET /api/cron/recover-booking-refunds` | `src/lib/bookings/cancel-booking.js`, `src/lib/payments/refunds.js`, `refund-request.js`, `refund-recovery.js` | `prepare_booking_cancellation`, `claim_booking_refund_operation`, `record_booking_refund_state`, `list_retryable_booking_refund_operations` |
-| Inspiration images | `/@[username]/book/[treatmentId]/checkout`, `/account/bookings/[bookingId]`, `/dashboard/bookings/[bookingId]` | `book/queries.js`, `book/inspiration-actions.js`, `account/bookings/actions.js`, `src/lib/bookings/booking-inspiration-images.js` | `booking_inspiration_image` RLS, `can_manage_booking_inspiration_images`, `can_view_booking_inspiration_images`, `add_booking_inspiration_image`, private storage bucket |
+| Inspiration images | `/account/bookings/[bookingId]` (after confirmation), `/dashboard/bookings/[bookingId]` | `account/bookings/actions.js`, `src/lib/bookings/booking-inspiration-images.js` | `booking_inspiration_image` RLS, `can_manage_booking_inspiration_images`, `can_view_booking_inspiration_images`, `add_booking_inspiration_image`, private storage bucket |
 | Completion and abandoned-image cleanup, reviews | `GET /api/cron/complete-bookings`, `/account/bookings/[bookingId]` | `api/cron/*`, `src/lib/bookings/discard-inspiration-images.js`, `account/bookings/actions.js` | `complete_elapsed_bookings`, `list_discardable_booking_inspiration_images`, `discard_booking_inspiration_images`, `create_booking_review` |
-| Transactional email | `GET /api/cron/send-booking-emails` | `src/lib/emails/booking-emails.js` (delivery), `booking-email-content.js` (text and HTML content), `email-layout.js` (shared HTML layout) | outbox rows enqueued by booking transitions; `claim_pending_booking_emails` |
+| Transactional email | `GET /api/cron/send-booking-emails` | `src/lib/emails/booking-emails.js` (delivery), `booking-email-content.js` (text and HTML content), `email-layout.js` (shared HTML layout) | outbox rows enqueued by booking transitions and by `enqueue_late_payment_refund_email` (late-payment refunds); `claim_pending_booking_emails` |
+| Account | `/account` (`/account/settings` redirects) | `account/actions.js`, `src/lib/profile/personal-details.js` | `profile` RLS (`profile_update_own_booking_details`) |
 | Scheduling | Supabase Cron | migration `202609150001` | `invoke_cron_endpoint` via `pg_cron` and `pg_net` |
 | Shared visual foundation | every page; `src/app/layout.tsx`, `src/app/globals.css` | `src/components/ui/*` (see [design-system.md](design-system.md)) | none |
 
@@ -194,8 +196,11 @@ PostgreSQL is authoritative for the important invariants:
 
 - account and provider ownership, including cross-provider relationships;
 - provider publication requirements and protected platform-managed state;
-- valid provider settings, including positive deposits and 15-minute working
-  hours;
+- valid provider settings, including complete percentage booking terms for new
+  writes, treatment prices of at least £1.00 and 15-minute working hours;
+- the pence a percentage becomes (`booking_payment_terms`, rounded once) and
+  whether a page may take a new booking (`provider_page_accepts_new_bookings`:
+  terms, Stripe, the current agreement, no balance owed);
 - valid booking inputs, active treatment/add-on compatibility, notice, window,
   working hours, blocked dates, and overlap prevention;
 - which participant may see private booking information or cancel a booking;
@@ -333,8 +338,11 @@ rejecting nonexistent local times, and converts accepted starts to instants.
 
 The trusted `create_validated_booking_hold` database operation recalculates the
 parts that protect correctness before inserting a hold. It verifies the
-customer, published page, active treatment, compatible add-ons, local working
-period, blocked date, 15-minute start, 24-hour notice, and 60-day window. The
+customer, that the page is taking new bookings, the active treatment,
+compatible add-ons, a total of at least £1.00, local working period, blocked
+date, 15-minute start, 24-hour notice, and 60-day window, then stores the
+percentage terms and the pence they came to in the snapshot. A hold lasts ten
+minutes until Checkout is claimed. The
 GiST exclusion constraint on provider and half-open time range is the last line
 of defence against concurrent overlap.
 
@@ -355,8 +363,13 @@ stored so an uncertain creation can be reconciled or safely retried.
 
 The payment webhook is the only confirmation boundary. It verifies Stripe's
 signature, claims the event, checks the persisted payment identifiers and exact
-amount, and then calls an atomic database operation. The Checkout success page
-only reads the resulting state. A paid event that arrives too late or duplicates
+amount, and then calls an atomic database operation. The held page Stripe
+returns to only reads the resulting state (`heldBookingState` decides what it
+says, in a fixed order) and, while a confirmation is on its way, asks the
+server again every three seconds for a minute. The Checkout claim refuses an
+amount that differs from the snapshot and a provider without the current
+agreement or with a balance owed; Stripe's configuration is checked before the
+claim so a missing key never holds a time. A paid event that arrives too late or duplicates
 another successful attempt creates a full refund entitlement rather than
 forcing a stale booking into confirmation.
 
@@ -366,8 +379,9 @@ reconcilable. The booking may already be cancelled while its refund is pending;
 screens must not infer external completion from booking status alone.
 
 The transition to confirmed and the transition from confirmed to cancelled
-enqueue transactional email in a database outbox through a constraint trigger;
-completion sends nothing. Secret-protected cron routes claim and process email batches and
+enqueue transactional email in a database outbox through a constraint trigger,
+and so does a late-payment refund operation (the customer is told their payment
+is being refunded); completion sends nothing. Secret-protected cron routes claim and process email batches and
 complete elapsed bookings. Claims expire and retries preserve stable work
 identity, because network delivery cannot be assumed to happen exactly once.
 

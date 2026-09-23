@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useActionState } from "react";
+import { isBookingPath } from "@/lib/auth/redirect";
 
 function signInHref(next) {
   const params = new URLSearchParams();
@@ -34,6 +35,9 @@ export function SignupForm({
         <h1 className="mt-10 text-2xl font-bold tracking-tight text-black/90">
           Create a Ceaute account
         </h1>
+        {isBookingPath(next) ? (
+          <p className="mt-2 text-sm text-ink-muted">Create an account to continue your booking. Your choices are kept.</p>
+        ) : null}
 
         <form className="mt-8 grid gap-2" action={createUserAction}>
           <label htmlFor="full_name" className="text-sm">

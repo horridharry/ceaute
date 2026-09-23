@@ -46,11 +46,18 @@ from unnest(array[
 cross join generate_series(0, 6) as weekday;
 
 insert into ceaute.provider_booking_setting (
-  provider_page_id, payment_mode, commitment_amount_pence, cancellation_window_hours
+  provider_page_id, payment_mode, deposit_percent, cancellation_window_hours
 )
 values
-  ('0b000000-0000-0000-0000-000000000001', 'full', 1000, 24),
-  ('0b000000-0000-0000-0000-000000000002', 'full', 1000, 24);
+  ('0b000000-0000-0000-0000-000000000001', 'full', 20, 24),
+  ('0b000000-0000-0000-0000-000000000002', 'full', 20, 24);
+
+insert into ceaute.provider_agreement_acceptance (
+  provider_page_id, agreement_version, accepted_by_profile_id
+)
+values
+  ('0b000000-0000-0000-0000-000000000001', ceaute.current_provider_agreement_version(), '0a000000-0000-0000-0000-000000000002'),
+  ('0b000000-0000-0000-0000-000000000002', ceaute.current_provider_agreement_version(), '0a000000-0000-0000-0000-000000000003');
 
 insert into ceaute.treatment (
   id, provider_page_id, name, description, duration_minutes, price_pence,

@@ -39,9 +39,19 @@ select '1b000000-0000-0000-0000-000000000001', weekday, '09:00', '17:00'
 from generate_series(0, 6) as weekday;
 
 insert into ceaute.provider_booking_setting (
-  provider_page_id, payment_mode, commitment_amount_pence, cancellation_window_hours
+  provider_page_id, payment_mode, deposit_percent, cancellation_window_hours
 )
-values ('1b000000-0000-0000-0000-000000000001', 'full', 1000, 24);
+values ('1b000000-0000-0000-0000-000000000001', 'full', 20, 24);
+
+insert into ceaute.provider_payment_account (
+  provider_page_id, stripe_account_id, recipient_applied, stripe_transfers_status, payouts_status
+)
+values ('1b000000-0000-0000-0000-000000000001', 'acct_inspiration', true, 'active', 'active');
+
+insert into ceaute.provider_agreement_acceptance (
+  provider_page_id, agreement_version, accepted_by_profile_id
+)
+values ('1b000000-0000-0000-0000-000000000001', ceaute.current_provider_agreement_version(), '1a000000-0000-0000-0000-000000000002');
 
 insert into ceaute.treatment (
   id, provider_page_id, name, description, duration_minutes, price_pence, is_active

@@ -52,6 +52,46 @@ export function formatTimeLabel(date) {
     .toLowerCase();
 }
 
+// "Thursday 1 October, 10:00 am – 11:15 am" in London time: the appointment
+// line on Review and pay, the held page and a booking.
+export function formatAppointmentWhen(startAt, endAt) {
+  const start = new Date(startAt);
+  const end = new Date(endAt);
+
+  if (Number.isNaN(start.getTime())) {
+    return "";
+  }
+
+  const date = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/London",
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  }).format(start);
+
+  return Number.isNaN(end.getTime())
+    ? `${date}, ${formatTimeLabel(start)}`
+    : `${date}, ${formatTimeLabel(start)} – ${formatTimeLabel(end)}`;
+}
+
+// "Thu 1 Oct, 10:00 am" in London time: a booking in a list.
+export function formatShortDateTime(value) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  const day = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/London",
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  }).format(date);
+
+  return `${day}, ${formatTimeLabel(date)}`;
+}
+
 export function addMinutes(date, minutes) {
   return new Date(date.getTime() + Number(minutes ?? 0) * 60_000);
 }
@@ -148,16 +188,27 @@ export function ratingSummary(reviews) {
     .map((review) => Number(review?.rating))
     .filter((rating) => Number.isInteger(rating) && rating >= 1 && rating <= 5);
 
-  if (ratings.length === 0) {
+  return ratingFromTotals(
+    ratings.length,
+    ratings.reduce((sum, rating) => sum + rating, 0),
+  );
+}
+
+// The same summary from a count and a total of visible ratings, as Discover
+// receives them from PostgreSQL. Null when there are none ("New").
+export function ratingFromTotals(count, total) {
+  const reviewCount = Number(count);
+  const ratingTotal = Number(total);
+
+  if (!Number.isInteger(reviewCount) || reviewCount <= 0 || !Number.isFinite(ratingTotal)) {
     return null;
   }
 
-  const total = ratings.reduce((sum, rating) => sum + rating, 0);
-  const average = Math.round((total / ratings.length) * 10) / 10;
+  const average = Math.round((ratingTotal / reviewCount) * 10) / 10;
 
   return {
     average: average.toFixed(1),
-    count: ratings.length,
-    countLabel: `${ratings.length} ${ratings.length === 1 ? "review" : "reviews"}`,
+    count: reviewCount,
+    countLabel: `${reviewCount} ${reviewCount === 1 ? "review" : "reviews"}`,
   };
 }

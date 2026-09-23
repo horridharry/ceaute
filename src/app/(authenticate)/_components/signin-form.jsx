@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useActionState } from "react";
 import { authenticationFormPath } from "@/lib/auth/form-path";
+import { isBookingPath } from "@/lib/auth/redirect";
 
 export function SigninForm({
   authenticateUser,
@@ -24,6 +25,9 @@ export function SigninForm({
         <h1 className="mt-10 text-2xl font-bold tracking-tight text-black/90">
           Log in
         </h1>
+        {isBookingPath(next) ? (
+          <p className="mt-2 text-sm text-ink-muted">Log in to continue your booking. Your choices are kept.</p>
+        ) : null}
 
         <form className="mt-8 grid gap-2" action={authenticateUserAction}>
           <label htmlFor="email" className="text-sm">

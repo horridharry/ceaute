@@ -17,3 +17,16 @@ export function normalizeUkPhoneNumber(value) {
 
   return null;
 }
+
+// "+447700900482" → "07700 900482": the national form people recognise. A
+// value that is not a UK number is shown as it was stored.
+export function formatUkPhoneNumber(value) {
+  const normalized = normalizeUkPhoneNumber(value);
+
+  if (!normalized) {
+    return String(value ?? "").trim();
+  }
+
+  const national = `0${normalized.slice(3)}`;
+  return national.length === 11 ? `${national.slice(0, 5)} ${national.slice(5)}` : national;
+}

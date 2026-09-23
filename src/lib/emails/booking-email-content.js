@@ -15,6 +15,7 @@ const EVENT_TITLES = {
   customer_cancelled_provider: "A customer cancelled a booking",
   provider_cancelled_customer: "Your provider cancelled a booking",
   provider_cancelled_provider: "You cancelled a booking",
+  late_payment_refunded_customer: "We’re refunding your payment",
   dispute_opened_operator: "Action needed: a payment was disputed",
   dispute_funds_withdrawn_operator: "Disputed funds were withdrawn",
   dispute_funds_reinstated_operator: "Disputed funds were reinstated",
@@ -173,9 +174,48 @@ function buildDisputeEmailContent(email, appUrl) {
   };
 }
 
+// A payment that arrived after the customer's held time ended: no booking was
+// made and the whole amount is refunded (Specification §13). It never carries
+// the provider's address and promises no refund timing.
+function buildLatePaymentEmailContent(email, appUrl) {
+  const payload = email.payload ?? {};
+  const treatment = payload.treatment_name || "your booking";
+  const provider = payload.provider_name ? ` with ${payload.provider_name}` : "";
+  const refund = formatMoneyFromPence(payload.refund_amount_pence ?? payload.amount_paid_pence);
+  const sentence = `Your payment for ${treatment}${provider} arrived after your held time ended, so the booking wasn’t made. We’re refunding ${refund} in full to the card you paid with.`;
+
+  return {
+    title: bookingEmailSubject(email),
+    intro: sentence,
+    textIntro: sentence,
+    badge: "Payment refunded",
+    tone: "neutral",
+    sections: [
+      section(
+        "Refund",
+        [
+          row("Amount paid", formatMoneyFromPence(payload.amount_paid_pence)),
+          row("Refund", refund),
+        ],
+        { highlight: true },
+      ),
+      section("The time you chose", [
+        row("Provider", payload.provider_name),
+        row("Treatment", payload.treatment_name),
+        row("Appointment", formatSingleDateTime(payload.start_at)),
+      ]),
+    ],
+    bookingUrl: safeBookingUrl(payload.customer_booking_path, appUrl),
+  };
+}
+
 export function buildBookingEmailContent(email, appUrl) {
   if (String(email.event_type ?? "").startsWith("dispute_")) {
     return buildDisputeEmailContent(email, appUrl);
+  }
+
+  if (email.event_type === "late_payment_refunded_customer") {
+    return buildLatePaymentEmailContent(email, appUrl);
   }
 
   const payload = email.payload ?? {};
@@ -248,6 +288,7 @@ export function renderBookingEmailText(email, appUrl) {
   return [
     content.title,
     "",
+    ...(content.textIntro ? [content.textIntro, ""] : []),
     ...content.sections.flatMap((entry) =>
       entry.rows.map(({ label, value }) => `${label}: ${value}`),
     ),
