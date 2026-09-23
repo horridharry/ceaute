@@ -316,9 +316,10 @@ each other's modules, and no source uses "catalog".
 
 The root layout renders only the document. Each route group's layout decides
 whether the header and footer appear, so no global component keeps a list of
-routes. `(site)` and `account` render both; the dashboard renders the header
-through `FocusedTaskHeaderGate`, which hides it on the create and edit screens
-listed in `dashboard/_lib/focused-task-routes.js`, and never renders the footer;
+routes. `(site)` and `account` render both; the dashboard renders the header on
+every screen, including create and edit screens (since 23 September 2026), and
+never renders the footer; `dashboard/_lib/focused-task-routes.js` still lists
+those screens so the setup guide stays off them;
 `[username]` renders the header and hides the footer inside the booking flow;
 `(authenticate)` and `/auth` have no chrome. The header component still chooses
 its provider-workspace variant, active link, and logo destination itself.
