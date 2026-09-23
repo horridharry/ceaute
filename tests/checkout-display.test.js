@@ -1,269 +1,128 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
-  calculatePaymentSummary,
-  describeLateCancellationOutcome,
-  getBookingDisplayState,
+  formatHeldUntil,
+  heldBookingCopy,
+  heldBookingState,
 } from "../src/app/(public-provider)/[username]/book/[treatmentId]/checkout/_lib/checkout-display.js";
 
-test("describeLateCancellationOutcome says the rest is refunded when the commitment is less than what was paid", () => {
-  const message = describeLateCancellationOutcome({
-    commitmentAmountPence: 1000,
-    amountDueNowPence: 5000,
-  });
+// The held page (Specification §9.5): what a customer sees when Stripe sends
+// them back or they return to a hold later. The page reads state only; the
+// webhook alone confirms a booking.
 
-  assert.equal(
-    message,
-    "£10.00 is retained after late cancellation and the rest is refunded.",
-  );
-});
+const NOW = Date.parse("2026-10-10T12:00:00.000Z");
+const LIVE = "2026-10-10T12:06:00.000Z";
+const ENDED = "2026-10-10T11:59:00.000Z";
 
-test("describeLateCancellationOutcome drops the refund clause when the whole amount is retained", () => {
-  const message = describeLateCancellationOutcome({
-    commitmentAmountPence: 5000,
-    amountDueNowPence: 5000,
-  });
-
-  assert.equal(message, "£50.00 is retained after late cancellation.");
-});
-
-test("describeLateCancellationOutcome treats a missing commitment as zero retained", () => {
-  const message = describeLateCancellationOutcome({
-    commitmentAmountPence: undefined,
-    amountDueNowPence: 3000,
-  });
-
-  assert.equal(
-    message,
-    "£0.00 is retained after late cancellation and the rest is refunded.",
-  );
-});
-
-test("describeLateCancellationOutcome floors a negative commitment at zero", () => {
-  const message = describeLateCancellationOutcome({
-    commitmentAmountPence: -500,
-    amountDueNowPence: 3000,
-  });
-
-  assert.equal(
-    message,
-    "£0.00 is retained after late cancellation and the rest is refunded.",
-  );
-});
-
-test("describeLateCancellationOutcome caps retention at the amount actually due, even if commitment is higher", () => {
-  const message = describeLateCancellationOutcome({
-    commitmentAmountPence: 9000,
-    amountDueNowPence: 2000,
-  });
-
-  assert.equal(message, "£20.00 is retained after late cancellation.");
-});
-
-test("calculatePaymentSummary for a fixed deposit splits due-now from due-later", () => {
-  const summary = calculatePaymentSummary({
-    bookingSettings: {
-      payment_mode: "fixed_deposit",
-      commitment_amount_pence: 1000,
-    },
-    totalPricePence: 5000,
-  });
-
-  assert.equal(summary.amountDueNow, 1000);
-  assert.equal(summary.amountDueAtAppointment, 4000);
-  // The deposit is entirely retained on late cancellation, because the amount
-  // paid now equals the commitment amount, so there is nothing to refund.
-  assert.equal(
-    summary.cancellationOutcome,
-    "£10.00 is retained after late cancellation.",
-  );
-});
-
-test("calculatePaymentSummary caps a deposit above the total at the total price", () => {
-  const summary = calculatePaymentSummary({
-    bookingSettings: {
-      payment_mode: "fixed_deposit",
-      commitment_amount_pence: 9000,
-    },
-    totalPricePence: 5000,
-  });
-
-  assert.equal(summary.amountDueNow, 5000);
-  assert.equal(summary.amountDueAtAppointment, 0);
-});
-
-test("calculatePaymentSummary for full payment charges the whole price up front", () => {
-  const summary = calculatePaymentSummary({
-    bookingSettings: { payment_mode: "full", commitment_amount_pence: 1000 },
-    totalPricePence: 5000,
-  });
-
-  assert.equal(summary.amountDueNow, 5000);
-  assert.equal(summary.amountDueAtAppointment, 0);
-  // Even in "full payment" mode, the cancellation outcome is phrased around
-  // the provider's configured commitment amount, not the amount just paid.
-  assert.equal(
-    summary.cancellationOutcome,
-    "£10.00 is retained after late cancellation and the rest is refunded.",
-  );
-});
-
-test("calculatePaymentSummary for full payment falls back to the total price when no commitment is set", () => {
-  const summary = calculatePaymentSummary({
-    bookingSettings: { payment_mode: "full", commitment_amount_pence: null },
-    totalPricePence: 5000,
-  });
-
-  assert.equal(summary.cancellationOutcome, "£50.00 is retained after late cancellation.");
-});
-
-const NOW = new Date("2026-09-21T12:00:00.000Z").getTime();
-
-test("getBookingDisplayState shows a confirmed booking and blocks payment", () => {
-  const state = getBookingDisplayState({ status: "confirmed" }, NOW);
-
-  assert.deepEqual(state, {
-    heading: "Booking confirmed",
-    message: "Your booking is confirmed.",
-    canPay: false,
-  });
-});
-
-test("getBookingDisplayState treats an explicitly expired status as expired", () => {
-  const state = getBookingDisplayState(
-    { status: "expired", expires_at: "2026-09-21T11:00:00.000Z" },
-    NOW,
-  );
-
-  assert.equal(state.heading, "Slot expired");
-  assert.equal(state.canPay, false);
-});
-
-test("getBookingDisplayState treats an awaiting_payment hold past its expiry as expired", () => {
-  const state = getBookingDisplayState(
-    { status: "awaiting_payment", expires_at: "2026-09-21T11:59:00.000Z" },
-    NOW,
-  );
-
-  assert.equal(state.heading, "Slot expired");
-});
-
-test("getBookingDisplayState reports a cancelled booking that has not expired as cancelled, not expired", () => {
-  const state = getBookingDisplayState(
-    { status: "cancelled", expires_at: "2026-09-21T13:00:00.000Z" },
-    NOW,
-  );
-
-  assert.equal(state.heading, "Booking cancelled");
-  assert.equal(state.canPay, false);
-});
-
-test("getBookingDisplayState reports a cancelled booking whose hold already expired as expired", () => {
-  const state = getBookingDisplayState(
-    { status: "cancelled", expires_at: "2026-09-21T11:00:00.000Z" },
-    NOW,
-  );
-
-  assert.equal(state.heading, "Slot expired");
-});
-
-test("getBookingDisplayState treats a non-awaiting_payment status with no usable expiry as unavailable", () => {
-  const state = getBookingDisplayState(
-    { status: "completed", expires_at: null },
-    NOW,
-  );
-
-  assert.equal(state.heading, "Booking unavailable");
-  assert.equal(state.canPay, false);
-});
-
-test("getBookingDisplayState surfaces a failed payment and still allows retrying", () => {
-  const state = getBookingDisplayState(
-    {
-      status: "awaiting_payment",
-      expires_at: "2026-09-21T13:00:00.000Z",
-      payment_status: "failed",
-    },
-    NOW,
-  );
-
-  assert.equal(state.heading, "Payment failed");
-  assert.equal(state.canPay, true);
-  assert.equal(state.showHoldExpiry, true);
-});
-
-test("getBookingDisplayState treats a cancelled payment attempt the same as a failed one", () => {
-  const state = getBookingDisplayState(
-    {
-      status: "awaiting_payment",
-      expires_at: "2026-09-21T13:00:00.000Z",
-      payment_status: "cancelled",
-    },
-    NOW,
-  );
-
-  assert.equal(state.heading, "Payment failed");
-  assert.equal(state.canPay, true);
-});
-
-for (const paymentStatus of ["refund_required", "refunded", "refund_failed"]) {
-  test(`getBookingDisplayState blocks payment when payment_status is ${paymentStatus}`, () => {
-    const state = getBookingDisplayState(
-      {
-        status: "awaiting_payment",
-        expires_at: "2026-09-21T13:00:00.000Z",
-        payment_status: paymentStatus,
-      },
-      NOW,
-    );
-
-    assert.equal(state.heading, "Payment unsuccessful");
-    assert.equal(state.canPay, false);
-    assert.equal(state.showHoldExpiry, true);
-  });
+function hold(overrides = {}) {
+  return {
+    status: "awaiting_payment",
+    confirmed_at: null,
+    expires_at: LIVE,
+    payment_status: null,
+    paid_attempt: null,
+    ...overrides,
+  };
 }
 
-test("getBookingDisplayState shows a held booking as payable while Stripe checkout is in progress", () => {
-  const state = getBookingDisplayState(
-    {
-      status: "awaiting_payment",
-      expires_at: "2026-09-21T13:00:00.000Z",
-      payment_status: "checkout_created",
-    },
-    NOW,
-  );
+const state = (booking, options = {}) => heldBookingState({ booking, now: NOW, ...options });
 
-  assert.equal(state.heading, "Booking held");
-  assert.equal(state.canPay, true);
-  assert.equal(state.showHoldExpiry, true);
+test("a booking that was ever confirmed goes to its own page, even if cancelled since", () => {
+  assert.equal(state(hold({ status: "confirmed", confirmed_at: "2026-10-10T11:58:00.000Z" })).kind, "confirmed");
+  assert.equal(
+    state(hold({ status: "cancelled", confirmed_at: "2026-10-01T09:00:00.000Z", paid_attempt: { payment_status: "refunded" } }), { checkout: "success" }).kind,
+    "confirmed",
+  );
 });
 
-test("getBookingDisplayState blocks a second payment once Stripe has already succeeded", () => {
-  const state = getBookingDisplayState(
-    {
-      status: "awaiting_payment",
-      expires_at: "2026-09-21T13:00:00.000Z",
-      payment_status: "succeeded",
-    },
-    NOW,
+test("a payment that arrived after the hold ended is never shown as an expired slot and never offers Pay", () => {
+  const late = state(
+    hold({ status: "cancelled", expires_at: ENDED, paid_attempt: { payment_status: "refund_required", amount_charged_pence: 1418 } }),
+    { checkout: "success" },
   );
 
-  assert.equal(state.heading, "Booking held");
-  assert.equal(state.canPay, false);
+  assert.equal(late.kind, "late_payment");
+  assert.equal(late.refundStatus, "refund_required");
+  assert.equal(late.canPay, undefined);
 });
 
-test("getBookingDisplayState shows the initial 5-minute hold when there is no payment attempt yet", () => {
-  const state = getBookingDisplayState(
-    {
-      status: "awaiting_payment",
-      expires_at: "2026-09-21T13:00:00.000Z",
-      payment_status: null,
-    },
-    NOW,
-  );
+test("a successful return waits for the webhook instead of offering Pay again", () => {
+  const confirming = state(hold(), { checkout: "success" });
+  assert.equal(confirming.kind, "confirming");
+  assert.equal(confirming.canPay, undefined);
+  // Even once the hold has ended: the late payment arrives with the webhook.
+  assert.equal(state(hold({ status: "cancelled", expires_at: ENDED }), { checkout: "success" }).kind, "confirming");
+});
 
-  assert.equal(state.heading, "Booking held");
-  assert.equal(state.message, "This time is held for 5 minutes while you continue.");
-  assert.equal(state.canPay, true);
-  assert.equal(state.showHoldExpiry, true);
+test("Checkout could not start because the provider is unavailable", () => {
+  assert.equal(state(hold(), { payment: "unavailable" }).kind, "unavailable");
+  assert.equal(state(hold(), { acceptingBookings: false }).kind, "unavailable", "the provider paused while the time was held");
+});
+
+test("another payment still finishing is shown before anything else can be tried", () => {
+  assert.equal(state(hold(), { payment: "processing" }).kind, "processing");
+});
+
+test("an ended hold with nothing paid says so and offers no payment", () => {
+  for (const booking of [
+    hold({ expires_at: ENDED }),
+    hold({ status: "cancelled", expires_at: ENDED }),
+    hold({ status: "expired" }),
+    hold({ expires_at: null }),
+  ]) {
+    const ended = state(booking);
+    assert.equal(ended.kind, "expired");
+    assert.equal(ended.canPay, undefined);
+  }
+  assert.equal(state(hold({ expires_at: ENDED }), { payment: "expired" }).kind, "expired");
+});
+
+test("a live hold can be paid in every recoverable state", () => {
+  assert.deepEqual(state(hold(), { notice: "terms_changed" }), { kind: "terms_changed", canPay: true });
+  assert.deepEqual(state(hold(), { payment: "failed_to_open" }), { kind: "failed_to_open", canPay: true });
+  assert.deepEqual(state(hold({ payment_status: "failed" })), { kind: "failed", canPay: true });
+  assert.deepEqual(state(hold(), { checkout: "cancelled" }), { kind: "not_finished", canPay: true });
+  assert.deepEqual(state(hold(), { payment: "expired" }), { kind: "not_finished", canPay: true });
+  assert.deepEqual(state(hold({ payment_status: "checkout_created" })), { kind: "not_finished", canPay: true });
+  assert.deepEqual(state(hold()), { kind: "held", canPay: true });
+});
+
+test("the held time is shown in London time", () => {
+  assert.equal(formatHeldUntil("2026-10-10T12:06:00.000Z"), "1:06 pm");
+  assert.equal(formatHeldUntil("not a date"), "");
+});
+
+const copyFor = (kind, extra = {}) =>
+  heldBookingCopy({ kind, ...extra }, {
+    providerName: "Studio Nala",
+    heldUntil: "1:06 pm",
+    refundAmount: "£14.18",
+    contactEmail: "help@example.test",
+  });
+
+test("every state explains itself and says whether anything was charged", () => {
+  assert.equal(copyFor("late_payment", { refundStatus: "refund_required" }).title, "We couldn’t book this time");
+  assert.match(copyFor("late_payment", { refundStatus: "refund_required" }).message, /We’re refunding £14\.18 in full to the card you paid with\./);
+  assert.match(copyFor("late_payment", { refundStatus: "refunded" }).message, /We’ve refunded £14\.18 in full/);
+  assert.match(copyFor("late_payment", { refundStatus: "refund_failed" }).message, /email help@example\.test/);
+  assert.match(copyFor("confirming").message, /Please don’t pay again\./);
+  assert.equal(copyFor("unavailable").title, "Studio Nala can’t take bookings right now");
+  assert.match(copyFor("unavailable").message, /Nothing has been charged\./);
+  assert.equal(copyFor("expired").title, "Your held time has ended");
+  assert.match(copyFor("expired").message, /Nothing has been charged\./);
+  assert.equal(copyFor("terms_changed").title, "Check the updated price");
+  assert.match(copyFor("terms_changed").message, /held until 1:06 pm/);
+  assert.equal(copyFor("failed").title, "Payment didn’t go through");
+  assert.equal(copyFor("not_finished").title, "Payment not finished");
+  assert.match(copyFor("processing").message, /before paying again/);
+
+  const titles = ["late_payment", "confirming", "unavailable", "processing", "expired", "terms_changed", "failed_to_open", "failed", "not_finished", "held"]
+    .map((kind) => copyFor(kind, { refundStatus: "refund_required" }).title);
+  assert.equal(new Set(titles).size, titles.length, "no two states share a heading");
+});
+
+test("no copy promises when a refund arrives", () => {
+  for (const refundStatus of ["refund_required", "refunded", "refund_failed"]) {
+    assert.doesNotMatch(copyFor("late_payment", { refundStatus }).message, /\bdays?\b|\bwithin\b|\bsoon\b/i);
+  }
 });

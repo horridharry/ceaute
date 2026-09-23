@@ -10,8 +10,10 @@ values ('1b000000-0000-0000-0000-000000000001','Central London','10 Test Street'
 insert into ceaute.availability_rule (provider_page_id, weekday, starts_at, ends_at) values ('1b000000-0000-0000-0000-000000000001',1,'09:00','17:00');
 insert into ceaute.treatment (provider_page_id,name,description,duration_minutes,price_pence,discovery_category_id,is_active)
 values ('1b000000-0000-0000-0000-000000000001','Race manicure','Fixture',60,5000,(select id from ceaute.discovery_category order by display_order limit 1),true);
-insert into ceaute.provider_booking_setting (provider_page_id,payment_mode,commitment_amount_pence,cancellation_window_hours,written_policy)
-values ('1b000000-0000-0000-0000-000000000001','full',1000,24,'Fixture');
+insert into ceaute.provider_booking_setting (provider_page_id,payment_mode,deposit_percent,cancellation_window_hours,written_policy)
+values ('1b000000-0000-0000-0000-000000000001','full',20,24,'Fixture');
+insert into ceaute.provider_agreement_acceptance (provider_page_id, agreement_version, accepted_by_profile_id)
+values ('1b000000-0000-0000-0000-000000000001', ceaute.current_provider_agreement_version(), '0b000000-0000-0000-0000-000000000001');
 insert into ceaute.provider_payment_account (provider_page_id,stripe_account_id,dashboard,identity_country,recipient_applied,stripe_transfers_status,payouts_status,requirements_currently_due,requirements_past_due,requirements_eventually_due,last_stripe_update_at)
 values ('1b000000-0000-0000-0000-000000000001','acct_race_publish','express','GB',true,'active','active',array[]::text[],array[]::text[],array[]::text[],now());
 insert into ceaute.treatment_group (id, provider_page_id, name) values ('2b000000-0000-0000-0000-000000000001','1b000000-0000-0000-0000-000000000001','Race group');

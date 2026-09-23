@@ -196,7 +196,7 @@ test("the card reads: name with Book beside it, then a clamped description, then
   const ownerCard = storefront.slice(storefront.indexOf("function TreatmentCard"), storefront.indexOf("const SECONDARY_BUTTON"));
 
   // Top row: the heading and Book, in that order, with Book unable to shrink.
-  assert.match(card, /<div className="flex items-start justify-between gap-3">\s*<h3[\s\S]*?<\/h3>\s*<button[\s\S]*?aria-label=\{`Book \$\{treatment\.name\}`\}/);
+  assert.match(card, /<div className="flex items-start justify-between gap-3">\s*<h3[\s\S]*?<\/h3>\s*\{bookable \? \(\s*<button[\s\S]*?aria-label=\{`Book \$\{treatment\.name\}`\}/);
   assert.match(card, /shrink-0/, "Book keeps its width beside a long name");
   assert.match(card, /min-h-11/, "Book stays comfortably tappable");
   assert.match(card, /\[overflow-wrap:anywhere\]/, "a long name wraps instead of overlapping Book");
@@ -237,8 +237,26 @@ test("See all buttons count everything, not the preview, and Portfolio stays a t
 test("both pages book through the same selection list and link", () => {
   const storefront = read("src/features/storefront/storefront-page.jsx");
   const allTreatments = read("src/features/storefront/all-treatments.jsx");
-  assert.match(storefront, /<TreatmentSelectionList sections=\{previewSections\} username=\{username\} \/>/);
-  assert.match(allTreatments, /<TreatmentSelectionList sections=\{shown\} username=\{username\} \/>/);
+  assert.match(storefront, /<TreatmentSelectionList sections=\{previewSections\} username=\{username\} bookable=\{bookable\} \/>/);
+  assert.match(allTreatments, /<TreatmentSelectionList sections=\{shown\} username=\{username\} bookable=\{bookable\} \/>/);
   const list = read("src/features/storefront/treatment-selection-list.jsx");
   assert.match(list, /buildTreatmentTimeHref\(\{ username, treatmentId: treatment\.id, addOnIds \}\)/);
+});
+
+test("a provider who is not taking bookings keeps the treatments, without Book", () => {
+  const list = read("src/features/storefront/treatment-selection-list.jsx");
+  const storefront = read("src/features/storefront/storefront-page.jsx");
+  const storefrontRoute = read("src/app/(public-provider)/[username]/(storefront)/page.jsx");
+  const treatmentsRoute = read("src/app/(public-provider)/[username]/(storefront)/treatments/page.jsx");
+
+  assert.match(list, /export function TreatmentSelectionList\(\{ sections, username, bookable = true \}\)/);
+  assert.match(list, /\{bookable \? \(\s*<button[\s\S]*?onClick=\{onContinue\}/, "the sheet's action needs bookable too");
+  assert.match(list, /Not taking online bookings right now\./);
+  assert.match(storefront, /publicView && !takingBookings \? \(\s*<Notice tone="neutral">/);
+  assert.match(storefront, /isn’t taking online bookings right now\./);
+  // Both public routes ask PostgreSQL (provider_page_accepts_new_bookings).
+  assert.match(storefrontRoute, /getProviderAcceptsBookings\(providerPage\.id\)/);
+  assert.match(storefrontRoute, /takingBookings=\{takingBookings\}/);
+  assert.match(treatmentsRoute, /getProviderAcceptsBookings\(providerPage\.id\)/);
+  assert.match(treatmentsRoute, /bookable=\{takingBookings\}/);
 });

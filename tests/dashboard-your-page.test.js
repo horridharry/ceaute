@@ -12,6 +12,7 @@ import {
   isLastVisiblePhoto,
 } from "../src/app/(dashboard)/dashboard/profile/portfolio/_lib/portfolio-rules.js";
 import { PublicationPanel } from "../src/app/(dashboard)/dashboard/settings/publication/_components/publication-panel.jsx";
+import { describeSetup } from "../src/app/(dashboard)/dashboard/_lib/publication-checks.js";
 
 const render = (element) => renderToStaticMarkup(element);
 const count = (html, pattern) => (html.match(pattern) ?? []).length;
@@ -55,46 +56,82 @@ test("the display photo is optional and says so", () => {
   assert.match(withPhoto, />Remove</);
 });
 
-const notReady = {
-  ready: false,
-  missing: ["At least one enabled working day", "Stripe payments ready"],
-  requirements: [
-    { label: "Business name", href: "/dashboard/profile", met: true },
-    { label: "At least one enabled working day", href: "/dashboard/availability", met: false },
-    { label: "Stripe payments ready", href: "/dashboard/settings/payments", met: false },
-  ],
+// The eight checks PostgreSQL returns (get_provider_page_publication_checks).
+const ALL_MET = {
+  status: "draft",
+  has_business_profile: true,
+  has_bookable_treatment: true,
+  has_visible_photo: true,
+  has_current_location: true,
+  has_working_hours: true,
+  has_booking_terms: true,
+  payments_ready: true,
+  agreement_accepted: true,
+  meets_publication_requirements: true,
+  accepts_new_bookings: false,
 };
+const notReady = describeSetup({
+  ...ALL_MET,
+  has_working_hours: false,
+  payments_ready: false,
+  meets_publication_requirements: false,
+});
+const ready = describeSetup(ALL_MET);
+const live = describeSetup({ ...ALL_MET, status: "published", accepts_new_bookings: true });
 
 test("publication: not ready lists what is missing, each linked, with Publish unavailable and why", () => {
-  const html = render(h(PublicationPanel, { status: "draft", username: "studionala", readiness: notReady, publishPage: noop, unpublishPage: noop }));
+  const html = render(h(PublicationPanel, { status: "draft", username: "studionala", setup: notReady, publishPage: noop, unpublishPage: noop }));
   assert.match(html, /Not live/);
   assert.match(html, /href="\/dashboard\/availability"/);
   assert.match(html, /href="\/dashboard\/settings\/payments"/);
-  assert.doesNotMatch(html, />Business name</, "met requirements are not repeated");
+  assert.doesNotMatch(html, /Complete your business profile/, "met requirements are not repeated");
   assert.match(html, /disabled=""[^>]*aria-describedby="publish-unavailable"[^>]*>Publish page|aria-describedby="publish-unavailable"[^>]*disabled=""[^>]*>Publish page|<button[^>]*disabled=""[^>]*>Publish page/);
   assert.match(html, /id="publish-unavailable"/);
   assert.match(html, /href="\/dashboard\/profile\/preview"/);
 });
 
+test("publication: the provider agreement is a requirement like the others", () => {
+  const html = render(h(PublicationPanel, {
+    status: "draft",
+    username: "studionala",
+    setup: describeSetup({ ...ALL_MET, agreement_accepted: false, meets_publication_requirements: false }),
+    publishPage: noop,
+    unpublishPage: noop,
+  }));
+  assert.match(html, /href="\/dashboard\/settings\/payments#provider-agreement"[^>]*>Accept the provider agreement/);
+  assert.match(html, /<button[^>]*disabled=""[^>]*>Publish page/);
+});
+
 test("publication: ready offers Publish and Preview", () => {
-  const html = render(h(PublicationPanel, { status: "draft", username: "studionala", readiness: { ready: true, missing: [], requirements: [] }, publishPage: noop, unpublishPage: noop }));
+  const html = render(h(PublicationPanel, { status: "draft", username: "studionala", setup: ready, publishPage: noop, unpublishPage: noop }));
   assert.match(html, /Everything’s in place/);
   assert.match(html, /<button[^>]*type="button"[^>]*>Publish page<\/button>/);
   assert.doesNotMatch(html, /disabled=""[^>]*>Publish page/);
 });
 
 test("publication: live offers View page and a confirmed Unpublish", () => {
-  const html = render(h(PublicationPanel, { status: "published", username: "studionala", readiness: { ready: true, missing: [], requirements: [] }, publishPage: noop, unpublishPage: noop }));
+  const html = render(h(PublicationPanel, { status: "published", username: "studionala", setup: live, publishPage: noop, unpublishPage: noop }));
   assert.match(html, /Live/);
   assert.match(html, /href="\/@studionala"/);
   assert.match(html, />Unpublish page</);
   assert.match(html, /Unpublish your page\?/);
   assert.match(html, /Existing bookings are not affected\./);
   assert.doesNotMatch(html, />Publish page</);
+  assert.doesNotMatch(html, /Not taking new bookings/);
+});
+
+test("publication: a live page that is not taking bookings stays live and says what to do", () => {
+  const paused = describeSetup({ ...ALL_MET, status: "published", agreement_accepted: false, has_booking_terms: false, accepts_new_bookings: false });
+  const html = render(h(PublicationPanel, { status: "published", username: "studionala", setup: paused, publishPage: noop, unpublishPage: noop }));
+  assert.match(html, /Live/);
+  assert.match(html, /Not taking new bookings/);
+  assert.match(html, /href="\/dashboard\/settings\/payments#provider-agreement"[^>]*>Accept the current provider agreement/);
+  assert.match(html, /href="\/dashboard\/settings\/booking"[^>]*>Choose your deposit percentage/);
+  assert.match(html, />Unpublish page</, "the page is never unpublished for the provider");
 });
 
 test("publication: a suspended page cannot be published", () => {
-  const html = render(h(PublicationPanel, { status: "suspended", username: "studionala", readiness: notReady, publishPage: noop, unpublishPage: noop }));
+  const html = render(h(PublicationPanel, { status: "suspended", username: "studionala", setup: describeSetup({ ...ALL_MET, status: "suspended" }), publishPage: noop, unpublishPage: noop }));
   assert.match(html, /Suspended pages cannot be published/);
   assert.doesNotMatch(html, />Publish page</);
 });
@@ -103,7 +140,7 @@ test("publication controls live only in Settings → Publication, with unchanged
   const actions = read("src/app/(dashboard)/dashboard/settings/publication/actions.js");
   assert.match(actions, /rpc\("publish_provider_page"\)/);
   assert.match(actions, /rpc\("unpublish_provider_page"\)/);
-  assert.match(actions, /getProviderPagePublicationReadiness/);
+  assert.match(actions, /getSetupState\(/);
   assert.match(actions, /Suspended pages cannot be published\./);
   assert.doesNotMatch(read("src/app/(dashboard)/dashboard/profile/actions.js"), /publish_provider_page/);
   assert.match(read("src/app/(dashboard)/dashboard/profile/preview/page.jsx"), /href="\/dashboard\/settings\/publication"/);

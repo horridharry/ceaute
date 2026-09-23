@@ -61,18 +61,18 @@ test("the owner preview keeps its restrictions", () => {
 });
 
 test("booking review still states the cancellation window, outcome and written policy", () => {
-  const details = read(`${CHECKOUT}/_components/booking-details-checkout.jsx`);
-  assert.match(details, /Cancellation window:[\s\S]*bookingSettings\.cancellation_window_hours/);
-  assert.match(details, /\{paymentSummary\.cancellationOutcome\}/);
-  assert.match(details, /\{bookingSettings\.written_policy\}/);
-
-  const hold = read(`${CHECKOUT}/_components/booking-hold-checkout.jsx`);
-  assert.match(hold, /Cancellation window:[\s\S]*serviceSnapshot\.cancellation_window_hours/);
-  assert.match(hold, /describeLateCancellationOutcome\(/);
-  assert.match(hold, /\{serviceSnapshot\.written_policy\}/);
+  // Review and pay and the held page share one Cancellation block
+  // (checkout/_components/booking-summary.jsx), fed from the SQL quote before
+  // a hold and from the booking snapshot after it.
+  const summary = read(`${CHECKOUT}/_components/booking-summary.jsx`);
+  assert.match(summary, /Free cancellation until <strong>\{cancellation\.deadline\}<\/strong>, \{cancellation\.windowHours\} hours/);
+  assert.match(summary, /After that, \{cancellation\.summary\}/);
+  assert.match(summary, /\{cancellation\.policy\}/);
 
   const page = read(`${CHECKOUT}/page.jsx`);
-  assert.match(page, /bookingSettings=\{bookingSettings\}/, "checkout loads its own booking settings");
+  assert.match(page, /cancellationView\(quote, \{ startAt, providerName, policy: terms\?\.written_policy \}\)/, "Review uses the SQL quote");
+  assert.match(page, /cancellationView\(terms, \{\s*startAt: summary\.start_at,[\s\S]*?policy: snapshot\.written_policy,/, "the held page uses the snapshot");
+  assert.match(page, /getPublicBookingDetailsPage\(/, "checkout loads its own booking terms");
 });
 
 test("providers still configure their booking terms", () => {
