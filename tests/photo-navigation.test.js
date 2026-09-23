@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import {
   TAP_SLOP_PX,
@@ -55,15 +56,24 @@ test("a still pointer is a tap; movement or scrolling is a swipe", () => {
   assert.equal(isTap({ startX: undefined, startY: 200, endX: 100, endY: 200 }), false);
 });
 
-test("the viewer loads only the photo in view and its neighbours", () => {
+test("the viewer loads the photo in view and two either side, and no more", () => {
   const loaded = Array.from({ length: 20 }, (_, index) => index).filter((index) =>
     shouldLoadViewerPhoto(index, 10),
   );
-  assert.deepEqual(loaded, [9, 10, 11]);
+  assert.deepEqual(loaded, [8, 9, 10, 11, 12]);
   assert.deepEqual(
-    [0, 1, 2].filter((index) => shouldLoadViewerPhoto(index, 0)),
-    [0, 1],
+    [0, 1, 2, 3].filter((index) => shouldLoadViewerPhoto(index, 0)),
+    [0, 1, 2],
   );
+});
+
+// Measured 23 September 2026: moving through the gallery with the router
+// re-rendered the page on the server and re-signed every photo URL per swipe.
+test("the gallery changes ?photo= through browser history, never the router", () => {
+  const gallery = readFileSync("src/features/storefront/photo-gallery.jsx", "utf8");
+  assert.match(gallery, /window\.history\.pushState\(null, "", href\)/, "opening a photo adds one entry");
+  assert.match(gallery, /window\.history\.replaceState\(null, "", href\)/, "moving between photos replaces it");
+  assert.doesNotMatch(gallery, /router\.(push|replace)\(/);
 });
 
 // Row-major CSS grid auto-placement without "dense", for the classes
