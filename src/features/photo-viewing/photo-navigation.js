@@ -64,6 +64,12 @@ export function isTap({ startX, startY, endX, endY, scrollDelta = 0 }) {
 // downloads every full-size image at once.
 export const VIEWER_PRELOAD_RADIUS = 2;
 
+// True when a scroll position rests on a photo (within 2px), rather than
+// part-way between two.
+export function isSnappedTo(scrollLeft, index, width) {
+  return Number.isFinite(scrollLeft) && width > 0 && Math.abs(scrollLeft - index * width) <= 2;
+}
+
 export function shouldLoadViewerPhoto(index, current, radius = VIEWER_PRELOAD_RADIUS) {
   return Math.abs(index - current) <= radius;
 }

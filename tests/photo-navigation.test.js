@@ -8,6 +8,7 @@ import {
   galleryHref,
   isTap,
   photoIndexById,
+  isSnappedTo,
   shouldLoadViewerPhoto,
   stepPhotoIndex,
   viewerKeyAction,
@@ -212,4 +213,13 @@ test("gallery links use the public username and the photo id only", () => {
   assert.equal(galleryHref("ada"), "/@ada/photos");
   assert.equal(galleryHref("ada", "0b8d-1"), "/@ada/photos?photo=0b8d-1");
   assert.equal(galleryHref("ada", "a b"), "/@ada/photos?photo=a%20b");
+});
+
+// Found while timing the viewer on 23 September 2026: a smooth scroll paused
+// part-way must not count as the photo the viewer settles on.
+test("only a track resting on a photo counts as settled", () => {
+  assert.equal(isSnappedTo(750, 2, 375), true);
+  assert.equal(isSnappedTo(751.5, 2, 375), true);
+  assert.equal(isSnappedTo(600, 2, 375), false, "part-way between photos 2 and 3");
+  assert.equal(isSnappedTo(0, 0, 0), false, "a track with no width never settles");
 });
