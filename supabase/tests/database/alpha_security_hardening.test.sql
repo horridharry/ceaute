@@ -102,17 +102,22 @@ values (
 insert into ceaute.provider_booking_setting (
   provider_page_id,
   payment_mode,
-  commitment_amount_pence,
+  deposit_percent,
   cancellation_window_hours,
   written_policy
 )
 values (
   '10000000-0000-0000-0000-000000000003',
   'full',
-  1000,
+  20,
   24,
   'Test policy'
 );
+
+insert into ceaute.provider_agreement_acceptance (
+  provider_page_id, agreement_version, accepted_by_profile_id
+)
+values ('10000000-0000-0000-0000-000000000003', ceaute.current_provider_agreement_version(), '00000000-0000-0000-0000-000000000003');
 
 insert into ceaute.portfolio_image (
   provider_page_id,

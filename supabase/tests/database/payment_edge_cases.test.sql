@@ -32,6 +32,11 @@ values (
   'payment.edge', 'Payment Edge Provider', 'Edge-case fixture', 'Nails', 'published'
 );
 
+insert into ceaute.provider_agreement_acceptance (
+  provider_page_id, agreement_version, accepted_by_profile_id
+)
+values ('12000000-0000-0000-0000-000000000001', ceaute.current_provider_agreement_version(), '02000000-0000-0000-0000-000000000002');
+
 insert into ceaute.treatment (
   id, provider_page_id, name, description, duration_minutes, price_pence,
   discovery_category_id, is_active

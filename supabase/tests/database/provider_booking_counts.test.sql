@@ -45,12 +45,22 @@ values (
 );
 
 insert into ceaute.provider_booking_setting (
-  provider_page_id, payment_mode, commitment_amount_pence,
+  provider_page_id, payment_mode, deposit_percent,
   cancellation_window_hours, written_policy
 )
 values (
-  '12100000-0000-0000-0000-000000000002', 'full', 1000, 24, 'Fixture policy'
+  '12100000-0000-0000-0000-000000000002', 'full', 20, 24, 'Fixture policy'
 );
+
+insert into ceaute.provider_payment_account (
+  provider_page_id, stripe_account_id, recipient_applied, stripe_transfers_status, payouts_status
+)
+values ('12100000-0000-0000-0000-000000000002', 'acct_counts', true, 'active', 'active');
+
+insert into ceaute.provider_agreement_acceptance (
+  provider_page_id, agreement_version, accepted_by_profile_id
+)
+values ('12100000-0000-0000-0000-000000000002', ceaute.current_provider_agreement_version(), '02100000-0000-0000-0000-000000000003');
 
 insert into ceaute.availability_rule (provider_page_id, weekday, starts_at, ends_at)
 select '12100000-0000-0000-0000-000000000002', weekday, '09:00', '17:00'
