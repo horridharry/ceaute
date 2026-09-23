@@ -121,19 +121,36 @@ test("the database rule for usernames is the same", () => {
 
 // --- navigation ----------------------------------------------------------------
 
-test("the account menu leads customers to My bookings and to starting a business page", () => {
-  assert.deepEqual(
-    personalMenuLinks({ hasProviderPage: false, isProviderWorkspace: false }).map((link) => link.label),
-    ["Discover", "My bookings", "Account", "Start your business page"],
-  );
-  assert.deepEqual(
-    personalMenuLinks({ hasProviderPage: true, isProviderWorkspace: false }).map((link) => link.label),
-    ["Your business", "Discover", "My bookings", "Account"],
-  );
-  assert.equal(
-    personalMenuLinks({ hasProviderPage: false, isProviderWorkspace: false }).at(-1).href,
-    "/dashboard/onboarding",
-  );
+// Approved 23 September 2026: Account, My bookings and Discover keep the same
+// positions for every account, then one business slot; Log out is added last
+// by the menu itself.
+test("the account menu keeps its rows in constant positions for every account", () => {
+  const labels = (options) => personalMenuLinks(options).map((link) => link.label);
+
+  assert.deepEqual(labels({ hasProviderPage: false, pathname: "/discover" }), [
+    "Account", "My bookings", "Discover", "Start your business page",
+  ]);
+  assert.deepEqual(labels({ hasProviderPage: true, pathname: "/discover" }), [
+    "Account", "My bookings", "Discover", "Your business",
+  ]);
+  assert.deepEqual(labels({ hasProviderPage: true, pathname: "/dashboard/bookings" }), [
+    "Account", "My bookings", "Discover", "Your business",
+  ]);
+  assert.equal(personalMenuLinks({ hasProviderPage: false }).at(-1).href, "/dashboard/onboarding");
+  assert.equal(personalMenuLinks({ hasProviderPage: true }).at(-1).href, "/dashboard");
+  assert.equal(personalMenuLinks({ hasProviderPage: true }).at(-1).separatorBefore, true);
+});
+
+test("the account menu marks the area you are in, and only that one", () => {
+  const current = (options) =>
+    personalMenuLinks(options).filter((link) => link.current).map((link) => link.label);
+
+  assert.deepEqual(current({ hasProviderPage: true, pathname: "/account" }), ["Account"]);
+  assert.deepEqual(current({ hasProviderPage: true, pathname: "/account/bookings/b1" }), ["My bookings"]);
+  assert.deepEqual(current({ hasProviderPage: true, pathname: "/discover" }), ["Discover"]);
+  assert.deepEqual(current({ hasProviderPage: true, pathname: "/dashboard/treatments/new" }), ["Your business"]);
+  assert.deepEqual(current({ hasProviderPage: false, pathname: "/dashboard/onboarding" }), ["Start your business page"]);
+  assert.deepEqual(current({ hasProviderPage: true, pathname: "/@studio.nala" }), []);
 });
 
 test("Log in comes back to the page it was pressed on, never to an auth page", () => {
