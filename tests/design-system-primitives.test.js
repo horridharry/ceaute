@@ -128,7 +128,7 @@ test("nothing stops people zooming the page", () => {
 // --- Button -----------------------------------------------------------------
 
 test("every button variant has a visible keyboard focus ring and disabled styling", () => {
-  assert.deepEqual(BUTTON_VARIANTS, ["primary", "primary-strong", "secondary", "outline", "destructive-strong", "destructive", "text"]);
+  assert.deepEqual(BUTTON_VARIANTS, ["primary", "primary-strong", "secondary", "outline", "destructive-strong", "destructive", "ink", "text"]);
   for (const variant of BUTTON_VARIANTS) {
     const classes = buttonClassName({ variant });
     assert.match(classes, /focus-visible:outline-2 focus-visible:outline-offset-2/, variant);
@@ -145,6 +145,7 @@ test("button variants keep the colours each one already had", () => {
   assert.match(buttonClassName({ variant: "secondary" }), /border border-line .*text-accent .*hover:border-line-strong/);
   assert.match(buttonClassName({ variant: "outline" }), /border border-ink\/15 bg-surface .*text-ink hover:bg-ink\/\[0\.03\]/);
   assert.match(buttonClassName({ variant: "destructive" }), /text-destructive hover:bg-destructive-surface\/80 active:bg-destructive active:text-white/);
+  assert.match(buttonClassName({ variant: "ink" }), /bg-ink font-semibold text-white/, "the storefront's monochrome Book");
   assert.match(buttonClassName({ variant: "text" }), /text-accent hover:text-accent-strong/);
   assert.doesNotMatch(buttonClassName({ variant: "text" }), /\bpx-4\b|\bborder\b/, "a text action has no box");
 });

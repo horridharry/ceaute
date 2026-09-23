@@ -31,6 +31,10 @@ const VARIANT_CLASSES = {
   // Archive and remove actions.
   destructive:
     "rounded-lg font-semibold text-destructive hover:bg-destructive-surface/80 active:bg-destructive active:text-white disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-60",
+  // Filled black: the storefront's Book and Choose a time (approved
+  // 23 September 2026), monochrome so provider photos carry the colour.
+  ink:
+    "rounded-lg bg-ink font-semibold text-white shadow-sm hover:bg-ink/85 active:bg-ink/85 disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-60",
   // A pink text action with no box, such as "Check my bookings".
   text: "rounded-lg font-semibold text-accent hover:text-accent-strong active:text-accent-strong disabled:cursor-not-allowed disabled:opacity-50 aria-disabled:cursor-not-allowed aria-disabled:opacity-50",
 };

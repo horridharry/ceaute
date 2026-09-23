@@ -104,16 +104,11 @@ export function pluralCount(count, noun, plural = `${noun}s`) {
   return `${safe} ${safe === 1 ? noun : plural}`;
 }
 
-// The line under a treatment card: how long it takes, what it costs, and
-// whether add-ons can be chosen with it.
-export function treatmentMetaLine(treatment) {
-  return [
-    formatDurationMinutes(treatment?.duration_minutes),
-    formatPricePence(treatment?.price_pence),
-    treatment?.add_ons?.length ? "Add-ons available" : null,
-  ]
-    .filter(Boolean)
-    .join(" \u00b7 ");
+// The pill on a treatment card (approved 23 September 2026): how many add-ons
+// can be chosen with it, or nothing. Duration lives in the details sheet.
+export function addOnCountLabel(treatment) {
+  const count = Array.isArray(treatment?.add_ons) ? treatment.add_ons.length : 0;
+  return count > 0 ? pluralCount(count, "add-on") : "";
 }
 
 export function shouldShowReviewsSection(reviews) {

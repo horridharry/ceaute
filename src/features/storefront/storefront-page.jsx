@@ -3,9 +3,8 @@ import { Notice } from "@/components/ui/notice";
 import {
   pluralCount,
   shouldShowReviewsSection,
-  treatmentMetaLine,
 } from "@/features/storefront/format";
-import { TreatmentSelectionList } from "./treatment-selection-list";
+import { TreatmentCardFacts, TreatmentSelectionList } from "./treatment-selection-list";
 import { HeroCarousel, ProviderPhoto } from "./hero-carousel";
 import { BentoHero } from "./bento-hero";
 import { galleryHref } from "@/features/photo-viewing/photo-navigation";
@@ -78,14 +77,14 @@ function ProviderIdentity({ provider }) {
 // without Book, because their preview never books.
 function TreatmentCard({ treatment }) {
   return (
-    <article className="rounded-xl border border-black/10 p-4">
+    <article className="rounded-xl border border-line-strong p-4">
       <h3 className="font-medium [overflow-wrap:anywhere]">{treatment.name}</h3>
       {treatment.description ? (
-        <p className="mt-2 line-clamp-2 text-sm text-black/60">
+        <p className="mt-1 truncate text-sm text-black/60">
           {treatment.description}
         </p>
       ) : null}
-      <p className="mt-2 text-sm text-black/60">{treatmentMetaLine(treatment)}</p>
+      <TreatmentCardFacts treatment={treatment} />
     </article>
   );
 }
