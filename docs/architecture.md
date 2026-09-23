@@ -385,6 +385,10 @@ and so does a late-payment refund operation (the customer is told their payment
 is being refunded); completion sends nothing. Secret-protected cron routes claim and process email batches and
 complete elapsed bookings. Claims expire and retries preserve stable work
 identity, because network delivery cannot be assumed to happen exactly once.
+An outbox row moves `pending` → `sending` → `sent`, or to `failed` for a
+backed-off retry; `cancelled` is a terminal state for an email deliberately
+withdrawn before delivery, which the claim never selects and the send and
+failure recorders cannot leave.
 
 Supabase Cron is the scheduler for those routes, not Vercel. `pg_cron` jobs
 call `ceaute.invoke_cron_endpoint`, which queues an authenticated GET to
