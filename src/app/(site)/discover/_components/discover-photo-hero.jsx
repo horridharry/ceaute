@@ -4,8 +4,8 @@ import { useCallback, useRef, useState } from "react";
 import Link from "next/link";
 import { isTap } from "@/features/photo-viewing/photo-navigation";
 
-// The ratio is provisional (approved 23 September 2026 for this pass; the
-// owner will judge the height in the running app), so it lives in one place.
+// The hero's shape: 4:5, approved by the product owner on 23 September 2026
+// after reviewing it in the running app.
 export const DISCOVER_HERO_ASPECT = "aspect-[4/5]";
 
 function prefersReducedMotion() {

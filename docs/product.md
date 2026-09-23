@@ -222,7 +222,7 @@ location and an active treatment, alphabetically, 24 at a time ("Show more"
 adds 24 through `?shown=`, without JavaScript), and filters them by public-area
 text and/or an active Ceaute discovery category. Each card (revised
 23 September 2026) shows up to three portfolio photos as one large swipeable
-photo (4:5, provisional) with dots, then the display photo, business name,
+photo (4:5, approved) with dots, then the display photo, business name,
 public area and the storefront's rating (average of visible reviews to one
 decimal with the count, or the plain word "New"). The business name is the
 card's link; each photo also opens the storefront on a tap, never on a swipe,
