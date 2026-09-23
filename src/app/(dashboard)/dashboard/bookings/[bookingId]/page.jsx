@@ -1,93 +1,169 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { BookingInspirationImages } from "@/components/booking-inspiration-images";
-import { PendingButton } from "@/components/pending-button";
+import { Badge } from "@/components/ui/badge";
+import { buttonClassName } from "@/components/ui/button-classes";
+import { Disclosure } from "@/components/ui/disclosure";
+import { BOOKING_FALLBACK_LABEL, providerBookingView } from "@/lib/bookings/booking-display";
+import { DashboardPage } from "../../_components/dashboard-page";
+import { formatShortDate, formatTimeRange, treatmentLine } from "../../_lib/booking-format";
+import { formatShortDuration } from "../../_lib/price-duration";
 import { cancelProviderBooking } from "../actions";
 import { getProviderBooking } from "../queries";
+import { CancelBooking } from "./_components/cancel-booking";
+import { InspirationGallery } from "./_components/inspiration-gallery";
 
 const canShowExactAddress = (booking) =>
   Boolean(booking.confirmed_at) &&
   (booking.status === "confirmed" || booking.status === "completed");
 
-function ExactLocation({ booking }) {
-  if (!canShowExactAddress(booking)) {
-    return <p className="mt-3 text-black/60">Area: {booking.public_area}</p>;
-  }
+const known = (value) => value && value !== BOOKING_FALLBACK_LABEL;
 
-  const addressLines = [
-    booking.address_line_1,
-    booking.address_line_2,
-    booking.city,
-    booking.postcode,
-  ].filter(Boolean);
+const isMinutes = (value) => Number.isInteger(value) && value > 0;
+
+// The snapshot's duration is the whole appointment, add-ons included.
+function treatmentMinutes(booking) {
+  const addOnMinutes = booking.selected_add_ons.map((addOn) => addOn.duration_minutes);
+  if (!isMinutes(booking.duration_minutes) || !addOnMinutes.every(isMinutes)) return null;
+  const minutes = booking.duration_minutes - addOnMinutes.reduce((sum, value) => sum + value, 0);
+  return isMinutes(minutes) ? minutes : null;
+}
+
+function ContactIcon({ kind }) {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      {kind === "phone" ? (
+        <path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2Z" />
+      ) : (
+        <>
+          <rect x="2" y="4" width="20" height="16" rx="2" />
+          <path d="m22 7-10 6L2 7" />
+        </>
+      )}
+    </svg>
+  );
+}
+
+function StatusLine({ booking }) {
+  const view = providerBookingView(booking);
+  const badge =
+    view === "cancelled" ? (
+      <Badge tone="quiet">{booking.cancelled_by === "provider" ? "Cancelled by you" : "Cancelled by customer"}</Badge>
+    ) : view === "completed" ? (
+      <Badge tone="quiet">Completed</Badge>
+    ) : (
+      <Badge tone="attention">Confirmed</Badge>
+    );
 
   return (
-    <div className="mt-4 border-t border-black/10 pt-4">
-      <p className="font-semibold">Location</p>
-      <p className="mt-2 text-black/60">Area: {booking.public_area}</p>
+    <p className="mt-2 flex flex-wrap items-center gap-2 text-[13px] text-ink-muted">
+      {badge}
+      {treatmentLine(booking)}
+    </p>
+  );
+}
+
+function WhenAndWhere({ booking }) {
+  const addressLines = canShowExactAddress(booking)
+    ? [booking.address_line_1, booking.address_line_2, [booking.city, booking.postcode].filter(Boolean).join(" ")].filter(Boolean)
+    : [];
+
+  return (
+    <section aria-label="When and where" className="mt-6 flex flex-col gap-1 text-sm">
+      <p className="text-base font-semibold tabular-nums">
+        {formatShortDate(booking.start_at)} · {formatTimeRange(booking.start_at, booking.end_at)}
+      </p>
+      <p className="text-ink-muted">
+        {isMinutes(booking.duration_minutes) ? formatShortDuration(booking.duration_minutes) : booking.duration_label}
+      </p>
       {addressLines.length ? (
         <p className="mt-2 whitespace-pre-line">{addressLines.join("\n")}</p>
       ) : (
-        <p className="mt-2 text-black/60">Exact address unavailable.</p>
+        <p className="mt-2">{booking.public_area}</p>
       )}
-      {booking.access_instructions ? (
-        <p className="mt-2 text-black/60">
-          Access: {booking.access_instructions}
-        </p>
+      {canShowExactAddress(booking) && booking.access_instructions ? (
+        <p className="text-ink-muted">{booking.access_instructions}</p>
+      ) : null}
+    </section>
+  );
+}
+
+function Contact({ booking }) {
+  const phone = known(booking.customer_phone) ? booking.customer_phone : "";
+  const email = known(booking.customer_email) ? booking.customer_email : "";
+  if (booking.status === "cancelled" || (!phone && !email)) return null;
+
+  return (
+    <div className="mt-5 flex gap-2">
+      {phone ? (
+        <a href={`tel:${phone.replace(/\s+/g, "")}`} className={buttonClassName({ variant: "secondary", className: "flex-1" })}>
+          <ContactIcon kind="phone" />
+          Call<span className="sr-only"> {booking.customer_name}</span>
+        </a>
+      ) : null}
+      {email ? (
+        <a href={`mailto:${email}`} className={buttonClassName({ variant: "secondary", className: "flex-1" })}>
+          <ContactIcon kind="email" />
+          Email<span className="sr-only"> {booking.customer_name}</span>
+        </a>
       ) : null}
     </div>
   );
 }
 
-function CancellationPanel({ booking }) {
+function Section({ title, id, children }) {
+  return (
+    <section aria-labelledby={id} className="mt-10 flex flex-col gap-3 text-sm">
+      <h2 id={id} className="text-xl font-semibold tracking-tight">
+        {title}
+      </h2>
+      {children}
+    </section>
+  );
+}
+
+function Rows({ rows }) {
+  return (
+    <dl className="flex flex-col">
+      {rows.map(([label, value, strong]) => (
+        <div key={label} className="flex justify-between gap-4 border-b border-line py-2.5 tabular-nums last:border-b-0">
+          <dt className={strong ? "font-semibold" : "text-ink-muted"}>{label}</dt>
+          <dd className={strong ? "font-semibold" : ""}>{value}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+function Payment({ booking }) {
   if (booking.status === "cancelled") {
     return (
-      <div className="mt-4 border-t border-black/10 pt-4">
-        <p className="font-semibold">Cancellation</p>
-        <p className="mt-2 text-black/60">
-          Cancelled by {booking.cancelled_by_label} on{" "}
-          {booking.cancelled_at_label}.
-        </p>
-        <p className="mt-2">Refunded: {booking.refund_amount_label}</p>
-        <p className="text-black/60">Retained: {booking.retained_amount_label}</p>
-        {booking.refund_status_label ? (
-          <p className="mt-2 text-black/60">{booking.refund_status_label}</p>
-        ) : null}
+      <Section title="Payment" id="payment">
+        <Rows
+          rows={[
+            ["Paid online", booking.amount_paid_online_label],
+            ["Refunded", booking.refund_amount_label],
+            ["Kept", booking.retained_amount_label],
+          ]}
+        />
+        {booking.refund_status_label ? <p className="text-ink-muted">{booking.refund_status_label}.</p> : null}
         {booking.payment_status === "refund_failed" ? (
-          <p className="mt-2 text-red-600">
-            Automatic refund failed. Support will need to review this payment.
-          </p>
+          <p className="text-danger">Automatic refund failed. Support will need to review this payment.</p>
         ) : null}
-      </div>
+      </Section>
     );
   }
 
-  if (!booking.can_cancel) {
-    return null;
-  }
-
   return (
-    <div className="mt-4 border-t border-black/10 pt-4">
-      <p className="font-semibold">Cancel booking</p>
-      <p className="mt-2 text-black/60">
-        Provider cancellation refunds the full amount paid online:{" "}
-        {booking.provider_refund_label}. The appointment time is released as
-        soon as the booking is cancelled.
-      </p>
-      <form action={cancelProviderBooking} className="mt-4">
-        <input type="hidden" name="booking_id" value={booking.booking_id} />
-        <label className="mb-4 flex gap-2 text-sm text-black/70">
-          <input type="checkbox" required className="mt-1 h-4 w-4" />
-          <span>I understand this will cancel the booking and refund the customer.</span>
-        </label>
-        <PendingButton
-          pendingLabel="Cancelling..."
-          className="rounded-lg border border-rose-200 p-3 px-4 text-sm font-semibold text-rose-700 duration-200 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          Cancel booking
-        </PendingButton>
-      </form>
-    </div>
+    <Section title="Payment" id="payment">
+      <Rows
+        rows={[
+          ["Paid online", booking.amount_paid_online_label],
+          ...(booking.amount_due_at_appointment_pence > 0
+            ? [["To collect", booking.amount_due_at_appointment_label, true]]
+            : []),
+          ["Total", booking.total_price_label],
+        ]}
+      />
+    </Section>
   );
 }
 
@@ -95,87 +171,64 @@ export default async function BookingDetailPage({ params }) {
   const { bookingId } = await params;
   const booking = await getProviderBooking(bookingId);
 
+  // A missing booking and a hold both end here; see getProviderBooking.
   if (!booking) {
     notFound();
   }
 
   return (
-    <main className="container mx-auto max-w-md p-5">
-      <div className="mt-12 flex flex-col">
-        <div className="flex items-end justify-between gap-4">
-          <h1 className="text-2xl font-bold tracking-tight text-black/80">
-            Booking details
-          </h1>
-          <Link
-            href="/dashboard/bookings"
-            className="text-sm font-semibold text-pink-600"
-          >
-            Back
-          </Link>
-        </div>
+    <DashboardPage
+      title={booking.customer_name}
+      size="md"
+      back={{ href: "/dashboard/bookings", label: "Bookings" }}
+    >
+      <StatusLine booking={booking} />
+      <WhenAndWhere booking={booking} />
+      <Contact booking={booking} />
 
-        <section className="mt-6 rounded-xl border border-black/10 p-4 text-sm">
-          <h2 className="text-lg font-semibold">{booking.customer_name}</h2>
-          <p className="mt-3 font-medium">{booking.treatment_name}</p>
-          <p className="mt-3">
-            <span className="font-semibold">{booking.date_label}</span>
-            {", "}
-            <span className="font-semibold">{booking.time_label}</span>
-          </p>
-          <p className="text-black/60">Duration: {booking.duration_label}</p>
-          <p className="mt-3 font-medium">
-            Total: {booking.total_price_label}
-          </p>
-          <p className="text-black/60">
-            Paid online: {booking.amount_paid_online_label}
-          </p>
-          <p className="text-black/60">
-            Due at appointment: {booking.amount_due_at_appointment_label}
-          </p>
-          <p className="text-xs text-black/60">{booking.status_label}</p>
+      <Section title="Treatment" id="treatment">
+        <Rows
+          rows={[
+            [booking.treatment_name, treatmentMinutes(booking) ? formatShortDuration(treatmentMinutes(booking)) : "", false],
+            ...booking.selected_add_ons.map((addOn) => [
+              addOn.name,
+              `+${addOn.price_label} · +${isMinutes(addOn.duration_minutes) ? formatShortDuration(addOn.duration_minutes) : addOn.duration_label}`,
+            ]),
+          ]}
+        />
+      </Section>
 
-          {booking.selected_add_ons.length ? (
-            <div className="mt-4 border-t border-black/10 pt-4">
-              <p className="font-semibold">Add-ons</p>
-              <ul className="mt-2 flex flex-col gap-2">
-                {booking.selected_add_ons.map((addOn) => (
-                  <li key={addOn.id}>
-                    {addOn.name} ({addOn.price_label}, {addOn.duration_label})
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
+      {booking.inspiration_images.length ? (
+        <Section title="Inspiration" id="inspiration">
+          <InspirationGallery images={booking.inspiration_images} />
+        </Section>
+      ) : null}
 
-          <div className="mt-4 border-t border-black/10 pt-4">
-            <p className="font-semibold">Customer</p>
-            <p className="mt-2">{booking.customer_name}</p>
-            <p className="text-black/60">{booking.customer_email}</p>
-            <p className="text-black/60">{booking.customer_phone}</p>
-          </div>
+      <Section title="Customer" id="customer">
+        <Rows
+          rows={[
+            ["Phone", booking.customer_phone],
+            ["Email", booking.customer_email],
+          ]}
+        />
+      </Section>
 
-          <ExactLocation booking={booking} />
+      <Payment booking={booking} />
 
-          <BookingInspirationImages
-            images={booking.inspiration_images}
-            allowance={null}
-            canManage={false}
-            description="The customer's reference pictures for this appointment. Only they can change them."
-          />
+      <Disclosure summary="Cancellation policy" className="mt-8">
+        <p>Cancellation window: {booking.cancellation_window_hours} hours</p>
+        <p className="whitespace-pre-line text-ink-muted">
+          {booking.written_policy || "No written policy stored."}
+        </p>
+      </Disclosure>
 
-          <div className="mt-4 border-t border-black/10 pt-4">
-            <p className="font-semibold">Cancellation terms</p>
-            <p className="mt-2 text-black/60">
-              Cancellation window: {booking.cancellation_window_hours} hours
-            </p>
-            <p className="mt-2 whitespace-pre-line text-black/60">
-              {booking.written_policy || "No written policy stored."}
-            </p>
-          </div>
-
-          <CancellationPanel booking={booking} />
-        </section>
-      </div>
-    </main>
+      <CancelBooking
+        bookingId={booking.booking_id}
+        customerName={booking.customer_name}
+        refundLabel={booking.provider_refund_label}
+        canCancel={booking.can_cancel}
+        cancelAction={cancelProviderBooking}
+      />
+    </DashboardPage>
   );
 }

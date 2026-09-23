@@ -132,6 +132,45 @@ Only Account bookings uses it: a bare `border` in Tailwind 4 takes the text
 colour, and that page has always looked that way. Whether it should use
 `line` instead is a visual decision for the customer-booking redesign.
 
+### Dashboard patterns
+
+Added by the provider dashboard redesign; tested in
+`tests/dashboard-primitives.test.js`.
+
+- `LinkFilterPills` and `ToggleFilterPills` are one row of filter pills with
+  one selected. Use link pills when the filter lives in the URL (Bookings
+  `?view=`, Add-ons and Treatment groups `?status=`); they carry
+  `aria-current="page"`. Use toggle pills for page-only state; they carry
+  `aria-pressed`. An optional `count` shows beside the label. The storefront's
+  treatment-group filter uses the same component.
+- `ActionMenu` holds a row's secondary actions behind a 44px "more" button
+  labelled with the item's name ("Actions for Gel removal"). It is a
+  disclosure of real buttons and links, not an ARIA menu. Opening focuses the
+  first action; Escape closes it and returns focus to the trigger. A disabled
+  action shows its reason underneath ("Archive first to delete"), linked by
+  `aria-describedby`. Destructive actions come last, after `separatorBefore`.
+- `ConfirmDialog` is the native `<dialog>` pattern of the Availability
+  closed-week dialog. The safe choice comes first and takes focus, and Escape
+  means the safe choice. The confirm button is `destructive-strong` for
+  irreversible actions and `primary` otherwise. Errors stay inside the dialog.
+  `blocked` shows an explanation with only OK. Focus returns to the opener,
+  or to `fallbackFocusRef` if the opener has gone.
+- `Badge` is a neutral pill. `attention` adds a pink dot and `live` a green
+  one; `quiet` is for secondary facts. Never use it to repeat the state a
+  filtered list already shows.
+- `FormActions` ends every create and edit form: one right-aligned primary
+  submit (the Booking settings pattern) and an optional neutral `FormStatus`.
+- `Disclosure` is a styled `<details>` for secondary content: archived
+  treatments, the cancellation policy, and payment fees.
+- Button `destructive-strong` is the filled confirm of an irreversible action.
+  PageContainer `medium` (`max-w-2xl`) is used only by the portfolio grid.
+- `Field` puts the label 6px above the control, the hint between them, and
+  the error below the control, only when there is one.
+
+In the dashboard, `DashboardPage` (a centred container plus the heading with
+description and "New" link) frames every screen, and `ManagementRow` is an
+edit link with its `ActionMenu` beside it, never inside it.
+
 ## Accessibility conventions
 
 - Every interactive element shows a focus ring on keyboard focus

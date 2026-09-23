@@ -1,38 +1,55 @@
 "use client";
 
 import { useActionState, useMemo, useState } from "react";
-import { FormField } from "../../_components/form-field";
+import { Button } from "@/components/ui/button";
+import { Field } from "@/components/ui/field";
+import { FormActions } from "@/components/ui/form-actions";
+import { FormError } from "@/components/ui/form-feedback";
+import { Input } from "@/components/ui/input";
+import { PageContainer } from "@/components/ui/page-container";
+import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { FocusedTaskHeader } from "../../_components/focused-task-header";
 
-function ArchiveButton({ treatment, archiveAction, restoreAction, pending }) {
-  const [archiveMessage, formAction, archivePending] = useActionState(
-    treatment.is_active ? archiveAction : restoreAction,
+// Archive and Restore for a treatment stay on its edit screen, unchanged in
+// behaviour; they sit in their own section after the form.
+function ArchiveSection({ treatment, archiveAction, restoreAction, pending }) {
+  const isArchived = !treatment.is_active;
+  const [message, formAction, archivePending] = useActionState(
+    isArchived ? restoreAction : archiveAction,
     "",
   );
-  const isPending = pending || archivePending;
-  const isArchived = !treatment.is_active;
 
   return (
-    <form action={formAction} className="mr-auto">
-      <input type="hidden" name="treatmentId" value={treatment.treatmentId} />
-      <button
-        type="submit"
-        className="w-max rounded-lg p-3 px-6 text-sm font-semibold text-rose-600 duration-200 hover:border-transparent hover:bg-rose-50/80 active:bg-rose-600 active:text-white disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
-        aria-disabled={isPending}
-        disabled={isPending}
-      >
-        {archivePending
-          ? isArchived
-            ? "Restoring..."
-            : "Archiving..."
-          : isArchived
-            ? "Restore"
-            : "Archive"}
-      </button>
-      {archiveMessage ? (
-        <p className="mt-2 text-sm text-red-600">{archiveMessage}</p>
-      ) : null}
-    </form>
+    <section aria-labelledby="archive-treatment" className="mt-10 border-t border-line pt-5">
+      <h2 id="archive-treatment" className="text-sm font-semibold">
+        {isArchived ? "Restore treatment" : "Archive treatment"}
+      </h2>
+      <p className="mt-1 text-sm text-ink-muted">
+        {isArchived
+          ? "Shows it on your page again."
+          : "Hidden from your page and new bookings. You can restore it later."}
+      </p>
+      <form action={formAction} className="mt-2">
+        <input type="hidden" name="treatmentId" value={treatment.treatmentId} />
+        <Button
+          type="submit"
+          variant={isArchived ? "secondary" : "destructive"}
+          className={isArchived ? "" : "-ml-4"}
+          disabled={pending || archivePending}
+          aria-busy={archivePending || undefined}
+        >
+          {archivePending
+            ? isArchived
+              ? "Restoring…"
+              : "Archiving…"
+            : isArchived
+              ? "Restore"
+              : "Archive"}
+        </Button>
+        <FormError className="mt-2">{message}</FormError>
+      </form>
+    </section>
   );
 }
 
@@ -48,124 +65,147 @@ export function TreatmentForm({
   const [stateMessage, formAction, pending] = useActionState(action, "");
   const [name, setName] = useState(treatment?.name ?? "");
   const [description, setDescription] = useState(treatment?.description ?? "");
-  const [price, setPrice] = useState(
-    treatment?.price ? String(treatment.price) : "",
-  );
+  const [price, setPrice] = useState(treatment?.price ? String(treatment.price) : "");
   const [durationMinutes, setDurationMinutes] = useState(
     treatment?.duration_minutes ? String(treatment.duration_minutes) : "",
   );
 
   const nameError =
-    name.trim() && name.trim().length < 2
-      ? "Name must be at least 2 characters."
-      : null;
+    name.trim() && name.trim().length < 2 ? "Name must be at least 2 characters." : "";
   const priceError =
     price.trim() && !/^\d+(\.\d{1,2})?$/.test(price.trim())
       ? "Use pounds and optional pennies, for example 35 or 35.50."
-      : null;
+      : "";
   const durationError =
     durationMinutes.trim() &&
     (!Number.isInteger(Number(durationMinutes)) || Number(durationMinutes) <= 0)
       ? "Duration must be a whole number of minutes greater than zero."
-      : null;
+      : "";
   const hasClientError = Boolean(nameError || priceError || durationError);
-  const heading = mode === "create" ? "Create treatment" : "Edit treatment";
+  const isCreate = mode === "create";
+  const archivedGroup = treatment?.archived_group ?? null;
   const fallbackCategoryId = useMemo(
     () => treatment?.discovery_category_id || discoveryCategories[0]?.id || "",
     [discoveryCategories, treatment?.discovery_category_id],
   );
 
   return (
-    <main className="container max-w-md p-5">
-      <div className="mt-6 flex flex-col">
-        <FocusedTaskHeader
-          backHref="/dashboard/treatments"
-          title={heading}
-          formId="treatment_form"
-          submitLabel={mode === "create" ? "Create" : "Save"}
-          pendingLabel={mode === "create" ? "Creating..." : "Saving..."}
-          pending={pending}
-          disabled={hasClientError}
-        />
+    <PageContainer>
+      <FocusedTaskHeader
+        backHref="/dashboard/treatments"
+        title={isCreate ? "New treatment" : "Edit treatment"}
+      />
 
-        <form
-          id="treatment_form"
-          className="mt-8 flex flex-col gap-4"
-          action={formAction}
-        >
-          {treatment ? (
-            <input
-              type="hidden"
-              name="treatmentId"
-              value={treatment.treatmentId}
-            />
-          ) : null}
+      <form id="treatment_form" className="mt-8 flex flex-col gap-5" action={formAction}>
+        {treatment ? (
+          <input type="hidden" name="treatmentId" value={treatment.treatmentId} />
+        ) : null}
 
-          <FormField label="Name" htmlFor="name" error={nameError}>
-            <input
-              id="name"
+        <Field label="Name" htmlFor="name" error={nameError}>
+          {(control) => (
+            <Input
+              {...control}
               name="name"
               required
-              className="field"
               value={name}
               onChange={(event) => setName(event.target.value)}
             />
-          </FormField>
+          )}
+        </Field>
 
-          <FormField label="Description" htmlFor="description">
-            <textarea
-              id="description"
+        <Field label="Description" htmlFor="description">
+          {(control) => (
+            <Textarea
+              {...control}
               name="description"
               required
-              className="field"
-              rows={3}
+              rows={4}
+              className="resize-none"
               value={description}
               onChange={(event) => setDescription(event.target.value)}
             />
-          </FormField>
+          )}
+        </Field>
 
-          <FormField label="Price" htmlFor="price" error={priceError}>
-            <input
-              type="text"
-              id="price"
-              name="price"
-              required
-              inputMode="decimal"
-              placeholder="35.00"
-              className="field"
-              value={price}
-              onChange={(event) => setPrice(event.target.value)}
-            />
-          </FormField>
+        <div className="grid grid-cols-2 gap-2.5">
+          <Field label="Price" htmlFor="price" error={priceError}>
+            {(control) => (
+              <span className="relative block">
+                <span aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-ink-muted">
+                  £
+                </span>
+                <Input
+                  {...control}
+                  type="text"
+                  name="price"
+                  required
+                  inputMode="decimal"
+                  placeholder="35.00"
+                  className="w-full pl-7"
+                  value={price}
+                  onChange={(event) => setPrice(event.target.value)}
+                />
+              </span>
+            )}
+          </Field>
+          <Field label="Duration (minutes)" htmlFor="duration_minutes" error={durationError}>
+            {(control) => (
+              <Input
+                {...control}
+                type="number"
+                name="duration_minutes"
+                required
+                min="1"
+                step="1"
+                placeholder="60"
+                className="w-full"
+                value={durationMinutes}
+                onChange={(event) => setDurationMinutes(event.target.value)}
+              />
+            )}
+          </Field>
+        </div>
 
-          <FormField
-            label="Duration"
-            htmlFor="duration_minutes"
-            error={durationError}
-          >
-            <input
-              type="number"
-              id="duration_minutes"
-              name="duration_minutes"
-              required
-              min="1"
-              step="1"
-              placeholder="60"
-              className="field"
-              value={durationMinutes}
-              onChange={(event) => setDurationMinutes(event.target.value)}
-            />
-          </FormField>
+        <Field
+          label="Treatment group"
+          htmlFor="treatment_group_id"
+          hint={
+            archivedGroup
+              ? "This group is archived. Choose another group or No group to move the treatment out."
+              : ""
+          }
+        >
+          {(control) => (
+            <Select
+              {...control}
+              name="treatment_group_id"
+              defaultValue={treatment?.treatment_group_id ?? ""}
+            >
+              {treatmentGroups
+                .filter((group) => group.id !== archivedGroup?.id)
+                .map((group) => (
+                  <option key={group.id} value={group.id}>
+                    {group.name}
+                  </option>
+                ))}
+              {archivedGroup ? (
+                <option value={archivedGroup.id}>{archivedGroup.name} (archived)</option>
+              ) : null}
+              <option value="">No group</option>
+            </Select>
+          )}
+        </Field>
 
-          <FormField
-            label="Discovery category"
-            htmlFor="discovery_category_id"
-          >
-            <select
-              id="discovery_category_id"
+        <Field
+          label="Ceaute category"
+          htmlFor="discovery_category_id"
+          hint="Helps customers find you in Discover."
+        >
+          {(control) => (
+            <Select
+              {...control}
               name="discovery_category_id"
               required
-              className="field cursor-pointer"
               defaultValue={fallbackCategoryId}
             >
               {discoveryCategories.map((category) => (
@@ -173,41 +213,26 @@ export function TreatmentForm({
                   {category.name}
                 </option>
               ))}
-            </select>
-          </FormField>
+            </Select>
+          )}
+        </Field>
 
-          <FormField label="Treatment group" htmlFor="treatment_group_id">
-            <select
-              id="treatment_group_id"
-              name="treatment_group_id"
-              className="field cursor-pointer"
-              defaultValue={treatment?.treatment_group_id ?? ""}
-            >
-              <option value="">No group</option>
-              {treatmentGroups.map((group) => (
-                <option key={group.id} value={group.id}>
-                  {group.name}
-                </option>
-              ))}
-            </select>
-          </FormField>
+        <FormError>{stateMessage}</FormError>
+        <FormActions>
+          <Button type="submit" disabled={pending || hasClientError} aria-busy={pending || undefined}>
+            {pending ? (isCreate ? "Adding…" : "Saving…") : isCreate ? "Add treatment" : "Save"}
+          </Button>
+        </FormActions>
+      </form>
 
-          {stateMessage ? (
-            <p className="mt-4 text-sm text-red-600">{stateMessage}</p>
-          ) : null}
-        </form>
-
-        {mode === "edit" ? (
-          <div className="mt-8 flex items-center">
-            <ArchiveButton
-              treatment={treatment}
-              archiveAction={archiveAction}
-              restoreAction={restoreAction}
-              pending={pending}
-            />
-          </div>
-        ) : null}
-      </div>
-    </main>
+      {!isCreate ? (
+        <ArchiveSection
+          treatment={treatment}
+          archiveAction={archiveAction}
+          restoreAction={restoreAction}
+          pending={pending}
+        />
+      ) : null}
+    </PageContainer>
   );
 }

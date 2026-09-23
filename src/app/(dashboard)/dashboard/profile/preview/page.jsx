@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { StorefrontPage } from "@/features/storefront/storefront-page";
 import { buildStorefrontViewModel } from "@/features/storefront/storefront-view-model";
@@ -22,12 +23,19 @@ export default async function DashboardProfilePreviewPage() {
 
   return (
     <>
-      <div className="container mx-auto max-w-md p-5 pb-0">
-        <div className="mt-6 rounded-xl border border-black/10 bg-black/[0.03] px-4 py-3">
-          <p className="text-sm font-semibold">Preview: not live yet</p>
-          <p className="mt-1 text-sm text-black/60">
-            Customers can&apos;t see your page until you publish it.
+      {/* Pinned under the app header, so the provider always knows this is a
+          preview and has a way back. */}
+      <div className="sticky top-14 z-10 bg-ink text-white">
+        <div className="mx-auto flex max-w-md items-center justify-between gap-3 px-5 py-2.5 text-sm">
+          <p>
+            <span className="font-semibold">Preview</span> · Not live yet
           </p>
+          <Link
+            href="/dashboard/settings/publication"
+            className="inline-flex min-h-11 items-center rounded-lg font-semibold underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+          >
+            Back to Publication
+          </Link>
         </div>
       </div>
       <StorefrontPage

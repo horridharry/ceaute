@@ -1,9 +1,5 @@
 import { TreatmentAddOnForm } from "../../_components/treatment-add-on-form";
-import {
-  archiveAddOn,
-  restoreAddOn,
-  updateAddOnWithCompatibility,
-} from "../../actions";
+import { updateAddOnWithCompatibility } from "../../actions";
 import { getAddOn, getAddOnFormOptions } from "../../queries";
 
 export default async function EditAddOnPage({ params }) {
@@ -18,8 +14,6 @@ export default async function EditAddOnPage({ params }) {
   return (
     <TreatmentAddOnForm
       action={updateAddOnWithCompatibility}
-      archiveAction={archiveAddOn}
-      restoreAction={restoreAddOn}
       addOn={addOn}
       mode="edit"
       treatments={options.treatments}

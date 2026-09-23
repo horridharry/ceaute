@@ -180,8 +180,12 @@ test("treatment rules stay pure; the filter UI reaches data only through props",
   const filterUi = read("src/features/storefront/all-treatments.jsx");
   assert.doesNotMatch(filterUi, /supabase|treatment-queries|useSearchParams|router\.(push|replace)/,
     "the filter is page state, not a query parameter");
-  assert.match(filterUi, /aria-pressed=\{selected\}/, "pills expose their selected state");
-  assert.match(filterUi, /role="group"[\s\S]*aria-label="Filter treatments by group"/);
+  // The pills are the shared ToggleFilterPills, which exposes the pressed
+  // state inside a labelled group (tests/dashboard-primitives.test.js).
+  assert.match(filterUi, /<ToggleFilterPills[\s\S]*label="Filter treatments by group"/);
+  const pills = read("src/components/ui/filter-pills.jsx");
+  assert.match(pills, /aria-pressed=\{selected\}/, "pills expose their selected state");
+  assert.match(pills, /role="group" aria-label=\{label\}/);
 });
 
 test("the card reads: name with Book beside it, then a clamped description, then its line", () => {

@@ -128,6 +128,62 @@ export function groupBookingsByTiming(bookings) {
   );
 }
 
+// The provider dashboard's appointment filters. A booking row is only an
+// appointment once it has been paid for: status confirmed, then completed, or
+// cancelled by a person (cancelled_by is set only by
+// prepare_booking_cancellation). Holds are not appointments and belong in no
+// provider list, count or detail page:
+//   - an unpaid hold (awaiting_payment, live or past its expiry), and
+//   - an expired or retired hold (cancelled with no cancelled_by), including
+//     one whose payment arrived late and was refunded automatically.
+// The rows themselves are kept; this only decides what the provider sees.
+// The customer account keeps categorizeBooking above.
+export const PROVIDER_BOOKING_VIEWS = ["upcoming", "completed", "cancelled"];
+
+export function providerBookingView(booking, now = new Date()) {
+  if (booking.status === "confirmed") {
+    const endAt = new Date(booking.end_at).getTime();
+    return Number.isFinite(endAt) && endAt <= now.getTime() ? "completed" : "upcoming";
+  }
+
+  if (booking.status === "completed") {
+    return "completed";
+  }
+
+  if (booking.status === "cancelled" && booking.cancelled_by) {
+    return "cancelled";
+  }
+
+  return null;
+}
+
+export function isProviderAppointment(booking) {
+  return providerBookingView(booking) !== null;
+}
+
+// Upcoming soonest first; Completed and Cancelled newest first.
+export function groupProviderBookings(bookings, now = new Date()) {
+  const groups = { upcoming: [], completed: [], cancelled: [] };
+
+  for (const booking of bookings) {
+    const view = providerBookingView(booking, now);
+    if (view) groups[view].push(booking);
+  }
+
+  const byStart = (first, second) => String(first.start_at).localeCompare(String(second.start_at));
+  groups.upcoming.sort(byStart);
+  groups.completed.sort((first, second) => byStart(second, first));
+  groups.cancelled.sort((first, second) => byStart(second, first));
+
+  return groups;
+}
+
+// Older links used ?view=previous for what is now Completed.
+export function providerBookingViewFromParam(value) {
+  if (value === "previous") return "completed";
+  return PROVIDER_BOOKING_VIEWS.includes(value) ? value : "upcoming";
+}
+
 // Booking snapshots are stored JSON and older rows use older shapes. This is the
 // only place that knows about those shapes; display code reads the result.
 export function normalizeBookingSnapshots(booking) {
@@ -218,6 +274,7 @@ export function bookingToDisplayBooking(booking, paymentAttempt = null) {
     date_label: dateTime.date,
     time_label: dateTime.time,
     duration_label: formatDurationMinutes(service.duration_minutes),
+    duration_minutes: service.duration_minutes ?? null,
     total_price_label: formatMoneyFromPence(service.total_price_pence),
     amount_paid_online_label: formatMoneyFromPence(
       paymentAttempt?.amount_charged_pence,
@@ -296,6 +353,7 @@ export function bookingToDisplayBooking(booking, paymentAttempt = null) {
       name: addOn.name ?? BOOKING_FALLBACK_LABEL,
       price_label: formatMoneyFromPence(addOn.additional_price_pence),
       duration_label: formatDurationMinutes(addOn.additional_duration_minutes),
+      duration_minutes: addOn.additional_duration_minutes ?? null,
     })),
   };
 }

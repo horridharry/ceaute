@@ -11,6 +11,8 @@ const CONTAINER_WIDTHS = {
   // Storefront sub-pages (All reviews, All treatments): the storefront's
   // column, narrowed and flush on wide screens.
   column: "max-w-md px-5 pb-10 pt-6 lg:max-w-[25.5rem] lg:px-0",
+  // Portfolio management's photo grid: room for three columns on desktop.
+  medium: "max-w-2xl p-5",
   // The photo gallery.
   wide: "max-w-5xl px-4 pb-10 pt-6 sm:px-5",
   // Legal text.

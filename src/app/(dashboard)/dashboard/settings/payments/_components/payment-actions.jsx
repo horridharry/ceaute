@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { Button } from "@/components/ui/button";
 
 const idleState = { error: false, message: "" };
 
@@ -27,45 +28,37 @@ export function PaymentActions({
   const outcome = onboardingState.message ? onboardingState : refreshState;
 
   return (
-    <div className="mt-8 flex flex-col items-end gap-3">
-      <div className="flex items-center justify-end gap-3">
-        {hasAccount ? (
-          <form action={refreshAction}>
-            <button
-              type="submit"
-              disabled={!configured || busy}
-              aria-disabled={!configured || busy}
-              className="rounded-lg border border-black/10 p-3 px-4 text-sm font-semibold text-pink-600 duration-200 hover:border-black/20 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {refreshPending ? "Refreshing..." : "Refresh status"}
-            </button>
-          </form>
-        ) : null}
+    <div className="flex flex-col gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         {canCreateOnboardingLink ? (
           <form action={onboardingAction}>
-            <button
-              type="submit"
-              disabled={!configured || busy}
-              aria-disabled={!configured || busy}
-              className="rounded-lg bg-pink-700 p-3 px-4 text-sm font-semibold text-white shadow-sm duration-200 hover:bg-pink-800 disabled:cursor-not-allowed disabled:opacity-50"
-            >
+            <Button type="submit" disabled={!configured || busy} aria-busy={onboardingPending || undefined}>
               {onboardingPending
-                ? "Connecting..."
+                ? "Connecting…"
                 : hasAccount
                   ? "Continue setup"
                   : "Connect Stripe"}
-            </button>
+            </Button>
+          </form>
+        ) : null}
+        {hasAccount ? (
+          <form action={refreshAction}>
+            <Button
+              type="submit"
+              variant="text"
+              className="px-2"
+              disabled={!configured || busy}
+              aria-busy={refreshPending || undefined}
+            >
+              {refreshPending ? "Refreshing…" : "Refresh status"}
+            </Button>
           </form>
         ) : null}
       </div>
       {outcome.message ? (
         <p
-          role="status"
-          className={
-            outcome.error
-              ? "rounded-lg border border-red-200 p-3 text-sm text-red-700"
-              : "text-sm text-black/60"
-          }
+          role={outcome.error ? "alert" : "status"}
+          className={outcome.error ? "text-sm text-danger" : "text-sm text-ink-muted"}
         >
           {outcome.message}
         </p>

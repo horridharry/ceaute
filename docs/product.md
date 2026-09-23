@@ -23,26 +23,36 @@ categorised treatment; booking and cancellation settings; a visible portfolio
 image; and a Stripe recipient account able to receive transfers and payouts.
 A published page keeps its username: the owner must unpublish before clearing
 it, and PostgreSQL rejects the change otherwise. The outcome of publishing or
-unpublishing, including the database's rejection reason, is shown on the
-profile screen. Suspended pages cannot be published or changed back to draft
-by their owner.
+unpublishing, including the database's rejection reason, is shown on
+Settings → Publication (`/dashboard/settings/publication`), the only place a
+provider publishes or unpublishes. It lists each unmet requirement with a link
+to the section where it is met; Profile has no publication controls. Suspended
+pages cannot be published or changed back to draft by their owner.
 
 The provider workspace is `/dashboard`. Each provider-management area is an
 independent section with its own page and heading: Home, Bookings,
 Availability, Locations, Treatments, Treatment groups, Add-ons, Profile,
-Portfolio, Booking settings and Payments. The header's menu button opens them
+Portfolio, Booking settings, Payments and Publication. The header's menu button opens them
 as one flat list in that order (`src/components/app-header/provider-menu.js`);
 its unlabelled dividers are scanning aids, not groups, and URL nesting
 (Portfolio under `/dashboard/profile`, the two settings pages under
 `/dashboard/settings`) implies no product hierarchy. After the sections,
 View your page opens the live `/@username` page once published, otherwise
-`/dashboard/profile/preview`, which is marked as not live and redirects to the
-live page after publishing. `/dashboard/settings` redirects to `/dashboard`.
+`/dashboard/profile/preview`, which is marked as not live, links to
+Publication, and redirects to the live page after publishing. `/dashboard/settings` redirects to `/dashboard`.
 The personal control is the person rather than the business: Account, My
 bookings (bookings they made as a customer) and Discover inside the workspace,
 Your business, Bookings and Account outside it. `/dashboard/treatment-groups`
 is the canonical group route. `/dashboard/onboarding` is the intentional exception to the normal
 guard which redirects dashboard users without a provider page into onboarding.
+
+The provider's Bookings section shows appointments only, under Upcoming,
+Completed (finished, whether or not the completion job has run) and Cancelled.
+Unpaid holds, expired holds and holds whose late payment was refunded are left
+out of every list and count, and their detail URLs are Not found, decided on the
+server; the records are kept. Availability's count of payments in progress is
+unchanged. Home (Today) lists the day's appointments and shows the publication
+checklist only while the page is a draft.
 
 Customer settings and booking history stay under `/account`, including
 `/account/bookings`. The settings screen edits the profile name and UK phone
@@ -128,7 +138,11 @@ portfolio order in a Bento grid, and a full-screen viewer (swipe,
 Previous/Next, arrow keys, Escape) opened at a photo with `?photo=<id>`.
 Unpublished and unknown providers have no gallery (a real 404). The owner's
 unpublished preview has no gallery links. On the provider's Portfolio page,
-each photo opens the same viewer; managing photos stays there.
+each photo opens the same viewer; managing photos stays there. Every photo
+deletion is confirmed, and the database record is removed before the stored
+file. While the page is published, its last visible photo cannot be hidden or
+deleted: PostgreSQL rejects the change (locking the page row so two concurrent
+requests cannot both pass), and publishing is never undone as a side effect.
 
 A treatment is the canonical internal name for the offering a customer books.
 Customer prose may say “service”, but code, routes, and domain documentation use
@@ -140,6 +154,18 @@ An add-on increases price, duration, or both. Compatibility is many-to-many, so
 one add-on can be offered with several treatments. Archived or inactive
 treatments, groups, and add-ons stop appearing in active customer and provider
 flows; historical bookings keep their snapshots.
+
+Add-ons and treatment groups are soft-deleted. Each is Active, Archived or
+Deleted, and the only changes are Active→Archived, Archived→Active and
+Archived→Deleted, made by PostgreSQL functions that check ownership; deleting an
+active record is rejected. A deleted record disappears from both the Active and
+Archived lists, the public page and booking, and its name can be reused. A
+deleted add-on keeps its treatment links internally. A group cannot be archived
+or deleted while any treatment, archived ones included, still uses it; the
+dashboard explains why and links to those treatments, and nothing is moved
+automatically. An archived group cannot be newly assigned, but a treatment
+already in one keeps it and its edit form shows the group as archived. Saving an
+add-on keeps its links to archived treatments and cannot create new ones.
 
 Discovery at `/discover` filters published providers by public-area text and/or
 an active Ceaute discovery category. It is a simple category and area search,

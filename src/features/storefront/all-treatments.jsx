@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { ToggleFilterPills } from "@/components/ui/filter-pills";
 import { TreatmentSelectionList } from "./treatment-selection-list";
 import {
   ALL_TREATMENTS_FILTER,
@@ -9,35 +10,16 @@ import {
   treatmentFilterOptions,
 } from "./treatment-sections";
 
-// Group filter pills: a row of toggle buttons, one pressed at a time. On a
-// narrow screen the row scrolls sideways on its own rather than widening the
-// page.
+// Group filter pills: a row of toggle buttons, one pressed at a time (the
+// shared ToggleFilterPills, which scrolls sideways on a narrow screen).
 function TreatmentGroupFilter({ options, value, onChange }) {
   return (
-    <div
-      role="group"
-      aria-label="Filter treatments by group"
-      className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 [&::-webkit-scrollbar]:hidden"
-    >
-      {options.map((option) => {
-        const selected = option.key === value;
-        return (
-          <button
-            key={option.key}
-            type="button"
-            aria-pressed={selected}
-            onClick={() => onChange(option.key)}
-            className={`inline-flex min-h-10 shrink-0 items-center rounded-full border px-4 text-sm font-semibold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pink-600 ${
-              selected
-                ? "border-black bg-black text-white"
-                : "border-black/15 bg-white text-black hover:bg-black/[0.03]"
-            }`}
-          >
-            {option.label}
-          </button>
-        );
-      })}
-    </div>
+    <ToggleFilterPills
+      label="Filter treatments by group"
+      options={options}
+      value={value}
+      onChange={onChange}
+    />
   );
 }
 

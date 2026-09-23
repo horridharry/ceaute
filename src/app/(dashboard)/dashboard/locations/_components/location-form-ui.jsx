@@ -1,175 +1,83 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { FormField } from "../../_components/form-field";
+import { Button } from "@/components/ui/button";
+import { Field } from "@/components/ui/field";
+import { FormActions } from "@/components/ui/form-actions";
+import { FormError } from "@/components/ui/form-feedback";
+import { Input } from "@/components/ui/input";
+import { PageContainer } from "@/components/ui/page-container";
+import { Textarea } from "@/components/ui/textarea";
 import { FocusedTaskHeader } from "../../_components/focused-task-header";
 
-const validateLength = (value, maxLength, label) => {
-  if (value.length > maxLength) {
-    return `${label} must be ${maxLength} characters or fewer.`;
-  }
+const validateLength = (value, maxLength, label) =>
+  value.length > maxLength ? `${label} must be ${maxLength} characters or fewer.` : "";
 
-  return null;
-};
+// One length-checked text field; the limits match readLocationDetails.
+function LocationInput({ id, label, maxLength, optional = false, location, errors, onCheck, ...rest }) {
+  return (
+    <Field label={label} htmlFor={id} optional={optional} error={errors[id]}>
+      {(control) => (
+        <Input
+          {...control}
+          name={id}
+          className="w-full"
+          defaultValue={location?.[id] ?? ""}
+          onChange={(event) => onCheck(id, validateLength(event.target.value, maxLength, label))}
+          {...rest}
+        />
+      )}
+    </Field>
+  );
+}
 
 export function LocationFormUI({ action, location = null }) {
   const [stateMessage, formAction, pending] = useActionState(action, "");
   const [errors, setErrors] = useState({});
   const editing = Boolean(location);
-
-  const updateFieldError = (field, error) => {
-    setErrors((currentErrors) => ({
-      ...currentErrors,
-      [field]: error,
-    }));
-  };
-
+  const onCheck = (field, error) => setErrors((current) => ({ ...current, [field]: error }));
   const hasClientError = Object.values(errors).some(Boolean);
+  const shared = { location, errors, onCheck };
 
   return (
-    <main className="container max-w-md p-5">
-      <div className="mt-6 flex flex-col">
-        <FocusedTaskHeader
-          backHref="/dashboard/locations"
-          title={editing ? "Edit location" : "New location"}
-          formId="save_location"
-          submitLabel={editing ? "Save" : "Add"}
-          pendingLabel="Saving..."
-          pending={pending}
-          disabled={hasClientError}
-        />
-        <p className="mt-2 text-sm text-black/60">
-          The public area appears on your page. The exact address stays private
-          until a booking is confirmed.
-        </p>
+    <PageContainer>
+      <FocusedTaskHeader
+        backHref="/dashboard/locations"
+        title={editing ? "Edit location" : "New location"}
+      />
+      <p className="mt-5 text-sm text-ink-muted">
+        The public area appears on your page. The exact address stays private
+        until a booking is confirmed.
+      </p>
 
-        <form
-          id="save_location"
-          className="mt-8 flex flex-col gap-4"
-          action={formAction}
-        >
-          {editing ? (
-            <input type="hidden" name="location_id" value={location.id} />
-          ) : null}
-          <FormField
-            label="Public area"
-            htmlFor="public_area"
-            error={errors.public_area}
-            reserveErrorSpace
-          >
-            <input
-              id="public_area"
-              name="public_area"
-              defaultValue={location?.public_area ?? ""}
-              onChange={(event) =>
-                updateFieldError(
-                  "public_area",
-                  validateLength(event.target.value, 120, "Public area"),
-                )
-              }
-              className="field"
-              placeholder="Shoreditch, London"
-            />
-          </FormField>
-
-          <FormField
-            label="Address line 1"
-            htmlFor="address_line_1"
-            error={errors.address_line_1}
-            reserveErrorSpace
-          >
-            <input
-              id="address_line_1"
-              name="address_line_1"
-              defaultValue={location?.address_line_1 ?? ""}
-              onChange={(event) =>
-                updateFieldError(
-                  "address_line_1",
-                  validateLength(event.target.value, 160, "Address line 1"),
-                )
-              }
-              className="field"
-            />
-          </FormField>
-
-          <FormField
-            label="Address line 2"
-            htmlFor="address_line_2"
-            error={errors.address_line_2}
-            reserveErrorSpace
-          >
-            <input
-              id="address_line_2"
-              name="address_line_2"
-              defaultValue={location?.address_line_2 ?? ""}
-              onChange={(event) =>
-                updateFieldError(
-                  "address_line_2",
-                  validateLength(event.target.value, 160, "Address line 2"),
-                )
-              }
-              className="field"
-            />
-          </FormField>
-
-          <FormField
-            label="City"
-            htmlFor="city"
-            error={errors.city}
-            reserveErrorSpace
-          >
-            <input
-              id="city"
-              name="city"
-              defaultValue={location?.city ?? ""}
-              onChange={(event) =>
-                updateFieldError(
-                  "city",
-                  validateLength(event.target.value, 100, "City"),
-                )
-              }
-              className="field"
-            />
-          </FormField>
-
-          <FormField
-            label="Postcode"
-            htmlFor="postcode"
-            error={errors.postcode}
-            reserveErrorSpace
-          >
-            <input
-              id="postcode"
-              name="postcode"
-              defaultValue={location?.postcode ?? ""}
-              onChange={(event) =>
-                updateFieldError(
-                  "postcode",
-                  validateLength(event.target.value, 12, "Postcode"),
-                )
-              }
-              className="field"
-            />
-          </FormField>
-
-          <FormField
-            label="Access instructions"
-            htmlFor="access_instructions"
-          >
-            <textarea
-              id="access_instructions"
+      <form id="save_location" className="mt-6 flex flex-col gap-5" action={formAction}>
+        {editing ? <input type="hidden" name="location_id" value={location.id} /> : null}
+        <LocationInput id="public_area" label="Public area" maxLength={120} placeholder="Shoreditch, London" {...shared} />
+        <LocationInput id="address_line_1" label="Address line 1" maxLength={160} {...shared} />
+        <LocationInput id="address_line_2" label="Address line 2" maxLength={160} optional {...shared} />
+        <div className="grid grid-cols-2 gap-2.5">
+          <LocationInput id="city" label="City" maxLength={100} {...shared} />
+          <LocationInput id="postcode" label="Postcode" maxLength={12} {...shared} />
+        </div>
+        <Field label="Access instructions" htmlFor="access_instructions" optional>
+          {(control) => (
+            <Textarea
+              {...control}
               name="access_instructions"
-              rows={5}
+              rows={4}
+              className="resize-none"
               defaultValue={location?.access_instructions ?? ""}
-              className="field resize-none"
             />
-          </FormField>
+          )}
+        </Field>
 
-          {stateMessage ? (
-            <p className="mt-4 text-sm text-red-600">{stateMessage}</p>
-          ) : null}
-        </form>
-      </div>
-    </main>
+        <FormError>{stateMessage}</FormError>
+        <FormActions>
+          <Button type="submit" disabled={pending || hasClientError} aria-busy={pending || undefined}>
+            {pending ? (editing ? "Saving…" : "Adding…") : editing ? "Save" : "Add location"}
+          </Button>
+        </FormActions>
+      </form>
+    </PageContainer>
   );
 }

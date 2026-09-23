@@ -1,4 +1,4 @@
-// A label, optional hint and error, and the control they describe.
+// A label, optional hint, the control, and its error.
 //
 // Pass the control as a function to have Field wire it up:
 //   <Field label="Name" htmlFor="name" error={nameError}>
@@ -35,23 +35,26 @@ export function Field({
       ? children(fieldControlProps(htmlFor, { hint, error }))
       : children;
 
+  // Label, then hint, then the control, then its error: the label sits 6px
+  // above the control and an error appears under what it describes, only
+  // when there is one.
   return (
-    <span className={composeClassName("field-set", className)}>
+    <span className={composeClassName("flex flex-1 flex-col gap-1.5", className)}>
       <label htmlFor={htmlFor} className="label">
         {label}
         {optional ? <OptionalMarker /> : null}
       </label>
       {hint ? (
-        <p id={ids.hint} className="text-sm text-ink-muted">
+        <p id={ids.hint} className="-mt-0.5 text-sm text-ink-muted">
           {hint}
         </p>
       ) : null}
+      {control}
       {error || reserveErrorSpace ? (
         <p id={error ? ids.error : undefined} className="text-sm text-danger">
           {error}
         </p>
       ) : null}
-      {control}
     </span>
   );
 }

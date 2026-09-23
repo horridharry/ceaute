@@ -6,19 +6,22 @@ import {
   updatePortfolioImageCaption,
   uploadPortfolioImage,
 } from "./actions";
-import { PortfolioPageUI } from "./_components/portfolio-page-ui";
+import { PortfolioManager } from "./_components/portfolio-manager";
 
 export default async function DashboardPortfolioPage() {
-  const images = await getPortfolioImages();
+  const { images, pageStatus } = await getPortfolioImages();
 
   return (
-    <PortfolioPageUI
+    <PortfolioManager
       images={images}
-      uploadPortfolioImage={uploadPortfolioImage}
-      updatePortfolioImageCaption={updatePortfolioImageCaption}
-      movePortfolioImage={movePortfolioImage}
-      setPortfolioImageVisibility={setPortfolioImageVisibility}
-      deletePortfolioImage={deletePortfolioImage}
+      isLive={pageStatus === "published"}
+      actions={{
+        upload: uploadPortfolioImage,
+        caption: updatePortfolioImageCaption,
+        move: movePortfolioImage,
+        visibility: setPortfolioImageVisibility,
+        remove: deletePortfolioImage,
+      }}
     />
   );
 }

@@ -62,3 +62,23 @@ export function formatDurationMinutes(minutes) {
     .filter(Boolean)
     .join(" ");
 }
+
+const poundsFormat = new Intl.NumberFormat("en-GB", {
+  style: "currency",
+  currency: "GBP",
+  minimumFractionDigits: 2,
+});
+
+// "£45.00": the dashboard's list-row price.
+export function formatPrice(pence) {
+  return poundsFormat.format(penceToPrice(pence));
+}
+
+// "1 h 15 min", "45 min", "2 h": the dashboard's list-row duration.
+export function formatShortDuration(minutes) {
+  const { hours, minutes: remainingMinutes } = minutesToDurationParts(minutes);
+
+  return [hours ? `${hours} h` : "", remainingMinutes ? `${remainingMinutes} min` : ""]
+    .filter(Boolean)
+    .join(" ") || "0 min";
+}

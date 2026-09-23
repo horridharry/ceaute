@@ -122,7 +122,7 @@ test("nothing stops people zooming the page", () => {
 // --- Button -----------------------------------------------------------------
 
 test("every button variant has a visible keyboard focus ring and disabled styling", () => {
-  assert.deepEqual(BUTTON_VARIANTS, ["primary", "primary-strong", "secondary", "outline", "destructive", "text"]);
+  assert.deepEqual(BUTTON_VARIANTS, ["primary", "primary-strong", "secondary", "outline", "destructive-strong", "destructive", "text"]);
   for (const variant of BUTTON_VARIANTS) {
     const classes = buttonClassName({ variant });
     assert.match(classes, /focus-visible:outline-2 focus-visible:outline-offset-2/, variant);
@@ -264,7 +264,9 @@ test("PageHeading renders one h1 at the requested size, with a descriptive back 
 test("SectionHeading is PageHeading with its + New action", () => {
   const html = render(h(SectionHeading, { title: "Add-ons", newHref: "/dashboard/add-ons/new" }));
   assert.equal(count(html, /<h1/g), 1);
-  assert.match(html, /<h1 class="text-3xl font-bold tracking-tighter">Add-ons<\/h1><a class="[^"]*text-accent[^"]*" href="\/dashboard\/add-ons\/new">\+ New/);
+  // The "+" is decoration; the link's accessible name is "New".
+  assert.match(html, /<h1 class="text-3xl font-bold tracking-tighter">Add-ons<\/h1><a class="[^"]*text-accent[^"]*" href="\/dashboard\/add-ons\/new"><span aria-hidden="true">\+<\/span>New/);
+  assert.match(html, /<header class="min-w-0 pt-6">/);
 });
 
 test("Card keeps the bordered look; CardLink is one focusable link around one card", () => {
@@ -308,33 +310,57 @@ test("the add-on form proves the form contract without saving anything", () => {
 
   assert.equal(count(html, /<main/g), 1);
   assert.match(html, /<main class="container w-full min-w-0 mx-auto max-w-md p-5">/, "centred on desktop");
-  // A new add-on starts with an empty name, which is already an error.
-  assert.ok(findTag(html, "input", { id: "name", name: "name", "aria-invalid": "true", "aria-describedby": "name-error", required: "" }));
-  assert.match(html, /<p id="name-error" class="text-sm text-danger">Name is required\.<\/p>/);
-  const price = findTag(html, "input", { id: "additional_price", required: "" });
-  assert.ok(price && !("aria-invalid" in price), "a valid field is not marked invalid");
-  // Price and duration both start at zero, which the form rejects as a whole.
-  assert.match(html, /<p role="alert" class="text-sm text-danger">Add-ons must increase the price, duration or both\.<\/p>/);
+  // An untouched form shows no errors yet, but its one submit is disabled
+  // until it is valid (empty name, and price and time both zero).
+  const name = findTag(html, "input", { id: "name", name: "name", required: "" });
+  assert.ok(name && !("aria-invalid" in name), "no error before the provider types");
+  assert.doesNotMatch(html, /role="alert"/);
+  assert.equal(count(html, /type="submit"/g), 1, "one submit per form");
+  assert.ok(findTag(html, "button", { type: "submit", disabled: "" }));
+  // The price-or-time rule is a hint tied to both inputs.
+  assert.match(html, /<p id="add_on_increase" class="text-sm text-ink-muted">An add-on must add to the price, the time or both\.<\/p>/);
+  assert.ok(findTag(html, "input", { id: "additional_price", "aria-describedby": "add_on_increase" }));
+  assert.ok(findTag(html, "input", { id: "additional_duration_minutes", "aria-describedby": "add_on_increase" }));
   // Compatible treatments may be left empty (the database accepts none).
-  assert.match(html, /<legend class="label">Compatible treatments<span class="font-normal text-ink-muted"> \(optional\)<\/span><\/legend>/);
-  assert.match(html, /<fieldset class="field-set" aria-describedby="compatible_treatments_hint">/);
+  assert.match(html, /<legend class="label">Works with<span class="font-normal text-ink-muted"> \(optional\)<\/span><\/legend>/);
   assert.ok(findTag(html, "input", { type: "checkbox", class: "h-4 w-4", name: "compatibleTreatmentIds", value: "t1" }));
   assert.equal(count(html, /\(optional\)/g), 1, "no other field is optional");
 });
 
-test("the add-on form's Archive action is the destructive button", () => {
+test("an add-on's links to archived treatments are shown kept, not offered", () => {
   const html = render(
     h(TreatmentAddOnForm, {
       action: async () => "",
       archiveAction: async () => "",
       restoreAction: async () => "",
       mode: "edit",
+      treatments: [{ id: "t1", name: "Gel polish" }],
+      addOn: {
+        addOnId: "a5", name: "Glitter fade", additional_price: 7, additional_duration_minutes: 15, is_active: false,
+        compatibleTreatmentIds: ["t8"], archivedLinkedTreatments: [{ id: "t8", name: "Stiletto sculpt" }],
+      },
+    }),
+  );
+
+  // The archived treatment is visible, ticked and disabled, and never
+  // submitted: the database keeps the link when the add-on is saved.
+  assert.ok(findTag(html, "input", { type: "checkbox", checked: "", disabled: "" }), "ticked and disabled");
+  assert.match(html, /<span>Stiletto sculpt <span class="text-ink-subtle">\(archived treatment\)<\/span>/);
+  assert.equal(count(html, /name="compatibleTreatmentIds"/g), 1);
+  assert.match(html, /Links to archived treatments are kept when you save/);
+});
+
+test("the add-on form only edits; archive, restore and delete live in the list", () => {
+  const html = render(
+    h(TreatmentAddOnForm, {
+      action: async () => "",
+      mode: "edit",
       treatments: [],
       addOn: { addOnId: "a1", name: "Nail art", additional_price: 5, additional_duration_minutes: 10, is_active: true, compatibleTreatmentIds: [] },
     }),
   );
-  assert.ok(findTag(html, "button", { type: "submit", class: /text-destructive.* w-max$/, "aria-disabled": "false" }));
-  assert.match(html, /<button [^>]*text-destructive[^>]*>Archive<\/button>/);
+  assert.doesNotMatch(html, />(Archive|Restore|Delete)</);
+  assert.equal(count(html, /type="submit"/g), 1);
   assert.doesNotMatch(html, /role="alert"/, "a valid add-on shows no form error");
 });
 
@@ -361,7 +387,8 @@ test("representative pages render exactly one main landmark through PageContaine
   ]) {
     const source = read(file);
     assert.doesNotMatch(source, /<main/, `${file} has no hand-written <main>`);
-    assert.equal(count(source, /<PageContainer[\s>]/g), 1, `${file} renders one PageContainer`);
+    // Dashboard screens reach PageContainer through DashboardPage.
+    assert.equal(count(source, /<(PageContainer|DashboardPage)[\s>]/g), 1, `${file} renders one PageContainer`);
   }
   const reviews = read("src/app/(public-provider)/[username]/(storefront)/reviews/page.jsx");
   assert.match(reviews, /<PageContainer width="column">/, "the storefront column width is kept");
@@ -373,6 +400,9 @@ test("every loading state uses the shared skeleton", () => {
     "src/app/(account)/account/loading.tsx",
     "src/app/(site)/discover/loading.jsx",
     "src/app/(dashboard)/dashboard/loading.jsx",
+    "src/app/(dashboard)/dashboard/bookings/loading.jsx",
+    "src/app/(dashboard)/dashboard/add-ons/loading.jsx",
+    "src/app/(dashboard)/dashboard/treatment-groups/loading.jsx",
     "src/app/(public-provider)/[username]/book/loading.jsx",
     "src/app/(public-provider)/[username]/(storefront)/loading.jsx",
   ];

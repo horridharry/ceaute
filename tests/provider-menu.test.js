@@ -24,6 +24,7 @@ test("the menu lists the approved sections in the approved order and labels", ()
       "Portfolio",
       "Booking settings",
       "Payments",
+      "Publication",
     ],
   );
 });
@@ -79,6 +80,7 @@ test("activeMenuItemId matches each section and its descendants", () => {
     ["/dashboard/profile/portfolio", "portfolio"],
     ["/dashboard/settings/booking", "booking-settings"],
     ["/dashboard/settings/payments", "payments"],
+    ["/dashboard/settings/publication", "publication"],
     ["/dashboard/availability/", "availability"],
   ];
 

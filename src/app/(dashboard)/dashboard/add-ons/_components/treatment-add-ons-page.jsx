@@ -1,92 +1,182 @@
-import { CardLink } from "@/components/ui/card";
+"use client";
+
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
+import { ActionMenu } from "@/components/ui/action-menu";
+import { buttonClassName } from "@/components/ui/button-classes";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
-import { PageContainer } from "@/components/ui/page-container";
-import { SectionHeading } from "../../_components/section-heading";
-import { StatusBadge } from "../../_components/status-badge";
-import { formatDurationMinutes } from "../../_lib/price-duration";
+import { LinkFilterPills } from "@/components/ui/filter-pills";
+import { DashboardPage } from "../../_components/dashboard-page";
+import { ManagementRow } from "../../_components/management-row";
+import { formatPrice } from "../../_lib/price-duration";
+import { lifecycleFilterOptions, splitByState, worksWithLine } from "../../_lib/lifecycle-lists";
+import { useServerAction } from "../../_lib/use-server-action";
 
-const currencyFormatter = new Intl.NumberFormat("en-GB", {
-  style: "currency",
-  currency: "GBP",
-});
+const CONFIRM = {
+  archive: {
+    description: "Customers can’t add it to new bookings. You can restore it from Archived.",
+    cancelLabel: "Keep active",
+    confirmLabel: "Archive",
+    pendingLabel: "Archiving…",
+    tone: "primary",
+  },
+  delete: {
+    description: "This can’t be undone. It’s removed from your add-ons for good. Past bookings keep their details.",
+    cancelLabel: "Keep add-on",
+    confirmLabel: "Delete add-on",
+    pendingLabel: "Deleting…",
+    tone: "destructive",
+  },
+};
 
-function AddOnState({ isActive }) {
+function addOnPriceLine(addOn) {
+  const parts = [];
+  if (addOn.additional_price_pence > 0) parts.push(`+${formatPrice(addOn.additional_price_pence)}`);
+  if (addOn.additional_duration_minutes > 0) parts.push(`+${addOn.additional_duration_minutes} min`);
+  return parts.join(" · ");
+}
+
+// Active and Archived are filters; deleted add-ons appear in neither. Archive,
+// restore and delete run through transition_treatment_add_on, which refuses
+// to delete an active add-on, so Delete is offered only from Archived.
+export function TreatmentAddOnsPage({ addOns, status, transitionAction }) {
+  const [runTransition, pending] = useServerAction(transitionAction);
+  const [outcome, setOutcome] = useState(null);
+  const [confirming, setConfirming] = useState(null); // { addOn, transition }
+  const [confirmError, setConfirmError] = useState("");
+  const statusRef = useRef(null);
+  // After the render that closes any dialog: focus inside an open modal
+  // fails, and the row that opened it may be about to leave the list.
+  useEffect(() => {
+    if (outcome) statusRef.current?.focus();
+  }, [outcome]);
+  const { active, archived } = splitByState(addOns);
+  const shown = status === "archived" ? archived : active;
+
+  const perform = async (addOn, transition, fromDialog) => {
+    const result = await runTransition({ addOnId: addOn.addOnId, addOnName: addOn.name, transition });
+
+    if (fromDialog && result.status !== "done") {
+      setConfirmError(result.message);
+      return;
+    }
+
+    setConfirming(null);
+    setConfirmError("");
+    setOutcome(result);
+  };
+
+  const ask = (addOn, transition) => {
+    setConfirmError("");
+    setConfirming({ addOn, transition });
+  };
+
+  const menuItems = (addOn) =>
+    addOn.is_active
+      ? [
+          { key: "edit", label: "Edit", href: `/dashboard/add-ons/${addOn.addOnId}/edit` },
+          { key: "archive", label: "Archive…", onSelect: () => ask(addOn, "archive") },
+          {
+            key: "delete",
+            label: "Delete",
+            tone: "danger",
+            separatorBefore: true,
+            disabled: true,
+            reason: "Archive first to delete",
+          },
+        ]
+      : [
+          { key: "restore", label: "Restore", onSelect: () => perform(addOn, "restore", false) },
+          {
+            key: "delete",
+            label: "Delete…",
+            tone: "danger",
+            separatorBefore: true,
+            onSelect: () => ask(addOn, "delete"),
+          },
+        ];
+
+  const confirmText = confirming ? CONFIRM[confirming.transition] : null;
+
   return (
-    <StatusBadge
-      tone={isActive ? "active" : "neutral"}
-      className="font-medium"
+    <DashboardPage
+      title="Add-ons"
+      description="Extras customers can add to a treatment."
+      newHref="/dashboard/add-ons/new"
     >
-      {isActive ? "Active" : "Archived"}
-    </StatusBadge>
-  );
-}
+      <LinkFilterPills
+        label="Filter add-ons"
+        value={status}
+        options={lifecycleFilterOptions({
+          basePath: "/dashboard/add-ons",
+          active: active.length,
+          archived: archived.length,
+        })}
+        className="mt-6"
+      />
 
-function AddOnItem({ addOn }) {
-  return (
-    <CardLink href={`/dashboard/add-ons/${addOn.addOnId}/edit`} padding="sm">
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0 flex-1">
-          <h3 className="truncate font-medium">{addOn.name}</h3>
-          <div className="mt-3 flex flex-wrap gap-x-1 gap-y-1 text-sm font-medium">
-            <span>{currencyFormatter.format(addOn.additional_price)}</span>
-            <span>•</span>
-            <span>
-              {addOn.additional_duration_minutes
-                ? formatDurationMinutes(addOn.additional_duration_minutes)
-                : "No extra time"}
-            </span>
-          </div>
-          <p className="mt-2 text-xs text-ink-subtle">
-            {addOn.compatible_treatment_count === 1
-              ? "1 compatible treatment"
-              : `${addOn.compatible_treatment_count} compatible treatments`}
-          </p>
-        </div>
-        <AddOnState isActive={addOn.is_active} />
-      </div>
-    </CardLink>
-  );
-}
+      <p
+        ref={statusRef}
+        tabIndex={-1}
+        role={outcome?.status === "error" ? "alert" : "status"}
+        className={`mt-4 text-sm outline-none ${outcome?.status === "error" ? "text-danger" : "text-ink-muted"}`}
+      >
+        {outcome?.message ?? ""}
+      </p>
 
-function AddOnList({ title, addOns, emptyMessage }) {
-  return (
-    <section className="mt-10">
-      <h2 className="text-lg font-semibold">{title}</h2>
-      {addOns.length === 0 ? (
-        <EmptyState className="mt-3">{emptyMessage}</EmptyState>
+      {shown.length === 0 ? (
+        status === "archived" ? (
+          <EmptyState className="mt-2">No archived add-ons.</EmptyState>
+        ) : addOns.length === 0 ? (
+          <EmptyState
+            variant="bounded"
+            className="mt-2"
+            action={
+              <Link
+                href="/dashboard/add-ons/new"
+                className={buttonClassName({ variant: "secondary", size: "compact" })}
+              >
+                Add an add-on
+              </Link>
+            }
+          >
+            No add-ons yet. Add-ons let customers extend a treatment.
+          </EmptyState>
+        ) : (
+          <EmptyState className="mt-2">
+            No active add-ons. Restore one from Archived or add a new one.
+          </EmptyState>
+        )
       ) : (
-        <ul className="mt-4 flex flex-col gap-4">
-          {addOns.map((addOn) => (
-            <li key={addOn.addOnId} className="list-none">
-              <AddOnItem addOn={addOn} />
-            </li>
+        <ul className="mt-2 flex flex-col gap-3">
+          {shown.map((addOn) => (
+            <ManagementRow
+              key={addOn.addOnId}
+              href={`/dashboard/add-ons/${addOn.addOnId}/edit`}
+              name={addOn.name}
+              archived={!addOn.is_active}
+              meta={[addOnPriceLine(addOn), worksWithLine(addOn.compatible_treatment_count)]}
+              menu={<ActionMenu label={`Actions for ${addOn.name}`} items={menuItems(addOn)} />}
+            />
           ))}
         </ul>
       )}
-    </section>
-  );
-}
 
-export function TreatmentAddOnsPage({ addOns }) {
-  const activeAddOns = addOns.filter((addOn) => addOn.is_active);
-  const archivedAddOns = addOns.filter((addOn) => !addOn.is_active);
-
-  return (
-    <PageContainer>
-      <div className="mt-6 flex flex-col">
-        <SectionHeading title="Add-ons" newHref="/dashboard/add-ons/new" />
-
-        <AddOnList
-          title="Active add-ons"
-          addOns={activeAddOns}
-          emptyMessage="No active add-ons yet."
-        />
-        <AddOnList
-          title="Archived add-ons"
-          addOns={archivedAddOns}
-          emptyMessage="No archived add-ons."
-        />
-      </div>
-    </PageContainer>
+      <ConfirmDialog
+        open={Boolean(confirming)}
+        title={confirming ? `${confirming.transition === "delete" ? "Delete" : "Archive"} ${confirming.addOn.name}?` : ""}
+        description={confirmText?.description}
+        cancelLabel={confirmText?.cancelLabel}
+        confirmLabel={confirmText?.confirmLabel}
+        pendingLabel={confirmText?.pendingLabel}
+        tone={confirmText?.tone}
+        pending={pending}
+        error={confirmError}
+        onConfirm={() => perform(confirming.addOn, confirming.transition, true)}
+        onCancel={() => setConfirming(null)}
+        fallbackFocusRef={statusRef}
+      />
+    </DashboardPage>
   );
 }
