@@ -9,7 +9,7 @@ import { cancelCustomerBooking } from "../actions";
 // back before the deadline; after it, the provider keeps their share of what
 // was paid. PostgreSQL decides the actual refund when the booking is
 // cancelled, and the outcome shown afterwards is the one it decided.
-export function CancelBooking({ bookingId, preview }) {
+export function CancelBooking({ bookingId, preview, canCancel = true }) {
   const [pending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
   const [error, setError] = useState("");
@@ -38,7 +38,7 @@ export function CancelBooking({ bookingId, preview }) {
       <p ref={statusRef} tabIndex={-1} role="status" className="text-sm text-ink-muted outline-none">
         {outcome}
       </p>
-      {outcome ? null : (
+      {outcome || !canCancel ? null : (
         <Button
           type="button"
           variant="destructive"

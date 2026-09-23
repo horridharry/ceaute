@@ -67,7 +67,7 @@ function refundSentence(paymentStatus, refundPence) {
     case "refund_failed":
       return `We couldn’t refund ${amount} automatically. Email ${legalIdentity.contactEmail} and we’ll put it right.`;
     default:
-      return "";
+      return `Refund of ${amount}: pending.`;
   }
 }
 
@@ -152,13 +152,13 @@ function RefundedLatePayment({ booking }) {
     <PageContainer>
       <PageHeading back={BACK} title={booking.treatment_name} />
       <p className="mt-2 flex flex-wrap items-center gap-2 text-[13px] text-ink-muted">
-        <Badge tone="quiet">Payment refunded</Badge>
+        <Badge tone="quiet">{paid.payment_status === "refunded" ? "Payment refunded" : "Late payment"}</Badge>
       </p>
       <WithProvider booking={booking} />
       <p className="mt-6 text-sm">
         Your payment arrived after the held time ended, so this booking wasn’t made.
         {" "}
-        {refundSentence(paid.payment_status, refund) || `We’re refunding ${formatPounds(refund)} in full.`}
+        {refundSentence(paid.payment_status, refund)}
       </p>
       <WhenAndWhere booking={booking} />
       {booking.provider_username ? (
@@ -197,7 +197,7 @@ function Payment({ booking, terms }) {
         <Rows
           rows={[
             ["Paid online", booking.amount_paid_online_label],
-            ["Refunded", formatPounds(refundPence)],
+            ["Refund", formatPounds(refundPence)],
             [`Kept by ${booking.provider_name}`, formatPounds(booking.retained_amount_pence)],
           ]}
         />
@@ -240,15 +240,6 @@ function Cancellation({ booking, terms }) {
         <Disclosure summary={`${booking.provider_name}’s booking policy`}>
           <p className="whitespace-pre-line">{booking.written_policy}</p>
         </Disclosure>
-      ) : null}
-      {booking.can_cancel ? (
-        <CancelBooking
-          bookingId={booking.booking_id}
-          preview={cancellationPreview(terms, {
-            startAt: booking.start_at,
-            providerName: booking.provider_name,
-          })}
-        />
       ) : null}
     </Section>
   );
@@ -346,6 +337,18 @@ export default async function CustomerBookingPage({ params, searchParams }) {
       ) : null}
 
       <Cancellation booking={booking} terms={terms} />
+      {/* Kept in the same place whatever the booking's state, so the outcome
+          of cancelling stays on screen after the page refreshes. */}
+      {booking.view === "upcoming" || booking.status === "cancelled" ? (
+        <CancelBooking
+          bookingId={booking.booking_id}
+          canCancel={booking.can_cancel && booking.view === "upcoming"}
+          preview={cancellationPreview(terms, {
+            startAt: booking.start_at,
+            providerName: booking.provider_name,
+          })}
+        />
+      ) : null}
       <Review booking={booking} />
     </PageContainer>
   );

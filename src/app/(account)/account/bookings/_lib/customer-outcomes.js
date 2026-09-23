@@ -2,6 +2,7 @@
 // PostgreSQL (prepare_booking_cancellation, create_booking_review); this only
 // words the result for the screen.
 import { formatPounds } from "@/lib/bookings/booking-money";
+import { legalIdentity } from "@/lib/legal/identity";
 
 const CANCELLATION_REASONS = [
   "Completed bookings cannot be cancelled.",
@@ -11,16 +12,29 @@ const CANCELLATION_REASONS = [
   "Booking not found.",
 ];
 
-export function customerCancellationSuccess(refundAmountPence) {
+// The refund's state right after cancelling. Never claims money is on its way
+// when Stripe refused the refund, and never promises when it arrives.
+export function customerCancellationSuccess(refundAmountPence, refundStatus = null) {
   const refund = Number(refundAmountPence) || 0;
 
-  return {
-    status: "cancelled",
-    message:
-      refund > 0
-        ? `Booking cancelled. We’re refunding ${formatPounds(refund)} to the card you paid with.`
-        : "Booking cancelled.",
-  };
+  if (refund <= 0) {
+    return { status: "cancelled", message: "Booking cancelled." };
+  }
+
+  const amount = formatPounds(refund);
+
+  if (refundStatus === "succeeded") {
+    return { status: "cancelled", message: `Booking cancelled. We’ve refunded ${amount} to the card you paid with.` };
+  }
+
+  if (refundStatus === "failed" || refundStatus === "requires_review") {
+    return {
+      status: "cancelled",
+      message: `Booking cancelled. We couldn’t refund ${amount} automatically. Email ${legalIdentity.contactEmail} and we’ll put it right.`,
+    };
+  }
+
+  return { status: "cancelled", message: `Booking cancelled. We’re refunding ${amount} to the card you paid with.` };
 }
 
 // A failure may come after the booking was already cancelled (the refund

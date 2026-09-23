@@ -86,7 +86,7 @@ export const SETUP_TASKS = Object.freeze([
 // Why a live page is not taking new bookings, in the order a provider can act.
 const PAUSE_REASONS = [
   { check: "agreement_accepted", taskId: "agreement", label: "Accept the current provider agreement" },
-  { check: "has_booking_terms", taskId: "terms", label: "Choose your deposit percentage" },
+  { check: "has_booking_terms", taskId: "terms", label: "Choose a percentage in Booking settings" },
   { check: "payments_ready", taskId: "payments", label: "Finish setting up Stripe" },
 ];
 

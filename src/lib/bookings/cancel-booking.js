@@ -42,8 +42,11 @@ export async function cancelBookingWithRefund({
 
   const result = normalizeCancellationResult(data);
 
+  // What happened to the refund just now (succeeded, pending, failed or
+  // requires_review); a later webhook or the recovery job may still move it.
   if (result.refundAmountPence > 0 && result.refundOperationId) {
-    await processBookingRefund(result.refundOperationId);
+    const refund = await processBookingRefund(result.refundOperationId);
+    result.refundProcessingStatus = refund?.status ?? null;
   }
 
   for (const path of revalidatePaths) {

@@ -4,6 +4,21 @@
 // text with src/lib/bookings/booking-money.js.
 import { Disclosure } from "@/components/ui/disclosure";
 
+// The bar with the page's one action: stuck to the bottom of the screen on
+// phones (above the home indicator), in the page flow from 640px. Its parent
+// must span the page content, or it has nowhere to stick.
+export const PAY_BAR =
+  "sticky bottom-0 z-10 -mx-5 mt-8 border-t border-line bg-surface px-5 pb-[calc(12px+env(safe-area-inset-bottom,0px))] pt-3 sm:static sm:mx-0 sm:border-0 sm:p-0";
+
+export function PayNow({ amount }) {
+  return (
+    <p className="flex flex-col tabular-nums">
+      <span className="text-xs text-ink-muted">Pay now</span>
+      <span className="text-base font-semibold">{amount}</span>
+    </p>
+  );
+}
+
 export function BookingSummaryCard({ provider, appointment, lines }) {
   return (
     <section aria-label="Your booking" className="flex flex-col gap-3 rounded-xl border border-line p-4">

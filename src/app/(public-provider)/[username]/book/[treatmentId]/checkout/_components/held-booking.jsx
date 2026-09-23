@@ -8,7 +8,7 @@ import { PageContainer } from "@/components/ui/page-container";
 import { PageHeading } from "@/components/ui/page-heading";
 import { PendingButton } from "@/components/ui/pending-button";
 import { resumeCheckout } from "../../../actions";
-import { BookingSummaryCard, CancellationBlock, PaymentBlock } from "./booking-summary";
+import { BookingSummaryCard, CancellationBlock, PaymentBlock, PAY_BAR, PayNow } from "./booking-summary";
 import { CheckoutFinePrint } from "./checkout-fine-print";
 import { ConfirmingPoller } from "./confirming-poller";
 
@@ -79,33 +79,28 @@ export function HeldBooking({
       </div>
 
       {state.canPay ? (
-        <>
+        // The form spans the terms so its pay bar can stay in view.
+        <form action={resumeCheckout}>
+          <input type="hidden" name="booking_id" value={bookingId} />
           <div className="mt-8">
             <PaymentBlock money={money} providerName={provider.name} />
           </div>
           <div className="mt-8">
             <CancellationBlock cancellation={cancellation} providerName={provider.name} />
           </div>
-
-          <form action={resumeCheckout} className="mt-8">
-            <input type="hidden" name="booking_id" value={bookingId} />
-            <div className="sticky bottom-0 -mx-5 border-t border-line bg-surface px-5 pb-[calc(12px+env(safe-area-inset-bottom,0px))] pt-3 sm:static sm:mx-0 sm:border-0 sm:p-0">
-              <div className="flex items-center justify-between gap-3">
-                <p className="flex flex-col tabular-nums">
-                  <span className="text-xs text-ink-muted">Pay now</span>
-                  <span className="text-base font-semibold">{money.dueNow}</span>
-                </p>
-                <PendingButton pendingLabel="Opening payment…">Continue to payment</PendingButton>
-              </div>
+          <div className={PAY_BAR}>
+            <div className="flex items-center justify-between gap-3">
+              <PayNow amount={money.dueNow} />
+              <PendingButton pendingLabel="Opening payment…">Continue to payment</PendingButton>
             </div>
-          </form>
+          </div>
           <p className="mt-3">
             <Link href={links.chooseTime} className={buttonClassName({ variant: "text" })}>
               Choose another time
             </Link>
           </p>
           <CheckoutFinePrint className="mt-2" />
-        </>
+        </form>
       ) : (
         <NextSteps state={state} links={links} />
       )}

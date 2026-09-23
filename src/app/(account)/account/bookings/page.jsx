@@ -30,16 +30,18 @@ function treatmentLine(booking) {
   return [booking.treatment_name, ...booking.selected_add_ons.map((addOn) => addOn.name)].join(" + ");
 }
 
-function refundState(booking) {
+// What happened to the money, from the refund's own state; a refund that
+// failed or has not happened yet is never called "refunded".
+function refundState(booking, refundPence) {
+  const amount = formatPounds(refundPence);
+
   switch (booking.paid_attempt?.payment_status) {
-    case "refund_required":
-      return "refund pending";
     case "refunded":
-      return "refunded";
+      return `${amount} refunded`;
     case "refund_failed":
-      return "refund failed";
+      return `refund of ${amount} failed`;
     default:
-      return "";
+      return `${amount} refund pending`;
   }
 }
 
@@ -56,14 +58,16 @@ function statusLine(booking, view) {
     return "Completed";
   }
 
+  // A payment that arrived after the hold ended: no booking was made.
   if (!booking.confirmed_at) {
-    const state = refundState(booking);
-    return state ? `Payment refunded · ${state}` : "Payment refunded";
+    const paid = booking.paid_attempt;
+    const refund = Number(paid?.refund_amount_pence || paid?.amount_charged_pence) || 0;
+    return paid?.payment_status === "refunded" ? "Payment refunded" : `Late payment · ${refundState(booking, refund)}`;
   }
 
   const refund = Number(booking.refund_amount_pence) || 0;
   const by = booking.cancelled_by === "provider" ? `Cancelled by ${booking.provider_name}` : "Cancelled by you";
-  return refund > 0 ? `${by} · ${formatPounds(refund)} refunded` : by;
+  return refund > 0 ? `${by} · ${refundState(booking, refund)}` : by;
 }
 
 function HoldCard({ booking }) {

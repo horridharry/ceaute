@@ -88,7 +88,7 @@ export async function cancelCustomerBooking(_currentState, formData) {
       revalidatePaths: paths,
     });
 
-    return customerCancellationSuccess(result.refundAmountPence);
+    return customerCancellationSuccess(result.refundAmountPence, result.refundProcessingStatus);
   } catch (error) {
     console.error("[bookings] customer cancellation failed", {
       bookingId,

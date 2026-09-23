@@ -196,10 +196,17 @@ test("checkout names the trader and links the Terms and Privacy Notice before pa
 });
 
 test("cancelling and reviewing report their outcome in the customer's words", () => {
-  assert.deepEqual(customerCancellationSuccess(3307), {
+  assert.deepEqual(customerCancellationSuccess(3307, "pending"), {
     status: "cancelled",
     message: "Booking cancelled. We’re refunding £33.07 to the card you paid with.",
   });
+  assert.equal(customerCancellationSuccess(3307, "succeeded").message, "Booking cancelled. We’ve refunded £33.07 to the card you paid with.");
+  // A refund Stripe refused is never reported as on its way.
+  for (const status of ["failed", "requires_review"]) {
+    const outcome = customerCancellationSuccess(3307, status);
+    assert.match(outcome.message, /We couldn’t refund £33\.07 automatically\. Email .+ and we’ll put it right\./);
+    assert.doesNotMatch(outcome.message, /refunding/);
+  }
   assert.deepEqual(customerCancellationSuccess(0), { status: "cancelled", message: "Booking cancelled." });
   assert.equal(customerCancellationFailure(new Error("Past bookings cannot be cancelled.")).message, "Past bookings cannot be cancelled.");
   assert.match(customerCancellationFailure(new Error("socket hang up")).message, /Refresh to see your booking’s current status/);

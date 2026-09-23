@@ -107,7 +107,7 @@ export function heldBookingCopy(state, { providerName, heldUntil, refundAmount, 
 
       return {
         title: "We couldn’t book this time",
-        message: `Your payment arrived after the held time ended, so the booking wasn’t made. ${refund} We’ve emailed you about it.`,
+        message: `Your payment arrived after the held time ended, so the booking wasn’t made. ${refund} We’ll also email you about it.`,
       };
     }
     case "confirming":

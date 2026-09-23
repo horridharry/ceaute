@@ -81,7 +81,7 @@ function LegacyNotice({ legacy, pageStatus }) {
         : "Your old late-cancellation setting";
   const consequence =
     pageStatus === "published"
-      ? "your page isn't taking new bookings until you save a percentage"
+      ? "your page isn’t taking new bookings until you save a percentage"
       : "you can publish once you save a percentage";
 
   return (

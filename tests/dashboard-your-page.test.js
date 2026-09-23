@@ -126,7 +126,7 @@ test("publication: a live page that is not taking bookings stays live and says w
   assert.match(html, /Live/);
   assert.match(html, /Not taking new bookings/);
   assert.match(html, /href="\/dashboard\/settings\/payments#provider-agreement"[^>]*>Accept the current provider agreement/);
-  assert.match(html, /href="\/dashboard\/settings\/booking"[^>]*>Choose your deposit percentage/);
+  assert.match(html, /href="\/dashboard\/settings\/booking"[^>]*>Choose a percentage in Booking settings/);
   assert.match(html, />Unpublish page</, "the page is never unpublished for the provider");
 });
 

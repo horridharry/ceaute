@@ -105,7 +105,7 @@ export function WhenSuitsYou({ days, providerName, username, treatmentId, addOnI
             {day.startsMonth ? (
               <span
                 aria-hidden="true"
-                className="flex w-5 items-center justify-center text-[11px] font-semibold uppercase tracking-wider text-ink-muted [writing-mode:vertical-rl] rotate-180"
+                className="flex w-5 shrink-0 snap-start items-center justify-center text-[11px] font-semibold uppercase tracking-wider text-ink-muted [writing-mode:vertical-rl] rotate-180"
               >
                 {day.monthShort}
               </span>
