@@ -34,6 +34,31 @@ happens:
 Promote before that event, not after it. Until then, do not promote
 piecemeal.
 
+## Before the first alpha invitation
+
+The one list of what is still unverified or unfinished before the first
+private-alpha invitation. Delete an item when it closes; mark it
+**accepted risk** if the owner decides not to verify it. How items are
+verified and reported is in [Verification](verification.md).
+
+- Owner: a real-keyboard pass across all new screens (unverified).
+- Owner: the contact inbox and business address are real (the support email
+  must not be a placeholder), and the full provider agreement is shown before
+  acceptance.
+- Agent: confirm the Preview environment variables and Stripe mode
+  (`vercel env ls`), and run the deployed smoke tests on Preview that were
+  blocked by the login wall: storefront gallery, treatments, reviews, hours,
+  closure, and the design-system pages (`vercel curl`).
+- Owner and agent on Preview: one real test-card payment and refund. Email
+  delivery itself was proven on 23 September 2026.
+- Needs the owner signed in: the provider Portfolio viewer (acceptance was
+  waived), the owner storefront preview, add-on cards and the Archive button
+  with real data, and the form save and submit paths.
+- No test account exists yet: the unpublished-provider states (View your page,
+  storefront 404).
+- Production only, after promotion: the published storefront and provider
+  metadata (production has no providers yet).
+
 ## Production migrations
 
 The repository stays linked to `ceaute-dev`; never re-link it to
@@ -60,6 +85,10 @@ until real use covers it.
 
 - Every production step (migration, promotion to `main`, production
   environment variables) needs the owner's explicit approval for that step.
+- The owner applies migrations to both `ceaute-dev` and `ceaute-prod`, from
+  their own terminal, dry run first. Agents never run `db push` and never
+  handle a connection string. Before pushing code that needs a migration,
+  confirm it is applied with `npx supabase migration list`.
 - `main` only ever fast-forwards to `preview`. If `--ff-only` refuses, `main`
   has a commit `preview` lacks: stop and ask rather than creating a merge
   commit.
