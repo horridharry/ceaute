@@ -14,7 +14,8 @@ Start with `README.md`, which maps every document to its one responsibility.
 Use `docs/engineering-principles.md` for how to make trade-offs and the change
 checklist, `docs/product.md` for current product behaviour, `docs/domain.md`
 for terminology, and `docs/architecture.md` for implementation boundaries and
-the "Where a change belongs" table. The ordered files in `supabase/migrations/`
+the "Where a change belongs" table, and `docs/verification.md` for how
+acceptance is run and reported. The ordered files in `supabase/migrations/`
 are the final authority for implemented database behaviour; later migrations
 may replace earlier functions.
 
