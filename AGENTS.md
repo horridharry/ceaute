@@ -29,6 +29,11 @@ move booking, refund, publication, ownership, and private-address invariants out
 of PostgreSQL without an explicit architectural decision recorded in
 `docs/decisions/`.
 
+Never apply production migrations, promote `main`, or change production
+settings without the owner's explicit approval for that step; the path is in
+`docs/release.md`. Files in `docs/reports/` are dated snapshots, not current
+behaviour: check any claim in them against the code and migrations first.
+
 The third-party skills in `.agents/skills/` (everything except
 `ceaute-product-design`) are generic guidance. Where one conflicts with this
 repository's documents, decision records or code comments, the repository wins.

@@ -92,8 +92,9 @@ not be added to:
 - compatibility surfaces kept beyond the point where anything uses them;
 - patterns that differ between routes for no product reason.
 
-The current inventory of both kinds is in the
-[architecture audit](reports/2026-09-17-architecture-audit.md).
+A point-in-time inventory of both kinds (17 September 2026) is in the
+[architecture audit](reports/2026-09-17-architecture-audit.md); check each item
+against the code before acting on it.
 
 ## Invariants we do not trade for speed
 
