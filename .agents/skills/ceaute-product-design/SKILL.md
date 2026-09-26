@@ -155,6 +155,10 @@ For broader reasoning, read:
 
 `references/product-principles.md`
 
+For any words the user reads (labels, messages, errors, empty states, emails), read:
+
+`references/copy.md`
+
 Before resolving an unspecified decision, check:
 
 `references/undecided.md`
@@ -188,7 +192,9 @@ A generic frontend-design skill may determine how to execute the approved direct
 
 A web-design/accessibility skill may identify usability, accessibility and implementation-quality problems.
 
-When either runs on Ceaute, the repository's `docs/design-system.md` and the references in this skill are the brief. Neither proposes new palettes, typefaces, copy rules or navigation patterns; where their guidance conflicts with those documents, the Ceaute documents win.
+A writing skill (for example humanizer) may tidy copy; `references/copy.md` and the Language section below are its brief.
+
+When any of these runs on Ceaute, the repository's `docs/design-system.md` and the references in this skill are the brief. Neither proposes new palettes, typefaces, copy rules or navigation patterns; where their guidance conflicts with those documents, the Ceaute documents win.
 
 Neither may:
 
@@ -245,6 +251,10 @@ Keep copy concise and human.
 Do not manufacture personality in every sentence.
 
 Ceaute is approachable, not chatty.
+
+Say whether money moved whenever it might have.
+
+The method, the things to avoid, and examples from the app are in `references/copy.md`.
 
 ## Final check
 

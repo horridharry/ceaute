@@ -35,8 +35,10 @@ settings without the owner's explicit approval for that step; the path is in
 `docs/release.md`. Files in `docs/reports/` are dated snapshots, not current
 behaviour: check any claim in them against the code and migrations first.
 
-The third-party skills in `.agents/skills/` (everything except
-`ceaute-product-design`) are generic guidance. Where one conflicts with this
+The `ceaute-*` skills in `.agents/skills/` are Ceaute's own:
+`ceaute-product-design` for product and design work, and `ceaute-grill` and
+`ceaute-release`, which run only when invoked. The rest are third-party and
+generic guidance. Where one conflicts with this
 repository's documents, decision records or code comments, the repository wins.
 Known conflicts:
 
