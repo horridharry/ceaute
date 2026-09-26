@@ -188,6 +188,8 @@ A generic frontend-design skill may determine how to execute the approved direct
 
 A web-design/accessibility skill may identify usability, accessibility and implementation-quality problems.
 
+When either runs on Ceaute, the repository's `docs/design-system.md` and the references in this skill are the brief. Neither proposes new palettes, typefaces, copy rules or navigation patterns; where their guidance conflicts with those documents, the Ceaute documents win.
+
 Neither may:
 
 - invent Ceaute features

@@ -49,13 +49,12 @@ You own only the edit.
    rule is about a product concept that stands in for the three as a group.
    There is no shared layout, shell, feature directory or data abstraction
    over those three; each is its own section.
-6. **Provider-management sections are independent.** Treatments, Treatment
-   Groups, Add-ons, Locations, Availability, Profile, Portfolio, Preview,
-   Payments and Booking Settings (at minimum) are independent product
-   sections. Each owns its own presentation, components, queries, actions and
-   product behaviour inside its own folder. Do not group sections into a shared
+6. **Provider-management sections are independent.** Use the sections and
+   navigation as defined in `ceaute-product-design`. Each owns its own
+   presentation, components, queries, actions and product behaviour inside
+   its own folder. Do not group sections into a shared
    feature, workspace, shell or directory because they currently share a route
-   prefix, a navigation tab row or a nav item, and do not invent an umbrella
+   prefix or a nav item, and do not invent an umbrella
    concept for any such grouping. Sections may share only genuinely
    product-agnostic infrastructure: `src/components/ui` primitives, generic
    page/layout, tabs/navigation and status/display primitives, and
