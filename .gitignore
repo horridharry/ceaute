@@ -47,3 +47,7 @@ next-env.d.ts
 # Created by Claude Code when a subagent runs in an isolated worktree, and
 # removed once that work is integrated. Never part of a change.
 /.claude/worktrees/
+
+# Session task briefs are temporary
+.claude/tasks/*
+!.claude/tasks/_template.md

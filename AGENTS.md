@@ -28,3 +28,20 @@ service-role key to the browser, confirm payments from Stripe return URLs, or
 move booking, refund, publication, ownership, and private-address invariants out
 of PostgreSQL without an explicit architectural decision recorded in
 `docs/decisions/`.
+
+Never apply production migrations, promote `main`, or change production
+settings without the owner's explicit approval for that step; the path is in
+`docs/release.md`. Files in `docs/reports/` are dated snapshots, not current
+behaviour: check any claim in them against the code and migrations first.
+
+The third-party skills in `.agents/skills/` (everything except
+`ceaute-product-design`) are generic guidance. Where one conflicts with this
+repository's documents, decision records or code comments, the repository wins.
+Known conflicts:
+
+- `supabase` builds migrations with `supabase db pull`; Ceaute's migrations are
+  hand-written and ordered, and the CLI runs as `npx supabase`.
+- `stripe-best-practices` says to use the latest Stripe API version;
+  `src/lib/stripe/server.js` deliberately pins a preview version.
+- `next-best-practices` is a snapshot; the guides in `node_modules/next/dist/docs/`
+  win, as above.

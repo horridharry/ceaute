@@ -44,6 +44,7 @@ it rather than repeating it.
 | [Design system](docs/design-system.md) | Colour tokens, the light-only baseline, the shared UI primitives and their accessibility conventions | A token, primitive or UI convention changes |
 | [Provider agreement (draft)](docs/provider-agreement-draft.md) | What providers accept before taking paid bookings, and the version acceptance is recorded against | The agreement's substance changes — bump the version with it |
 | [Dispute response](docs/dispute-response.md) | What happens when a customer disputes a payment, and what a person must do by hand | The dispute flow or its limitations change |
+| [Releasing](docs/release.md) | How a change reaches Preview and production, when to promote, how production migrations are applied | The release path or promotion trigger changes |
 | [Stripe Preview testing](docs/stripe-preview-testing.md) | How Stripe Test webhooks are routed to the designated Vercel Preview | Preview integration routing or webhook assumptions change |
 | [Stripe Live activation](docs/stripe-live-activation.md) | What the owner must do to switch Stripe from Test to Live | An activation step is completed or a new one is found |
 | [Decisions](docs/decisions/) | Why the few non-obvious choices were made and what reversing them costs | A one-way-door decision is made or revisited |

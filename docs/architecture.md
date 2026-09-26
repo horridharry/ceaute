@@ -289,8 +289,9 @@ Sections may share only product-agnostic infrastructure:
   container and heading, cards, empty and loading states; see
   [design-system.md](design-system.md)) and `src/components` (header, footer,
   error and not-found content, pending feedback);
-- `src/features/navigation` (section tabs), `src/features/storefront` (the
-  public storefront, also rendered by the dashboard preview), and
+- `src/features/storefront` (the public storefront, also rendered by the
+  dashboard preview), `src/features/photo-viewing` (the shared photo grid and
+  viewer), and
   `src/features/auth/logout-action.js`;
 - dashboard infrastructure in `dashboard/_lib` (`getSignedInProvider`, form
   values, price and duration conversion, focused-task routes) and
