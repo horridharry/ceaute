@@ -37,9 +37,12 @@ behaviour: check any claim in them against the code and migrations first.
 
 The `ceaute-*` skills in `.agents/skills/` are Ceaute's own:
 `ceaute-product-design` for product and design work, and `ceaute-grill` and
-`ceaute-release`, which run only when invoked. The rest are third-party and
-generic guidance. Where one conflicts with this
-repository's documents, decision records or code comments, the repository wins.
+`ceaute-release`, which run only when invoked. For a settled change that spans
+layers or touches money, the `ceaute-change` workflow in `.claude/workflows/`
+runs it through product, engineering and verification lanes, stopping for
+owner decisions and never committing; small fixes do not need it. The rest are
+third-party and generic guidance. Where one conflicts with this repository's
+documents, decision records or code comments, the repository wins.
 Known conflicts:
 
 - `supabase` builds migrations with `supabase db pull`; Ceaute's migrations are
