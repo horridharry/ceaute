@@ -26,7 +26,7 @@ where id in (
 );
 
 -- Page A holds directly inserted count fixtures. Page B is bookable through
--- the trusted hold operation and is used for the blocked-date lock-in.
+-- the trusted hold operation and is used for the removed-date lock-in.
 insert into ceaute.provider_page (
   id, owner_profile_id, username, display_name, biography, provider_category, status
 )
@@ -62,9 +62,14 @@ insert into ceaute.provider_agreement_acceptance (
 )
 values ('12100000-0000-0000-0000-000000000002', ceaute.current_provider_agreement_version(), '02100000-0000-0000-0000-000000000003');
 
-insert into ceaute.availability_rule (provider_page_id, weekday, starts_at, ends_at)
-select '12100000-0000-0000-0000-000000000002', weekday, '09:00', '17:00'
-from generate_series(0, 6) as weekday;
+insert into ceaute.availability_drop (id, provider_page_id, opens_at)
+values ('42100000-0000-0000-0000-000000000001', '12100000-0000-0000-0000-000000000002', now() - interval '1 day');
+
+insert into ceaute.availability_date (provider_page_id, drop_id, local_date, hours_start, hours_end)
+select
+  '12100000-0000-0000-0000-000000000002', '42100000-0000-0000-0000-000000000001',
+  (now() at time zone 'Europe/London')::date + offset_day, '09:00', '17:00'
+from generate_series(0, 120) as offset_day;
 
 insert into ceaute.treatment (
   id, provider_page_id, name, description, duration_minutes, price_pence, is_active
@@ -212,8 +217,8 @@ insert into tap_results (result) select throws_ok(
   'anon cannot execute the function'
 );
 
--- Lock-in: a hold created before its date is blocked can still complete, and
--- no new hold can be created on that date afterwards.
+-- Lock-in: a hold made before the owner removes its date can still complete,
+-- and no new hold can be made on that date afterwards.
 reset role;
 set local role service_role;
 select set_config('request.jwt.claim.sub', '', true);
@@ -229,13 +234,33 @@ select ceaute.create_validated_booking_hold(
 ) as id;
 
 insert into tap_results (result) select ok((select id from lockin_hold) is not null,
-  'A hold is created before its date is blocked');
+  'A hold is created before its date is removed');
+
+-- The owner saves the drop again without the hold's date.
+reset role;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '02100000-0000-0000-0000-000000000003', true);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+select ceaute.save_availability_drop(
+  '12100000-0000-0000-0000-000000000002',
+  '42100000-0000-0000-0000-000000000001',
+  null,
+  null,
+  (select jsonb_agg(jsonb_build_object(
+      'local_date', availability_date.local_date,
+      'hours_start', availability_date.hours_start,
+      'hours_end', availability_date.hours_end
+    ) order by availability_date.local_date)
+   from ceaute.availability_date, count_dates
+   where availability_date.drop_id = '42100000-0000-0000-0000-000000000001'
+     and availability_date.local_date >= count_dates.london_today
+     and availability_date.local_date <> count_dates.lockin_date)
+);
 
 reset role;
-insert into ceaute.blocked_date (provider_page_id, local_date)
-select '12100000-0000-0000-0000-000000000002', lockin_date from count_dates;
-
 set local role service_role;
+select set_config('request.jwt.claim.sub', '', true);
 select set_config('request.jwt.claim.role', 'service_role', true);
 
 create temp table lockin_claim as
@@ -254,18 +279,21 @@ insert into tap_results (result) select is(
     (select payment_attempt_id from lockin_claim),
     'pi_counts_lockin', 'cs_counts_lockin', 'paid', 'gbp', 5000)),
   'confirmed',
-  'A hold created before the block still completes through payment'
+  'A hold created before the date was removed still completes through payment'
 );
 
 reset role;
 insert into tap_results (result) select ok(
   (select booking.status = 'confirmed'
+     and not exists (
+       select 1
+       from ceaute.availability_date
+       where availability_date.provider_page_id = booking.provider_page_id
+         and availability_date.local_date = (booking.start_at at time zone 'Europe/London')::date
+     )
    from ceaute.booking
-   join ceaute.blocked_date
-     on blocked_date.provider_page_id = booking.provider_page_id
-    and blocked_date.local_date = (booking.start_at at time zone 'Europe/London')::date
    where booking.id = (select id from lockin_hold)),
-  'The completed booking is confirmed on the blocked date'
+  'The completed booking is confirmed on the removed date'
 );
 
 set local role service_role;
@@ -278,8 +306,8 @@ insert into tap_results (result) select throws_matching(
     '22100000-0000-0000-0000-000000000002',
     (select pg_temp.london_at(lockin_date, '14:00') from count_dates)
   ),
-  'Requested date is blocked',
-  'A new hold on the blocked date is rejected'
+  'Requested time is unavailable',
+  'A new hold on the removed date is rejected'
 );
 
 reset role;
@@ -292,7 +320,7 @@ insert into tap_results (result) select is(
    from ceaute.get_provider_booking_counts_by_local_date('12100000-0000-0000-0000-000000000002')
    where local_date = (select lockin_date from count_dates)),
   '1/0',
-  'The owner sees the completed booking on the blocked date'
+  'The owner sees the completed booking on the removed date'
 );
 
 reset role;

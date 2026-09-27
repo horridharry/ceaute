@@ -161,7 +161,7 @@ Borders are not forbidden.
 
 Neither should become automatic.
 
-For the Availability MVP, simple divider lines beneath weekday rows are acceptable.
+For the Availability MVP, simple divider lines between a drop's dates are acceptable.
 
 This is not a universal Ceaute border rule.
 

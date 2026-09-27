@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import { calculateAvailableAppointmentTimes } from "../src/app/(public-provider)/[username]/book/_lib/appointment-availability.js";
 import {
@@ -7,6 +8,8 @@ import {
   formatSlotTime,
   groupSlotsByPartOfDay,
   nextAvailableIndex,
+  nextDropLine,
+  nothingOpenMessage,
   dayStatusWord,
   monthRangeLabel,
   partOfDay,
@@ -14,15 +17,19 @@ import {
   unavailableDayMessage,
 } from "../src/app/(public-provider)/[username]/book/_lib/time-choices.js";
 
-// "When suits you?" (Specification §9.1): the calculator is unchanged; these
-// only shape its answer.
+// "When suits you?" (Specification §9.1) with drops (decision 007): the strip
+// holds only the dates the provider has opened; these helpers only shape the
+// calculator's answer.
 
-test("each day says why it has no times: closed, fully booked, too short or inside the notice", () => {
-  // Thursday 1 January 2026, 09:00–10:00; Friday closed.
+const componentsDir = new URL("../src/app/(public-provider)/[username]/book/_components/", import.meta.url);
+const whenSuitsYouSource = readFileSync(new URL("when-suits-you.jsx", componentsDir), "utf8");
+const reloadSource = readFileSync(new URL("reload-at-drop-time.jsx", componentsDir), "utf8");
+
+test("each open day says why it has no times: fully booked, too short or inside the notice", () => {
+  // Thursday 1 January 2026, open 09:00-10:00.
   const base = {
     now: new Date("2025-12-30T00:00:00.000Z"),
-    availabilityRules: [{ weekday: 4, starts_at: "09:00", ends_at: "10:00" }],
-    blockedDates: [],
+    openDates: [{ local_date: "2026-01-01", hours_start: "09:00:00", hours_end: "10:00:00", start_times: null }],
     appointments: [],
     durationMinutes: 30,
   };
@@ -30,14 +37,17 @@ test("each day says why it has no times: closed, fully booked, too short or insi
     calculateAvailableAppointmentTimes({ ...base, ...input }).find((day) => day.local_date === date).unavailable_reason;
 
   assert.equal(reason("2026-01-01"), null, "a day with times has no reason");
-  assert.equal(reason("2026-01-02"), "closed");
-  assert.equal(reason("2026-01-01", { blockedDates: ["2026-01-01"] }), "closed", "a blocked date reads as closed");
   assert.equal(reason("2026-01-01", { durationMinutes: 90 }), "short");
   assert.equal(
     reason("2026-01-01", { appointments: [{ start_at: "2026-01-01T09:00:00.000Z", end_at: "2026-01-01T10:00:00.000Z" }] }),
     "full",
   );
   assert.equal(reason("2026-01-01", { now: new Date("2025-12-31T12:00:00.000Z") }), "notice");
+  assert.equal(
+    calculateAvailableAppointmentTimes(base).some((day) => day.local_date === "2026-01-02"),
+    false,
+    "a date that is not open is not in the strip at all",
+  );
 });
 
 test("times fall into Morning, Afternoon and Evening at noon and 5 pm", () => {
@@ -65,7 +75,7 @@ const dates = [
   { local_date: "2026-09-30", slots: [], unavailable_reason: "notice" },
   { local_date: "2026-10-01", slots: [{ local_time: "10:00", start_at: "2026-10-01T09:00:00.000Z" }], unavailable_reason: null },
   { local_date: "2026-10-02", slots: [], unavailable_reason: "full" },
-  { local_date: "2026-10-03", slots: [], unavailable_reason: "closed" },
+  { local_date: "2026-10-03", slots: [], unavailable_reason: "short" },
   { local_date: "2026-10-04", slots: [{ local_time: "14:00", start_at: "2026-10-04T13:00:00.000Z" }], unavailable_reason: null },
 ];
 
@@ -77,9 +87,24 @@ test("the strip starts after the notice period and labels each day for screen re
     ["Thu 1", "Fri 2", "Sat 3", "Sun 4"],
   );
   assert.equal(days[1].label, "Friday 2 October, fully booked");
-  assert.equal(days[2].label, "Saturday 3 October, closed");
+  assert.equal(days[2].label, "Saturday 3 October, no times");
   assert.equal(days[3].label, "Sunday 4 October");
   assert.equal(shortDateLabel(days[3]), "Sun 4 Oct");
+  assert.ok(days.every((day) => day.status !== "closed" && !day.label.includes("closed")));
+});
+
+test("open dates all inside the notice stay in the strip as No times", () => {
+  const days = buildDayStrip([
+    { local_date: "2026-09-30", slots: [], unavailable_reason: "notice" },
+    { local_date: "2026-10-01", slots: [], unavailable_reason: "notice" },
+  ]);
+  assert.deepEqual(
+    days.map((day) => [day.localDate, dayStatusWord(day)]),
+    [
+      ["2026-09-30", "No times"],
+      ["2026-10-01", "No times"],
+    ],
+  );
 });
 
 test("a day without times says which kind it is, with the next available day", () => {
@@ -87,13 +112,28 @@ test("a day without times says which kind it is, with the next available day", (
   assert.equal(firstAvailableIndex(days), 0);
   assert.equal(nextAvailableIndex(days, 1), 3);
   assert.equal(nextAvailableIndex(days, 3), -1);
-  assert.equal(unavailableDayMessage(days[1], "Studio Nala"), "Friday 2 October is fully booked.");
-  assert.equal(unavailableDayMessage(days[2], "Studio Nala"), "Studio Nala isn’t working on Saturday 3 October.");
-  assert.equal(buildDayStrip([{ local_date: "2026-09-30", slots: [], unavailable_reason: "notice" }]).length, 0);
+  assert.equal(unavailableDayMessage(days[1]), "Friday 2 October is fully booked.");
+  assert.equal(
+    unavailableDayMessage(days[2]),
+    "There isn’t a long enough gap for this booking on Saturday 3 October.",
+  );
+  assert.equal(
+    unavailableDayMessage({ status: "notice", fullDate: "Monday 5 October" }),
+    "There are no times on Monday 5 October.",
+  );
+  assert.equal(buildDayStrip([{ local_date: "2026-09-30", slots: [], unavailable_reason: "notice" }]).length, 1);
 });
 
-// Approved 23 September 2026: the month is a heading above the day cards, and
-// a closed day and a fully booked day say so in words on their cards.
+test("when every open day is full, no day is available and the first is chosen", () => {
+  const days = buildDayStrip([
+    { local_date: "2026-10-02", slots: [], unavailable_reason: "full" },
+    { local_date: "2026-10-03", slots: [], unavailable_reason: "full" },
+  ]);
+  assert.equal(firstAvailableIndex(days), -1);
+  assert.deepEqual(days.map(dayStatusWord), ["Full", "Full"]);
+});
+
+// Approved 23 September 2026: the month is a heading above the day cards.
 test("the month heading names the months of the cards in view", () => {
   const days = buildDayStrip([
     { local_date: "2026-09-29", slots: [{ local_time: "10:00", start_at: "x" }], unavailable_reason: null },
@@ -106,21 +146,77 @@ test("the month heading names the months of the cards in view", () => {
   assert.equal(monthRangeLabel([], 0, 0), "");
 });
 
-test("each unavailable day card says why in one word", () => {
+test("each unavailable day card says why in one word, and never 'Closed'", () => {
   const days = buildDayStrip(dates);
-  assert.deepEqual(days.map(dayStatusWord), ["", "Full", "Closed", ""]);
+  assert.deepEqual(days.map(dayStatusWord), ["", "Full", "No times", ""]);
   assert.equal(dayStatusWord({ status: "short" }), "No times");
+  assert.equal(dayStatusWord({ status: "notice" }), "No times");
+  assert.equal(dayStatusWord({ status: "closed" }), "No times", "there is no closed word any more");
+});
+
+test("with nothing open, the screen says when the next drop opens, or that nothing is open", () => {
+  assert.equal(
+    // 18:00 UTC on 15 October is 7 pm in London (BST).
+    nothingOpenMessage({ name: "November", opensAt: "2026-10-15T18:00:00.000Z" }),
+    "No dates are open. November slots open on 15 October at 7 pm.",
+  );
+  assert.equal(nothingOpenMessage(null), "No dates are open for booking right now.");
+  assert.equal(nothingOpenMessage(undefined), "No dates are open for booking right now.");
+});
+
+test("above a strip with no free start, the next drop line has no full stop", () => {
+  assert.equal(
+    // 19:00 UTC on 15 November is 7 pm in London (GMT).
+    nextDropLine({ name: "December", opensAt: "2026-11-15T19:00:00.000Z" }),
+    "December slots open on 15 November at 7 pm",
+  );
+  assert.equal(nextDropLine(null), "");
+});
+
+test("the booking screen has no window and no closed days", () => {
+  assert.equal(whenSuitsYouSource.includes("in the next"), false);
+  assert.equal(whenSuitsYouSource.includes("Closed"), false);
+  assert.equal(whenSuitsYouSource.includes('"closed"'), false);
+  assert.ok(whenSuitsYouSource.includes("There are no more times."));
+  // Only an empty strip returns early; a strip of full days is still shown.
+  assert.ok(whenSuitsYouSource.includes("if (days.length === 0) {"));
+  assert.equal(whenSuitsYouSource.includes("days.length === 0 ||"), false);
+  // Every next-drop sentence comes with the reload at the drop time.
+  assert.equal(
+    (whenSuitsYouSource.match(/<ReloadAtDropTime opensAt=\{nextDrop\.opensAt\} serverNow=\{serverNow\} \/>/g) ?? []).length,
+    2,
+  );
+});
+
+test("the screen reloads after the drop time, and keeps checking if it has already passed", () => {
+  assert.ok(reloadSource.startsWith('"use client";'));
+  assert.ok(reloadSource.includes("Date.parse(opensAt) - serverNow + AFTER_DROP_TIME_MS"));
+  assert.ok(reloadSource.includes("const AFTER_DROP_TIME_MS = 2000;"));
+  assert.ok(reloadSource.includes("const CHECK_AGAIN_MS = 5000;"));
+  assert.ok(reloadSource.includes("const LONGEST_DELAY_MS = 2_000_000_000;"));
+  assert.ok(reloadSource.includes("delay > 0 ? delay : CHECK_AGAIN_MS"), "a passed drop time checks again in 5 s");
+  assert.ok(reloadSource.includes("router.refresh()"));
+  assert.ok(reloadSource.includes("clearTimeout(timer)"));
+  assert.ok(reloadSource.includes("return null;"));
 });
 
 // The redesign is presentation only: the strip and its times are exactly the
-// calculator's, so the 24-hour notice, the 60-day window and the 15-minute
-// start grid (all mirrored from ceaute.create_validated_booking_hold) hold.
+// calculator's, so the 24-hour notice and the 15-minute start grid (mirrored
+// from ceaute.create_validated_booking_hold) hold, with no 60-day window.
 test("the strip shows exactly the calculator's days and times", () => {
   const now = new Date("2026-09-23T16:00:00.000Z"); // 17:00 in London
+  const openDates = Array.from({ length: 130 }, (_, index) => {
+    const date = new Date(Date.UTC(2026, 8, 23 + index, 12));
+    return {
+      local_date: date.toISOString().slice(0, 10),
+      hours_start: "09:00:00",
+      hours_end: "20:00:00",
+      start_times: null,
+    };
+  });
   const availableDates = calculateAvailableAppointmentTimes({
     now,
-    availabilityRules: [0, 1, 2, 3, 4, 5, 6].map((weekday) => ({ weekday, starts_at: "09:00", ends_at: "20:00" })),
-    blockedDates: [],
+    openDates,
     appointments: [],
     durationMinutes: 180,
   });
@@ -131,9 +227,9 @@ test("the strip shows exactly the calculator's days and times", () => {
   assert.equal(days[0].localDate, "2026-09-24");
   assert.deepEqual(days[0].slots.map((slot) => formatSlotTime(slot.local_time)), ["17:00"]);
 
-  // Window: the last day offered is the 60th after today, and no later.
-  assert.equal(days.at(-1).localDate, "2026-11-22");
-  assert.equal(availableDates.some((date) => date.local_date > "2026-11-22"), false);
+  // No window: the last open date is offered, 129 days after today.
+  assert.equal(days.at(-1).localDate, "2027-01-30");
+  assert.equal(days.at(-1).status, "available");
 
   // Grid: every start is on a quarter hour, and a full day runs 09:00-17:00.
   const full = days[1].slots.map((slot) => slot.local_time);

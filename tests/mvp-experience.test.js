@@ -55,6 +55,12 @@ test("the setup guide counts the eight requirements and names the next one", () 
   assert.equal(setup.readyToPublish, false);
 });
 
+test("the availability requirement is named for at least one open date with times", () => {
+  const hoursTask = SETUP_TASKS.find((task) => task.id === "hours");
+  assert.equal(hoursTask.name, "Add your availability");
+  assert.equal(hoursTask.detail, "At least one date from today on with times");
+});
+
 test("the guide disappears when setup is complete, and publishing stays a separate step", () => {
   const setup = describeSetup(checks());
   assert.equal(setup.setupComplete, true);

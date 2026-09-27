@@ -1,7 +1,8 @@
-// Wording for bookings and payments in progress on a date the provider is
-// blocking or has blocked. Counts are read once when the page loads and are
-// advisory only: create_validated_booking_hold and
-// complete_booking_payment_attempt decide what can actually be booked.
+// Wording for the bookings and payments in progress on a date the provider
+// has opened. Counts are read once when the page loads and are advisory only:
+// they never stop a date being removed or its times changed, and
+// create_validated_booking_hold and complete_booking_payment_attempt decide
+// what can actually be booked.
 
 const toCount = (value) => {
   const count = Number(value);
@@ -25,54 +26,18 @@ export function toBookingCountsByDate(rows) {
   );
 }
 
-// Shown under the date input while blocking. When no date is chosen yet the
-// caller shows nothing and doesn't call this; an empty label returns "" too.
-export function formatBookingsOnDateMessage(counts, dateLabel) {
-  if (!dateLabel) {
-    return "";
-  }
-
-  const confirmed = toCount(counts?.confirmed);
-  const inProgress = toCount(counts?.inProgress);
-
-  if (confirmed === 0 && inProgress === 0) {
-    return "No bookings on this date.";
-  }
-
-  if (inProgress === 0) {
-    return `You have ${confirmed} ${bookingsWord(confirmed)} on ${dateLabel}. ${
-      confirmed === 1 ? "It'll" : "They'll"
-    } stay booked. Blocking only stops new ones.`;
-  }
-
-  if (confirmed === 0) {
-    const single = inProgress === 1;
-
-    return `${inProgress} ${bookingsWord(inProgress)} ${
-      single ? "is" : "are"
-    } being paid for on ${dateLabel} right now. If payment finishes, ${
-      single ? "it" : "they"
-    } will be booked. Blocking only stops new ones.`;
-  }
-
-  return `You have ${confirmed} ${bookingsWord(confirmed)} on ${dateLabel}, and ${inProgress} more ${
-    inProgress === 1 ? "is" : "are"
-  } being paid for right now. Existing bookings stay, and payments already started can still finish. Blocking only stops new ones.`;
-}
-
-// The line under a blocked-date row, or "" when the date has nothing on it.
-export function formatBlockedDateBookingsLine(counts) {
-  const confirmed = toCount(counts?.confirmed);
-  const inProgress = toCount(counts?.inProgress);
+// "2 bookings", "1 payment in progress", "2 bookings and 1 payment in
+// progress", or "" when there is nothing.
+function formatBookingsCount({ confirmed, inProgress }) {
   const bookings = `${confirmed} ${bookingsWord(confirmed)}`;
   const payments = `${inProgress} ${inProgress === 1 ? "payment" : "payments"} in progress`;
 
   if (confirmed > 0 && inProgress > 0) {
-    return `${bookings} and ${payments} on this day`;
+    return `${bookings} and ${payments}`;
   }
 
   if (confirmed > 0) {
-    return `${bookings} on this day`;
+    return bookings;
   }
 
   if (inProgress > 0) {
@@ -80,4 +45,28 @@ export function formatBlockedDateBookingsLine(counts) {
   }
 
   return "";
+}
+
+// The muted line under a date, or "" when the date has nothing on it.
+export function formatDateBookingsLine(counts) {
+  const confirmed = toCount(counts?.confirmed);
+  const inProgress = toCount(counts?.inProgress);
+  const line = formatBookingsCount({ confirmed, inProgress });
+
+  return confirmed > 0 ? `${line} on this day` : line;
+}
+
+// The muted line on a drop's card: its dates' bookings and payments in
+// progress added up, or "" when none of its dates has any.
+export function formatDropBookingsLine(dates, countsByDate) {
+  let confirmed = 0;
+  let inProgress = 0;
+
+  for (const date of dates ?? []) {
+    const counts = countsByDate?.[date.local_date];
+    confirmed += toCount(counts?.confirmed);
+    inProgress += toCount(counts?.inProgress);
+  }
+
+  return formatBookingsCount({ confirmed, inProgress });
 }

@@ -50,15 +50,22 @@ select provider_page.id, 'full', 20, 24, 'Fixture policy'
 from ceaute.provider_page
 where provider_page.id::text like '18000000-%';
 
-insert into ceaute.availability_rule (provider_page_id, weekday, starts_at, ends_at)
-select provider_page.id, weekday, '09:00', '17:00'
-from ceaute.provider_page, generate_series(0, 6) as weekday
-where provider_page.id::text like '18000000-%';
-
-insert into ceaute.blocked_date (provider_page_id, local_date)
-select provider_page.id, (now() at time zone 'Europe/London')::date + 10
+-- One opened drop per page: every date from London today to today + 120.
+insert into ceaute.availability_drop (id, provider_page_id, opens_at)
+select
+  ('48000000-0000-0000-0000-00000000000' || right(provider_page.id::text, 1))::uuid,
+  provider_page.id,
+  now() - interval '1 day'
 from ceaute.provider_page
 where provider_page.id::text like '18000000-%';
+
+insert into ceaute.availability_date (provider_page_id, drop_id, local_date, hours_start, hours_end)
+select
+  availability_drop.provider_page_id, availability_drop.id,
+  (now() at time zone 'Europe/London')::date + offset_day, '09:00', '17:00'
+from ceaute.availability_drop
+cross join generate_series(0, 120) as offset_day
+where availability_drop.provider_page_id::text like '18000000-%';
 
 insert into ceaute.treatment (
   id, provider_page_id, name, description, duration_minutes, price_pence, is_active
@@ -113,29 +120,29 @@ select set_config('request.jwt.claim.sub', '08000000-0000-0000-0000-000000000004
 select set_config('request.jwt.claim.role', 'authenticated', true);
 
 insert into tap_results (result) select ok(
-  (select count(*) from ceaute.get_public_availability_rules('18000000-0000-0000-0000-000000000001')) = 7,
-  'Published working hours are available'
+  (select count(*) from ceaute.get_public_open_dates('18000000-0000-0000-0000-000000000001')) = 121,
+  'Published open dates are available'
 );
 insert into tap_results (result) select ok(
-  (select count(*) from ceaute.get_public_availability_rules('18000000-0000-0000-0000-000000000002')) = 0,
-  'Draft working hours are not disclosed'
+  (select count(*) from ceaute.get_public_open_dates('18000000-0000-0000-0000-000000000002')) = 0,
+  'Draft open dates are not disclosed'
 );
 insert into tap_results (result) select ok(
-  (select count(*) from ceaute.get_public_availability_rules('18000000-0000-0000-0000-000000000003')) = 0,
-  'Suspended working hours are not disclosed'
+  (select count(*) from ceaute.get_public_open_dates('18000000-0000-0000-0000-000000000003')) = 0,
+  'Suspended open dates are not disclosed'
 );
 
 insert into tap_results (result) select ok(
-  (select count(*) from ceaute.get_public_blocked_dates('18000000-0000-0000-0000-000000000001')) = 1,
-  'Published blocked dates are available'
+  (select count(*) from ceaute.get_public_availability_summary('18000000-0000-0000-0000-000000000001')) = 1,
+  'The published availability summary is available'
 );
 insert into tap_results (result) select ok(
-  (select count(*) from ceaute.get_public_blocked_dates('18000000-0000-0000-0000-000000000002')) = 0,
-  'Draft blocked dates are not disclosed'
+  (select count(*) from ceaute.get_public_availability_summary('18000000-0000-0000-0000-000000000002')) = 0,
+  'The draft availability summary is not disclosed'
 );
 insert into tap_results (result) select ok(
-  (select count(*) from ceaute.get_public_blocked_dates('18000000-0000-0000-0000-000000000003')) = 0,
-  'Suspended blocked dates are not disclosed'
+  (select count(*) from ceaute.get_public_availability_summary('18000000-0000-0000-0000-000000000003')) = 0,
+  'The suspended availability summary is not disclosed'
 );
 
 insert into tap_results (result) select ok(
@@ -188,16 +195,16 @@ select set_config('request.jwt.claim.sub', '', true);
 select set_config('request.jwt.claim.role', 'service_role', true);
 
 insert into tap_results (result) select ok(
-  (select count(*) from ceaute.get_public_availability_rules('18000000-0000-0000-0000-000000000001')) = 7,
-  'The storefront loader still reads a published provider''s working hours'
+  (select count(*) from ceaute.get_public_open_dates('18000000-0000-0000-0000-000000000001')) = 121,
+  'The storefront loader still reads a published provider''s open dates'
 );
 insert into tap_results (result) select ok(
-  (select count(*) from ceaute.get_public_availability_rules('18000000-0000-0000-0000-000000000002')) = 0,
-  'The service role cannot read draft working hours through the projection'
+  (select count(*) from ceaute.get_public_open_dates('18000000-0000-0000-0000-000000000002')) = 0,
+  'The service role cannot read draft open dates through the projection'
 );
 insert into tap_results (result) select ok(
-  (select count(*) from ceaute.get_public_blocked_dates('18000000-0000-0000-0000-000000000002')) = 0,
-  'The service role cannot read draft blocked dates through the projection'
+  (select count(*) from ceaute.get_public_availability_summary('18000000-0000-0000-0000-000000000002')) = 0,
+  'The service role cannot read a draft availability summary through the projection'
 );
 insert into tap_results (result) select ok(
   (select count(*) from ceaute.get_public_occupied_periods('18000000-0000-0000-0000-000000000002')) = 0,
@@ -212,8 +219,9 @@ insert into tap_results (result) select ok(
   'The service role cannot read draft booking terms through the projection'
 );
 
--- The provider still reaches their own draft page through the tables the
--- dashboard and its storefront preview read, which RLS scopes to the owner.
+-- The provider still reaches their own draft page: the location through the
+-- table RLS scopes to the owner, and the availability summary through the
+-- projection, which answers its owner for the storefront preview.
 reset role;
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '08000000-0000-0000-0000-000000000002', true);
@@ -225,9 +233,8 @@ insert into tap_results (result) select ok(
   'A draft provider still reads their own location for preview'
 );
 insert into tap_results (result) select ok(
-  (select count(*) from ceaute.availability_rule
-   where provider_page_id = '18000000-0000-0000-0000-000000000002') = 7,
-  'A draft provider still reads their own working hours for preview'
+  (select count(*) from ceaute.get_public_availability_summary('18000000-0000-0000-0000-000000000002')) = 1,
+  'A draft provider still reads their own availability summary for preview'
 );
 
 reset role;

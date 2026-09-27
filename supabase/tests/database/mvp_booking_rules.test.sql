@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions, ceaute;
 
-select plan(17);
+select plan(11);
 
 create temp table tap_results (result text);
 grant insert, select on table tap_results to authenticated, service_role;
@@ -55,9 +55,14 @@ insert into ceaute.provider_agreement_acceptance (
 )
 values ('15000000-0000-0000-0000-000000000001', ceaute.current_provider_agreement_version(), '05000000-0000-0000-0000-000000000002');
 
-insert into ceaute.availability_rule (provider_page_id, weekday, starts_at, ends_at)
-select '15000000-0000-0000-0000-000000000001', weekday, '09:00', '17:00'
-from generate_series(0, 6) as weekday;
+insert into ceaute.availability_drop (id, provider_page_id, opens_at)
+values ('45000000-0000-0000-0000-000000000001', '15000000-0000-0000-0000-000000000001', now() - interval '1 day');
+
+insert into ceaute.availability_date (provider_page_id, drop_id, local_date, hours_start, hours_end)
+select
+  '15000000-0000-0000-0000-000000000001', '45000000-0000-0000-0000-000000000001',
+  (now() at time zone 'Europe/London')::date + offset_day, '09:00', '17:00'
+from generate_series(0, 120) as offset_day;
 
 insert into ceaute.treatment (
   id, provider_page_id, name, description, duration_minutes, price_pence, is_active
@@ -70,12 +75,11 @@ values (
 create temp table rule_times as
 select
   (((now() at time zone 'Europe/London')::date + 3)::timestamp + time '12:00') at time zone 'Europe/London' as grid_start,
-  (((now() at time zone 'Europe/London')::date + 60)::timestamp + time '12:00') at time zone 'Europe/London' as last_window_start,
-  (((now() at time zone 'Europe/London')::date + 61)::timestamp + time '12:00') at time zone 'Europe/London' as outside_window_start;
+  (((now() at time zone 'Europe/London')::date + 61)::timestamp + time '12:00') at time zone 'Europe/London' as beyond_old_window_start;
 
 grant select on table rule_times to authenticated, service_role;
 
--- Booking window and appointment start grid, at hold creation.
+-- Appointment start grid, at hold creation. There is no booking window.
 set local role service_role;
 select set_config('request.jwt.claim.role', 'service_role', true);
 
@@ -109,14 +113,8 @@ insert into tap_results (result) select lives_ok(
   format(
     'select ceaute.create_validated_booking_hold(%L,%L,%L,array[]::uuid[],%L)',
     '05000000-0000-0000-0000-000000000001', '15000000-0000-0000-0000-000000000001',
-    '25000000-0000-0000-0000-000000000001', (select last_window_start from rule_times)
-  ), 'A start on the 60th London calendar day is inside the booking window');
-insert into tap_results (result) select throws_matching(
-  format(
-    'select ceaute.create_validated_booking_hold(%L,%L,%L,array[]::uuid[],%L)',
-    '05000000-0000-0000-0000-000000000001', '15000000-0000-0000-0000-000000000001',
-    '25000000-0000-0000-0000-000000000001', (select outside_window_start from rule_times)
-  ), 'outside the booking rules', 'A start on the 61st London calendar day is rejected');
+    '25000000-0000-0000-0000-000000000001', (select beyond_old_window_start from rule_times)
+  ), 'A start 61 London calendar days ahead is now accepted');
 
 insert into tap_results (result) select throws_matching(
   $$select * from ceaute.claim_booking_checkout(
@@ -175,44 +173,6 @@ insert into tap_results (result) select lives_ok(
     set payment_mode = excluded.payment_mode, commitment_amount_pence = excluded.commitment_amount_pence,
         deposit_percent = excluded.deposit_percent$$,
   'Full payment keeping 100% after a late cancellation is accepted'
-);
-
--- Working-period boundaries, through the provider RPC and a direct table write.
-insert into tap_results (result) select lives_ok(
-  $$select ceaute.replace_provider_availability_rules(
-    '15000000-0000-0000-0000-000000000001',
-    '[{"weekday": 0, "starts_at": "09:00", "ends_at": "17:00"}]'::jsonb
-  )$$,
-  '09:00-17:00 is a valid working period'
-);
-insert into tap_results (result) select lives_ok(
-  $$select ceaute.replace_provider_availability_rules(
-    '15000000-0000-0000-0000-000000000001',
-    '[{"weekday": 0, "starts_at": "09:15", "ends_at": "17:45"}]'::jsonb
-  )$$,
-  '09:15-17:45 is a valid working period'
-);
-insert into tap_results (result) select throws_matching(
-  $$select ceaute.replace_provider_availability_rules(
-    '15000000-0000-0000-0000-000000000001',
-    '[{"weekday": 0, "starts_at": "09:07", "ends_at": "17:00"}]'::jsonb
-  )$$,
-  'availability_rule_quarter_hour_boundaries',
-  'An off-grid opening time is rejected'
-);
-insert into tap_results (result) select throws_matching(
-  $$select ceaute.replace_provider_availability_rules(
-    '15000000-0000-0000-0000-000000000001',
-    '[{"weekday": 0, "starts_at": "09:00", "ends_at": "17:07"}]'::jsonb
-  )$$,
-  'availability_rule_quarter_hour_boundaries',
-  'An off-grid closing time is rejected'
-);
-insert into tap_results (result) select throws_matching(
-  $$insert into ceaute.availability_rule (provider_page_id, weekday, starts_at, ends_at)
-    values ('15000000-0000-0000-0000-000000000001', 1, '09:00:30', '17:00')$$,
-  'availability_rule_quarter_hour_boundaries',
-  'A direct table write cannot bypass the grid with seconds'
 );
 
 reset role;

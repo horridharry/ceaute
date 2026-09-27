@@ -12,6 +12,9 @@ checks alone cannot prevent both requests passing before either writes.
 Pre-generating permanent slot rows would duplicate derived state and still
 require careful transactional ownership of a slot.
 
+Availability rules changed in decision 007 (dates and drops); the protection
+described here is unchanged.
+
 ## Decision
 
 Generate useful appointment candidates in application code, then validate the

@@ -28,8 +28,9 @@ Publishing is a PostgreSQL operation, not merely a UI state change. It requires
 eight things, read from one breakdown
 (`ceaute.get_provider_page_publication_checks`): a business profile (name,
 username, category; the bio is optional), an active categorised treatment priced
-at least £1.00, a visible portfolio photo, a complete current location, working
-hours, complete booking terms (a percentage, see Payments), a Stripe recipient
+at least £1.00, a visible portfolio photo, a complete current location, at
+least one date from today on with times, even if its drop has not opened,
+complete booking terms (a percentage, see Payments), a Stripe recipient
 account able to receive transfers and payouts, and acceptance of the current
 provider agreement. Treatment descriptions and treatment groups are optional.
 
@@ -155,13 +156,19 @@ carries only its rating, comment, date and the reviewer's first name, derived
 on the server; a reviewer with no name reads as "Verified customer". Hiding a
 review removes it from the page, the count and the average at once.
 
-Availability is the last section: the provider's normal weekly opening hours,
-open days only, Monday to Sunday, written the same way as on their own
-Availability screen ("9 am to 5 pm"). Closed days, blocked dates, holiday
-exceptions, a today marker and any explanation of bookable times are all left
-out, and the section disappears when the provider has no open days. These
-hours describe when the provider works, not which appointments are free: the
-booking journey remains the only source of bookable times.
+Availability is the last section: it says which drops are open for booking
+and, if one is still to come, the next drop's name and opening time (e.g.
+"October slots are open for booking" and "November slots open on 15 October at 7 pm"),
+naming each open drop when there are several and showing only the next
+upcoming one. It never shows the dates of a drop before its drop time, and
+customers never read "drop" or "drop time". The section is left out when
+nothing is open and nothing is coming, and on a paused page. An open drop
+still reads "open for booking" even when its remaining dates are full or
+inside 24 hours' notice; the booking screen explains that instead. The
+section changes at the drop time only on the next page load: it does not
+update itself. These lines describe when the provider is open, not which
+appointments are free: the booking journey remains the only source of
+bookable times.
 `/@[username]/treatments`
 (All treatments) lists every active treatment under its group's name, groups
 in order and treatments without an active group last (headed "Other
@@ -278,14 +285,21 @@ not a bug to design around.
 The public journey starts on the provider page. Selecting a treatment goes
 directly into its booking flow; there is no separate public `/services`
 catalogue or detail route. Compatible add-ons can be selected, then the customer
-chooses a time on "When suits you?" (revised 23 September 2026): a treatment
-summary card, the month as a heading, a strip of day cards (abbreviated weekday
-and date; closed and fully booked days look different and say "Closed" or
-"Full"), the chosen day ("Friday 25"), and its times in two columns, 24-hour,
-grouped Morning, Afternoon and Evening. The days and times are the
-calculator's, which mirrors the hold rules: 24 hours' notice, a fixed 60-day
-window (the unused `booking_window_days` column never drives it) and the
-15-minute start grid. Review and pay is readable
+chooses a time on "When suits you?" (revised 27 September 2026): a treatment
+summary card, the month as a heading, a strip of day cards for only the dates
+the provider has opened (abbreviated weekday and date), the chosen day
+("Friday 25"), and its times in two columns, 24-hour, grouped Morning,
+Afternoon and Evening. A day with no free start says "Full"; the first day
+with a free start is selected. There is no booking window: every open date
+appears however far ahead. A date where the treatment and its add-ons fit at
+no start still says "No times", with why. When no free start remains, the
+screen also says when the next drop opens, or that nothing is open at all
+when none is coming; it reloads itself at that drop time so newly opened
+dates appear without the customer reloading. When no later free date
+exists, the chosen day says "There are no more times." Open dates that are
+all inside the 24 hours' notice stay in the strip as "No times". The days and
+times are the calculator's, which mirrors the hold rules: 24 hours' notice, a
+date in an opened drop, and the 15-minute start grid. Review and pay is readable
 before signing in: the summary, what is paid now and at the appointment (from
 PostgreSQL's quote), the cancellation deadline and what a late cancellation
 keeps, the written policy, and the customer's saved contact details as one line
@@ -305,36 +319,41 @@ with the full refund's state; a failed, cancelled or unfinished payment keeps
 says so; a provider who stopped taking bookings is named and nothing is
 charged.
 
-Availability is derived rather than stored as slot rows. Each provider has at
-most one continuous working period per weekday plus whole blocked dates. A slot
-must fit the treatment and selected add-on duration inside that period and must
-not overlap an active booking or checkout hold.
+Availability is derived rather than stored as slot rows. Each date belongs to
+one drop and has either hours (one opening and one closing time) or start
+times (a fixed list), never both. A start must fit the treatment and selected
+add-on duration inside that date's hours or at one of its start times, and
+must not overlap an active booking or checkout hold. A hold is accepted only
+on a date whose drop has opened.
 
-The current implementation has fixed rules which are easy to misread. Working
-period boundaries and appointment starts use a 15-minute grid, while treatment
-and add-on durations can be any whole number of minutes. Bookings require 24
-hours' notice, customers can book up to 60 days ahead, and all local calendar
-calculations use `Europe/London`. PostgreSQL enforces these rules when working
-hours are saved and when a hold is created, so changing the JavaScript
-calculator alone does not change the accepted booking rules. The booking window
-is not provider-configurable; the legacy `provider_page.booking_window_days`
-column is unused and providers cannot change it.
+The current implementation has fixed rules which are easy to misread. Hours,
+start times and drop times use a 15-minute grid, while treatment and add-on
+durations can be any whole number of minutes. Bookings require 24 hours'
+notice, and all local calendar calculations use `Europe/London`. There is no
+booking window: every open date appears however far ahead, and the legacy
+`provider_page.booking_window_days` column is unused and providers cannot
+change it. PostgreSQL enforces these rules when a drop is saved and when a
+hold is created, so changing the JavaScript calculator alone does not change
+the accepted booking rules.
 
-Providers manage availability at `/dashboard/availability`. Weekdays show as
-summary rows ("Monday 9 am to 5 pm", "Wednesday Closed") that expand in place
-for editing; the week is edited as a draft and saved together with one Save
-hours action, whose bar appears only while there are unsaved changes. Leaving
-with unsaved hours asks first, whether through Ceaute's links or browser
-back/forward; reload and closing the tab use the browser's own prompt, which iOS
-Safari never shows, so those two cases are unprotected on iPhone (a browser
-limitation). A published provider who saves a week with every day closed is
-asked to confirm; the page stays published but takes no new bookings, and a
-banner says so. Blocked dates are added one at a time and removed immediately,
-separately from weekly hours. Blocking a date never cancels or changes existing
-bookings: confirmed bookings stay, and a checkout already in progress may still
-complete, while no new hold can start on a blocked date. The screen shows
-confirmed bookings and payments in progress per date, read once when the page
-loads; the counts are advisory and the database rules decide what can be booked.
+Providers manage availability at `/dashboard/availability` in drops: a group
+of dates with one drop time. The provider picks dates on a month grid, gives
+the chosen dates their times together with "Set times" (hours or start
+times, never both), and chooses the drop time, "Now" or "Later". One Save
+covers a drop's dates, times and drop time. Leaving with unsaved changes asks
+first, whether through Ceaute's links or browser back/forward; reload and
+closing the tab use the browser's own prompt, which iOS Safari never shows,
+so those two cases are unprotected on iPhone (a browser limitation). After a
+drop opens, adding or removing dates, changing times or moving the drop time
+asks for no confirmation; moving it later hides the dates again, and bookings
+already made never change. Past dates are not shown or editable; a drop
+whose dates have all passed disappears, and a drop with no dates stops
+existing. With no dates the screen says "No dates yet." with an "Add dates"
+action. When a published page has no open and no upcoming dates, Availability
+says "Customers can't book: you have no open dates." with no confirmation
+or banner elsewhere, and the page's state does not change. The screen shows confirmed bookings and payments in progress per
+date, read once when the page loads; the counts are advisory and the database
+rules decide what can be booked.
 
 Creating a booking first inserts an `awaiting_payment` booking with a ten-minute
 hold, refused if the provider is not taking bookings. Starting Stripe Checkout
@@ -491,5 +510,5 @@ customer their late payment is being refunded in full (no address, no timing
 promise), is written to a database outbox and delivered by a protected
 scheduled route through Resend; the outbox's unique key sends each once. Delivery is
 claim-and-retry based. Appointment reminders, SMS, provider replies, distance
-search, mobile or virtual appointments, recurring availability exceptions, and
-an internal administration UI are not implemented product flows.
+search, mobile or virtual appointments, and an internal administration UI are
+not implemented product flows.

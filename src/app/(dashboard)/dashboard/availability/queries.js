@@ -2,52 +2,66 @@
 // in ./actions.js.
 
 import { getSignedInProvider } from "../_lib/provider-data";
+import { namedDrops, sortDates, toClockValue } from "./_lib/drop-form";
 import { todayInLondon } from "./_lib/today-london";
-import { weekdayNumberToName } from "./_lib/weekdays";
 
-export const getSchedule = async () => {
+// The provider's current drops, read through their own row-level security:
+// each { id, opensAt, dates, name, firstDate, lastDate }, where a date is
+// { local_date, hours_start, hours_end, start_times } with times as 'HH:MM'.
+// Past dates are left out, so a drop whose dates have all passed is too.
+// Drops are ordered by their first date.
+export const getDrops = async () => {
   const { supabase, providerPage } = await getSignedInProvider({
     next: "/dashboard/availability",
   });
 
-  const { data: schedule, error } = await supabase
-    .schema("ceaute")
-    .from("availability_rule")
-    .select("weekday, starts_at, ends_at")
-    .eq("provider_page_id", providerPage.id)
-    .order("weekday", { ascending: true });
+  const [dropsResult, datesResult] = await Promise.all([
+    supabase
+      .schema("ceaute")
+      .from("availability_drop")
+      .select("id, opens_at")
+      .eq("provider_page_id", providerPage.id),
+    supabase
+      .schema("ceaute")
+      .from("availability_date")
+      .select("drop_id, local_date, hours_start, hours_end, start_times")
+      .eq("provider_page_id", providerPage.id)
+      .gte("local_date", todayInLondon())
+      .order("local_date", { ascending: true }),
+  ]);
 
-  if (error) {
+  if (dropsResult.error || datesResult.error) {
     throw new Error("Could not load availability.");
   }
 
-  return schedule
-    .map((entry) => ({
-      day_of_week: weekdayNumberToName(entry.weekday),
-      start_time: entry.starts_at,
-      end_time: entry.ends_at,
-    }))
-    .filter((entry) => entry.day_of_week);
-};
+  const datesByDrop = new Map();
 
-export const getBlockedDates = async () => {
-  const { supabase, providerPage } = await getSignedInProvider({
-    next: "/dashboard/availability",
-  });
-
-  const { data: blockedDates, error } = await supabase
-    .schema("ceaute")
-    .from("blocked_date")
-    .select("id, local_date")
-    .eq("provider_page_id", providerPage.id)
-    .gte("local_date", todayInLondon())
-    .order("local_date", { ascending: true });
-
-  if (error) {
-    throw new Error("Could not load blocked dates.");
+  for (const row of datesResult.data ?? []) {
+    const date = {
+      local_date: String(row.local_date).slice(0, 10),
+      hours_start: row.hours_start ? toClockValue(row.hours_start) : null,
+      hours_end: row.hours_end ? toClockValue(row.hours_end) : null,
+      start_times: Array.isArray(row.start_times)
+        ? row.start_times.map(toClockValue)
+        : null,
+    };
+    const list = datesByDrop.get(row.drop_id) ?? [];
+    list.push(date);
+    datesByDrop.set(row.drop_id, list);
   }
 
-  return blockedDates ?? [];
+  const drops = (dropsResult.data ?? [])
+    .filter((drop) => datesByDrop.has(drop.id))
+    .map((drop) => ({
+      id: drop.id,
+      opensAt: drop.opens_at,
+      dates: sortDates(datesByDrop.get(drop.id)),
+    }))
+    .sort((a, b) =>
+      a.dates[0].local_date.localeCompare(b.dates[0].local_date),
+    );
+
+  return namedDrops(drops);
 };
 
 // Upcoming confirmed bookings and in-progress payments (unexpired holds) per

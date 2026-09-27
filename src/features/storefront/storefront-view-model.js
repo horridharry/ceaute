@@ -5,8 +5,8 @@ import { ratingSummary } from "./format";
 import { buildTreatmentSections } from "./treatment-sections";
 import { treatmentQueries } from "./treatment-queries";
 import { publicReviews, visibleReviewsQuery } from "./review-queries";
-import { openingHoursQuery } from "./availability-queries";
-import { openingHours } from "./opening-hours";
+import { availabilitySummaryQuery } from "./availability-summary";
+import { summaryFromRows } from "@/lib/availability/drops";
 import {
   portfolioImagesWithSignedUrls,
   signPortfolioImages,
@@ -28,7 +28,7 @@ export async function buildStorefrontViewModel({ supabase, providerPage }) {
     addOnsResult,
     compatibilityResult,
     reviewsResult,
-    openingHoursResult,
+    availabilityResult,
   ] = await Promise.all([
     supabase
       .schema("ceaute")
@@ -46,7 +46,7 @@ export async function buildStorefrontViewModel({ supabase, providerPage }) {
     treatmentQuery.addOns,
     treatmentQuery.compatibility,
     visibleReviewsQuery(supabase, providerPage.id),
-    openingHoursQuery(supabase, providerPage.id),
+    availabilitySummaryQuery(supabase, providerPage.id),
   ]);
 
   const failures = Object.entries({
@@ -57,7 +57,7 @@ export async function buildStorefrontViewModel({ supabase, providerPage }) {
     add_ons: addOnsResult,
     add_on_compatibility: compatibilityResult,
     reviews: reviewsResult,
-    opening_hours: openingHoursResult,
+    availability: availabilityResult,
   }).filter(([, result]) => result.error);
 
   if (failures.length > 0) {
@@ -101,6 +101,6 @@ export async function buildStorefrontViewModel({ supabase, providerPage }) {
       compatibility: compatibilityResult.data ?? [],
     }),
     reviews,
-    opening_hours: openingHours(openingHoursResult.data),
+    availability: summaryFromRows(availabilityResult.data),
   };
 }

@@ -84,7 +84,7 @@ could not finish that request. If you were paying for or cancelling a booking,
 check your bookings before trying again." (`src/lib/errors/route-error.js`)
 
 **Empty states** state the fact, and add the next action only when there is
-one: "No upcoming bookings." "No blocked dates." "No active groups. Restore one
+one: "No upcoming bookings." "No dates yet." "No active groups. Restore one
 from Archived or add a new one." "No treatments match “{query}”."
 
 ---

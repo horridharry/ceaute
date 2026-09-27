@@ -55,12 +55,14 @@ values
   ('17000000-0000-0000-0000-000000000003', 'Testville Quarter', '7 Private Street', 'London', 'N1 1AA', 'Ring the bell', true),
   ('17000000-0000-0000-0000-000000000004', 'Testville Quarter', '7 Private Street', 'London', 'N1 1AA', 'Ring the bell', true);
 
-insert into ceaute.availability_rule (provider_page_id, weekday, starts_at, ends_at)
-select '17000000-0000-0000-0000-000000000001', weekday, '09:00', '17:00'
-from generate_series(0, 6) as weekday;
+insert into ceaute.availability_drop (id, provider_page_id, opens_at)
+values ('67000000-0000-0000-0000-000000000001', '17000000-0000-0000-0000-000000000001', now() - interval '1 day');
 
-insert into ceaute.blocked_date (provider_page_id, local_date, reason)
-values ('17000000-0000-0000-0000-000000000001', (now() at time zone 'Europe/London')::date + 20, 'Regression fixture');
+insert into ceaute.availability_date (provider_page_id, drop_id, local_date, hours_start, hours_end)
+select
+  '17000000-0000-0000-0000-000000000001', '67000000-0000-0000-0000-000000000001',
+  (now() at time zone 'Europe/London')::date + offset_day, '09:00', '17:00'
+from generate_series(0, 120) as offset_day;
 
 insert into ceaute.treatment_group (id, provider_page_id, name)
 values ('47000000-0000-0000-0000-000000000001', '17000000-0000-0000-0000-000000000001', 'Hands');
@@ -439,14 +441,14 @@ insert into tap_results (result) select is(
   0, 'Another provider sees no treatment groups'
 );
 insert into tap_results (result) select is(
-  (select count(*)::integer from ceaute.availability_rule
+  (select count(*)::integer from ceaute.availability_drop
    where provider_page_id = '17000000-0000-0000-0000-000000000001'),
-  0, 'Another provider sees no working hours'
+  0, 'Another provider sees no drops'
 );
 insert into tap_results (result) select is(
-  (select count(*)::integer from ceaute.blocked_date
+  (select count(*)::integer from ceaute.availability_date
    where provider_page_id = '17000000-0000-0000-0000-000000000001'),
-  0, 'Another provider sees no blocked dates'
+  0, 'Another provider sees no dates'
 );
 insert into tap_results (result) select is(
   (select count(*)::integer from ceaute.provider_location

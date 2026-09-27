@@ -39,14 +39,14 @@ trade-offs behind this shape are in
 | Setup guide, readiness, publish, unpublish, taking bookings | every draft dashboard page (guide), `/dashboard` (Today), `/dashboard/settings/publication` | `dashboard/_lib/publication-checks.js` (one derived setup state), `dashboard/_components/setup-guide.jsx`, `settings/publication/actions.js` | `get_provider_page_publication_checks`, `provider_page_meets_publication_requirements`, `provider_page_accepts_new_bookings`, `publish_provider_page`, `unpublish_provider_page` |
 | Portfolio images | `/dashboard/profile/portfolio` | `portfolio/queries.js`, `portfolio/actions.js`, `src/lib/supabase/signed-urls.js` | `portfolio_image` RLS, private storage bucket |
 | Saved locations, the current one, private address | `/dashboard/locations` | `locations/queries.js`, `locations/actions.js` | `provider_location` RLS and constraints; `set_primary_provider_location` |
-| Working hours and blocked dates | `/dashboard/availability` | `availability/queries.js`, `availability/actions.js`, `availability/_lib/schedule-form.js`, `availability/_lib/booking-messages.js`, `src/lib/bookings/appointment-grid.js` | `replace_provider_availability_rules`, 15-minute grid checks, `blocked_date` RLS, `get_provider_booking_counts_by_local_date` (advisory counts) |
+| Availability (dates and drops) | `/dashboard/availability` | `availability/queries.js`, `availability/actions.js`, `availability/_lib/drop-form.js`, `availability/_lib/booking-messages.js`, `availability/_components/drop-editor.jsx`, `availability/_components/month-grid.jsx`, `src/lib/availability/drops.js`, `src/lib/bookings/appointment-grid.js` | `save_availability_drop`, quarter-hour and hours-or-start-times checks, `availability_drop`/`availability_date` RLS, `get_provider_booking_counts_by_local_date` (advisory counts) |
 | Treatments | `/dashboard/treatments` | `treatments/queries.js`, `treatments/actions.js`, `treatments/_lib/treatment-values.js` | `treatment` RLS |
 | Treatment Groups | `/dashboard/treatment-groups` | `treatment-groups/queries.js`, `treatment-groups/actions.js` | `treatment_group` RLS |
 | Add-ons | `/dashboard/add-ons` | `add-ons/queries.js`, `add-ons/actions.js` | table RLS; `create_add_on_with_compatibility`, `update_add_on_with_compatibility` |
 | Booking terms | `/dashboard/settings/booking` | `settings/booking/queries.js`, `settings/booking/actions.js`, `src/lib/payments/booking-terms.js` (form and example only) | `booking_terms_are_complete`, `provider_booking_setting_percentage_terms` (new writes), `booking_payment_terms` (the only rounding; [decision 006](decisions/006-percentage-booking-terms.md)) |
 | Stripe Connect onboarding | `/dashboard/settings/payments`, `POST /api/stripe/connect` | `settings/payments/queries.js`, `settings/payments/actions.js`, `src/lib/stripe/server.js` | `sync_provider_payment_account`, Connect event claims |
-| Public page and discovery | `/@[username]`, `/discover`, `/dashboard/profile/preview` | `src/features/storefront/*`, `[username]/_lib/public-provider-data.js`, `discover/queries.js` | `get_public_*` projections, `provider_page_accepts_new_bookings` (paused state), `discover_public_providers` (published only, paged; `search_public_providers` is kept for the previous deployment) |
-| Choose add-ons and time | `/@[username]/book/[treatmentId]`, `/time` | `[username]/_lib/public-provider-data.js`, `book/_lib/appointment-availability.js`, `book/_lib/time-choices.js` | `get_public_availability_rules`, `get_public_blocked_dates`, `get_public_occupied_periods` |
+| Public page and discovery | `/@[username]`, `/discover`, `/dashboard/profile/preview` | `src/features/storefront/*`, `[username]/_lib/public-provider-data.js`, `discover/queries.js` | `get_public_*` projections, `get_public_availability_summary`, `provider_page_accepts_new_bookings` (paused state), `discover_public_providers` (published only, paged; `search_public_providers` is kept for the previous deployment) |
+| Choose add-ons and time | `/@[username]/book/[treatmentId]`, `/time` | `[username]/_lib/public-provider-data.js`, `book/_lib/appointment-availability.js`, `book/_lib/time-choices.js` | `get_public_open_dates`, `get_public_availability_summary`, `get_public_occupied_periods` |
 | Review and pay, hold and Checkout | `/@[username]/book/[treatmentId]/checkout` (Review without `?hold`, the held page with it) | `book/actions.js` (`continueToPayment`, `resumeCheckout`), `src/lib/bookings/checkout-session.js` (hold reuse and the Checkout claim, shared with My bookings), `src/lib/bookings/booking-money.js` (formats stored pence), `checkout/_lib/checkout-display.js` (held-page states) | `get_public_booking_terms` (the quote), `create_validated_booking_hold`, `claim_booking_checkout`, `record_booking_checkout_session`, exclusion constraint |
 | Payment confirmation | `POST /api/stripe/payments` | `api/stripe/payments/route.ts`, `src/lib/payments/refunds.js` | `claim_stripe_payment_event`, `complete_booking_payment_attempt` |
 | Payment disputes | `POST /api/stripe/payments`, `GET /api/operator/disputes` | `src/lib/payments/disputes.js` (event mapping), `refund-settlement.js` (economics, off the live path) | `record_stripe_dispute`, `list_booking_disputes` |
@@ -166,15 +166,17 @@ an id tie-breaker) and send the browser `{ rating, comment, created_at,
 reviewer_name }` only, so no customer identity, booking or review id leaves
 the server. `src/features/storefront/reviews.js` holds the pure preview and
 naming rules, and `review-card.jsx` is the one card both pages render.
-Opening hours read `availability_rule` through
-`src/features/storefront/availability-queries.js`; the (storefront) route
-group's published check decides who may see them, blocked dates are never
-read for display, and `opening-hours.js` turns the rows into open days in
-Monday-to-Sunday order. Times are written by `src/lib/time/clock-time.js`,
-which the provider's own Availability screen also uses, so both sides read
-alike. Neither area needed a migration or a new grant: service_role already
-had select on `availability_rule`, and an owner reads their own rows under
-the existing policy.
+The storefront Availability section reads `get_public_availability_summary`
+through `src/features/storefront/availability-summary.js`. PostgreSQL
+returns only open drops and the single next upcoming drop, only on a
+published page or to its owner, and returns only what each drop name shows
+(the month, or the first and last dates when the name is that range), so
+unopened dates never leave the database. `src/lib/availability/drops.js`
+turns the rows into "October slots are open for booking" and "November slots
+open on 15 October at 7 pm". The drop time is written with
+`src/lib/time/clock-time.js`, which the provider's own Availability screen
+also uses, so both sides read alike. The owner's unpublished preview reads
+the same function under their own client.
 
 Public treatment views (the storefront preview and All treatments) read
 through `treatmentQueries` in `src/features/storefront/treatment-queries.js`
@@ -197,12 +199,13 @@ PostgreSQL is authoritative for the important invariants:
 - account and provider ownership, including cross-provider relationships;
 - provider publication requirements and protected platform-managed state;
 - valid provider settings, including complete percentage booking terms for new
-  writes, treatment prices of at least £1.00 and 15-minute working hours;
+  writes, treatment prices of at least £1.00 and 15-minute availability
+  hours, start times and drop times;
 - the pence a percentage becomes (`booking_payment_terms`, rounded once) and
   whether a page may take a new booking (`provider_page_accepts_new_bookings`:
   terms, Stripe, the current agreement, no balance owed);
-- valid booking inputs, active treatment/add-on compatibility, notice, window,
-  working hours, blocked dates, and overlap prevention;
+- valid booking inputs, active treatment/add-on compatibility, notice, a date
+  in an opened drop, its hours or start times, and overlap prevention;
 - which participant may see private booking information or cancel a booking;
 - atomic payment confirmation, cancellation amounts, and refund entitlement;
 - idempotent claims for Checkout, Stripe events, refund work, and email work;
@@ -298,7 +301,7 @@ Sections may share only product-agnostic infrastructure:
   `dashboard/_components`;
 - `src/components/unsaved-changes`, the dashboard's unsaved-changes guard,
   mounted once in the dashboard layout. A screen opts in with
-  `useUnsavedChanges(isDirty)`; only Availability's weekly hours does today,
+  `useUnsavedChanges(isDirty)`; only Availability's drop editor does today,
   and adopting it on another screen is a product decision for that screen.
   Link clicks are caught in the capture phase on `window` and browser Back is
   held with a same-URL sentinel history entry (see
@@ -333,28 +336,34 @@ each have an `error` boundary so a failing page keeps its chrome.
 
 ## Availability and booking boundary
 
-`appointment-availability.js` generates the customer-visible candidates from
-weekly rules, blocked dates, occupied periods, selected duration, and fixed time
-assumptions. It correctly treats local dates in `Europe/London`, including
-rejecting nonexistent local times, and converts accepted starts to instants.
+`appointment-availability.js` generates the customer-visible candidates from a
+provider's open dates, occupied periods, the requested duration, and fixed
+time assumptions. For a date with hours it steps through every 15-minute
+start that fits; for a date with start times it offers exactly those, and any
+treatment may begin at one if it ends the same day. It correctly treats local
+dates in `Europe/London`, including rejecting nonexistent local times, and
+converts accepted starts to instants.
 
-The trusted `create_validated_booking_hold` database operation recalculates the
-parts that protect correctness before inserting a hold. It verifies the
+The trusted `create_validated_booking_hold` database operation recalculates
+the parts that protect correctness before inserting a hold. It verifies the
 customer, that the page is taking new bookings, the active treatment,
-compatible add-ons, a total of at least £1.00, local working period, blocked
-date, 15-minute start, 24-hour notice, and 60-day window, then stores the
-percentage terms and the pence they came to in the snapshot. A hold lasts ten
-minutes until Checkout is claimed. The
-GiST exclusion constraint on provider and half-open time range is the last line
-of defence against concurrent overlap.
+compatible add-ons, a total of at least £1.00, a date in a drop whose drop
+time has passed, that date's hours or start times, a 15-minute start, and
+24-hour notice, then stores the percentage terms and the pence they came to
+in the snapshot. A hold lasts ten minutes until Checkout is claimed. The GiST
+exclusion constraint on provider and half-open time range is the last line of
+defence against concurrent overlap.
 
-There are two sources which must currently change together: JavaScript controls
-which slots customers see, while PostgreSQL controls which holds are accepted.
-Slot generation steps through each working period in 15-minute increments from
-its opening time. That only matches the hold check because PostgreSQL requires
-stored working-period boundaries to sit on the same grid. The 60-day window is
-fixed; the legacy `booking_window_days` column is unused and not writable by
-providers.
+There are two sources which must currently change together: JavaScript
+controls which starts customers see, while PostgreSQL controls which holds
+are accepted. Only PostgreSQL compares a drop's opening time with the clock:
+the public functions return an unopened drop's dates to no one, and the hold
+refuses them, on every read and every hold, because nothing runs at the drop
+time itself. JavaScript works only from the dates PostgreSQL returns.
+Hours and start times are stored on the same 15-minute grid the calculator
+steps through, and there is no booking window: every open date appears
+however far ahead. The legacy `booking_window_days` column is unused and not
+writable by providers.
 
 ## Stripe and asynchronous work
 

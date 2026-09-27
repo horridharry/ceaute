@@ -1,5 +1,5 @@
 -- Fictional fixture for scripts/db-races/booking-races.sh. It is COMMITTED, so
--- load it only into a disposable database. Provider race.booking, ids 0c…/1c…/2c….
+-- load it only into a disposable database. Provider race.booking, ids 0c…/1c…/2c…/3c….
 insert into auth.users (
   instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
   raw_app_meta_data, raw_user_meta_data, created_at, updated_at
@@ -28,9 +28,14 @@ values ('1c000000-0000-0000-0000-000000000001', 'acct_race', true, 'active', 'ac
 insert into ceaute.provider_agreement_acceptance (provider_page_id, agreement_version, accepted_by_profile_id)
 values ('1c000000-0000-0000-0000-000000000001', ceaute.current_provider_agreement_version(), '0c000000-0000-0000-0000-000000000003');
 
-insert into ceaute.availability_rule (provider_page_id, weekday, starts_at, ends_at)
-select '1c000000-0000-0000-0000-000000000001', weekday, '09:00', '17:00'
-from generate_series(0, 6) as weekday;
+insert into ceaute.availability_drop (id, provider_page_id, opens_at)
+values ('3c000000-0000-0000-0000-000000000001', '1c000000-0000-0000-0000-000000000001', now() - interval '1 day');
+
+insert into ceaute.availability_date (provider_page_id, drop_id, local_date, hours_start, hours_end)
+select
+  '1c000000-0000-0000-0000-000000000001', '3c000000-0000-0000-0000-000000000001',
+  (now() at time zone 'Europe/London')::date + offset_day, '09:00', '17:00'
+from generate_series(0, 120) as offset_day;
 
 insert into ceaute.treatment (id, provider_page_id, name, duration_minutes, price_pence, is_active)
 values ('2c000000-0000-0000-0000-000000000001', '1c000000-0000-0000-0000-000000000001', 'Race manicure', 60, 4725, true);

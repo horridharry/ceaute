@@ -21,7 +21,7 @@ A provider needs the following before going live:
 
 - at least one Treatment
 - Location
-- Availability: at least one date from today on with times, even if its drop has not opened
+- Availability: at least one date from today on with times, even if its drop has not opened. The setup guide and the Publication checklist call this "Add your availability", with the detail "At least one date from today on with times" (decided 27 September 2026).
 - Payments configured
 - provider/business Category
 
@@ -256,8 +256,7 @@ The provider nickname is a provider-management aid, not a public substitute for 
 
 Decided 27 September 2026 by the product owner
 (`docs/decisions/007-availability-released-in-drops.md`): providers release
-their time in drops. This replaces weekly hours and blocked dates. The current
-weekly-hours screen is legacy until it is rebuilt.
+their time in drops. This replaces weekly hours and blocked dates.
 
 The provider's task, done easily on a phone:
 
@@ -275,6 +274,15 @@ Never both on one date. The provider never types individual 15-minute starts.
 A **drop** is a group of dates with one **drop time**. Until the drop time nobody else can see or book those dates. A provider can have several drops, for example 1–14 November and 15–30 November. Ceaute names a drop by its dates; there is no name to type.
 
 Everything stays editable after a drop opens: dates, times and the drop time. Moving the drop time later hides the dates again. Bookings already made never change.
+
+Decided 27 September 2026 by the product owner, for the first drops release:
+
+- **Drop names.** A drop whose dates all fall in one calendar month is named by the month ("October"), even if only some of that month's dates are in it, unless another current drop also has dates in that month. Otherwise it is named by its first and last dates, with an en dash: "28 October – 10 November", or "1–14 November" and "15–30 November" for two drops in one month, as in decision 007.
+- **Saving.** One Save covers a drop's dates, times and drop time, and leaving with unsaved changes asks first, as on today's screen. Customers see nothing of an edit until the provider saves it.
+- **No warnings.** Removing a date, changing its times or moving an open drop's time later saves without a confirmation. Bookings already made stay either way. The screen keeps showing each date's confirmed bookings and payments in progress, as today's screen does.
+- **Past dates.** Past dates are not shown or editable. A drop whose dates have all passed disappears, and a drop with no dates stops existing. A drop time is either now or a later quarter hour.
+- **Nothing to book.** When a published page has no open and no upcoming dates, Availability says "Customers can't book: you have no open dates." The page's state does not change, and Home (Today) shows nothing new. This replaces the confirmation and banner for a week with every day closed.
+- **Labels.** With no dates, the screen says "No dates yet." with an "Add dates" action. The button is "Save". The drop time is "Now" or "Later". Each drop reads "Slots open for booking" or "Slots open on 15 October at 7 pm" (revised after the first local test).
 
 There is no usual week and no blocked-dates list. A date without times is closed.
 

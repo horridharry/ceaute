@@ -116,10 +116,18 @@ values
   ('19100000-0000-0000-0000-000000000001', ceaute.current_provider_agreement_version(), '09100000-0000-0000-0000-000000000002'),
   ('19100000-0000-0000-0000-000000000002', ceaute.current_provider_agreement_version(), '09100000-0000-0000-0000-000000000003');
 
-insert into ceaute.availability_rule (provider_page_id, weekday, starts_at, ends_at)
-select provider_page.id, weekday, '09:00', '17:00'
-from ceaute.provider_page, generate_series(0, 6) as weekday
+insert into ceaute.availability_drop (id, provider_page_id, opens_at)
+select ('69100000' || substr(provider_page.id::text, 9))::uuid, provider_page.id, now() - interval '1 day'
+from ceaute.provider_page
 where provider_page.id::text like '19100000-%';
+
+insert into ceaute.availability_date (provider_page_id, drop_id, local_date, hours_start, hours_end)
+select
+  availability_drop.provider_page_id, availability_drop.id,
+  (now() at time zone 'Europe/London')::date + offset_day, '09:00', '17:00'
+from ceaute.availability_drop
+cross join generate_series(0, 120) as offset_day
+where availability_drop.id::text like '69100000-%';
 
 insert into ceaute.treatment (
   id, provider_page_id, name, description, duration_minutes, price_pence,

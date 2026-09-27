@@ -15,6 +15,7 @@ import {
 } from "./treatment-sections";
 import { ReviewCard } from "./review-card";
 import { reviewsHref, reviewsPreview } from "./reviews";
+import { openForBookingSentence, opensSentence } from "@/lib/availability/drops";
 
 // Average rating and review count, or a "New" pill before the first review.
 function RatingSummary({ rating }) {
@@ -149,21 +150,21 @@ function ReviewsPreview({ reviews, username }) {
   );
 }
 
-// The provider's normal weekly hours: the days they are open, Monday first.
-// Closed days, blocked dates and holidays are not shown, and these hours are
-// not a promise of free appointments - the booking journey decides that.
-function Availability({ hours }) {
+// What is open for booking now, and when the next drop opens: "October slots
+// are open for booking" and "November slots open on 15 October at 7 pm". An unopened
+// drop's dates never appear here - only its name and opening time - and
+// these lines are not a promise of a free appointment: the booking journey
+// decides that.
+function Availability({ summary }) {
+  const { open, next } = summary;
+
   return (
     <section className="flex flex-col gap-3">
       <h2 className="text-lg font-semibold">Availability</h2>
-      <dl className="flex flex-col gap-2 text-sm">
-        {hours.map((entry) => (
-          <div key={entry.weekday} className="flex justify-between gap-4">
-            <dt>{entry.day}</dt>
-            <dd className="text-black/60">{entry.hours}</dd>
-          </div>
-        ))}
-      </dl>
+      {open.length ? <p className="text-sm">{openForBookingSentence(open)}</p> : null}
+      {next ? (
+        <p className="text-sm text-black/60">{opensSentence(next.name, next.opensAt)}</p>
+      ) : null}
     </section>
   );
 }
@@ -236,7 +237,7 @@ export function StorefrontPage({ viewModel, backHref, showBackLink = true, takin
     provider,
     portfolio,
     treatment_sections: treatmentSections,
-    opening_hours: openingHours = [],
+    availability = { open: [], next: null },
   } = viewModel;
   // The owner's preview (backHref) is neither bookable nor linked to the
   // gallery or All treatments, which exist only for published pages.
@@ -303,7 +304,9 @@ export function StorefrontPage({ viewModel, backHref, showBackLink = true, takin
           <ReviewsPreview reviews={viewModel.reviews} username={bookingUsername} />
         ) : null}
 
-        {openingHours.length ? <Availability hours={openingHours} /> : null}
+        {takingBookings && (availability.open.length > 0 || availability.next) ? (
+          <Availability summary={availability} />
+        ) : null}
       </div>
     </main>
   );

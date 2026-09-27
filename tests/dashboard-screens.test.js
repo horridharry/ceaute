@@ -144,10 +144,37 @@ test("payments keeps every fee and refund fact, just collapsed", () => {
   assert.doesNotMatch(page, /within a few days/);
 });
 
-test("availability only gains the shared page frame", () => {
+test("availability lists drops and drops the weekly editor", () => {
   const form = read("src/app/(dashboard)/dashboard/availability/availability-form.jsx");
   assert.match(form, /title="Availability"/);
-  assert.match(form, /description="Customers can book within these hours, except on dates you block\."/);
-  assert.match(form, /<WeeklyScheduleForm/);
-  assert.match(form, /<BlockedDatesForm/);
+  assert.match(form, /<DropList/);
+  assert.match(form, /No dates yet\./);
+  assert.doesNotMatch(form, /WeeklyScheduleForm|BlockedDatesForm|Close every day/);
+});
+
+test("availability shows each drop as one card and types times instead of choosing from a list", () => {
+  const dir = "src/app/(dashboard)/dashboard/availability";
+  const list = read(`${dir}/_components/drop-list.jsx`);
+  const editor = read(`${dir}/_components/drop-editor.jsx`);
+  const timeInput = read(`${dir}/_components/time-input.jsx`);
+
+  assert.match(list, /dropSummaryLine\(drop\)/);
+  assert.match(list, /formatDropBookingsLine\(drop\.dates, countsByDate\)/);
+  assert.doesNotMatch(list, /formatDateLabel|drop\.dates\.map/);
+  assert.match(editor, /formatDateBookingsLine\(countsByDate\[date\.local_date\]\)/);
+  assert.doesNotMatch(editor, /<Select|TIME_OPTIONS/);
+  assert.equal((editor.match(/<TimeInput/g) ?? []).length, 4);
+  for (const attribute of [
+    'role="combobox"',
+    "aria-expanded=",
+    "aria-controls=",
+    'aria-autocomplete="list"',
+    "aria-activedescendant=",
+    'role="listbox"',
+    'role="option"',
+    'autoComplete="off"',
+    "min-h-11",
+  ]) {
+    assert.ok(timeInput.includes(attribute), attribute);
+  }
 });

@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions, ceaute;
 
-select plan(41);
+select plan(40);
 
 create temp table tap_results (result text);
 grant insert, select on table tap_results to authenticated, service_role;
@@ -58,9 +58,24 @@ insert into ceaute.provider_agreement_acceptance (
 )
 values ('12000000-0000-0000-0000-000000000001', ceaute.current_provider_agreement_version(), '02000000-0000-0000-0000-000000000002');
 
-insert into ceaute.availability_rule (provider_page_id, weekday, starts_at, ends_at)
-select '12000000-0000-0000-0000-000000000001', weekday, '09:00', '17:00'
-from generate_series(0, 6) as weekday;
+-- Every date from London today to today + 120 is open 09:00-17:00. One more
+-- date sits in a drop that has not opened.
+insert into ceaute.availability_drop (id, provider_page_id, opens_at)
+values
+  ('42000000-0000-0000-0000-000000000001', '12000000-0000-0000-0000-000000000001', now() - interval '1 day'),
+  ('42000000-0000-0000-0000-000000000002', '12000000-0000-0000-0000-000000000001', now() + interval '1 day');
+
+insert into ceaute.availability_date (provider_page_id, drop_id, local_date, hours_start, hours_end)
+select
+  '12000000-0000-0000-0000-000000000001', '42000000-0000-0000-0000-000000000001',
+  (now() at time zone 'Europe/London')::date + offset_day, '09:00', '17:00'
+from generate_series(0, 120) as offset_day;
+
+insert into ceaute.availability_date (provider_page_id, drop_id, local_date, hours_start, hours_end)
+values (
+  '12000000-0000-0000-0000-000000000001', '42000000-0000-0000-0000-000000000002',
+  (now() at time zone 'Europe/London')::date + 130, '09:00', '17:00'
+);
 
 insert into ceaute.treatment (
   id, provider_page_id, name, description, duration_minutes, price_pence, is_active
@@ -88,19 +103,11 @@ values (
 create temp table consistency_times as
 select
   (((now() at time zone 'Europe/London')::date + 3)::timestamp + time '12:00') at time zone 'Europe/London' as valid_start,
-  (((now() at time zone 'Europe/London')::date + 4)::timestamp + time '12:00') at time zone 'Europe/London' as blocked_start,
   (((now() at time zone 'Europe/London')::date + 5)::timestamp + time '15:45') at time zone 'Europe/London' as boundary_start,
   (((now() at time zone 'Europe/London')::date + 6)::timestamp + time '10:00') at time zone 'Europe/London' as partial_start,
-  (((now() at time zone 'Europe/London')::date + 61)::timestamp + time '12:00') at time zone 'Europe/London' as outside_window_start;
+  (((now() at time zone 'Europe/London')::date + 130)::timestamp + time '12:00') at time zone 'Europe/London' as unopened_start;
 
 grant select on table consistency_times to authenticated, service_role;
-
-insert into ceaute.blocked_date (provider_page_id, local_date, reason)
-select
-  '12000000-0000-0000-0000-000000000001',
-  (blocked_start at time zone 'Europe/London')::date,
-  'Consistency fixture'
-from consistency_times;
 
 insert into tap_results (result) select ok(
   to_regprocedure('ceaute.create_booking_hold(uuid,uuid,uuid[],timestamp with time zone)') is null,
@@ -159,12 +166,6 @@ insert into tap_results (result) select throws_matching(
   format(
     'select ceaute.create_validated_booking_hold(%L,%L,%L,array[]::uuid[],%L)',
     '02000000-0000-0000-0000-000000000001', '12000000-0000-0000-0000-000000000001',
-    '22000000-0000-0000-0000-000000000001', (select outside_window_start from consistency_times)
-  ), 'outside the booking rules', 'The booking window is enforced');
-insert into tap_results (result) select throws_matching(
-  format(
-    'select ceaute.create_validated_booking_hold(%L,%L,%L,array[]::uuid[],%L)',
-    '02000000-0000-0000-0000-000000000001', '12000000-0000-0000-0000-000000000001',
     '22000000-0000-0000-0000-000000000001',
     (select date_trunc('day', valid_start at time zone 'Europe/London') + time '18:00' from consistency_times)
   ), 'Requested time is unavailable', 'Availability hours are enforced');
@@ -172,8 +173,8 @@ insert into tap_results (result) select throws_matching(
   format(
     'select ceaute.create_validated_booking_hold(%L,%L,%L,array[]::uuid[],%L)',
     '02000000-0000-0000-0000-000000000001', '12000000-0000-0000-0000-000000000001',
-    '22000000-0000-0000-0000-000000000001', (select blocked_start from consistency_times)
-  ), 'Requested date is blocked', 'Blocked dates are enforced');
+    '22000000-0000-0000-0000-000000000001', (select unopened_start from consistency_times)
+  ), 'Requested time is unavailable', 'A date in an unopened drop is refused');
 insert into tap_results (result) select throws_matching(
   format(
     'select ceaute.create_validated_booking_hold(%L,%L,%L,array[]::uuid[],%L)',

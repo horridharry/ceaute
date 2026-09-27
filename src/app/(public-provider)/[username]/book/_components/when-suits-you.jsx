@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { LinkPendingHint } from "@/components/link-pending-hint";
 import { buttonClassName } from "@/components/ui/button-classes";
-import { BOOKING_AVAILABILITY_CONSTANTS } from "../_lib/appointment-availability";
 import {
   dayStatusWord,
   firstAvailableIndex,
@@ -12,13 +11,12 @@ import {
   monthRangeLabel,
   groupSlotsByPartOfDay,
   nextAvailableIndex,
+  nextDropLine,
+  nothingOpenMessage,
   shortDateLabel,
   unavailableDayMessage,
 } from "../_lib/time-choices";
-
-// The window comes from the calculator, which mirrors the hold rule in
-// PostgreSQL; the copy never hard-codes it.
-const { BOOKING_WINDOW_DAYS } = BOOKING_AVAILABILITY_CONSTANTS;
+import { ReloadAtDropTime } from "./reload-at-drop-time";
 
 function checkoutHref({ username, treatmentId, addOnIds, startAt }) {
   const params = new URLSearchParams({ start_at: startAt });
@@ -39,16 +37,30 @@ function prefersReducedMotion() {
 }
 
 // Revised 23 September 2026: the month is a heading above the day cards (no
-// rail inside the strip), each unavailable card says "Closed", "Full" or "No
-// times", the chosen day heads its times ("Friday 25"), and times are 24-hour
-// in two columns, still grouped Morning, Afternoon and Evening. Only the
-// presentation changed: the days and times are the calculator's.
+// rail inside the strip), each unavailable card says "Full" or "No times", the
+// chosen day heads its times ("Friday 25"), and times are 24-hour in two
+// columns, still grouped Morning, Afternoon and Evening. Only the presentation
+// changed: the days and times are the calculator's.
+//
+// Drops (decision 007): the strip holds only the dates the provider has
+// opened, however far ahead. When no free start remains, the screen says when
+// the next drop opens (nextDrop, from the availability summary) and reloads
+// itself at that time. serverNow is the server's clock when the page was
+// rendered, in milliseconds.
 //
 // The day strip is a single-choice group: one day is selected, the arrow keys
 // move between days, and only the selected day is a Tab stop, so a keyboard
-// user does not tab through sixty buttons. Each button's accessible name is
-// the full date and whether the day is closed or fully booked.
-export function WhenSuitsYou({ days, providerName, username, treatmentId, addOnIds, initialDate = "" }) {
+// user does not tab through every date. Each button's accessible name is the
+// full date and whether the day is fully booked or has no times.
+export function WhenSuitsYou({
+  days,
+  username,
+  treatmentId,
+  addOnIds,
+  initialDate = "",
+  nextDrop = null,
+  serverNow,
+}) {
   const initialIndex = (() => {
     const requested = days.findIndex((day) => day.localDate === initialDate);
     if (requested !== -1) return requested;
@@ -91,17 +103,18 @@ export function WhenSuitsYou({ days, providerName, username, treatmentId, addOnI
     measureMonths();
   }, [selectedIndex, measureMonths]);
 
-  if (days.length === 0 || firstAvailableIndex(days) === -1) {
+  if (days.length === 0) {
     return (
       <div className="mt-8 rounded-xl border border-line p-4">
-        <p className="font-medium">No times in the next {BOOKING_WINDOW_DAYS} days.</p>
-        <p className="mt-1 text-sm text-ink-muted">
-          {providerName} hasn’t opened any more dates yet. Try another treatment or check
-          back later.
-        </p>
+        <p className="font-medium">{nothingOpenMessage(nextDrop)}</p>
+        {nextDrop ? <ReloadAtDropTime opensAt={nextDrop.opensAt} serverNow={serverNow} /> : null}
       </div>
     );
   }
+
+  // Every open date is full (or too short for this booking): the strip still
+  // shows them, with the next drop time above it when one is coming.
+  const showNextDrop = firstAvailableIndex(days) === -1 && Boolean(nextDrop);
 
   const selectDay = (index, { focus = false } = {}) => {
     setSelectedIndex(index);
@@ -130,7 +143,16 @@ export function WhenSuitsYou({ days, providerName, username, treatmentId, addOnI
 
   return (
     <>
-      <h2 className="mt-6 text-base font-semibold tracking-tight" aria-live="polite">
+      {showNextDrop ? (
+        <>
+          <p className="mt-6 font-medium">{nextDropLine(nextDrop)}</p>
+          <ReloadAtDropTime opensAt={nextDrop.opensAt} serverNow={serverNow} />
+        </>
+      ) : null}
+      <h2
+        className={`${showNextDrop ? "mt-4" : "mt-6"} text-base font-semibold tracking-tight`}
+        aria-live="polite"
+      >
         {monthLabel}
       </h2>
       <div
@@ -164,11 +186,9 @@ export function WhenSuitsYou({ days, providerName, username, treatmentId, addOnI
                 "flex min-h-[4.75rem] w-[60px] shrink-0 snap-start flex-col items-center justify-center gap-0.5 rounded-xl border text-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus",
                 isSelected
                   ? "border-ink bg-ink text-white"
-                  : day.status === "closed"
-                    ? "border-dashed border-line-strong bg-surface text-ink-subtle"
-                    : day.status === "available"
-                      ? "border-black/15 bg-surface text-ink hover:border-ink"
-                      : "border-transparent bg-surface-subtle text-ink-subtle",
+                  : day.status === "available"
+                    ? "border-black/15 bg-surface text-ink hover:border-ink"
+                    : "border-transparent bg-surface-subtle text-ink-subtle",
               ].join(" ")}
             >
               <span className={`text-xs ${isSelected ? "text-white/80" : day.status === "available" ? "text-ink-muted" : ""}`}>
@@ -213,7 +233,7 @@ export function WhenSuitsYou({ days, providerName, username, treatmentId, addOnI
           ))
         ) : (
           <div className="mt-2 rounded-xl border border-line p-4">
-            <p>{unavailableDayMessage(selected, providerName)}</p>
+            <p>{unavailableDayMessage(selected)}</p>
             {nextIndex !== -1 ? (
               <button
                 type="button"
@@ -223,9 +243,7 @@ export function WhenSuitsYou({ days, providerName, username, treatmentId, addOnI
                 Next available: {shortDateLabel(days[nextIndex])}
               </button>
             ) : (
-              <p className="mt-1 text-sm text-ink-muted">
-                There are no more times in the next {BOOKING_WINDOW_DAYS} days.
-              </p>
+              <p className="mt-1 text-sm text-ink-muted">There are no more times.</p>
             )}
           </div>
         )}

@@ -1,11 +1,14 @@
 import { APPOINTMENT_GRID_MINUTES } from "../../../../../lib/bookings/appointment-grid.js";
 
-// Fixed MVP rules, mirrored from ceaute.create_validated_booking_hold, which is
-// authoritative. The window is inclusive: starts are offered through the 60th
-// Europe/London calendar day after today. It is not provider-configurable.
-const BOOKING_WINDOW_DAYS = 60;
+// Fixed MVP rules, mirrored from ceaute.create_validated_booking_hold
+// (202609270001), which is authoritative. There is no booking window: every
+// open date is offered however far ahead. A start is offered only on a date
+// the provider has opened (get_public_open_dates returns only dates of opened
+// drops), inside that date's hours or at one of its start times, at least 24
+// hours ahead, on the 15-minute grid, and ending on the London date it starts.
 const MINIMUM_NOTICE_HOURS = 24;
 const PROVIDER_TIME_ZONE = "Europe/London";
+const MINUTES_PER_DAY = 24 * 60;
 
 function pad(value) {
   return String(value).padStart(2, "0");
@@ -81,18 +84,6 @@ export function localDateTimeToInstant({
   return instant;
 }
 
-function addLocalDays(localDate, days) {
-  const [year, month, day] = localDate.split("-").map(Number);
-  const date = new Date(Date.UTC(year, month - 1, day + days, 12));
-
-  return `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}`;
-}
-
-function weekdayForLocalDate(localDate) {
-  const [year, month, day] = localDate.split("-").map(Number);
-  return new Date(Date.UTC(year, month - 1, day, 12)).getUTCDay();
-}
-
 function timeToMinutes(timeValue) {
   const [hours, minutes] = String(timeValue).slice(0, 5).split(":").map(Number);
   return hours * 60 + minutes;
@@ -111,90 +102,97 @@ function overlapsExistingAppointment(startAt, endAt, appointments) {
   });
 }
 
+// The candidate starts of one open date, in minutes after local midnight. A
+// date has either hours (one opening and one closing time) or a list of start
+// times, never both. Stored hours are on the grid, so stepping from the
+// opening time keeps every start on it; the duration only decides whether the
+// appointment fits. A start-times date offers exactly its listed starts, and
+// any treatment may begin at one of them.
+function candidateStartMinutes(openDate, durationMinutes) {
+  if (openDate.start_times == null) {
+    const openMinutes = timeToMinutes(openDate.hours_start);
+    const closeMinutes = timeToMinutes(openDate.hours_end);
+    const starts = [];
+
+    for (
+      let slotMinutes = openMinutes;
+      slotMinutes + durationMinutes <= closeMinutes;
+      slotMinutes += APPOINTMENT_GRID_MINUTES
+    ) {
+      starts.push(slotMinutes);
+    }
+
+    return starts;
+  }
+
+  return openDate.start_times.map(timeToMinutes);
+}
+
 export function calculateAvailableAppointmentTimes({
   now = new Date(),
-  availabilityRules,
-  blockedDates,
+  openDates,
   appointments,
   durationMinutes,
   timeZone = PROVIDER_TIME_ZONE,
 }) {
   const today = localDateStringFromInstant(now, timeZone);
-  const latestDate = addLocalDays(today, BOOKING_WINDOW_DAYS);
   const minimumStart = new Date(
     now.getTime() + MINIMUM_NOTICE_HOURS * 60 * 60_000,
   );
-  const blockedDateSet = new Set(blockedDates);
-  const rulesByWeekday = new Map(
-    availabilityRules.map((rule) => [Number(rule.weekday), rule]),
-  );
+  const sortedOpenDates = [...openDates]
+    .filter((openDate) => openDate.local_date >= today)
+    .sort((first, second) => first.local_date.localeCompare(second.local_date));
   const dates = [];
 
-  for (
-    let localDate = today;
-    localDate <= latestDate;
-    localDate = addLocalDays(localDate, 1)
-  ) {
-    const rule = rulesByWeekday.get(weekdayForLocalDate(localDate));
+  for (const openDate of sortedOpenDates) {
+    const localDate = openDate.local_date;
     const slots = [];
     // Why a day has no times, for the day picker only; it never changes which
-    // starts are offered. "closed": no working hours that weekday, or a
-    // blocked date. "notice": every start that fits is inside the 24 hours'
-    // notice. "short": working, but this appointment does not fit the day.
-    // "full": starts fit and are far enough ahead, but all are taken.
+    // starts are offered. "short": this appointment fits at no start.
+    // "notice": every start that fits is inside the 24 hours' notice. "full":
+    // starts fit and are far enough ahead, but all are taken.
     let fittingStarts = 0;
     let startsAfterNotice = 0;
 
-    if (rule && !blockedDateSet.has(localDate)) {
-      const openMinutes = timeToMinutes(rule.starts_at);
-      const closeMinutes = timeToMinutes(rule.ends_at);
+    for (const slotMinutes of candidateStartMinutes(openDate, durationMinutes)) {
+      // The hold check refuses an appointment that ends on a later date than
+      // it starts, so one ending at or after midnight is never offered.
+      if (slotMinutes + durationMinutes >= MINUTES_PER_DAY) {
+        continue;
+      }
 
-      // Stored opening times are on the grid, so stepping from them keeps every
-      // start on it. The duration only decides whether the appointment fits.
-      for (
-        let slotMinutes = openMinutes;
-        slotMinutes + durationMinutes <= closeMinutes;
-        slotMinutes += APPOINTMENT_GRID_MINUTES
-      ) {
-        const startAt = localDateTimeToInstant({
-          localDate,
-          localTime: minutesToTime(slotMinutes),
-          timeZone,
+      const startAt = localDateTimeToInstant({
+        localDate,
+        localTime: minutesToTime(slotMinutes),
+        timeZone,
+      });
+
+      if (!startAt) {
+        continue;
+      }
+
+      fittingStarts += 1;
+
+      if (startAt < minimumStart) {
+        continue;
+      }
+
+      startsAfterNotice += 1;
+      const endAt = new Date(startAt.getTime() + durationMinutes * 60_000);
+
+      if (!overlapsExistingAppointment(startAt, endAt, appointments)) {
+        slots.push({
+          start_at: startAt.toISOString(),
+          local_time: minutesToTime(slotMinutes),
         });
-
-        if (!startAt) {
-          continue;
-        }
-
-        fittingStarts += 1;
-
-        if (startAt < minimumStart) {
-          continue;
-        }
-
-        startsAfterNotice += 1;
-        const endAt = new Date(startAt.getTime() + durationMinutes * 60_000);
-
-        if (!overlapsExistingAppointment(startAt, endAt, appointments)) {
-          slots.push({
-            start_at: startAt.toISOString(),
-            local_time: minutesToTime(slotMinutes),
-          });
-        }
       }
     }
 
-    const closed = !rule || blockedDateSet.has(localDate);
     let unavailableReason = null;
 
     if (slots.length === 0) {
-      unavailableReason = closed
-        ? "closed"
-        : fittingStarts === 0
-          ? "short"
-          : startsAfterNotice === 0
-            ? "notice"
-            : "full";
+      unavailableReason =
+        fittingStarts === 0 ? "short" : startsAfterNotice === 0 ? "notice" : "full";
     }
 
     dates.push({ local_date: localDate, slots, unavailable_reason: unavailableReason });
@@ -204,7 +202,6 @@ export function calculateAvailableAppointmentTimes({
 }
 
 export const BOOKING_AVAILABILITY_CONSTANTS = {
-  BOOKING_WINDOW_DAYS,
   MINIMUM_NOTICE_HOURS,
   PROVIDER_TIME_ZONE,
   APPOINTMENT_GRID_MINUTES,

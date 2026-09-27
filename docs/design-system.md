@@ -150,9 +150,9 @@ Added by the provider dashboard redesign; tested in
   first action; Escape closes it and returns focus to the trigger. A disabled
   action shows its reason underneath ("Archive first to delete"), linked by
   `aria-describedby`. Destructive actions come last, after `separatorBefore`.
-- `ConfirmDialog` is the native `<dialog>` pattern of the Availability
-  closed-week dialog. The safe choice comes first and takes focus, and Escape
-  means the safe choice. The confirm button is `destructive-strong` for
+- `ConfirmDialog` is the native `<dialog>` pattern of cancelling a booking.
+  The safe choice comes first and takes focus, and Escape means the safe
+  choice. The confirm button is `destructive-strong` for
   irreversible actions and `primary` otherwise. Errors stay inside the dialog.
   `blocked` shows an explanation with only OK. Focus returns to the opener,
   or to `fallbackFocusRef` if the opener has gone.

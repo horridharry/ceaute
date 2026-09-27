@@ -1,34 +1,30 @@
 import { getSignedInProvider } from "../_lib/provider-data";
 import { AvailabilityForm } from "./availability-form";
-import { blockDate, removeBlockedDate, updateSchedule } from "./actions";
+import { saveDrop } from "./actions";
 import { todayInLondon } from "./_lib/today-london";
-import {
-  getBlockedDates,
-  getBookingCountsByDate,
-  getSchedule,
-} from "./queries";
+import { getBookingCountsByDate, getDrops } from "./queries";
 
 export default async function DashboardAvailabilityPage() {
-  const [schedule, blockedDates, bookingCountRows, { providerPage }] =
-    await Promise.all([
-      getSchedule(),
-      getBlockedDates(),
-      getBookingCountsByDate(),
-      getSignedInProvider({ next: "/dashboard/availability" }),
-    ]);
+  const [drops, bookingCountRows, { providerPage }] = await Promise.all([
+    getDrops(),
+    getBookingCountsByDate(),
+    getSignedInProvider({ next: "/dashboard/availability" }),
+  ]);
   const isPublished = providerPage.status === "published";
   const today = todayInLondon();
+  // Read once per request, so every drop's status and the editor's starting
+  // drop time are decided against the same moment the page was rendered.
+  // eslint-disable-next-line react-hooks/purity -- a Server Component renders once per request
+  const now = Date.now();
 
   return (
     <AvailabilityForm
-      schedule={schedule}
-      blockedDates={blockedDates}
+      drops={drops}
       bookingCountRows={bookingCountRows}
       isPublished={isPublished}
       today={today}
-      updateSchedule={updateSchedule}
-      blockDate={blockDate}
-      removeBlockedDate={removeBlockedDate}
+      now={now}
+      saveDrop={saveDrop}
     />
   );
 }

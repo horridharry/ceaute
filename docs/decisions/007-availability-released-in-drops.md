@@ -53,9 +53,13 @@ decided, so no live page depended on the weekly model.
   dates, an appointment ending on the day it starts, the ten-minute hold and
   signing up before it, and PostgreSQL re-validating every hold behind the
   exclusion constraint (ADR 001).
-- **Words:** drop, drop time, hours and start times. Ceaute does not say
-  "slot": it stores no slots, and works out free starts from bookings
-  (ADR 001).
+- **Words:** drop, drop time, hours and start times. Ceaute stores no
+  slots, and works out free starts from bookings (ADR 001). *Revised
+  27 September 2026 by the owner after the first local test:* customer and
+  provider copy say "slots" for what a drop opens ("October slots are open
+  for booking", "November slots open on 15 October at 7 pm"), because
+  that is the word providers already use with their clients. The data
+  model still has no slots.
 - **Left for later:** the drop kit (idea #6), a share image and link for a
   drop, is its own change straight after this one, trialled with the first
   pilot drop if it is ready. There is no in-app messaging. An email to

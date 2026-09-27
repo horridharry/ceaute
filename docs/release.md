@@ -12,15 +12,19 @@ in [Stripe Preview testing](stripe-preview-testing.md#recommended-preview-archit
    (`ceaute-dev`, Stripe Test, behind Vercel Deployment Protection).
 3. Apply the branch's migrations to `ceaute-dev` and verify on Preview.
 4. When the promotion trigger below is met: apply every pending migration to
-   `ceaute-prod`, then fast-forward `main` to `preview`
-   (`git merge --ff-only preview`) and push. Vercel deploys
-   `https://ceaute.com`. Fast-forward keeps production on exactly the commit
-   tested on Preview and keeps the two branches identical.
-5. Delete the merged feature branches, locally and on origin.
+   `ceaute-prod`.
+5. Before fast-forwarding `main`, set the Terms and Privacy `updated` dates to
+   the production promotion day.
+6. Fast-forward `main` to `preview` (`git merge --ff-only preview`) and push.
+   Vercel deploys `https://ceaute.com`. Fast-forward keeps production on
+   exactly the commit tested on Preview and keeps the two branches identical.
+7. Delete the merged feature branches, locally and on origin.
 
 Migrations always reach a database before the code that reads them, because
 new code on an unmigrated database fails (for example, the storefront selects
-`display_photo_path`).
+`display_photo_path`). Migration `202609270001` drops the old availability
+tables outright, so Preview storefronts error between applying it and the new
+deploy finishing.
 
 ## When to promote to production
 
@@ -45,10 +49,15 @@ verified and reported is in [Verification](verification.md).
 - Owner: the contact inbox and business address are real (the support email
   must not be a placeholder), and the full provider agreement is shown before
   acceptance.
+- Owner: tell any pilot provider that their weekly hours and blocked dates
+  are deleted when drops ship.
+- Owner and agent on Preview: rehearse a full drop before a pilot provider's
+  first one (the owner signs in for the provider side), watching the reload
+  of waiting booking screens.
 - Agent: confirm the Preview environment variables and Stripe mode
   (`vercel env ls`), and run the deployed smoke tests on Preview that were
-  blocked by the login wall: storefront gallery, treatments, reviews, hours,
-  closure, and the design-system pages (`vercel curl`).
+  blocked by the login wall: storefront gallery, treatments, reviews,
+  availability, closure, and the design-system pages (`vercel curl`).
 - Owner and agent on Preview: one real test-card payment and refund. Email
   delivery itself was proven on 23 September 2026.
 - Needs the owner signed in: the provider Portfolio viewer (acceptance was
