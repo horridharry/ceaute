@@ -13,7 +13,11 @@
     "test": "node --import ./tests/_support/register-alias.mjs --test",
     "test:db": "supabase test db",
     "typecheck": "tsc --noEmit",
-    "check:legal": "node scripts/assert-legal-identity.mjs"
+    "check:legal": "node scripts/assert-legal-identity.mjs",
+    "local:start": "node scripts/local/start.mjs",
+    "local:seed": "node --import ./tests/_support/register-alias.mjs scripts/local/seed.mjs",
+    "local:sign-in": "node scripts/local/sign-in.mjs",
+    "local:timeline": "node --import ./tests/_support/register-alias.mjs scripts/local/timeline.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.6",
