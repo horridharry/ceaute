@@ -12,7 +12,7 @@ The intended vertical information architecture is:
 4. Treatments
 5. Reviews
 6. Availability
-7. Policies — future/not currently scheduled for MVP
+7. Policies
 
 Exact styling remains subject to design exploration.
 
@@ -99,11 +99,9 @@ This is customer-readable availability information rather than provider editing 
 
 ## Policies
 
-A customer-facing Policies section is envisioned below Availability.
+Decided 27 September 2026 by the product owner: a Policies section below Availability, so a customer can read the rules before choosing a Treatment. It shows the terms Ceaute writes from Booking Settings (the deposit or full payment, the cancellation window and what a late cancellation keeps), then the provider's house rules under their headings. Review and pay and the held page keep showing the same terms and house rules.
 
-It is not currently scheduled for the MVP.
-
-Do not implement it merely because its eventual page position has been discussed.
+How a long set of rules is shortened on the page is UNDECIDED (see `undecided.md`). For now it is one section.
 
 # Booking Journey
 
@@ -173,7 +171,7 @@ Customer pays the full required amount.
 
 ### Deposit provider
 
-Customer pays the provider's configured deposit percentage.
+Customer pays the provider's deposit: a flat amount or a percentage (`docs/decisions/008-flat-deposit.md`).
 
 The customer does not currently choose between full payment and deposit.
 

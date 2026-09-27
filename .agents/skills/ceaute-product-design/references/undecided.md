@@ -18,6 +18,10 @@ UNDECIDED:
 
 Current direction is neutral-first with colour as accent.
 
+## How the name is said
+
+UNDECIDED, and left open to findings (27 September 2026). In the interview transcripts "Ceaute" came out as "Qt", "QE" and "Cute". The product owner collects how people hear and type the name over time; findings go into a dated report in `docs/reports/`. Buying lookalike domains or renaming waits for them.
+
 That direction does not define exact brand values.
 
 ## Customer Portfolio preview count
@@ -67,7 +71,7 @@ MVP:
 Provider chooses either:
 
 - full payment
-- percentage deposit
+- deposit, flat or percentage (decision 008)
 
 Possible future direction:
 
@@ -77,11 +81,9 @@ Not MVP.
 
 ## Fixed deposit amounts
 
-MVP direction is percentage deposits.
+Decided 27 September 2026 by the product owner: `docs/decisions/008-flat-deposit.md`.
 
-Fixed-amount deposits may be considered if providers request the capability.
-
-Do not implement without a new product decision.
+Whether to retire the percentage deposit, if no pilot provider picks it, is a later decision.
 
 ## Payments expansion
 
@@ -100,11 +102,13 @@ These are not current MVP requirements.
 
 ## Customer-facing Policies
 
-Envisioned below Availability on the public provider page.
+The section itself was decided on 27 September 2026 (`customer-experience.md`, Policies).
 
-Not currently scheduled for the MVP.
+UNDECIDED:
 
-Do not implement automatically.
+- how long house rules are shortened on the provider page, for example a "Read more" that opens every rule on a separate page, without repeating them between the page, Review and pay and the held page
+
+The owner wants something better than a plain "Read more". Until that is designed, it is one section.
 
 ## Location editing after autocomplete
 
