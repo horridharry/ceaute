@@ -155,3 +155,85 @@ test("a booking's price lines are its treatment and add-ons, adding up to the to
     { key: "add-on-a1", label: "Nail art", price: "£7.25", addOn: true },
   ]);
 });
+
+// Flat deposits (decision 008). PostgreSQL wrote these snapshots: a flat
+// deposit is paid now in full and kept after a late cancellation, and never
+// more than the price.
+const flatSnapshot = (flat, total, due, commitment) => ({
+  payment_mode: "deposit",
+  deposit_kind: "flat",
+  deposit_amount_pence: flat,
+  deposit_percent: null,
+  total_price_pence: total,
+  amount_due_now_pence: due,
+  commitment_amount_pence: commitment,
+  cancellation_window_hours: 24,
+});
+
+test("F1: a £15 flat deposit on a £40 booking", () => {
+  const terms = termsFromSnapshot(flatSnapshot(1500, 4000, 1500, 1500));
+  const view = paymentView(terms);
+  assert.equal(terms.legacy, false);
+  assert.equal(terms.percent, null);
+  assert.equal(view.payNowLabel, "Deposit to pay now");
+  assert.equal(view.dueNow, "£15.00");
+  assert.equal(view.dueLater, "£25.00");
+  assert.equal(view.minimumApplied, false);
+  assert.equal(view.depositCoversPriceNote, null);
+  assert.equal(lateCancellationSentence(terms, "Glow"), "Glow keeps your £15.00 deposit.");
+
+  const startAt = "2026-10-20T10:00:00.000Z";
+  const late = cancellationPreview(terms, { startAt, providerName: "Glow", now: Date.parse("2026-10-20T09:00:00.000Z") });
+  assert.match(late.description, /keeps the £15\.00 you paid\. There’s no refund\./);
+  assert.equal(late.confirmLabel, "Cancel booking");
+  const early = cancellationPreview(terms, { startAt, providerName: "Glow", now: Date.parse("2026-10-18T10:00:00.000Z") });
+  assert.equal(early.refundPence, 1500);
+  assert.equal(early.confirmLabel, "Cancel and refund £15.00");
+});
+
+test("F2: a £10 flat deposit on an £8 booking is paid in full now", () => {
+  const terms = termsFromSnapshot(flatSnapshot(1000, 800, 800, 800));
+  const view = paymentView(terms);
+  assert.equal(terms.depositCoversPrice, true);
+  assert.equal(view.payNowLabel, "Pay now");
+  assert.equal(view.dueNow, "£8.00");
+  assert.equal(view.dueLater, null);
+  assert.equal(view.minimumApplied, false);
+  assert.equal(view.depositCoversPriceNote, "The £10.00 deposit is more than the price, so you pay the whole price now.");
+  assert.equal(lateCancellationSentence(terms, "Glow"), "Glow keeps the full £8.00.");
+});
+
+test("F3: a £10 flat deposit on a £10 booking is still a deposit", () => {
+  const terms = termsFromSnapshot(flatSnapshot(1000, 1000, 1000, 1000));
+  const view = paymentView(terms);
+  assert.equal(terms.depositCoversPrice, false);
+  assert.equal(view.payNowLabel, "Deposit to pay now");
+  assert.equal(view.dueLater, null);
+  assert.equal(view.depositCoversPriceNote, null);
+  assert.equal(lateCancellationSentence(terms, "Glow"), "Glow keeps your £10.00 deposit.");
+});
+
+test("F4: Review reads a flat deposit from PostgreSQL's quote the same way", () => {
+  const quote = {
+    accepts_new_bookings: true,
+    payment_mode: "deposit",
+    deposit_kind: "flat",
+    deposit_amount_pence: 1500,
+    deposit_percent: null,
+    amount_due_now_pence: 1500,
+    amount_due_later_pence: 2500,
+    late_cancellation_retained_pence: 1500,
+  };
+  const fromQuote = termsFromQuote(quote, 4000);
+  assert.deepEqual(paymentView(fromQuote), paymentView(termsFromSnapshot(flatSnapshot(1500, 4000, 1500, 1500))));
+  assert.equal(fromQuote.percent, null);
+});
+
+test("a percentage snapshot without deposit_kind reads exactly as before", () => {
+  const terms = termsFromSnapshot(snapshotFor(EXAMPLES[0]));
+  assert.equal(terms.depositKind, null);
+  assert.equal(terms.depositCoversPrice, false);
+  assert.equal(terms.legacy, false);
+  assert.equal(payNowLabel(terms), "Deposit to pay now (30%)");
+  assert.equal(paymentView(terms).depositCoversPriceNote, null);
+});

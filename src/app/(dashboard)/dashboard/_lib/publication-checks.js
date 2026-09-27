@@ -62,7 +62,7 @@ export const SETUP_TASKS = Object.freeze([
     id: "terms",
     check: "has_booking_terms",
     name: "Choose your booking terms",
-    detail: "Full payment or deposit, a percentage and a cancellation window",
+    detail: "Full payment or a deposit, and a cancellation window",
     href: "/dashboard/settings/booking",
     cta: "Open Booking settings",
   },
@@ -87,7 +87,7 @@ export const SETUP_TASKS = Object.freeze([
 // Why a live page is not taking new bookings, in the order a provider can act.
 const PAUSE_REASONS = [
   { check: "agreement_accepted", taskId: "agreement", label: "Accept the current provider agreement" },
-  { check: "has_booking_terms", taskId: "terms", label: "Choose a percentage in Booking settings" },
+  { check: "has_booking_terms", taskId: "terms", label: "Choose your booking terms in Booking settings" },
   { check: "payments_ready", taskId: "payments", label: "Finish setting up Stripe" },
 ];
 

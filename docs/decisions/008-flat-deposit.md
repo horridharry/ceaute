@@ -54,3 +54,28 @@ and it is the line they post on Instagram. Customers in the demos accepted a
 Low for new bookings: one SQL function, one check and the form. Stored bookings
 keep their amounts either way, so removing the flat option later would only
 affect providers who chose it, who would need to pick a percentage.
+
+## Implementation
+
+`202609270002_flat_deposit_terms.sql` adds
+`ceaute.provider_booking_setting.deposit_amount_pence` (whole pounds in pence,
+set only for a flat deposit; null for a percentage deposit and for full
+payment), and replaces the 3-argument `ceaute.booking_terms_are_complete` and
+`ceaute.booking_payment_terms` with 4-argument versions that accept it.
+`provider_booking_setting_percentage_terms` keeps its name and is re-added
+`not valid` against the 4-argument check, so pre-006 rows stay saved and
+incomplete.
+
+The hold snapshot carries two new keys: `deposit_kind` (`'flat'` |
+`'percentage'`, null for full payment, absent on bookings made before this
+decision) and `deposit_amount_pence` (the flat amount, or null). Readers that
+find no `deposit_kind` on a snapshot treat it by today's percentage and legacy
+rules, exactly as before this decision.
+
+`ceaute.get_public_booking_terms` returns `deposit_kind` and
+`deposit_amount_pence` alongside the existing quote columns. Owner decision,
+27 September 2026: "Continue to payment" also compares the amount kept after
+a late cancellation (`commitment_amount_pence`) against what Review and pay
+showed, closing a gap where only the amount due now and the total were
+checked; a mismatch sends the customer to the held page's "Check the updated
+price" notice instead of Stripe.

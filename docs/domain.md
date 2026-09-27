@@ -71,10 +71,15 @@ requested duration, notice, and occupied booking intervals.
 ## The booking contract
 
 **Booking terms** belong to the provider page: **Full payment** or **Deposit**,
-one **percentage**, and a **cancellation window** of 12, 24 or 48 hours, with
-an optional written policy. For a deposit the percentage is what is **paid
-now** (at least £1.00); for either mode it is what the provider **keeps** after
-a late customer cancellation, never more than was paid. The rest of a deposit
+where a Deposit is either a **flat amount** (whole pounds, at least £1, one
+amount for the whole business) or a **percentage**, and a **cancellation
+window** of 12, 24 or 48 hours, with an optional written policy. For a
+percentage deposit, the percentage is what is **paid now** (at least £1.00);
+for a flat deposit, what is paid now is the lesser of the flat amount and the
+price. After a late customer cancellation the provider **keeps** the whole
+flat deposit, the percentage deposit's percentage, or the full-payment
+percentage, never more than was paid
+([decision 008](decisions/008-flat-deposit.md)). The rest of a deposit
 booking is **due at the appointment**, outside Ceaute.
 
 A **booking** joins one customer profile to one provider page, treatment, and
@@ -89,9 +94,11 @@ The booking is also the historical contract. Its customer snapshot preserves
 the customer's contact details. Its service snapshot preserves the provider and
 treatment names, selected add-ons, duration, price, the public and private
 location the provider was working from when the hold was taken, payment
-mode, percentage, the amount paid now and the amount kept after a late
-cancellation (stored as `commitment_amount_pence`), cancellation window, and
-written policy. Bookings made before percentage terms keep the fixed amounts
+mode, percentage, deposit kind (flat or percentage; absent on bookings made
+before decision 008), flat deposit amount, the amount paid now and the amount
+kept after a late cancellation (stored as `commitment_amount_pence`),
+cancellation window, and written policy. Bookings made before percentage terms
+keep the fixed amounts
 they were made with. Those
 values remain meaningful after the current provider page or treatment changes.
 

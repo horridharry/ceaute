@@ -137,10 +137,11 @@ export default function TermsPage() {
         <h2>Paying: full payment or a deposit</h2>
         <p>
           Each provider chooses whether customers pay the full price when
-          booking or a deposit: a percentage of the booking price, between 10%
-          and 90%, and at least £1. The percentage is worked out to the
-          nearest penny. Checkout shows which applies, how much is due now,
-          and how much is due at the appointment.
+          booking or a deposit. A deposit is either a fixed amount set by the
+          provider, of at least £1, or a percentage of the booking price
+          between 10% and 90% and at least £1. A deposit is never more than
+          the booking price. Checkout shows which applies, how much is due
+          now, and how much is due at the appointment.
         </p>
         <p>
           Payment is taken through Stripe and transferred to the
@@ -168,12 +169,10 @@ export default function TermsPage() {
           </li>
           <li>
             <strong>Cancel after the deadline</strong> and the provider keeps
-            the percentage of the booking price shown to you at checkout,
-            never more than you paid online. With a deposit that is normally
-            the whole deposit; with full payment it is the percentage the
-            provider set. Anything you paid above that is refunded. Bookings
-            made before percentages were introduced keep the terms they were
-            made on.
+            the amount shown to you at checkout, never more than you paid
+            online. With a deposit that is the whole deposit; with full
+            payment it is the percentage the provider set. Anything you paid
+            above that is refunded. Bookings keep the terms they were made on.
           </li>
         </ul>
         <p>

@@ -14,7 +14,9 @@ export const updateBookingSettings = async (_currentState, formData) => {
 
   const parsed = parseBookingTermsForm({
     paymentMode: formData.get("payment_mode"),
+    depositKind: formData.get("deposit_kind"),
     depositPercent: formData.get("deposit_percent"),
+    depositAmount: formData.get("deposit_amount"),
     cancellationWindowHours: formData.get("cancellation_window_hours"),
     writtenPolicy: formData.get("written_policy"),
   });
@@ -27,7 +29,7 @@ export const updateBookingSettings = async (_currentState, formData) => {
     };
   }
 
-  // PostgreSQL refuses anything that is not complete percentage terms
+  // PostgreSQL refuses anything that is not complete booking terms
   // (provider_booking_setting_percentage_terms), so this write is the rule.
   const { error } = await supabase
     .schema("ceaute")
@@ -41,7 +43,7 @@ export const updateBookingSettings = async (_currentState, formData) => {
     if (error.code === "23514") {
       return {
         status: "error",
-        message: "Those booking terms can't be saved. Check the percentage and try again.",
+        message: "Those booking terms can't be saved. Check your booking terms and try again.",
         fieldErrors: {},
       };
     }

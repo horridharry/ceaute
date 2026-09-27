@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions, ceaute;
 
-select plan(57);
+select plan(81);
 
 create temp table tap_results (result text);
 grant insert, select on table tap_results to authenticated, service_role;
@@ -13,60 +13,105 @@ grant insert, select on table tap_results to authenticated, service_role;
 -- kept after a late customer cancellation.
 insert into tap_results select is(
   (select row(amount_due_now_pence, amount_due_later_pence, late_cancellation_retained_pence)::text
-   from ceaute.booking_payment_terms(4725, 'deposit', 30)),
+   from ceaute.booking_payment_terms(4725, 'deposit', 30, null)),
   '(1418,3307,1418)', 'E1: 30% deposit of £47.25 is £14.18 now (1417.5p rounds up)');
 insert into tap_results select is(
   (select row(amount_due_now_pence, amount_due_later_pence, late_cancellation_retained_pence)::text
-   from ceaute.booking_payment_terms(4725, 'full', 30)),
+   from ceaute.booking_payment_terms(4725, 'full', 30, null)),
   '(4725,0,1418)', 'E2: full payment of £47.25 keeps £14.18 after a late cancellation');
 insert into tap_results select is(
   (select row(amount_due_now_pence, amount_due_later_pence, late_cancellation_retained_pence)::text
-   from ceaute.booking_payment_terms(800, 'deposit', 10)),
+   from ceaute.booking_payment_terms(800, 'deposit', 10, null)),
   '(100,700,80)', 'E3: the £1 minimum applies, but a late cancellation keeps only the 10%');
 insert into tap_results select is(
   (select row(amount_due_now_pence, amount_due_later_pence, late_cancellation_retained_pence)::text
-   from ceaute.booking_payment_terms(100, 'deposit', 10)),
+   from ceaute.booking_payment_terms(100, 'deposit', 10, null)),
   '(100,0,10)', 'E4: the minimum never exceeds the whole price');
 insert into tap_results select is(
   (select row(amount_due_now_pence, amount_due_later_pence, late_cancellation_retained_pence)::text
-   from ceaute.booking_payment_terms(3333, 'deposit', 25)),
+   from ceaute.booking_payment_terms(3333, 'deposit', 25, null)),
   '(833,2500,833)', 'E5: 25% of £33.33 is £8.33');
 insert into tap_results select is(
   (select row(amount_due_now_pence, amount_due_later_pence, late_cancellation_retained_pence)::text
-   from ceaute.booking_payment_terms(1230, 'deposit', 15)),
+   from ceaute.booking_payment_terms(1230, 'deposit', 15, null)),
   '(185,1045,185)', 'E6: 184.5p rounds half up to £1.85');
 insert into tap_results select is(
   (select row(amount_due_now_pence, amount_due_later_pence, late_cancellation_retained_pence)::text
-   from ceaute.booking_payment_terms(6000, 'full', 100)),
+   from ceaute.booking_payment_terms(6000, 'full', 100, null)),
   '(6000,0,6000)', 'E7: full payment keeping 100% refunds nothing after a late cancellation');
 insert into tap_results select is(
   (select row(amount_due_now_pence, amount_due_later_pence, late_cancellation_retained_pence)::text
-   from ceaute.booking_payment_terms(4500, 'deposit', 90)),
+   from ceaute.booking_payment_terms(4500, 'deposit', 90, null)),
   '(4050,450,4050)', 'E8: a 90% deposit');
 insert into tap_results select is(
   (select row(amount_due_now_pence, amount_due_later_pence, late_cancellation_retained_pence)::text
-   from ceaute.booking_payment_terms(1995, 'full', 10)),
+   from ceaute.booking_payment_terms(1995, 'full', 10, null)),
   '(1995,0,200)', 'E9: 199.5p kept rounds half up to £2.00');
 insert into tap_results select is(
   (select row(amount_due_now_pence, amount_due_later_pence, late_cancellation_retained_pence)::text
-   from ceaute.booking_payment_terms(4999, 'deposit', 50)),
+   from ceaute.booking_payment_terms(4999, 'deposit', 50, null)),
   '(2500,2499,2500)', 'E10: 2499.5p rounds half up to £25.00');
 
 insert into tap_results select throws_matching(
-  $$select * from ceaute.booking_payment_terms(4000, 'deposit', 5)$$,
+  $$select * from ceaute.booking_payment_terms(4000, 'deposit', 5, null)$$,
   'Invalid booking payment terms', 'A deposit below 10% is refused');
 insert into tap_results select throws_matching(
-  $$select * from ceaute.booking_payment_terms(4000, 'deposit', 95)$$,
+  $$select * from ceaute.booking_payment_terms(4000, 'deposit', 95, null)$$,
   'Invalid booking payment terms', 'A deposit above 90% is refused');
 insert into tap_results select throws_matching(
-  $$select * from ceaute.booking_payment_terms(4000, 'full', 12)$$,
+  $$select * from ceaute.booking_payment_terms(4000, 'full', 12, null)$$,
   'Invalid booking payment terms', 'A percentage off the 5% steps is refused');
 insert into tap_results select throws_matching(
-  $$select * from ceaute.booking_payment_terms(4000, 'fixed_deposit', 30)$$,
+  $$select * from ceaute.booking_payment_terms(4000, 'fixed_deposit', 30, null)$$,
   'Invalid booking payment terms', 'The legacy fixed-deposit mode has no percentage rule');
 insert into tap_results select throws_matching(
-  $$select * from ceaute.booking_payment_terms(-1, 'full', 30)$$,
+  $$select * from ceaute.booking_payment_terms(-1, 'full', 30, null)$$,
   'Invalid booking payment terms', 'A negative price is refused');
+
+-- Flat deposits (docs/decisions/008-flat-deposit.md) -------------------------------
+-- Price, flat amount -> pay now, later, kept after a late customer cancellation.
+insert into tap_results select is(
+  (select row(amount_due_now_pence, amount_due_later_pence, late_cancellation_retained_pence)::text
+   from ceaute.booking_payment_terms(4000, 'deposit', null, 1500)),
+  '(1500,2500,1500)', 'F1: a £15 flat deposit on £40 is £15 now, and a late cancellation keeps all of it');
+insert into tap_results select is(
+  (select row(amount_due_now_pence, amount_due_later_pence, late_cancellation_retained_pence)::text
+   from ceaute.booking_payment_terms(800, 'deposit', null, 1000)),
+  '(800,0,800)', 'F2: a booking cheaper than the £10 deposit is paid in full now');
+insert into tap_results select is(
+  (select row(amount_due_now_pence, amount_due_later_pence, late_cancellation_retained_pence)::text
+   from ceaute.booking_payment_terms(1000, 'deposit', null, 1000)),
+  '(1000,0,1000)', 'F3: a booking costing exactly the deposit leaves nothing for the appointment');
+insert into tap_results select is(
+  (select row(amount_due_now_pence, amount_due_later_pence, late_cancellation_retained_pence)::text
+   from ceaute.booking_payment_terms(100000, 'deposit', null, 500000)),
+  '(100000,0,100000)', 'A flat deposit has no maximum and is never more than the price');
+
+insert into tap_results select throws_matching(
+  $$select * from ceaute.booking_payment_terms(4000, 'deposit', null, 1550)$$,
+  'Invalid booking payment terms', 'A flat deposit must be whole pounds');
+insert into tap_results select throws_matching(
+  $$select * from ceaute.booking_payment_terms(4000, 'deposit', null, 50)$$,
+  'Invalid booking payment terms', 'A flat deposit below £1 is refused');
+insert into tap_results select throws_matching(
+  $$select * from ceaute.booking_payment_terms(4000, 'deposit', null, 0)$$,
+  'Invalid booking payment terms', 'A £0 flat deposit is refused');
+insert into tap_results select throws_matching(
+  $$select * from ceaute.booking_payment_terms(4000, 'deposit', 30, 1500)$$,
+  'Invalid booking payment terms', 'A deposit cannot be both a percentage and a flat amount');
+insert into tap_results select throws_matching(
+  $$select * from ceaute.booking_payment_terms(4000, 'full', null, 1500)$$,
+  'Invalid booking payment terms', 'Full payment has no flat amount');
+
+insert into tap_results select is(
+  ceaute.booking_terms_are_complete('deposit', null, 1500, 24),
+  true, 'A £15 flat deposit with a 24-hour window is complete');
+insert into tap_results select is(
+  ceaute.booking_terms_are_complete('deposit', 30, 1500, 24),
+  false, 'A flat amount beside a percentage is not complete');
+insert into tap_results select is(
+  ceaute.booking_terms_are_complete('full', 50, 1500, 24),
+  false, 'Full payment with a flat amount is not complete');
 
 -- Fixtures ------------------------------------------------------------------------
 insert into auth.users (
@@ -209,6 +254,9 @@ insert into tap_results select is(
   (select row(service_snapshot ->> 'payment_mode', service_snapshot ->> 'amount_due_now_pence', service_snapshot ->> 'commitment_amount_pence')::text
    from ceaute.booking where id = (select id from full_hold)),
   '(full,4725,1418)', 'A full-payment hold charges the whole price and keeps 30% after a late cancellation (E2)');
+insert into tap_results select is(
+  (select service_snapshot ->> 'deposit_kind' from ceaute.booking where id = (select id from deposit_hold)),
+  'percentage', 'A percentage-deposit hold snapshots its deposit kind');
 
 -- A later settings change never rewrites a hold that exists.
 update ceaute.provider_booking_setting set deposit_percent = 10
@@ -347,7 +395,19 @@ values
   -- Historical fixed £15 deposit, starting in 20 hours: late.
   ('39100000-0000-0000-0000-000000000007', '09100000-0000-0000-0000-000000000001', '19100000-0000-0000-0000-000000000001', '29100000-0000-0000-0000-000000000001',
    now() + interval '20 hours', now() + interval '21 hours', 'confirmed', now() - interval '1 day', '{"email":"pct-customer@example.test"}',
-   '{"payment_mode":"fixed_deposit","commitment_amount_pence":1500,"total_price_pence":4500,"cancellation_window_hours":24}');
+   '{"payment_mode":"fixed_deposit","commitment_amount_pence":1500,"total_price_pence":4500,"cancellation_window_hours":24}'),
+  -- Flat £15 deposit on £40, starting in 22 hours: late.
+  ('39100000-0000-0000-0000-000000000008', '09100000-0000-0000-0000-000000000001', '19100000-0000-0000-0000-000000000001', '29100000-0000-0000-0000-000000000001',
+   now() + interval '22 hours', now() + interval '23 hours', 'confirmed', now() - interval '1 day', '{"email":"pct-customer@example.test"}',
+   '{"payment_mode":"deposit","deposit_kind":"flat","deposit_amount_pence":1500,"deposit_percent":null,"amount_due_now_pence":1500,"commitment_amount_pence":1500,"total_price_pence":4000,"cancellation_window_hours":24}'),
+  -- Flat £15 deposit on £40, starting in 10 days: early.
+  ('39100000-0000-0000-0000-000000000009', '09100000-0000-0000-0000-000000000001', '19100000-0000-0000-0000-000000000001', '29100000-0000-0000-0000-000000000001',
+   now() + interval '10 days', now() + interval '10 days 1 hour', 'confirmed', now() - interval '1 day', '{"email":"pct-customer@example.test"}',
+   '{"payment_mode":"deposit","deposit_kind":"flat","deposit_amount_pence":1500,"deposit_percent":null,"amount_due_now_pence":1500,"commitment_amount_pence":1500,"total_price_pence":4000,"cancellation_window_hours":24}'),
+  -- Flat £15 deposit on £40, starting in 9 hours, cancelled by the provider.
+  ('39100000-0000-0000-0000-000000000010', '09100000-0000-0000-0000-000000000001', '19100000-0000-0000-0000-000000000001', '29100000-0000-0000-0000-000000000001',
+   now() + interval '9 hours', now() + interval '10 hours', 'confirmed', now() - interval '1 day', '{"email":"pct-customer@example.test"}',
+   '{"payment_mode":"deposit","deposit_kind":"flat","deposit_amount_pence":1500,"deposit_percent":null,"amount_due_now_pence":1500,"commitment_amount_pence":1500,"total_price_pence":4000,"cancellation_window_hours":24}');
 
 insert into ceaute.booking_payment_attempt (
   id, booking_id, attempt_number, checkout_idempotency_key,
@@ -362,7 +422,10 @@ values
   ('59100000-0000-0000-0000-000000000004', '39100000-0000-0000-0000-000000000004', 1, 'ceaute-checkout-pct-4', 'cs_pct_4', 'pi_pct_4', 4725, 4725, 0, 186, 'succeeded', 'acct_pct_full'),
   ('59100000-0000-0000-0000-000000000005', '39100000-0000-0000-0000-000000000005', 1, 'ceaute-checkout-pct-5', 'cs_pct_5', 'pi_pct_5', 100, 800, 700, 24, 'succeeded', 'acct_pct_deposit'),
   ('59100000-0000-0000-0000-000000000006', '39100000-0000-0000-0000-000000000006', 1, 'ceaute-checkout-pct-6', 'cs_pct_6', 'pi_pct_6', 5000, 5000, 0, 195, 'succeeded', 'acct_pct_deposit'),
-  ('59100000-0000-0000-0000-000000000007', '39100000-0000-0000-0000-000000000007', 1, 'ceaute-checkout-pct-7', 'cs_pct_7', 'pi_pct_7', 1500, 4500, 3000, 73, 'succeeded', 'acct_pct_deposit');
+  ('59100000-0000-0000-0000-000000000007', '39100000-0000-0000-0000-000000000007', 1, 'ceaute-checkout-pct-7', 'cs_pct_7', 'pi_pct_7', 1500, 4500, 3000, 73, 'succeeded', 'acct_pct_deposit'),
+  ('59100000-0000-0000-0000-000000000008', '39100000-0000-0000-0000-000000000008', 1, 'ceaute-checkout-pct-8', 'cs_pct_8', 'pi_pct_8', 1500, 4000, 2500, 73, 'succeeded', 'acct_pct_deposit'),
+  ('59100000-0000-0000-0000-000000000009', '39100000-0000-0000-0000-000000000009', 1, 'ceaute-checkout-pct-9', 'cs_pct_9', 'pi_pct_9', 1500, 4000, 2500, 73, 'succeeded', 'acct_pct_deposit'),
+  ('59100000-0000-0000-0000-000000000010', '39100000-0000-0000-0000-000000000010', 1, 'ceaute-checkout-pct-10', 'cs_pct_10', 'pi_pct_10', 1500, 4000, 2500, 73, 'succeeded', 'acct_pct_deposit');
 
 update ceaute.booking
 set confirming_payment_attempt_id = ('59100000' || substr(id::text, 9))::uuid
@@ -380,7 +443,9 @@ from (values
   ('39100000-0000-0000-0000-000000000003'::uuid),
   ('39100000-0000-0000-0000-000000000005'::uuid),
   ('39100000-0000-0000-0000-000000000006'::uuid),
-  ('39100000-0000-0000-0000-000000000007'::uuid)
+  ('39100000-0000-0000-0000-000000000007'::uuid),
+  ('39100000-0000-0000-0000-000000000008'::uuid),
+  ('39100000-0000-0000-0000-000000000009'::uuid)
 ) as booking(id)
 cross join lateral ceaute.prepare_booking_cancellation(booking.id, 'customer') as outcome;
 
@@ -388,6 +453,11 @@ select set_config('request.jwt.claim.sub', '09100000-0000-0000-0000-000000000003
 
 create temp table provider_outcome as
 select * from ceaute.prepare_booking_cancellation('39100000-0000-0000-0000-000000000004', 'provider');
+
+select set_config('request.jwt.claim.sub', '09100000-0000-0000-0000-000000000002', true);
+
+create temp table flat_provider_outcome as
+select * from ceaute.prepare_booking_cancellation('39100000-0000-0000-0000-000000000010', 'provider');
 
 reset role;
 
@@ -413,8 +483,17 @@ insert into tap_results select is(
   (select row(refund_amount_pence, retained_amount_pence)::text from customer_outcomes where id = '39100000-0000-0000-0000-000000000007'),
   '(0,1500)', 'A historical fixed £15 deposit keeps £15 after a late cancellation');
 insert into tap_results select is(
+  (select row(refund_amount_pence, retained_amount_pence)::text from customer_outcomes where id = '39100000-0000-0000-0000-000000000008'),
+  '(0,1500)', 'Late cancellation of a £15 flat deposit keeps the whole deposit and refunds nothing');
+insert into tap_results select is(
+  (select row(refund_amount_pence, retained_amount_pence)::text from customer_outcomes where id = '39100000-0000-0000-0000-000000000009'),
+  '(1500,0)', 'Early cancellation of a £15 flat deposit refunds all of it');
+insert into tap_results select is(
+  (select row(refund_amount_pence, retained_amount_pence)::text from flat_provider_outcome),
+  '(1500,0)', 'A provider cancellation of a £15 flat deposit refunds all of it, even inside the window');
+insert into tap_results select is(
   (select count(*)::integer from ceaute.booking_refund_operation where booking_id::text like '39100000-%' and purpose = 'cancellation'),
-  5, 'A refund operation exists exactly where money is refunded');
+  7, 'A refund operation exists exactly where money is refunded');
 
 -- Legacy settings are kept, never converted, and no longer count as complete ------------
 -- Rows saved before 202609230001 bypassed the new check. Recreate one by
@@ -425,7 +504,9 @@ set payment_mode = 'fixed_deposit', commitment_amount_pence = 4500, deposit_perc
 where provider_page_id = '19100000-0000-0000-0000-000000000001';
 alter table ceaute.provider_booking_setting
   add constraint provider_booking_setting_percentage_terms check (
-    ceaute.booking_terms_are_complete(payment_mode, deposit_percent, cancellation_window_hours)
+    ceaute.booking_terms_are_complete(
+      payment_mode, deposit_percent, deposit_amount_pence, cancellation_window_hours
+    )
     and commitment_amount_pence is null
   ) not valid;
 
@@ -499,6 +580,81 @@ insert into tap_results select is(
   0, 'A price below £1 is never quoted as payable');
 
 reset role;
+
+-- Flat deposits: settings, holds and the quote ---------------------------------------
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '09100000-0000-0000-0000-000000000002', true);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+insert into tap_results select lives_ok(
+  $$update ceaute.provider_booking_setting
+    set payment_mode = 'deposit', deposit_percent = null, deposit_amount_pence = 1500
+    where provider_page_id = '19100000-0000-0000-0000-000000000001'$$,
+  'The owner can choose a £15 flat deposit');
+insert into tap_results select throws_matching(
+  $$update ceaute.provider_booking_setting set deposit_amount_pence = 1550
+    where provider_page_id = '19100000-0000-0000-0000-000000000001'$$,
+  'provider_booking_setting_percentage_terms', 'A flat deposit of £15.50 cannot be saved');
+insert into tap_results select throws_matching(
+  $$update ceaute.provider_booking_setting set deposit_percent = 30
+    where provider_page_id = '19100000-0000-0000-0000-000000000001'$$,
+  'provider_booking_setting_percentage_terms', 'A flat deposit cannot be saved beside a percentage');
+
+reset role;
+
+insert into tap_results select is(
+  (select has_booking_terms from ceaute.provider_page_publication_check_values('19100000-0000-0000-0000-000000000001')),
+  true, 'A flat deposit counts as complete booking terms');
+insert into tap_results select is(
+  ceaute.provider_page_accepts_new_bookings('19100000-0000-0000-0000-000000000001'),
+  true, 'A page with a flat deposit takes new bookings');
+
+set local role service_role;
+select set_config('request.jwt.claim.role', 'service_role', true);
+
+insert into tap_results select is(
+  (select row(deposit_kind, deposit_amount_pence, accepts_new_bookings, amount_due_now_pence, amount_due_later_pence, late_cancellation_retained_pence)::text
+   from ceaute.get_public_booking_terms('19100000-0000-0000-0000-000000000001', 4000)),
+  '(flat,1500,t,1500,2500,1500)', 'The public quote for a £15 flat deposit on £40 uses the same rule as the hold');
+
+create temp table flat_hold as
+select ceaute.create_validated_booking_hold(
+  '09100000-0000-0000-0000-000000000001', '19100000-0000-0000-0000-000000000001',
+  '29100000-0000-0000-0000-000000000001', array[]::uuid[],
+  (select start_at from pct_times where n = 5)
+) as id;
+
+reset role;
+
+insert into tap_results select is(
+  (select row(
+     service_snapshot ->> 'payment_mode', service_snapshot ->> 'deposit_kind',
+     service_snapshot ->> 'deposit_amount_pence', service_snapshot ->> 'deposit_percent',
+     service_snapshot ->> 'amount_due_now_pence', service_snapshot ->> 'commitment_amount_pence')::text
+   from ceaute.booking where id = (select id from flat_hold)),
+  '(deposit,flat,1500,,1500,1500)', 'A £15 flat hold snapshots the flat terms: £15 now, all of it kept after a late cancellation');
+
+update ceaute.provider_booking_setting set deposit_amount_pence = 1000
+where provider_page_id = '19100000-0000-0000-0000-000000000001';
+
+set local role service_role;
+select set_config('request.jwt.claim.role', 'service_role', true);
+
+create temp table flat_cheaper_hold as
+select ceaute.create_validated_booking_hold(
+  '09100000-0000-0000-0000-000000000001', '19100000-0000-0000-0000-000000000001',
+  '29100000-0000-0000-0000-000000000002', array[]::uuid[],
+  (select start_at from pct_times where n = 7)
+) as id;
+
+reset role;
+
+insert into tap_results select is(
+  (select row(
+     service_snapshot ->> 'total_price_pence', service_snapshot ->> 'amount_due_now_pence',
+     service_snapshot ->> 'commitment_amount_pence')::text
+   from ceaute.booking where id = (select id from flat_cheaper_hold)),
+  '(800,800,800)', 'An £8 booking under a £10 flat deposit is paid in full now and all of it is kept after a late cancellation');
 
 insert into tap_results select * from finish();
 select result from tap_results;
