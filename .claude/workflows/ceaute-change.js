@@ -1,7 +1,7 @@
 export const meta = {
   name: 'ceaute-change',
   description: 'Take one Ceaute change through product, engineering and verification lanes, stopping at owner gates',
-  whenToUse: 'A settled change request. Run with stage "plan" first; pass the returned brief and plan back with stage "build". Fuzzy ideas go to /ceaute-grill first; shipping goes to /ceaute-release after.',
+  whenToUse: 'A settled change request. Plan first: /ceaute-change followed by the request (a leading stage "plan": is optional). To build, the lead session calls the Workflow tool with object args { request, stage: "build", brief, plan } from the approved plan. Fuzzy ideas go to /ceaute-grill first; shipping goes to /ceaute-release after.',
   phases: [
     { title: 'Product', detail: 'brief from docs/product.md, decisions and ceaute-product-design' },
     { title: 'Engineering', detail: 'surveyor maps the slice, planner writes fenced tasks' },
@@ -17,12 +17,22 @@ export const meta = {
 //     -> { status: 'needs-owner-decisions' | 'plan-ready', brief, plan, objections }
 //   Workflow({ name: 'ceaute-change', args: { request, stage: 'build', brief, plan } })
 //     -> { status, tasks, checks, findings, acceptance }
+// A plan can also start from typed text: /ceaute-change stage "plan": <request>.
+// The slash command passes that text as a string; the stage "plan": prefix and
+// its quotes are optional. Text cannot carry a brief and plan, so a build always
+// takes an object.
 // The workflow never commits, pushes, resets a database, runs db push or
 // touches production. Browser acceptance and release stay in the lead session.
 
-const request = args && args.request
+let request = args && args.request
+let stage = (args && args.stage) || 'plan'
+if (typeof args === 'string') {
+  const prefix = args.match(/^\s*stage\s+["']?(\w+)["']?\s*:/i)
+  stage = prefix ? prefix[1].toLowerCase() : 'plan'
+  request = args.slice(prefix ? prefix[0].length : 0).trim()
+  if (stage === 'build') throw new Error('stage "build" needs args as an object: { request, stage: \'build\', brief, plan }, with the brief and plan from an approved plan run. Typed text can only start a plan.')
+}
 if (!request) throw new Error('Pass args.request: the change, in the owner\'s words')
-const stage = args.stage || 'plan'
 
 const str = { type: 'string' }
 const strs = { type: 'array', items: str }
