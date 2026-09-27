@@ -266,9 +266,12 @@ deleted outright, and nothing is archived. Historical bookings survive that
 deletion because each booking snapshotted its own address when the hold was
 taken.
 
-Search results can lag a move, because discovery reads are cached like every
-other page. Opening the provider's page shows where they are working now. That
-staleness is an accepted MVP trade-off, not a bug to design around.
+Discover is rendered on every request, so a new visit or search shows a move
+at once. A browser that goes back or forward to a Discover page it has already
+loaded shows that earlier copy until it is reloaded, because Next.js reuses
+visited pages for back and forward navigation. Opening the provider's page
+shows where they are working now. That staleness is an accepted MVP trade-off,
+not a bug to design around.
 
 ## Booking and availability
 
