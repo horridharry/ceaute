@@ -1,5 +1,6 @@
 import { revalidatePath } from "next/cache";
 import { processBookingRefund } from "@/lib/payments/refunds";
+import { sendBookingEmailsAfterResponse } from "@/lib/emails/send-booking-emails-now";
 
 function normalizeCancellationResult(results) {
   const result = results?.[0];
@@ -39,6 +40,9 @@ export async function cancelBookingWithRefund({
   if (error) {
     throw new Error(error.message || "Could not cancel booking.");
   }
+
+  // The cancellation emails were enqueued when this RPC committed; send them once the response is sent (the 10-minute cron sweep retries).
+  sendBookingEmailsAfterResponse();
 
   const result = normalizeCancellationResult(data);
 

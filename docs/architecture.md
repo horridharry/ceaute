@@ -54,7 +54,7 @@ trade-offs behind this shape are in
 | Cancellation and refund | same booking routes, `GET /api/cron/recover-booking-refunds` | `src/lib/bookings/cancel-booking.js`, `src/lib/payments/refunds.js`, `refund-request.js`, `refund-recovery.js` | `prepare_booking_cancellation`, `claim_booking_refund_operation`, `record_booking_refund_state`, `list_retryable_booking_refund_operations` |
 | Inspiration images | `/account/bookings/[bookingId]` (after confirmation), `/dashboard/bookings/[bookingId]` | `account/bookings/actions.js`, `src/lib/bookings/booking-inspiration-images.js` | `booking_inspiration_image` RLS, `can_manage_booking_inspiration_images`, `can_view_booking_inspiration_images`, `add_booking_inspiration_image`, private storage bucket |
 | Completion and abandoned-image cleanup, reviews | `GET /api/cron/complete-bookings`, `/account/bookings/[bookingId]` | `api/cron/*`, `src/lib/bookings/discard-inspiration-images.js`, `account/bookings/actions.js` | `complete_elapsed_bookings`, `list_discardable_booking_inspiration_images`, `discard_booking_inspiration_images`, `create_booking_review` |
-| Transactional email | `GET /api/cron/send-booking-emails` | `src/lib/emails/booking-emails.js` (delivery), `booking-email-content.js` (text and HTML content), `email-layout.js` (shared HTML layout) | outbox rows enqueued by booking transitions and by `enqueue_late_payment_refund_email` (late-payment refunds); `claim_pending_booking_emails` |
+| Transactional email | `POST /api/stripe/payments` and the cancellation actions on `/account/bookings` and `/dashboard/bookings` (send after the response), plus `GET /api/cron/send-booking-emails` (safety-net sweep) | `src/lib/emails/send-booking-emails-now.js` (after-response pass, called from `api/stripe/payments/route.ts` and `src/lib/bookings/cancel-booking.js`), `src/lib/emails/booking-emails.js` (delivery), `booking-email-content.js` (text and HTML content), `email-layout.js` (shared HTML layout) | outbox rows enqueued by booking transitions and by `enqueue_late_payment_refund_email` (late-payment refunds); `claim_pending_booking_emails` |
 | Account | `/account` (`/account/settings` redirects) | `account/actions.js`, `src/lib/profile/personal-details.js` | `profile` RLS (`profile_update_own_booking_details`) |
 | Scheduling | Supabase Cron | migration `202609150001` | `invoke_cron_endpoint` via `pg_cron` and `pg_net` |
 | Shared visual foundation | every page; `src/app/layout.tsx`, `src/app/globals.css` | `src/components/ui/*` (see [design-system.md](design-system.md)) | none |
@@ -399,8 +399,13 @@ screens must not infer external completion from booking status alone.
 The transition to confirmed and the transition from confirmed to cancelled
 enqueue transactional email in a database outbox through a constraint trigger,
 and so does a late-payment refund operation (the customer is told their payment
-is being refunded); completion sends nothing. Secret-protected cron routes claim and process email batches and
-complete elapsed bookings. Claims expire and retries preserve stable work
+is being refunded); completion sends nothing. The webhook and cancellation paths
+that cause an enqueue run a delivery pass with Next's `after()` once their
+response is sent (the fast path), and secret-protected cron routes claim and
+process email batches every 10 minutes as the safety net and complete elapsed
+bookings; both email paths rely on the same duplicate guards: the
+`claim_pending_booking_emails` claims, the outbox's unique key and the Resend
+Idempotency-Key (ADR 009). Claims expire and retries preserve stable work
 identity, because network delivery cannot be assumed to happen exactly once.
 An outbox row moves `pending` → `sending` → `sent`, or to `failed` for a
 backed-off retry; `cancelled` is a terminal state for an email deliberately

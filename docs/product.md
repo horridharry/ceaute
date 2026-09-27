@@ -523,8 +523,9 @@ see [the dispute runbook](dispute-response.md).
 
 Transactional confirmation and cancellation email, and the email telling a
 customer their late payment is being refunded in full (no address, no timing
-promise), is written to a database outbox and delivered by a protected
-scheduled route through Resend; the outbox's unique key sends each once. Delivery is
+promise), is written to a database outbox and sent through Resend straight away
+after the event that causes it; a scheduled pass every 10 minutes retries
+anything not yet sent, and the outbox's unique key sends each once. Delivery is
 claim-and-retry based. Appointment reminders, SMS, provider replies, distance
 search, mobile or virtual appointments, and an internal administration UI are
 not implemented product flows.

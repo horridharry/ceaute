@@ -16,7 +16,8 @@ systems, or it will look wrong without its context.
 | [006 Booking terms are a percentage, rounded once in PostgreSQL](006-percentage-booking-terms.md) | One rounding for quote, hold, charge and refund; old bookings keep their terms | Low for new bookings; high to reinterpret stored bookings |
 | [007 Availability is set per date and released in drops](007-availability-released-in-drops.md) | Dates stay private until their drop time; every hold is checked against dated availability | High: dates and drops replace the weekly rules as stored data |
 | [008 A deposit can be a flat amount](008-flat-deposit.md) | Flat deposits use the same stored amounts and single rounding as percentages | Low for new bookings; stored bookings keep their amounts |
+| [009 Booking emails are sent straight away](009-booking-emails-sent-immediately.md) | Prompt confirmation, cancellation and late-payment refund email without duplicate sends or a costlier sweep | Low: remove the after-response calls and the 10-minute sweep still delivers everything |
 
 Format: context, decision, consequences, and a reversibility note. Number the
-next record `009`. Keep records short and do not restate product behaviour
+next record `010`. Keep records short and do not restate product behaviour
 that [product.md](../product.md) already describes.

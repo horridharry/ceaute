@@ -5,6 +5,7 @@ import {
   processBookingRefund,
   recordBookingRefundState,
 } from '@/lib/payments/refunds';
+import { sendBookingEmailsAfterResponse } from '@/lib/emails/send-booking-emails-now';
 import { createServiceRoleClient } from '@/lib/supabase/service-role';
 import {
   DISPUTE_EVENT_TYPES,
@@ -132,6 +133,9 @@ async function processCompletedCheckout(session: Stripe.Checkout.Session) {
     },
     'Could not complete booking payment.',
   );
+  // The confirmation or late-payment refund email was enqueued when this RPC committed; send it
+  // once the response is sent. The 10-minute cron sweep retries anything this misses.
+  sendBookingEmailsAfterResponse();
   const result = rows?.[0];
 
   if (!result) {
