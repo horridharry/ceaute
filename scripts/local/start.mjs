@@ -60,24 +60,42 @@ if (!process.argv.includes("--no-build")) {
   if (build.status !== 0) process.exit(build.status ?? 1);
 }
 
-const children = [
-  noStripe ? null : spawn(
-    "stripe",
-    [
-      "listen",
-      "--api-key", local.STRIPE_SECRET_KEY,
-      "--forward-to", `localhost:${port}/api/stripe/payments`,
-      "--forward-connect-to", `localhost:${port}/api/stripe/connect`,
-    ],
-    { cwd: ROOT, stdio: "inherit" },
-  ),
-  spawn("npx", ["next", "start", "-p", port], { cwd: ROOT, env, stdio: "inherit" }),
-].filter(Boolean);
+// The Stripe CLI needs the events named. Payment events are snapshot events
+// (docs/stripe-preview-testing.md lists them); the Connect route receives v2
+// thin events about provider accounts, so each gets its own listener.
+const PAYMENT_EVENTS = [
+  "checkout.session.completed", "checkout.session.expired",
+  "payment_intent.payment_failed", "payment_intent.canceled",
+  "refund.updated", "refund.failed",
+  "charge.dispute.created", "charge.dispute.updated", "charge.dispute.closed",
+  "charge.dispute.funds_withdrawn", "charge.dispute.funds_reinstated",
+];
+const listen = (flags, path) => spawn(
+  "stripe",
+  ["listen", "--api-key", stripeKey, ...flags, "--forward-to", `localhost:${port}${path}`],
+  { cwd: ROOT, stdio: "inherit" },
+);
 
-const stop = () => {
+const children = [
+  ...(noStripe ? [] : [
+    listen(["--events", PAYMENT_EVENTS.join(",")], "/api/stripe/payments"),
+    listen(["--all-thin"], "/api/stripe/connect"),
+  ]),
+  spawn("npx", ["next", "start", "-p", port], { cwd: ROOT, env, stdio: "inherit" }),
+];
+
+let stopping = false;
+const stop = (code) => {
+  if (stopping) return;
+  stopping = true;
   for (const child of children) child.kill("SIGTERM");
-  process.exit(0);
+  process.exit(code);
 };
-process.on("SIGINT", stop);
-process.on("SIGTERM", stop);
-for (const child of children) child.on("exit", stop);
+process.on("SIGINT", () => stop(0));
+process.on("SIGTERM", () => stop(0));
+for (const child of children) {
+  child.on("exit", (code) => {
+    if (!stopping) console.error(`local:start: ${child.spawnargs.slice(0, 2).join(" ")} exited (${code}); stopping.`);
+    stop(1);
+  });
+}
