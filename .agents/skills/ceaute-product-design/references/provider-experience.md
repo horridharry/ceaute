@@ -345,9 +345,18 @@ Provider chooses:
 - Full payment
 - Deposit
 
-If Deposit is selected, the provider sets a percentage of the Treatment price to be paid online.
+If Deposit is selected, the provider sets how much is paid online: a flat amount or a percentage of the booking price.
 
 Decided 27 September 2026 by the product owner (`docs/decisions/008-flat-deposit.md`): a Deposit is either a flat amount, one £ figure for the whole business, or a percentage. Flat is offered first and is the default. A late cancellation keeps the whole flat deposit. Full payment is unchanged.
+
+Also decided 27 September 2026 by the product owner, for the first flat-deposit release:
+
+- **The choice.** "Payment when booking" keeps Deposit and Full payment. The Deposit hint reads "Customers pay a deposit when they book and the rest at the appointment." When Deposit is chosen, a second choice appears: "Flat amount" (selected by default) and "Percentage". A provider already on a percentage deposit sees Percentage selected.
+- **The flat field.** A "£" field labelled "Deposit amount", with the hint "Whole pounds, at least £1. The same for every treatment." It starts empty, so no figure is suggested. Its error is "Enter a deposit in whole pounds, at least £1."
+- **No maximum.** A flat deposit has no upper limit. A deposit is never more than the booking price, which already protects customers.
+- **The explanation.** For a £15 flat deposit and a 24-hour window: "Customers pay £15 when they book. The rest is paid to you at the appointment. If they cancel less than 24 hours before, you keep the £15." Then the existing £40 example, "£15 now, £25 at the appointment.", and "If a booking costs less than £15, they pay the whole price when they book." The Percentage wording stays as it is.
+- **Setup and publication.** The setup task and the Publication checklist detail read "Full payment or a deposit, and a cancellation window". The pause reason on a live page reads "Choose your booking terms in Booking settings".
+- **Settings saved before decision 006.** An old fixed £ deposit is still not converted and still counts as incomplete, as decision 006 says. The flat field is not prefilled from it. Its notice is titled "Choose your booking terms" and reads "Your old £X deposit no longer applies to new bookings, and your page isn't taking new bookings until you save your terms. Bookings already made keep their terms." (on a draft: "…and you can publish once you save your terms.").
 
 ### Cancellation window
 

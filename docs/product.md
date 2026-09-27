@@ -30,9 +30,10 @@ eight things, read from one breakdown
 username, category; the bio is optional), an active categorised treatment priced
 at least £1.00, a visible portfolio photo, a complete current location, at
 least one date from today on with times, even if its drop has not opened,
-complete booking terms (a percentage, see Payments), a Stripe recipient
-account able to receive transfers and payouts, and acceptance of the current
-provider agreement. Treatment descriptions and treatment groups are optional.
+complete booking terms (a flat deposit, a percentage deposit or full payment,
+see Payments), a Stripe recipient account able to receive transfers and
+payouts, and acceptance of the current provider agreement. Treatment
+descriptions and treatment groups are optional.
 
 Setup completion, readiness, publication, taking bookings and suspension are
 separate. A draft with anything left to do shows the setup guide on every
@@ -305,9 +306,10 @@ PostgreSQL's quote), the cancellation deadline and what a late cancellation
 keeps, the written policy, and the customer's saved contact details as one line
 with Change. Signing in returns to the same Review. "Continue to payment" is
 one server action: it saves changed details, continues with the customer's own
-matching live hold or makes a new one, checks the held amounts equal what was
-reviewed (stopping on "Check the updated price" if the provider changed
-something), and opens Stripe Checkout. A different hold of the customer's own
+matching live hold or makes a new one, checks the held amount due now, total
+and late-cancellation amount all equal what was reviewed (stopping on "Check
+the updated price" if the provider changed something), and opens Stripe
+Checkout. A different hold of the customer's own
 at an overlapping time is linked, never silently replaced.
 
 Stripe returns to the held page, which only reads state: a confirmed booking
@@ -403,21 +405,27 @@ for those yet, and that is deliberately deferred.
 
 Providers connect a Stripe recipient account. Checkout uses a destination charge
 to transfer the booking payment to that account. Booking terms apply to the
-whole provider: Deposit or Full payment, one percentage (10–100% in steps of 5;
-a deposit 10–90%; never 0%) and a free-cancellation window of 12, 24 or 48
-hours, with an optional written policy. A deposit is that percentage of the
-whole booking price (treatment and add-ons), at least £1.00 and never more than
-the price; full payment is the whole price. After a late customer cancellation
-the provider keeps the same percentage, never more than was paid; an early
-cancellation or any provider cancellation refunds everything. The percentage is
-rounded to the nearest penny, halves up, once, by PostgreSQL when the hold is
-made, and stored on the booking ([decision 006](decisions/006-percentage-booking-terms.md)).
-Any balance after a deposit is due at the appointment; collection of that
-offline balance is outside Ceaute. There is no pay-later option. Settings saved
-before percentages are kept exactly and never converted: they count as
-incomplete, so a draft cannot publish and a live page takes no new bookings
-until a percentage is chosen, and bookings already made keep their terms,
-including £0 kept where an old full-payment setting left the amount blank.
+whole provider: Deposit or Full payment, and a free-cancellation window of 12,
+24 or 48 hours, with an optional written policy. A deposit is either a flat
+amount in whole pounds, at least £1, one amount for the whole business and the
+default, or a percentage of the whole booking price (treatment and add-ons),
+10–90% in steps of 5 and at least £1.00; full payment is the whole price, with
+a percentage of 10–100% in steps of 5 (never 0%) kept after a late
+cancellation. A deposit is never more than the price: a booking that costs
+less than the flat deposit is paid in full now and nothing is due at the
+appointment. After a late customer cancellation the provider keeps the whole
+flat deposit, the percentage deposit's percentage or the full-payment
+percentage, never more than was paid; an early cancellation or any provider
+cancellation refunds everything. The percentage is rounded to the nearest
+penny, halves up, once, by PostgreSQL when the hold is made, and stored on the
+booking ([decision 006](decisions/006-percentage-booking-terms.md);
+[decision 008](decisions/008-flat-deposit.md)). Any balance after a deposit is
+due at the appointment; collection of that offline balance is outside Ceaute.
+There is no pay-later option. Settings saved before percentages are kept
+exactly and never converted: they count as incomplete, so a draft cannot
+publish and a live page takes no new bookings until terms are saved, and
+bookings already made keep their terms, including £0 kept where an old
+full-payment setting left the amount blank.
 
 The customer pays the advertised price; the provider bears both deductions.
 Stripe's `application_fee_amount` is the only lever, so it carries Ceaute's 2%

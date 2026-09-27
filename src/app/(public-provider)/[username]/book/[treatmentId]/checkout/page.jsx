@@ -203,6 +203,7 @@ export default async function BookingCheckoutPage({ params, searchParams }) {
           add_on: selectedAddOnIds,
           expected_due_now_pence: String(terms?.amount_due_now_pence ?? ""),
           expected_total_pence: String(totalPricePence),
+          expected_kept_pence: String(terms?.late_cancellation_retained_pence ?? ""),
         }}
         links={{
           signIn: `/sign-in?next=${encodeURIComponent(reviewPath)}`,

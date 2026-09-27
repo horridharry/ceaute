@@ -14,6 +14,9 @@ const render = (element) => renderToStaticMarkup(element);
 const count = (html, pattern) => (html.match(pattern) ?? []).length;
 const read = (path) => readFileSync(path, "utf8");
 const noop = async () => ({ status: "done", message: "" });
+// An <input> carrying every given attribute, in whatever order React writes them.
+const inputWith = (...attributes) =>
+  new RegExp(`<input${attributes.map((attribute) => `(?=[^>]*${attribute})`).join("")}[^>]*>`);
 
 const locations = [
   { id: "l1", public_area: "Peckham, London", address_line_1: "14 Bellenden Road", address_line_2: "", city: "London", postcode: "SE15 4RF", is_primary: true },
@@ -46,7 +49,9 @@ test("booking settings keeps its fields and ends in one right-aligned Save", () 
     h(BookingSettingsForm, {
       settings: {
         payment_mode: "deposit",
+        deposit_kind: "percentage",
         deposit_percent: "30",
+        deposit_amount: "",
         cancellation_window_hours: 24,
         written_policy: "",
         legacy: null,
@@ -57,6 +62,12 @@ test("booking settings keeps its fields and ends in one right-aligned Save", () 
   );
 
   assert.match(html, /<legend[^>]*>Payment when booking<\/legend>/);
+  assert.match(html, /Customers pay a deposit when they book and the rest at the appointment\./);
+  assert.match(html, /<legend class="sr-only">Deposit<\/legend>/);
+  assert.match(html, /name="deposit_kind"[^>]*value="flat"[^>]*\/><span[^>]*>Flat amount<\/span>/);
+  assert.match(html, /name="deposit_kind"[^>]*value="percentage"[^>]*\/><span[^>]*>Percentage<\/span>/);
+  assert.match(html, inputWith('name="deposit_kind"', 'value="percentage"', 'checked=""'));
+  assert.doesNotMatch(html, /name="deposit_amount"/);
   for (const label of ["Deposit percentage", "Free cancellation until"]) {
     assert.match(html, new RegExp(`>${label}</label>`), label);
   }
@@ -94,26 +105,112 @@ test("booking settings explains full payment with the amount kept after a late c
   assert.match(html, /a late cancellation keeps\s*(<!-- -->)?£20\.00(<!-- -->)? and refunds £20\.00/);
 });
 
-test("booking settings saved before percentages asks for one and says what is paused", () => {
+test("booking settings explains a flat deposit on a £40 booking and a cheaper one", () => {
   const html = render(
     h(BookingSettingsForm, {
       settings: {
-        payment_mode: "full",
+        payment_mode: "deposit",
+        deposit_kind: "flat",
         deposit_percent: "",
+        deposit_amount: "15",
         cancellation_window_hours: 24,
         written_policy: "",
-        legacy: { paymentMode: "fixed_deposit", amountPence: 4500 },
-        pageStatus: "published",
+        legacy: null,
+        pageStatus: "draft",
       },
       updateBookingSettings: noop,
     }),
   );
 
-  assert.match(html, /Choose a percentage/);
+  assert.match(html, inputWith('name="deposit_kind"', 'value="flat"', 'checked=""'));
+  assert.match(html, />Deposit amount<\/label>/);
+  assert.match(html, /Whole pounds, at least £1\. The same for every treatment\./);
+  assert.match(html, /name="deposit_amount"/);
+  assert.match(html, inputWith('name="deposit_amount"', 'inputMode="numeric"', 'value="15"'));
+  assert.doesNotMatch(html, inputWith('name="deposit_amount"', "placeholder="));
+  assert.doesNotMatch(html, /name="deposit_percent"/);
+  assert.match(html, /Customers pay\s*(<!-- -->)?£15\.00(<!-- -->)?\s*when they book\./);
+  assert.match(html, /you keep\s+the\s*(<!-- -->)?£15\.00/);
+  assert.match(
+    html,
+    /On a\s*(<!-- -->)?£40\.00(<!-- -->)?\s*booking:\s*(<!-- -->)?£15\.00(<!-- -->)?\s*now,\s*(<!-- -->)?£25\.00(<!-- -->)?\s*at the appointment\./,
+  );
+  assert.match(
+    html,
+    /If a booking costs less than\s*(<!-- -->)?£15\.00(<!-- -->)?, they pay the whole price when they\s+book\./,
+  );
+});
+
+test("booking settings asks for a flat amount before explaining it", () => {
+  const html = render(
+    h(BookingSettingsForm, {
+      settings: {
+        payment_mode: "deposit",
+        deposit_kind: "flat",
+        deposit_percent: "",
+        deposit_amount: "",
+        cancellation_window_hours: 24,
+        written_policy: "",
+        legacy: null,
+        pageStatus: "draft",
+      },
+      updateBookingSettings: noop,
+    }),
+  );
+
+  assert.match(html, />Deposit amount<\/label>/);
+  assert.match(html, /Enter a deposit amount to see what customers pay\./);
+  assert.doesNotMatch(html, /Choose a percentage to see what customers pay\./);
+});
+
+// What queries.js returns for a provider who saved a fixed £45 deposit
+// before decision 006: Deposit > Flat amount, with the amount left empty.
+const legacyFixedDeposit = (pageStatus) => ({
+  payment_mode: "deposit",
+  deposit_kind: "flat",
+  deposit_percent: "",
+  deposit_amount: "",
+  cancellation_window_hours: 24,
+  written_policy: "",
+  legacy: { paymentMode: "fixed_deposit", amountPence: 4500 },
+  pageStatus,
+});
+
+test("booking settings saved before decision 006 asks for terms and says new bookings are paused", () => {
+  const html = render(
+    h(BookingSettingsForm, {
+      settings: legacyFixedDeposit("published"),
+      updateBookingSettings: noop,
+    }),
+  );
+
+  assert.match(html, /Choose your booking terms/);
+  assert.doesNotMatch(html, /Booking terms are now a percentage/);
   assert.match(html, /Your old £45\.00 deposit(<!-- -->)? no longer\s+applies to new bookings/);
-  assert.match(html, /your page isn(’|&#x27;|')t taking new bookings until you save a percentage/);
-  assert.match(html, /Bookings already made keep their\s+terms\./);
-  assert.match(html, /Choose a percentage to see what customers pay\./);
+  assert.match(html, /your page isn(’|&#x27;|')t taking new bookings until you save your terms/);
+  assert.match(html, /Bookings\s+already made keep their terms\./);
+  assert.match(html, inputWith('name="deposit_kind"', 'value="flat"', 'checked=""'));
+  assert.match(html, inputWith('name="deposit_amount"', 'value=""'));
+  assert.doesNotMatch(html, inputWith('name="deposit_amount"', 'value="45'));
+  assert.match(html, /Enter a deposit amount to see what customers pay\./);
+});
+
+test("booking settings saved before decision 006 on a draft says it can publish once terms are saved", () => {
+  const html = render(
+    h(BookingSettingsForm, {
+      settings: legacyFixedDeposit("draft"),
+      updateBookingSettings: noop,
+    }),
+  );
+
+  assert.match(html, /Choose your booking terms/);
+  assert.doesNotMatch(html, /Booking terms are now a percentage/);
+  assert.match(html, /Your old £45\.00 deposit(<!-- -->)? no longer\s+applies to new bookings/);
+  assert.match(html, /you can publish once you save your terms/);
+  assert.doesNotMatch(html, /isn(’|&#x27;|')t taking new bookings/);
+  assert.match(html, inputWith('name="deposit_amount"', 'value=""'));
+  assert.doesNotMatch(html, inputWith('name="deposit_amount"', 'value="45'));
+  assert.match(html, /Enter a deposit amount to see what customers pay\./);
 });
 
 test("booking settings reports success as a neutral status, not an error", () => {

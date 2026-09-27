@@ -13,7 +13,7 @@ export const getBookingSettings = async () => {
     .schema("ceaute")
     .from("provider_booking_setting")
     .select(
-      "payment_mode, deposit_percent, commitment_amount_pence, cancellation_window_hours, written_policy",
+      "payment_mode, deposit_percent, deposit_amount_pence, commitment_amount_pence, cancellation_window_hours, written_policy",
     )
     .eq("provider_page_id", providerPage.id)
     .maybeSingle();
@@ -26,19 +26,29 @@ export const getBookingSettings = async () => {
     ? areBookingTermsComplete({
         paymentMode: settings.payment_mode,
         depositPercent: settings.deposit_percent,
+        depositAmountPence: settings.deposit_amount_pence,
         cancellationWindowHours: settings.cancellation_window_hours,
       })
     : false;
   const legacy = isLegacyBookingSetting(settings);
 
   return {
-    // A legacy fixed deposit becomes a deposit that still needs a percentage;
-    // legacy full payment stays full payment. Nothing is pre-filled from the
-    // old £ amount: the provider chooses.
+    // A legacy fixed deposit lands on Deposit > Flat amount with the amount
+    // empty; legacy full payment stays full payment. Nothing is pre-filled
+    // from the old £ amount: the provider chooses. A new provider and a
+    // full-payment provider also start on Flat amount if they pick Deposit.
     payment_mode: ["deposit", "fixed_deposit"].includes(settings?.payment_mode)
       ? "deposit"
       : "full",
-    deposit_percent: complete ? String(settings.deposit_percent) : "",
+    deposit_kind:
+      complete && settings.payment_mode === "deposit" && settings.deposit_percent != null
+        ? "percentage"
+        : "flat",
+    deposit_amount:
+      complete && settings.deposit_amount_pence != null
+        ? String(settings.deposit_amount_pence / 100)
+        : "",
+    deposit_percent: complete && settings.deposit_percent != null ? String(settings.deposit_percent) : "",
     cancellation_window_hours: settings?.cancellation_window_hours ?? 48,
     written_policy: settings?.written_policy ?? "",
     legacy: legacy

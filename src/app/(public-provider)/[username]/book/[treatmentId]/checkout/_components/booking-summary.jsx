@@ -66,6 +66,9 @@ export function PaymentBlock({ money, providerName }) {
         {money.minimumApplied ? (
           <p className="mt-2 text-[13px] text-ink-muted">Deposits are at least £1.00.</p>
         ) : null}
+        {money.depositCoversPriceNote ? (
+          <p className="mt-2 text-[13px] text-ink-muted">{money.depositCoversPriceNote}</p>
+        ) : null}
       </div>
     </section>
   );

@@ -4,8 +4,12 @@
 // Nothing here calculates a percentage. Before a hold exists the numbers come
 // from PostgreSQL's quote (ceaute.get_public_booking_terms); afterwards from
 // the booking's own snapshot, which PostgreSQL wrote when the hold was made.
+// A deposit is a flat amount or a percentage (decisions 006 and 008); a flat
+// deposit is never more than the price, so a booking that costs less than it
+// is paid in full now. Nothing here compares or formats beyond stored pence.
 // A snapshot from before percentage terms keeps the rule it was made under:
-// a blank retained amount keeps £0, which is what the database refunds.
+// a blank retained amount keeps £0, which is what the database refunds. A
+// snapshot without deposit_kind (made before flat deposits) reads as before.
 import { snapshotAmountDueNowPence } from "@/lib/payments/booking-payments";
 
 const TIME_ZONE = "Europe/London";
@@ -44,11 +48,22 @@ export function formatDeadline(startAt, windowHours) {
   return `${date}, ${time}`;
 }
 
-function describe({ totalPence, dueNowPence, lateKeepPence, mode, percent, windowHours, legacy }) {
+function describe({
+  totalPence,
+  dueNowPence,
+  lateKeepPence,
+  mode,
+  percent,
+  depositKind,
+  depositAmountPence,
+  windowHours,
+  legacy,
+}) {
   const total = pence(totalPence);
   const dueNow = Math.min(pence(dueNowPence), total);
   const keep = Math.min(pence(lateKeepPence), dueNow);
   const isDeposit = mode === "deposit" || mode === "fixed_deposit";
+  const flatDepositPence = depositKind === "flat" ? pence(depositAmountPence) : null;
 
   return {
     totalPence: total,
@@ -57,7 +72,12 @@ function describe({ totalPence, dueNowPence, lateKeepPence, mode, percent, windo
     lateKeepPence: keep,
     lateRefundPence: dueNow - keep,
     isDeposit,
-    percent: Number.isInteger(percent) ? percent : null,
+    percent: depositKind !== "flat" && Number.isInteger(percent) ? percent : null,
+    depositKind: depositKind ?? null,
+    flatDepositPence,
+    // The flat deposit is more than the price, so the whole price is paid
+    // now. An equal price is still a deposit.
+    depositCoversPrice: isDeposit && depositKind === "flat" && flatDepositPence > total,
     windowHours: Number(windowHours) || 24,
     legacy,
     // The £1 minimum raised the deposit above the percentage.
@@ -76,7 +96,9 @@ export function termsFromQuote(quote, totalPricePence) {
     dueNowPence: quote.amount_due_now_pence,
     lateKeepPence: quote.late_cancellation_retained_pence,
     mode: quote.payment_mode,
-    percent: Number(quote.deposit_percent),
+    percent: quote.deposit_percent == null ? null : Number(quote.deposit_percent),
+    depositKind: quote.deposit_kind,
+    depositAmountPence: quote.deposit_amount_pence,
     windowHours: quote.cancellation_window_hours,
     legacy: false,
   });
@@ -89,7 +111,8 @@ export function termsFromSnapshot(snapshot = {}, { amountPaidPence = null } = {}
     ? snapshotAmountDueNowPence(snapshot)
     : pence(amountPaidPence);
   const commitment = snapshot?.commitment_amount_pence;
-  const legacy = snapshot?.deposit_percent === undefined || snapshot?.deposit_percent === null;
+  const legacy = !snapshot?.deposit_kind
+    && (snapshot?.deposit_percent === undefined || snapshot?.deposit_percent === null);
 
   return describe({
     totalPence: snapshot?.total_price_pence,
@@ -98,14 +121,18 @@ export function termsFromSnapshot(snapshot = {}, { amountPaidPence = null } = {}
     // £0: prepare_booking_cancellation treats it as zero.
     lateKeepPence: commitment === null || commitment === undefined || commitment === "" ? 0 : commitment,
     mode: snapshot?.payment_mode,
-    percent: Number(snapshot?.deposit_percent),
+    percent: snapshot?.deposit_percent === undefined || snapshot?.deposit_percent === null
+      ? null
+      : Number(snapshot.deposit_percent),
+    depositKind: snapshot?.deposit_kind ?? null,
+    depositAmountPence: snapshot?.deposit_amount_pence,
     windowHours: snapshot?.cancellation_window_hours ?? 24,
     legacy,
   });
 }
 
 export function payNowLabel(terms) {
-  if (!terms.isDeposit) {
+  if (!terms.isDeposit || terms.depositCoversPrice) {
     return "Pay now";
   }
 
@@ -121,7 +148,7 @@ export function lateCancellationSentence(terms, providerName) {
   }
 
   if (terms.lateRefundPence === 0) {
-    return terms.isDeposit
+    return terms.isDeposit && !terms.depositCoversPrice
       ? `${name} keeps your ${formatPounds(terms.lateKeepPence)} deposit.`
       : `${name} keeps the full ${formatPounds(terms.lateKeepPence)}.`;
   }
@@ -140,6 +167,9 @@ export function paymentView(terms) {
     dueNow: formatPounds(terms.dueNowPence),
     dueLater: terms.dueLaterPence > 0 ? formatPounds(terms.dueLaterPence) : null,
     minimumApplied: terms.minimumApplied,
+    depositCoversPriceNote: terms.depositCoversPrice
+      ? `The ${formatPounds(terms.flatDepositPence)} deposit is more than the price, so you pay the whole price now.`
+      : null,
   };
 }
 

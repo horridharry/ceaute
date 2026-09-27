@@ -43,7 +43,7 @@ trade-offs behind this shape are in
 | Treatments | `/dashboard/treatments` | `treatments/queries.js`, `treatments/actions.js`, `treatments/_lib/treatment-values.js` | `treatment` RLS |
 | Treatment Groups | `/dashboard/treatment-groups` | `treatment-groups/queries.js`, `treatment-groups/actions.js` | `treatment_group` RLS |
 | Add-ons | `/dashboard/add-ons` | `add-ons/queries.js`, `add-ons/actions.js` | table RLS; `create_add_on_with_compatibility`, `update_add_on_with_compatibility` |
-| Booking terms | `/dashboard/settings/booking` | `settings/booking/queries.js`, `settings/booking/actions.js`, `src/lib/payments/booking-terms.js` (form and example only) | `booking_terms_are_complete`, `provider_booking_setting_percentage_terms` (new writes), `booking_payment_terms` (the only rounding; [decision 006](decisions/006-percentage-booking-terms.md)) |
+| Booking terms | `/dashboard/settings/booking` | `settings/booking/queries.js`, `settings/booking/actions.js`, `src/lib/payments/booking-terms.js` (form and example only) | `booking_terms_are_complete`, `provider_booking_setting_percentage_terms` (new writes, its name kept though it now also accepts a flat deposit), `booking_payment_terms` (the only rounding; [decision 006](decisions/006-percentage-booking-terms.md); [decision 008](decisions/008-flat-deposit.md)) |
 | Stripe Connect onboarding | `/dashboard/settings/payments`, `POST /api/stripe/connect` | `settings/payments/queries.js`, `settings/payments/actions.js`, `src/lib/stripe/server.js` | `sync_provider_payment_account`, Connect event claims |
 | Public page and discovery | `/@[username]`, `/discover`, `/dashboard/profile/preview` | `src/features/storefront/*`, `[username]/_lib/public-provider-data.js`, `discover/queries.js` | `get_public_*` projections, `get_public_availability_summary`, `provider_page_accepts_new_bookings` (paused state), `discover_public_providers` (published only, paged; `search_public_providers` is kept for the previous deployment) |
 | Choose add-ons and time | `/@[username]/book/[treatmentId]`, `/time` | `[username]/_lib/public-provider-data.js`, `book/_lib/appointment-availability.js`, `book/_lib/time-choices.js` | `get_public_open_dates`, `get_public_availability_summary`, `get_public_occupied_periods` |
@@ -198,12 +198,13 @@ PostgreSQL is authoritative for the important invariants:
 
 - account and provider ownership, including cross-provider relationships;
 - provider publication requirements and protected platform-managed state;
-- valid provider settings, including complete percentage booking terms for new
-  writes, treatment prices of at least £1.00 and 15-minute availability
-  hours, start times and drop times;
-- the pence a percentage becomes (`booking_payment_terms`, rounded once) and
-  whether a page may take a new booking (`provider_page_accepts_new_bookings`:
-  terms, Stripe, the current agreement, no balance owed);
+- valid provider settings, including complete booking terms (flat or
+  percentage deposit, or full payment) for new writes, treatment prices of at
+  least £1.00 and 15-minute availability hours, start times and drop times;
+- the pence a deposit or percentage becomes (`booking_payment_terms`, rounded
+  once) and whether a page may take a new booking
+  (`provider_page_accepts_new_bookings`: terms, Stripe, the current agreement,
+  no balance owed);
 - valid booking inputs, active treatment/add-on compatibility, notice, a date
   in an opened drop, its hours or start times, and overlap prevention;
 - which participant may see private booking information or cancel a booking;
@@ -349,8 +350,9 @@ the parts that protect correctness before inserting a hold. It verifies the
 customer, that the page is taking new bookings, the active treatment,
 compatible add-ons, a total of at least £1.00, a date in a drop whose drop
 time has passed, that date's hours or start times, a 15-minute start, and
-24-hour notice, then stores the percentage terms and the pence they came to
-in the snapshot. A hold lasts ten minutes until Checkout is claimed. The GiST
+24-hour notice, then stores the booking terms, including the deposit kind,
+and the pence they came to in the snapshot. A hold lasts ten minutes until
+Checkout is claimed. The GiST
 exclusion constraint on provider and half-open time range is the last line of
 defence against concurrent overlap.
 

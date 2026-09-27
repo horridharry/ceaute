@@ -83,9 +83,10 @@ async function saveChangedDetails({ supabase, profileId, formData }) {
 // 1. Save the contact details if the customer changed them.
 // 2. Continue with the customer's own matching live hold, or make a new one
 //    (10 minutes; PostgreSQL checks the time, the terms and the provider).
-// 3. Check the held amounts equal what Review showed. If the provider changed
-//    a price or their terms in between, stop before Stripe and show the new
-//    terms on the held page.
+// 3. Check the held amounts equal what Review showed: the amount due now, the
+//    total and the amount kept after a late cancellation. If the provider
+//    changed a price or their terms in between, stop before Stripe and show
+//    the new terms on the held page.
 // 4. Claim Checkout and send the customer to Stripe.
 //
 // Returns { status, fieldErrors, formError, holdHref } for anything the
@@ -100,6 +101,7 @@ export async function continueToPayment(_previousState, formData) {
   const addOnIds = normalizeAddOnIds(formData);
   const expectedDueNowPence = wholePence(formData.get("expected_due_now_pence"));
   const expectedTotalPence = wholePence(formData.get("expected_total_pence"));
+  const expectedKeptPence = wholePence(formData.get("expected_kept_pence"));
   const thisReview = reviewPath({ username, treatmentId, startAt: startAtValue, addOnIds });
 
   if (!profileId) {
@@ -240,12 +242,15 @@ export async function continueToPayment(_previousState, formData) {
   });
   const heldDueNow = snapshotAmountDueNowPence(booking.service_snapshot);
   const heldTotal = wholePence(booking.service_snapshot?.total_price_pence);
+  const heldKept = wholePence(booking.service_snapshot?.commitment_amount_pence);
 
   if (
     expectedDueNowPence === null ||
     expectedTotalPence === null ||
+    expectedKeptPence === null ||
     heldDueNow !== expectedDueNowPence ||
-    heldTotal !== expectedTotalPence
+    heldTotal !== expectedTotalPence ||
+    heldKept !== expectedKeptPence
   ) {
     redirect(`${returnPath}&notice=terms_changed`);
   }
