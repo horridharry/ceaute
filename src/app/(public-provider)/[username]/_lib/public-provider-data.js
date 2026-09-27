@@ -5,6 +5,7 @@ import { calculateAvailableAppointmentTimes } from "../book/_lib/appointment-ava
 import { normalizePublicUsername } from "@/features/storefront/format";
 import { logSupabaseError } from "@/lib/supabase/log-error";
 import { findPublishedHeroImage } from "@/features/storefront/hero-image";
+import { summaryFromRows } from "@/lib/availability/drops";
 
 export const getPublishedProviderPageByUsername = cache(async (username) => {
   const normalizedUsername = normalizePublicUsername(username);
@@ -71,10 +72,13 @@ export const getPublicTreatmentForProvider = cache(
   },
 );
 
-export const getAvailabilityRulesForProvider = cache(async (providerPageId) => {
+// The dates a customer can book: only dates of opened drops on a published
+// page, from London today on. PostgreSQL leaves out every date whose drop has
+// not opened (get_public_open_dates), so nothing here filters by drop time.
+export const getOpenDatesForProvider = cache(async (providerPageId) => {
   const supabase = createServiceRoleClient();
-  const { data: availabilityRules, error } = await supabase.schema("ceaute").rpc(
-    "get_public_availability_rules",
+  const { data: openDates, error } = await supabase.schema("ceaute").rpc(
+    "get_public_open_dates",
     {
       target_provider_page_id: providerPageId,
     },
@@ -84,7 +88,27 @@ export const getAvailabilityRulesForProvider = cache(async (providerPageId) => {
     throw new Error("Could not load availability.");
   }
 
-  return availabilityRules ?? [];
+  return openDates ?? [];
+});
+
+// What is open and when the next drop opens, named for customers
+// (get_public_availability_summary, mapped by summaryFromRows). Unopened
+// dates never leave PostgreSQL; only the next drop time does.
+export const getAvailabilitySummaryForProvider = cache(async (providerPageId) => {
+  const supabase = createServiceRoleClient();
+  const { data, error } = await supabase.schema("ceaute").rpc(
+    "get_public_availability_summary",
+    {
+      target_provider_page_id: providerPageId,
+    },
+  );
+
+  if (error) {
+    logSupabaseError("public availability summary", error);
+    throw new Error("Could not load availability.", { cause: error });
+  }
+
+  return summaryFromRows(data);
 });
 
 export const getActiveAddOnsForTreatment = cache(
@@ -143,22 +167,6 @@ export const getCompatibleAddOnsForTreatment = cache(
     return addOns ?? [];
   },
 );
-
-export const getBlockedDatesForProvider = cache(async (providerPageId) => {
-  const supabase = createServiceRoleClient();
-  const { data: blockedDates, error } = await supabase.schema("ceaute").rpc(
-    "get_public_blocked_dates",
-    {
-      target_provider_page_id: providerPageId,
-    },
-  );
-
-  if (error) {
-    throw new Error("Could not load blocked dates.");
-  }
-
-  return (blockedDates ?? []).map((blockedDate) => blockedDate.local_date);
-});
 
 export const getOccupiedPeriodsForProvider = cache(async (providerPageId) => {
   const supabase = createServiceRoleClient();
@@ -238,18 +246,18 @@ export async function getPublicBookingPage(username, treatmentId, addOnIds = [])
   const providerPage = await getPublishedProviderPageByUsername(username);
   const [
     treatment,
-    availabilityRules,
+    openDates,
     compatibleAddOns,
     selectedAddOns,
-    blockedDates,
     occupiedPeriods,
+    availabilitySummary,
   ] = await Promise.all([
     getPublicTreatmentForProvider(providerPage.id, treatmentId),
-    getAvailabilityRulesForProvider(providerPage.id),
+    getOpenDatesForProvider(providerPage.id),
     getCompatibleAddOnsForTreatment(providerPage.id, treatmentId),
     getActiveAddOnsForTreatment(providerPage.id, treatmentId, addOnIds),
-    getBlockedDatesForProvider(providerPage.id),
     getOccupiedPeriodsForProvider(providerPage.id),
+    getAvailabilitySummaryForProvider(providerPage.id),
   ]);
   const totalDurationMinutes =
     treatment.duration_minutes +
@@ -272,13 +280,14 @@ export async function getPublicBookingPage(username, treatmentId, addOnIds = [])
     selectedAddOns,
     totalDurationMinutes,
     totalPricePence,
-    availabilityRules,
     availableDates: calculateAvailableAppointmentTimes({
-      availabilityRules,
-      blockedDates,
+      openDates,
       appointments: occupiedPeriods,
       durationMinutes: totalDurationMinutes,
     }),
+    // The next drop still to open, or null: the booking screen names it when
+    // no free start remains, and reloads itself when it opens.
+    nextDrop: availabilitySummary.next,
   };
 }
 
@@ -290,16 +299,14 @@ export async function getPublicBookingDetailsPage(
   const providerPage = await getPublishedProviderPageByUsername(username);
   const [
     treatment,
-    availabilityRules,
+    openDates,
     selectedAddOns,
-    blockedDates,
     occupiedPeriods,
     location,
   ] = await Promise.all([
     getPublicTreatmentForProvider(providerPage.id, treatmentId),
-    getAvailabilityRulesForProvider(providerPage.id),
+    getOpenDatesForProvider(providerPage.id),
     getActiveAddOnsForTreatment(providerPage.id, treatmentId, addOnIds),
-    getBlockedDatesForProvider(providerPage.id),
     getOccupiedPeriodsForProvider(providerPage.id),
     getPublicLocationForProvider(providerPage.id),
   ]);
@@ -316,8 +323,7 @@ export async function getPublicBookingDetailsPage(
       0,
     );
   const availableDates = calculateAvailableAppointmentTimes({
-    availabilityRules,
-    blockedDates,
+    openDates,
     appointments: occupiedPeriods,
     durationMinutes: totalDurationMinutes,
   });

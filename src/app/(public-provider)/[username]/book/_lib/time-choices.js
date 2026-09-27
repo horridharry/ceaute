@@ -2,6 +2,8 @@
 // for the chosen day, grouped by part of the day. Pure, so the server page and
 // the client picker share it and it can be tested without a browser.
 
+import { opensSentence } from "@/lib/availability/drops";
+
 const TIME_ZONE = "Europe/London";
 
 function dateFromLocal(localDate) {
@@ -41,11 +43,14 @@ export function groupSlotsByPartOfDay(slots) {
   })).filter((group) => group.slots.length > 0);
 }
 
-// The strip starts at the first day that is not entirely inside the 24 hours'
-// notice, so today (never bookable) does not lead it.
+// The strip holds only the dates the provider has opened, and starts at the
+// first one that is not entirely inside the 24 hours' notice, so today (never
+// bookable) does not lead it. When every open date is inside the notice they
+// all stay, each saying "No times", so the screen never claims nothing is
+// open while the storefront says a month is open for booking.
 export function buildDayStrip(availableDates) {
   const firstUseful = availableDates.findIndex((date) => date.unavailable_reason !== "notice");
-  const dates = firstUseful === -1 ? [] : availableDates.slice(firstUseful);
+  const dates = firstUseful === -1 ? availableDates : availableDates.slice(firstUseful);
 
   return dates.map((date) => {
     const when = dateFromLocal(date.local_date);
@@ -53,7 +58,7 @@ export function buildDayStrip(availableDates) {
     const status = date.slots.length > 0 ? "available" : date.unavailable_reason ?? "full";
     const fullDate = `${longWeekday.format(when)} ${when.getUTCDate()} ${month}`;
     const statusLabel =
-      status === "closed" ? ", closed" : status === "full" ? ", fully booked" : status === "available" ? "" : ", no times";
+      status === "full" ? ", fully booked" : status === "available" ? "" : ", no times";
 
     return {
       localDate: date.local_date,
@@ -84,13 +89,9 @@ export function nextAvailableIndex(days, fromIndex) {
   return -1;
 }
 
-// The message a day without times shows, so closed and fully booked days read
-// differently.
-export function unavailableDayMessage(day, providerName) {
-  if (day.status === "closed") {
-    return `${providerName} isn’t working on ${day.fullDate}.`;
-  }
-
+// The message a day without times shows, so a fully booked day and a day too
+// short for this booking read differently.
+export function unavailableDayMessage(day) {
   if (day.status === "full") {
     return `${day.fullDate} is fully booked.`;
   }
@@ -102,11 +103,11 @@ export function unavailableDayMessage(day, providerName) {
   return `There are no times on ${day.fullDate}.`;
 }
 
-// The word under the date on a day card, so a closed day and a fully booked
-// day read differently without relying on style. Available days say nothing.
+// The word under the date on a day card, so a fully booked day and a day
+// without times read differently without relying on style. Available days say
+// nothing.
 export function dayStatusWord(day) {
   if (day.status === "available") return "";
-  if (day.status === "closed") return "Closed";
   if (day.status === "full") return "Full";
   return "No times";
 }
@@ -125,4 +126,21 @@ export function monthRangeLabel(days, firstIndex, lastIndex) {
 // "Tue 6 Oct" for the Next available button.
 export function shortDateLabel(day) {
   return `${day.weekday} ${day.day} ${day.monthShort}`;
+}
+
+// With no open date at all: when the next drop opens, if one is coming
+// ("No dates are open. November slots open on 15 October at 7 pm."). Customers
+// never read "drop".
+export function nothingOpenMessage(nextDrop) {
+  if (nextDrop) {
+    return `No dates are open. ${opensSentence(nextDrop.name, nextDrop.opensAt)}.`;
+  }
+
+  return "No dates are open for booking right now.";
+}
+
+// Above a strip with no free start: when the next drop opens, with no full
+// stop ("December slots open on 15 November at 7 pm"), or "" with none coming.
+export function nextDropLine(nextDrop) {
+  return nextDrop ? opensSentence(nextDrop.name, nextDrop.opensAt) : "";
 }

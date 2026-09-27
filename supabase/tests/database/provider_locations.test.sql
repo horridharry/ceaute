@@ -37,13 +37,21 @@ values
   ('0b000000-0000-0000-0000-000000000001', '0a000000-0000-0000-0000-000000000002', 'locations.one', 'Whitney Locations', 'Moves around', 'Nails', 'published'),
   ('0b000000-0000-0000-0000-000000000002', '0a000000-0000-0000-0000-000000000003', 'locations.two', 'Other Provider', 'Stays put', 'Nails', 'published');
 
-insert into ceaute.availability_rule (provider_page_id, weekday, starts_at, ends_at)
-select provider_page_id, weekday, '09:00', '17:00'
-from unnest(array[
-  '0b000000-0000-0000-0000-000000000001'::uuid,
-  '0b000000-0000-0000-0000-000000000002'::uuid
-]) as provider_page_id
-cross join generate_series(0, 6) as weekday;
+insert into ceaute.availability_drop (id, provider_page_id, opens_at)
+values
+  ('0f000000-0000-0000-0000-000000000001', '0b000000-0000-0000-0000-000000000001', now() - interval '1 day'),
+  ('0f000000-0000-0000-0000-000000000002', '0b000000-0000-0000-0000-000000000002', now() - interval '1 day');
+
+insert into ceaute.availability_date (provider_page_id, drop_id, local_date, hours_start, hours_end)
+select
+  availability_drop.provider_page_id, availability_drop.id,
+  (now() at time zone 'Europe/London')::date + offset_day, '09:00', '17:00'
+from ceaute.availability_drop
+cross join generate_series(0, 120) as offset_day
+where availability_drop.id in (
+  '0f000000-0000-0000-0000-000000000001',
+  '0f000000-0000-0000-0000-000000000002'
+);
 
 insert into ceaute.provider_booking_setting (
   provider_page_id, payment_mode, deposit_percent, cancellation_window_hours
@@ -483,8 +491,8 @@ insert into tap_results (result) select is(
   'Discovery stops matching the area the provider left'
 );
 insert into tap_results (result) select is(
-  (select count(*)::integer from ceaute.get_public_availability_rules('0b000000-0000-0000-0000-000000000001')),
-  7,
+  (select count(*)::integer from ceaute.get_public_open_dates('0b000000-0000-0000-0000-000000000001')),
+  121,
   'Availability stays provider-wide and is unchanged by the move'
 );
 

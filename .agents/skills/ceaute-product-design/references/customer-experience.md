@@ -93,9 +93,9 @@ Reviews should be sorted most recent first unless product direction changes.
 
 ## Availability
 
-Decided 27 September 2026 by the product owner (`docs/decisions/007-availability-released-in-drops.md`): the page says what is open for booking and when the next drop opens, for example "October is open for booking" and "November opens on 15 October at 7 pm". Providers no longer have weekly opening hours, so the page does not show them. It never shows the dates of a drop before its drop time.
+Decided 27 September 2026 by the product owner (`docs/decisions/007-availability-released-in-drops.md`): the page says what is open for booking and when the next drop opens, for example "October slots are open for booking" and "November slots open on 15 October at 7 pm" (wording revised the same day, see below). Providers no longer have weekly opening hours, so the page does not show them. It never shows the dates of a drop before its drop time.
 
-Also decided 27 September 2026: customers read "open for booking" and "opens"; "drop" and "drop time" are words for providers only. Drop times are written like hours: "15 October at 7 pm". With several open drops the page names each one, using the names in provider-experience.md (Availability). With nothing open and nothing coming, the section is left out, as it is today when a provider has no open days. While a page is paused, the section is also left out, so it never says "open for booking" beside "isn't taking online bookings right now".
+Also decided 27 September 2026: customers read "slots", "open for booking" and "open on"; "drop" and "drop time" are words for providers only. "Slots" was added after the first local test (decision 007, Words). Drop times are written like hours: "15 October at 7 pm". With several open drops the page names each one, using the names in provider-experience.md (Availability). With nothing open and nothing coming, the section is left out, as it is today when a provider has no open days. While a page is paused, the section is also left out, so it never says "open for booking" beside "isn't taking online bookings right now".
 
 This is customer-readable availability information rather than provider editing controls.
 
@@ -133,8 +133,8 @@ When nothing is open, say when the next drop opens instead of showing closed day
 Also decided 27 September 2026 by the product owner:
 
 - The day strip shows only dates the provider has opened, and the month heading follows the dates shown. If a provider opens 3, 10 and 17 November, the strip shows those three. A date with no free start left says "Full". The first date with a free start is selected.
-- When no free start remains, because nothing is open or everything open is full, the screen also says when the next drop opens, above any "Full" dates: for example "December opens on 15 November at 7 pm".
-- With nothing open, the screen says "No dates are open. November opens on 15 October at 7 pm." With nothing open and nothing coming, it says "No dates are open for booking right now."
+- When no free start remains, because nothing is open or everything open is full, the screen also says when the next drop opens, above any "Full" dates: for example "December slots open on 15 November at 7 pm".
+- With nothing open, the screen says "No dates are open. November slots open on 15 October at 7 pm." With nothing open and nothing coming, it says "No dates are open for booking right now."
 - An open date where the chosen Treatment, with its Add-ons, fits at no start keeps today's "No times" label and its message, "There isn't a long enough gap for this booking on …".
 - Booking times stay 24-hour, as today.
 

@@ -7,7 +7,9 @@ insert into ceaute.provider_page (id, owner_profile_id, username, display_name, 
 values ('1b000000-0000-0000-0000-000000000001','0b000000-0000-0000-0000-000000000001','race.publish','Race Publish','Ready provider','Nails','draft');
 insert into ceaute.provider_location (provider_page_id, public_area, address_line_1, city, postcode, is_active)
 values ('1b000000-0000-0000-0000-000000000001','Central London','10 Test Street','London','W1A 1AA',true);
-insert into ceaute.availability_rule (provider_page_id, weekday, starts_at, ends_at) values ('1b000000-0000-0000-0000-000000000001',1,'09:00','17:00');
+insert into ceaute.availability_drop (id, provider_page_id, opens_at) values ('6b000000-0000-0000-0000-000000000001','1b000000-0000-0000-0000-000000000001',now() - interval '1 day');
+insert into ceaute.availability_date (provider_page_id, drop_id, local_date, hours_start, hours_end)
+select '1b000000-0000-0000-0000-000000000001','6b000000-0000-0000-0000-000000000001',(now() at time zone 'Europe/London')::date + offset_day,'09:00','17:00' from generate_series(0, 120) as offset_day;
 insert into ceaute.treatment (provider_page_id,name,description,duration_minutes,price_pence,discovery_category_id,is_active)
 values ('1b000000-0000-0000-0000-000000000001','Race manicure','Fixture',60,5000,(select id from ceaute.discovery_category order by display_order limit 1),true);
 insert into ceaute.provider_booking_setting (provider_page_id,payment_mode,deposit_percent,cancellation_window_hours,written_policy)

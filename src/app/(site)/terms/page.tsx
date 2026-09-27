@@ -13,7 +13,7 @@ export default function TermsPage() {
     <LegalPage
       title="Terms"
       summary="The terms for using Ceaute as a customer or a provider."
-      updated="18 September 2026"
+      updated="27 September 2026"
     >
       <section>
         <h2>Who operates Ceaute</h2>
@@ -89,9 +89,9 @@ export default function TermsPage() {
         <h2>Treatments, prices and availability</h2>
         <p>
           Providers write their own treatment names, descriptions, durations,
-          prices and add-ons, and control their own opening hours and blocked
-          dates. Ceaute does not check or guarantee that any of it is
-          accurate.
+          prices and add-ons, and choose which dates and times to open for
+          booking, and when. Ceaute does not check or guarantee that any of it
+          is accurate.
         </p>
         <p>
           Prices are in pounds sterling and are the total you pay for the
@@ -100,9 +100,9 @@ export default function TermsPage() {
           provider sets.
         </p>
         <p>
-          Appointments must start at least 24 hours ahead and no more than 60
-          days ahead, on a 15-minute start time, inside the provider&rsquo;s
-          working hours. All times are London time.
+          Appointments must start at least 24 hours ahead, on a date the
+          provider has opened for booking, at a start time the provider
+          offers. All times are London time.
         </p>
       </section>
 

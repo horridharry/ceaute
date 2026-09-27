@@ -65,18 +65,14 @@ values (
   true
 );
 
-insert into ceaute.availability_rule (
-  provider_page_id,
-  weekday,
-  starts_at,
-  ends_at
-)
-values (
-  '10000000-0000-0000-0000-000000000003',
-  1,
-  '09:00',
-  '17:00'
-);
+insert into ceaute.availability_drop (id, provider_page_id, opens_at)
+values ('60000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000003', now() - interval '1 day');
+
+insert into ceaute.availability_date (provider_page_id, drop_id, local_date, hours_start, hours_end)
+select
+  '10000000-0000-0000-0000-000000000003', '60000000-0000-0000-0000-000000000003',
+  (now() at time zone 'Europe/London')::date + offset_day, '09:00', '17:00'
+from generate_series(0, 120) as offset_day;
 
 insert into ceaute.treatment (
   id,

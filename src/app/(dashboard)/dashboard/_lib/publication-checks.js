@@ -51,9 +51,10 @@ export const SETUP_TASKS = Object.freeze([
   },
   {
     id: "hours",
+    // has_working_hours now means a date from today on (decision 007).
     check: "has_working_hours",
-    name: "Set your working hours",
-    detail: "At least one working day",
+    name: "Add your availability",
+    detail: "At least one date from today on with times",
     href: "/dashboard/availability",
     cta: "Open Availability",
   },

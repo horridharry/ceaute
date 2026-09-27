@@ -30,8 +30,8 @@ function addOnsPath({ username, treatmentId, addOnIds }) {
 }
 
 // "When suits you?" (approved 23 September 2026). The times come from the
-// same calculator as before; PostgreSQL checks the chosen one again when the
-// hold is made.
+// calculator over the provider's open dates; PostgreSQL checks the chosen one
+// again when the hold is made.
 export default async function TreatmentBookingTimePage({ params, searchParams }) {
   const { username, treatmentId } = await params;
   const resolvedSearchParams = await searchParams;
@@ -50,10 +50,16 @@ export default async function TreatmentBookingTimePage({ params, searchParams })
     totalDurationMinutes,
     totalPricePence,
     availableDates,
+    nextDrop,
   } = await getPublicBookingPage(decodedUsername, treatmentId, selectedAddOnIds);
   const takingBookings = await getProviderAcceptsBookings(providerPage.id);
   const addOnIds = selectedAddOns.map((addOn) => addOn.id);
   const notice = firstSearchValue(resolvedSearchParams?.notice);
+  const days = buildDayStrip(availableDates);
+  // The server's clock for this request, which the reload at the next drop
+  // time counts from, so a wrong clock on the customer's phone cannot move it.
+  // eslint-disable-next-line react-hooks/purity -- A Server Component renders once per request; this is the request time, not render state.
+  const serverNow = Date.now();
 
   return (
     <PageContainer>
@@ -93,13 +99,17 @@ export default async function TreatmentBookingTimePage({ params, searchParams })
       ) : null}
 
       {takingBookings ? (
+        // Keyed on the days and their states, so when a refresh at a drop time
+        // brings new dates the picker starts again on the first free date.
         <WhenSuitsYou
-          days={buildDayStrip(availableDates)}
-          providerName={providerPage.display_name || `@${providerPage.username}`}
+          key={days.map((day) => day.localDate + day.status).join("|")}
+          days={days}
           username={providerPage.username}
           treatmentId={treatment.id}
           addOnIds={addOnIds}
           initialDate={firstSearchValue(resolvedSearchParams?.date)}
+          nextDrop={nextDrop}
+          serverNow={serverNow}
         />
       ) : (
         <Notice tone="neutral" className="mt-6">

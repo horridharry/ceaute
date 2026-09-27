@@ -63,10 +63,10 @@ between a provider's saved locations and never sees that there is more than
 one. Changing which location is current is how a provider says they have moved;
 it is a deliberate act, not a side effect of editing a form.
 
-**Availability** combines one weekly working period per weekday with whole
-blocked dates. There is no slot entity. Candidate starts are calculated from
-these rules, the requested duration, notice and window rules, and occupied
-booking intervals.
+**Availability** is a set of dates, each with hours or start times, grouped
+into drops with a drop time. There is no slot entity and no booking window.
+Candidate starts are calculated from a date's hours or start times, the
+requested duration, notice, and occupied booking intervals.
 
 ## The booking contract
 

@@ -256,8 +256,7 @@ The provider nickname is a provider-management aid, not a public substitute for 
 
 Decided 27 September 2026 by the product owner
 (`docs/decisions/007-availability-released-in-drops.md`): providers release
-their time in drops. This replaces weekly hours and blocked dates. The current
-weekly-hours screen is legacy until it is rebuilt.
+their time in drops. This replaces weekly hours and blocked dates.
 
 The provider's task, done easily on a phone:
 
@@ -283,7 +282,7 @@ Decided 27 September 2026 by the product owner, for the first drops release:
 - **No warnings.** Removing a date, changing its times or moving an open drop's time later saves without a confirmation. Bookings already made stay either way. The screen keeps showing each date's confirmed bookings and payments in progress, as today's screen does.
 - **Past dates.** Past dates are not shown or editable. A drop whose dates have all passed disappears, and a drop with no dates stops existing. A drop time is either now or a later quarter hour.
 - **Nothing to book.** When a published page has no open and no upcoming dates, Availability says "Customers can't book: you have no open dates." The page's state does not change, and Home (Today) shows nothing new. This replaces the confirmation and banner for a week with every day closed.
-- **Labels.** With no dates, the screen says "No dates yet." with an "Add dates" action. The button is "Save". The drop time is "Now" or "Later". Each drop reads "Open for booking" or "Opens 15 October at 7 pm".
+- **Labels.** With no dates, the screen says "No dates yet." with an "Add dates" action. The button is "Save". The drop time is "Now" or "Later". Each drop reads "Slots open for booking" or "Slots open on 15 October at 7 pm" (revised after the first local test).
 
 There is no usual week and no blocked-dates list. A date without times is closed.
 

@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions, ceaute;
 
-select plan(34);
+select plan(35);
 
 create temp table tap_results (result text);
 grant insert, select on table tap_results to authenticated, service_role, anon;
@@ -37,10 +37,18 @@ insert into ceaute.provider_location (
 select id, 'Camden, London', '2 Private Road', 'London', 'NW1 1AA', true
 from ceaute.provider_page where id::text like '19200000-%';
 
-insert into ceaute.availability_rule (provider_page_id, weekday, starts_at, ends_at)
-select provider_page.id, weekday, '09:00', '17:00'
-from ceaute.provider_page, generate_series(0, 6) as weekday
-where provider_page.id::text like '19200000-%';
+-- One opened drop per page: every date from London today to today + 120.
+insert into ceaute.availability_drop (id, provider_page_id, opens_at)
+select ('49200000' || substr(provider_page.id::text, 9))::uuid, provider_page.id, now() - interval '1 day'
+from ceaute.provider_page where id::text like '19200000-%';
+
+insert into ceaute.availability_date (provider_page_id, drop_id, local_date, hours_start, hours_end)
+select
+  availability_drop.provider_page_id, availability_drop.id,
+  (now() at time zone 'Europe/London')::date + offset_day, '09:00', '17:00'
+from ceaute.availability_drop
+cross join generate_series(0, 120) as offset_day
+where availability_drop.provider_page_id::text like '19200000-%';
 
 insert into ceaute.treatment (
   id, provider_page_id, name, description, duration_minutes, price_pence,
@@ -277,6 +285,24 @@ insert into tap_results select lives_ok(
 insert into tap_results select throws_matching(
   $$update ceaute.provider_page set username = 'checks.live' where id = '19200000-0000-0000-0000-000000000001'$$,
   'provider_page_username_unique', 'Usernames stay unique');
+
+-- Availability: only past dates left ------------------------------------------------
+reset role;
+delete from ceaute.availability_date where provider_page_id = '19200000-0000-0000-0000-000000000001';
+insert into ceaute.availability_date (provider_page_id, drop_id, local_date, hours_start, hours_end)
+values (
+  '19200000-0000-0000-0000-000000000001', '49200000-0000-0000-0000-000000000001',
+  (now() at time zone 'Europe/London')::date - 2, '09:00', '17:00'
+);
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '09200000-0000-0000-0000-000000000001', true);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+insert into tap_results select is(
+  (select has_working_hours
+   from ceaute.get_provider_page_publication_checks('19200000-0000-0000-0000-000000000001')),
+  false, 'With no current dates the availability requirement is not met');
 
 reset role;
 insert into tap_results select * from finish();

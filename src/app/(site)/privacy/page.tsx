@@ -13,7 +13,7 @@ export default function PrivacyPage() {
     <LegalPage
       title="Privacy"
       summary="What personal information Ceaute holds, why, and what you can do about it."
-      updated="18 September 2026"
+      updated="27 September 2026"
     >
       <section>
         <h2>Who we are and how to contact us</h2>
@@ -84,10 +84,10 @@ export default function PrivacyPage() {
           <li>
             <strong>If you publish a provider page</strong>: your business
             name, username, category, biography, portfolio images, the general
-            area you show publicly, your working hours and blocked dates, your
-            treatments and prices, and your full appointment address and
-            access instructions. The address is held privately and is never
-            shown on your public page.
+            area you show publicly, the dates and times you open for booking,
+            and when they open, your treatments and prices, and your full
+            appointment address and access instructions. The address is held
+            privately and is never shown on your public page.
           </li>
           <li>
             <strong>Payment records</strong>: the amount, currency, status and

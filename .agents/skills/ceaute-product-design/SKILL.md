@@ -115,7 +115,7 @@ Examples:
 
 - Treatments may need search and Treatment Group filtering.
 - Add-ons do not currently need search or filtering.
-- Availability can use expandable weekday rows.
+- Availability lists drops with their dates.
 - Treatments can use bounded cards.
 - Discovery providers should not automatically be enclosed in cards.
 

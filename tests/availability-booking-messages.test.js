@@ -1,91 +1,83 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
-  formatBlockedDateBookingsLine,
-  formatBookingsOnDateMessage,
+  formatDateBookingsLine,
+  formatDropBookingsLine,
   toBookingCountsByDate,
 } from "../src/app/(dashboard)/dashboard/availability/_lib/booking-messages.js";
 
-const DATE = "Saturday 18 October";
-
-test("formatBookingsOnDateMessage says nothing when no date is chosen", () => {
-  assert.equal(formatBookingsOnDateMessage({ confirmed: 2, inProgress: 1 }, ""), "");
-  assert.equal(formatBookingsOnDateMessage(undefined, undefined), "");
+test("formatDateBookingsLine is empty when the date has nothing on it", () => {
+  assert.equal(formatDateBookingsLine(undefined), "");
+  assert.equal(formatDateBookingsLine({ confirmed: 0, inProgress: 0 }), "");
 });
 
-test("formatBookingsOnDateMessage reports no bookings for missing or zero counts", () => {
-  assert.equal(formatBookingsOnDateMessage(undefined, DATE), "No bookings on this date.");
+test("formatDateBookingsLine counts bookings, singular and plural", () => {
   assert.equal(
-    formatBookingsOnDateMessage({ confirmed: 0, inProgress: 0 }, DATE),
-    "No bookings on this date.",
-  );
-});
-
-test("formatBookingsOnDateMessage explains confirmed bookings stay, singular and plural", () => {
-  assert.equal(
-    formatBookingsOnDateMessage({ confirmed: 1, inProgress: 0 }, DATE),
-    "You have 1 booking on Saturday 18 October. It'll stay booked. Blocking only stops new ones.",
-  );
-  assert.equal(
-    formatBookingsOnDateMessage({ confirmed: 2, inProgress: 0 }, DATE),
-    "You have 2 bookings on Saturday 18 October. They'll stay booked. Blocking only stops new ones.",
-  );
-});
-
-test("formatBookingsOnDateMessage explains payments in progress can finish, singular and plural", () => {
-  assert.equal(
-    formatBookingsOnDateMessage({ confirmed: 0, inProgress: 1 }, DATE),
-    "1 booking is being paid for on Saturday 18 October right now. If payment finishes, it will be booked. Blocking only stops new ones.",
-  );
-  assert.equal(
-    formatBookingsOnDateMessage({ confirmed: 0, inProgress: 2 }, DATE),
-    "2 bookings are being paid for on Saturday 18 October right now. If payment finishes, they will be booked. Blocking only stops new ones.",
-  );
-});
-
-test("formatBookingsOnDateMessage covers bookings and payments in progress together", () => {
-  assert.equal(
-    formatBookingsOnDateMessage({ confirmed: 2, inProgress: 1 }, DATE),
-    "You have 2 bookings on Saturday 18 October, and 1 more is being paid for right now. Existing bookings stay, and payments already started can still finish. Blocking only stops new ones.",
-  );
-  assert.equal(
-    formatBookingsOnDateMessage({ confirmed: 1, inProgress: 2 }, DATE),
-    "You have 1 booking on Saturday 18 October, and 2 more are being paid for right now. Existing bookings stay, and payments already started can still finish. Blocking only stops new ones.",
-  );
-});
-
-test("formatBlockedDateBookingsLine is empty when the date has nothing on it", () => {
-  assert.equal(formatBlockedDateBookingsLine(undefined), "");
-  assert.equal(formatBlockedDateBookingsLine({ confirmed: 0, inProgress: 0 }), "");
-});
-
-test("formatBlockedDateBookingsLine counts bookings, singular and plural", () => {
-  assert.equal(
-    formatBlockedDateBookingsLine({ confirmed: 1, inProgress: 0 }),
+    formatDateBookingsLine({ confirmed: 1, inProgress: 0 }),
     "1 booking on this day",
   );
   assert.equal(
-    formatBlockedDateBookingsLine({ confirmed: 2, inProgress: 0 }),
+    formatDateBookingsLine({ confirmed: 2, inProgress: 0 }),
     "2 bookings on this day",
   );
 });
 
-test("formatBlockedDateBookingsLine counts payments in progress, singular and plural", () => {
+test("formatDateBookingsLine counts payments in progress, singular and plural", () => {
   assert.equal(
-    formatBlockedDateBookingsLine({ confirmed: 0, inProgress: 1 }),
+    formatDateBookingsLine({ confirmed: 0, inProgress: 1 }),
     "1 payment in progress",
   );
   assert.equal(
-    formatBlockedDateBookingsLine({ confirmed: 0, inProgress: 2 }),
+    formatDateBookingsLine({ confirmed: 0, inProgress: 2 }),
     "2 payments in progress",
   );
 });
 
-test("formatBlockedDateBookingsLine combines bookings and payments in progress", () => {
+test("formatDateBookingsLine combines bookings and payments in progress", () => {
   assert.equal(
-    formatBlockedDateBookingsLine({ confirmed: 2, inProgress: 1 }),
+    formatDateBookingsLine({ confirmed: 2, inProgress: 1 }),
     "2 bookings and 1 payment in progress on this day",
   );
+});
+
+test("formatDropBookingsLine adds up its dates' bookings and payments in progress", () => {
+  const countsByDate = {
+    "2026-11-01": { confirmed: 2, inProgress: 0 },
+    "2026-11-02": { confirmed: 1, inProgress: 1 },
+    "2026-12-01": { confirmed: 5, inProgress: 5 },
+  };
+  const dates = [
+    { local_date: "2026-11-01" },
+    { local_date: "2026-11-02" },
+    { local_date: "2026-11-03" },
+  ];
+
+  assert.equal(
+    formatDropBookingsLine(dates, countsByDate),
+    "3 bookings and 1 payment in progress",
+  );
+  assert.equal(
+    formatDropBookingsLine([{ local_date: "2026-11-01" }], countsByDate),
+    "2 bookings",
+  );
+  assert.equal(
+    formatDropBookingsLine([{ local_date: "2026-11-01" }], {
+      "2026-11-01": { confirmed: 1, inProgress: 0 },
+    }),
+    "1 booking",
+  );
+  assert.equal(
+    formatDropBookingsLine([{ local_date: "2026-11-01" }], {
+      "2026-11-01": { confirmed: 0, inProgress: 2 },
+    }),
+    "2 payments in progress",
+  );
+});
+
+test("formatDropBookingsLine is empty when none of its dates has anything", () => {
+  assert.equal(formatDropBookingsLine([{ local_date: "2026-11-03" }], {}), "");
+  assert.equal(formatDropBookingsLine([], {}), "");
+  assert.equal(formatDropBookingsLine(undefined, undefined), "");
 });
 
 test("toBookingCountsByDate keys numeric counts by local date", () => {
@@ -104,4 +96,12 @@ test("toBookingCountsByDate keys numeric counts by local date", () => {
 test("toBookingCountsByDate returns an empty object for no rows", () => {
   assert.deepEqual(toBookingCountsByDate([]), {});
   assert.deepEqual(toBookingCountsByDate(null), {});
+});
+
+test("the blocking wording is gone", async () => {
+  const messages = await import(
+    "../src/app/(dashboard)/dashboard/availability/_lib/booking-messages.js"
+  );
+  assert.equal(messages.formatBookingsOnDateMessage, undefined);
+  assert.equal(messages.formatBlockedDateBookingsLine, undefined);
 });

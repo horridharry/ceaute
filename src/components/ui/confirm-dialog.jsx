@@ -2,7 +2,7 @@
 
 // A modal question before an action that matters (archive, delete, cancel a
 // booking, unpublish), or an explanation when an action is not allowed
-// (blocked). It is the pattern of the Availability closed-week dialog and the
+// (blocked). It is the pattern of the cancel-booking dialog and the
 // unsaved-changes dialog: a native <dialog> opened with showModal(), so focus
 // is trapped and the page behind is inert.
 //

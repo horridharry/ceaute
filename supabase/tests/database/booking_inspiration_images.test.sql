@@ -34,9 +34,14 @@ values
   ('1b000000-0000-0000-0000-000000000001', '1a000000-0000-0000-0000-000000000002', 'inspiration.one', 'Inspiration Provider', 'Fixture', 'Nails', 'published'),
   ('1b000000-0000-0000-0000-000000000002', '1a000000-0000-0000-0000-000000000004', 'inspiration.two', 'Other Provider', 'Fixture', 'Nails', 'published');
 
-insert into ceaute.availability_rule (provider_page_id, weekday, starts_at, ends_at)
-select '1b000000-0000-0000-0000-000000000001', weekday, '09:00', '17:00'
-from generate_series(0, 6) as weekday;
+insert into ceaute.availability_drop (id, provider_page_id, opens_at)
+values ('1d000000-0000-0000-0000-000000000001', '1b000000-0000-0000-0000-000000000001', now() - interval '1 day');
+
+insert into ceaute.availability_date (provider_page_id, drop_id, local_date, hours_start, hours_end)
+select
+  '1b000000-0000-0000-0000-000000000001', '1d000000-0000-0000-0000-000000000001',
+  (now() at time zone 'Europe/London')::date + offset_day, '09:00', '17:00'
+from generate_series(0, 120) as offset_day;
 
 insert into ceaute.provider_booking_setting (
   provider_page_id, payment_mode, deposit_percent, cancellation_window_hours
