@@ -2,7 +2,7 @@
 
 Dated 27 September 2026. A snapshot, not current behaviour. Written by the `ceaute-change` plan run for [decision 007](../decisions/007-availability-released-in-drops.md), reviewed by two critics (invariants, and product and scope), revised once, then tightened by the lead session. **Status: approved by the owner on 27 September 2026.** Not yet built.
 
-Target: on Preview by 8 October for Provider B's 15 October drop. 8 October is go or no-go; on a no-go, B's trial moves to the 15 November drop. On a go, a full drop is rehearsed on Preview by 12 October.
+A full drop is rehearsed on Preview before any pilot provider's first drop (decision 007). There is no delivery date; pilot start dates are in [docs/pilot.md](../pilot.md).
 
 ## Summary
 
@@ -575,7 +575,7 @@ ADDED BY THE LEAD SESSION AFTER REVIEW
 | browser | The Terms and Privacy pages show the approved sentences and the new 'updated' date |
 | owner-keyboard | The owner's real-keyboard pass on Preview across the new Availability screen (month grid arrow and Tab order, Set times, Now/Later, Save), the storefront section and 'When suits you?', checking the unsettled wording listed in T5 and T7 |
 | stripe | On Preview, a test-card payment for a time on a date in an opened drop reaches Confirmed through the webhook, and a hold on a date whose drop is moved later is refused with the 'taken' notice |
-| owner-keyboard | Release step outside the build: the owner rehearses a full drop on Preview by 12 October, signed in as the provider |
+| owner-keyboard | Release step outside the build: the owner rehearses a full drop on Preview before a pilot provider's first drop, signed in as the provider |
 
 ## Risks
 
@@ -588,7 +588,7 @@ ADDED BY THE LEAD SESSION AFTER REVIEW
 - book/actions.js:217 matches the hold's exception text. The migration must keep 'Requested time is unavailable.' and 'Requested time is outside the booking rules.' verbatim, or a date removed or hidden between viewing and 'Continue to payment' would reach the error page instead of the 'taken' notice.
 - With no window, deposits can be held for a long time before appointments, and a leaving provider may owe more refunds (decision 007, Consequences). This is accepted, not mitigated.
 - The Terms and Privacy 'updated' date must equal the day the change reaches Preview. The builder may not know that day, so it must be corrected at merge, and again at promotion by the new release.md step.
-- The provider screen (month grid, Set times, Now or Later) is the largest part of the build. Slipping it past 8 October moves Provider B's trial to the 15 November drop, per the owner's go or no-go.
+- The provider screen (month grid, Set times, Now or Later) is the largest part of the build.
 - A concurrent save and hold on the same date are ordered by row locks on availability_date and availability_drop, taken with 'for share' in the hold and by update/delete in the save. A hold that loses the race may be refused and the customer picks again. That is acceptable, with no double booking, and the exclusion constraint still stands behind it.
 
 ## Review objections (on the first draft)
