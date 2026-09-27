@@ -6,6 +6,8 @@ import { renderToStaticMarkup } from "react-dom/server";
 
 import { LocationsPage } from "../src/app/(dashboard)/dashboard/locations/_components/locations-page.jsx";
 import { BookingSettingsForm } from "../src/app/(dashboard)/dashboard/settings/booking/_components/booking-settings-form.jsx";
+import { AvailabilityForm } from "../src/app/(dashboard)/dashboard/availability/availability-form.jsx";
+import { namedDrops } from "../src/app/(dashboard)/dashboard/availability/_lib/drop-form.js";
 
 // Screen-level guarantees of the dashboard redesign, rendered with fixtures.
 const render = (element) => renderToStaticMarkup(element);
@@ -150,6 +152,87 @@ test("availability lists drops and drops the weekly editor", () => {
   assert.match(form, /<DropList/);
   assert.match(form, /No dates yet\./);
   assert.doesNotMatch(form, /WeeklyScheduleForm|BlockedDatesForm|Close every day/);
+});
+
+// Adding or editing a drop has its own page, so browser Back from the editor
+// returns to the list (usability test, 27 September 2026).
+const dropFixture = (id, localDate, opensAt) => ({
+  id,
+  opensAt,
+  dates: [{ local_date: localDate, hours_start: "09:00", hours_end: "17:00", start_times: null }],
+});
+
+test("availability list links to each drop's own edit page and to Add dates, with no editor", () => {
+  const drops = namedDrops([
+    dropFixture("drop-1", "2026-10-18", "2026-09-01T09:00:00Z"),
+    dropFixture("drop-2", "2026-11-08", "2026-10-01T09:00:00Z"),
+  ]);
+  const html = render(
+    h(AvailabilityForm, { drops, bookingCountRows: [], isPublished: true, now: Date.parse("2026-09-27T09:00:00Z") }),
+  );
+
+  for (const drop of drops) {
+    assert.match(
+      html,
+      new RegExp(
+        `<a(?=[^>]*href="/dashboard/availability/${drop.id}/edit")(?=[^>]*aria-label="Edit ${drop.name}")[^>]*>Edit</a>`,
+      ),
+    );
+  }
+  assert.equal(count(html, /href="\/dashboard\/availability\/new"/g), 1);
+  assert.match(html, />Add dates<\/a>/);
+  assert.doesNotMatch(html, /<button|<form|Drop time|Set times|>Saved</);
+  assert.doesNotMatch(html, /Customers can&#x27;t book/);
+
+  const dir = "src/app/(dashboard)/dashboard/availability";
+  const listSources = [
+    read(`${dir}/page.jsx`),
+    read(`${dir}/availability-form.jsx`),
+    read(`${dir}/_components/drop-list.jsx`),
+  ].join("\n");
+  assert.doesNotMatch(listSources, /DropEditor|editingId|onEdit|NEW_DROP|saveDrop|"use client"/);
+});
+
+test("availability with no drops keeps its notice and empty state, linking to Add dates", () => {
+  const html = render(h(AvailabilityForm, { drops: [], bookingCountRows: [], isPublished: true, now: 0 }));
+
+  assert.match(html, /Customers can&#x27;t book: you have no open dates\./);
+  assert.match(html, /No dates yet\./);
+  assert.match(html, /<a[^>]*href="\/dashboard\/availability\/new"[^>]*>Add dates<\/a>/);
+});
+
+test("adding and editing a drop are their own pages with a way back to Availability", () => {
+  const dir = "src/app/(dashboard)/dashboard/availability";
+  const newPage = read(`${dir}/new/page.jsx`);
+  const editPage = read(`${dir}/[dropId]/edit/page.jsx`);
+  const editor = read(`${dir}/_components/drop-editor.jsx`);
+  const actions = read(`${dir}/actions.js`);
+
+  for (const page of [newPage, editPage]) {
+    assert.match(page, /back=\{\{ href: "\/dashboard\/availability", label: "Availability" \}\}/);
+    assert.match(page, /<DropEditor/);
+    assert.match(page, /getDrops\(\)/);
+  }
+  assert.match(newPage, /title="Add dates"/);
+  assert.match(newPage, /next: "\/dashboard\/availability\/new"/);
+  assert.match(editPage, /title=\{drop\.name\}/);
+  assert.match(editPage, /description=\{dropStatusLine\(drop, now\)\}/);
+  assert.match(editPage, /next: `\/dashboard\/availability\/\$\{dropId\}\/edit`/);
+  assert.match(editPage, /if \(!drop\) \{\s*notFound\(\);/);
+
+  // Save goes back to the list; errors stay on the editor with the input.
+  assert.match(actions, /redirect\("\/dashboard\/availability", RedirectType\.replace\);\n\};\s*$/);
+  assert.doesNotMatch(actions, /status: "saved"/);
+  assert.match(actions, /return \{ status: "error", message: saveErrorMessage\(error\) \}/);
+
+  // The guard stands down on submit, comes back on an error, and Cancel is a
+  // link the guard can ask about.
+  assert.match(editor, /useUnsavedChanges\(\s*isDraftDirty\(draft, baseline\) && !released,?\s*\)/);
+  assert.match(editor, /onSubmit=\{\(\) => \{\s*allowNextNavigation\(\);\s*setReleased\(true\);/);
+  assert.match(editor, /await saveDrop\(null, formData\);\s*setReleased\(false\);/);
+  assert.match(editor, /<Link\s+href="\/dashboard\/availability"[^>]*>\s*Cancel\s*<\/Link>/);
+  assert.match(editor, /export function DropEditor\(\{ drop, drops, countsByDate, today, now, saveDrop \}\)/);
+  assert.doesNotMatch(editor, /onSaved|rootRef/);
 });
 
 test("availability shows each drop as one card and types times instead of choosing from a list", () => {

@@ -3,12 +3,16 @@
 // Edits one drop, or makes a new one: tap dates, give the untimed ones their
 // times together, change or remove single dates, choose the drop time, then
 // one Save. The draft lives here until Save; customers see nothing of it.
-// Leaving with unsaved changes asks first. Nothing here asks for
-// confirmation: removing a date or moving the drop time later never changes
-// bookings already made.
+// It is the whole of its own page (/dashboard/availability/new or
+// /dashboard/availability/[dropId]/edit): a successful Save redirects to the
+// list, and Cancel is a link back to it. Leaving with unsaved changes asks
+// first. Nothing here asks for confirmation: removing a date or moving the
+// drop time later never changes bookings already made.
+import Link from "next/link";
 import { useActionState, useEffect, useId, useRef, useState } from "react";
 import { useUnsavedChanges } from "@/components/unsaved-changes/use-unsaved-changes";
 import { Button } from "@/components/ui/button";
+import { buttonClassName } from "@/components/ui/button-classes";
 import { FormActions } from "@/components/ui/form-actions";
 import { FormError } from "@/components/ui/form-feedback";
 import { Input } from "@/components/ui/input";
@@ -224,18 +228,8 @@ function TimesPanel({ heading, initial, disabled, autoFocus, onApply, onCancel }
   );
 }
 
-export function DropEditor({
-  drop,
-  drops,
-  countsByDate,
-  today,
-  now,
-  saveDrop,
-  onSaved,
-  onCancel,
-}) {
+export function DropEditor({ drop, drops, countsByDate, today, now, saveDrop }) {
   const id = useId();
-  const rootRef = useRef(null);
   const [baseline] = useState(() => dropBaseline(drop, now));
   const [draft, setDraft] = useState(baseline);
   // The one date whose times are being changed, or null.
@@ -249,30 +243,32 @@ export function DropEditor({
   }, [draft]);
 
   useEffect(() => {
-    rootRef.current?.focus();
-  }, []);
-
-  useEffect(() => {
     if (!focusDate) return;
     document.getElementById(`${id}-change-${focusDate}`)?.focus();
   }, [focusDate, id]);
 
+  // True from Submit until the save returns an error: the unsaved-changes
+  // guard stands down so the redirect after a successful save is never
+  // intercepted (the same idea as useFormUnsavedGuard).
+  const [released, setReleased] = useState(false);
+  const { allowNextNavigation } = useUnsavedChanges(
+    isDraftDirty(draft, baseline) && !released,
+  );
+
   const [result, formAction, pending] = useActionState(
     async (_previous, formData) => {
       const submitted = draftRef.current;
-      // The server ignores the previous state, so none is sent.
+      // The server ignores the previous state, so none is sent. A successful
+      // save redirects to the list and never returns here; reaching the next
+      // line means it failed and the draft is still on screen, so protect it
+      // again.
       const next = await saveDrop(null, formData);
-
-      if (next?.status === "saved") {
-        onSaved();
-      }
+      setReleased(false);
 
       return { ...next, submitted };
     },
     { status: "idle" },
   );
-
-  useUnsavedChanges(isDraftDirty(draft, baseline));
 
   // An error only stands while the draft is the one that failed to save.
   const showError = result.status === "error" && result.submitted === draft;
@@ -351,16 +347,7 @@ export function DropEditor({
   ) : null;
 
   return (
-    <div
-      ref={rootRef}
-      tabIndex={-1}
-      aria-busy={pending || undefined}
-      className="flex flex-col gap-6 outline-none"
-    >
-      {drop ? null : (
-        <h2 className="text-xl font-semibold tracking-tight">Add dates</h2>
-      )}
-
+    <div aria-busy={pending || undefined} className="flex flex-col gap-6">
       <MonthGrid
         today={today}
         initialMonth={(baseline.dates[0]?.local_date ?? today).slice(0, 7)}
@@ -474,7 +461,14 @@ export function DropEditor({
 
       {/* Only hidden fields live in the form, so React's reset after the
           action never touches the controls above. */}
-      <form action={formAction} className="flex flex-col gap-3">
+      <form
+        action={formAction}
+        onSubmit={() => {
+          allowNextNavigation();
+          setReleased(true);
+        }}
+        className="flex flex-col gap-3"
+      >
         <input type="hidden" name="drop_id" value={drop?.id ?? ""} />
         <input type="hidden" name="drop_time" value={draft.drop_time} />
         <input
@@ -491,15 +485,12 @@ export function DropEditor({
 
         <FormError>{showError ? result.message : ""}</FormError>
         <FormActions className="mt-0">
-          <Button
-            type="button"
-            variant="secondary"
-            className="min-h-11"
-            disabled={pending}
-            onClick={onCancel}
+          <Link
+            href="/dashboard/availability"
+            className={buttonClassName({ variant: "secondary" })}
           >
             Cancel
-          </Button>
+          </Link>
           <PendingButton pendingLabel="Saving…" className="min-h-11">
             Save
           </PendingButton>
