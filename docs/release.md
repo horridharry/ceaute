@@ -58,8 +58,10 @@ verified and reported is in [Verification](verification.md).
   (`vercel env ls`), and run the deployed smoke tests on Preview that were
   blocked by the login wall: storefront gallery, treatments, reviews,
   availability, closure, and the design-system pages (`vercel curl`).
-- Owner and agent on Preview: one real test-card payment and refund. Email
-  delivery itself was proven on 23 September 2026.
+- Flat deposit on Preview: a late customer cancellation and a provider
+  cancellation of a flat-deposit booking, and the setup, pause and pre-006
+  notice wording (database and unit tests only; see
+  [the acceptance results](reports/2026-09-27-flat-deposit-preview-acceptance.md)).
 - Needs the owner signed in: the provider Portfolio viewer (acceptance was
   waived), the owner storefront preview, add-on cards and the Archive button
   with real data, and the form save and submit paths.
