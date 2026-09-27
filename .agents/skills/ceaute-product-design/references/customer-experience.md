@@ -183,6 +183,18 @@ Customer pays the full required amount.
 
 Customer pays the provider's deposit: a flat amount or a percentage (`docs/decisions/008-flat-deposit.md`).
 
+Decided 27 September 2026 by the product owner, for the first flat-deposit release. Review and pay, the held page and the booking pages say:
+
+- A flat deposit reads "Deposit to pay now", without a percentage. A late cancellation reads "{Provider} keeps your £15 deposit."
+- When the booking costs less than the flat deposit (an £8 Treatment under a £10 deposit), the amount reads "Pay now", with no "Pay {provider} at the appointment" line, and a note in the style of "Deposits are at least £1.00.": "The £10 deposit is more than the price, so you pay the whole price now." The late-cancellation line uses the full-amount wording: "{Provider} keeps the full £8."
+
+The /terms page (approved as legal wording on 27 September 2026):
+
+- Paying: "Each provider chooses whether customers pay the full price when booking or a deposit. A deposit is either a fixed amount set by the provider, of at least £1, or a percentage of the booking price between 10% and 90% and at least £1. A deposit is never more than the booking price. Checkout shows which applies, how much is due now, and how much is due at the appointment."
+- Late cancellation: "Cancel after the deadline and the provider keeps the amount shown to you at checkout, never more than you paid online. With a deposit that is the whole deposit; with full payment it is the percentage the provider set. Anything you paid above that is refunded. Bookings keep the terms they were made on."
+
+This /terms change does not issue a new provider agreement version: `PROVIDER_AGREEMENT_VERSION` and the page's 27 September 2026 date stay as they are, and providers do not accept again (decided 27 September 2026 by the product owner). The text changes booking terms that providers set themselves, not their obligations.
+
 The customer does not currently choose between full payment and deposit.
 
 Allowing the customer to choose among payment options enabled by the provider is a possible future feature.
