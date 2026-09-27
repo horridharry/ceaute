@@ -8,7 +8,7 @@ export const meta = {
     { title: 'Plan review', detail: 'two critics: invariants and product/scope' },
     { title: 'Preflight', detail: 'refuse to build on main or preview' },
     { title: 'Implement', detail: 'one agent per task, sequential, inside its file fence' },
-    { title: 'Verify', detail: 'change checklist commands plus a diff review' },
+    { title: 'Verify', detail: 'change checklist commands plus a diff review, with one fix attempt' },
   ],
 }
 
@@ -16,7 +16,7 @@ export const meta = {
 //   Workflow({ name: 'ceaute-change', args: { request: '...' } })
 //     -> { status: 'needs-owner-decisions' | 'plan-ready', brief, plan, objections }
 //   Workflow({ name: 'ceaute-change', args: { request, stage: 'build', brief, plan } })
-//     -> { status, tasks, checks, findings, acceptance }
+//     -> { status, tasks, fix_round, checks, findings, acceptance }
 // A plan can also start from typed text: /ceaute-change stage "plan": <request>.
 // The slash command passes that text as a string; the stage "plan": prefix and
 // its quotes are optional. Text cannot carry a brief and plan, so a build always
@@ -358,12 +358,6 @@ Read every file in the fence in full before editing. Stay inside the fence excep
 }
 
 phase('Verify')
-const checksRun = agent(
-  `Run the Ceaute change checklist commands from docs/engineering-principles.md and report each: npm test, npm run typecheck, npm run lint, npm run build. Do not edit any file and do not fix failures; report the relevant output lines.
-Do not run npx supabase db reset or npm run test:db: resetting wipes the owner's local data. Report "npm run test:db" as not-run with detail "${plan.migration ? 'needed: a migration changed; run after npx supabase db reset' : 'not needed: no migration'}".`,
-  { label: 'checks', phase: 'Verify', schema: CHECKS, effort: 'low' },
-)
-
 const REVIEW_LENSES = [
   {
     key: 'correctness-invariants',
@@ -374,10 +368,20 @@ const REVIEW_LENSES = [
     prompt: 'whether the diff delivers every change in the brief and nothing more: unrequested behaviour, copy or fields, edits outside the planned fences, missing tests, missing doc updates, and ceaute-product-design rules for anything visible.',
   },
 ]
-const reviewRun = pipeline(
-  REVIEW_LENSES,
-  (l) => agent(
-    `Review the uncommitted Ceaute change (git diff, plus git status for new files) for ${l.prompt}
+
+// One verify round: the checklist commands and the two diff reviews, run side by side.
+// Round 2 labels differ so the second round never reuses round 1's cached results.
+async function verify(round) {
+  const tag = round === 1 ? '' : `:${round}`
+  const checksRun = agent(
+    `Run the Ceaute change checklist commands from docs/engineering-principles.md and report each: npm test, npm run typecheck, npm run lint, npm run build. Do not edit any file and do not fix failures; report the relevant output lines.
+Do not run npx supabase db reset or npm run test:db: resetting wipes the owner's local data. Report "npm run test:db" as not-run with detail "${plan.migration ? 'needed: a migration changed; run after npx supabase db reset' : 'not needed: no migration'}".`,
+    { label: `checks${tag}`, phase: 'Verify', schema: CHECKS, effort: 'low' },
+  )
+  const reviewRun = pipeline(
+    REVIEW_LENSES,
+    (l) => agent(
+      `Review the uncommitted Ceaute change (git diff, plus git status for new files) for ${l.prompt}
 Report only defects you can point to at a file and line, with evidence. No style preferences.
 
 Brief:
@@ -385,31 +389,79 @@ ${json(brief)}
 
 Plan:
 ${json(plan)}`,
-    { label: `review:${l.key}`, phase: 'Verify', schema: FINDINGS, effort: 'high' },
-  ),
-  (review, l) => parallel((review ? review.findings : []).map((f) => () =>
-    f.severity !== 'blocking'
-      ? Promise.resolve({ lens: l.key, ...f, verdict: null })
-      : agent(
-        `Try to refute this review finding on the uncommitted Ceaute diff. Read the code yourself. Return real=false if the finding is wrong, already handled elsewhere, or outside what the brief asked for; default to real=false if you cannot confirm it.
+      { label: `review:${l.key}${tag}`, phase: 'Verify', schema: FINDINGS, effort: 'high' },
+    ),
+    (review, l) => parallel((review ? review.findings : []).map((f) => () =>
+      f.severity !== 'blocking'
+        ? Promise.resolve({ lens: l.key, ...f, verdict: null })
+        : agent(
+          `Try to refute this review finding on the uncommitted Ceaute diff. Read the code yourself. Return real=false if the finding is wrong, already handled elsewhere, or outside what the brief asked for; default to real=false if you cannot confirm it.
 
 Finding:
 ${json(f)}`,
-        { label: `refute:${f.file}`, phase: 'Verify', schema: VERDICT },
-      ).then((v) => ({ lens: l.key, ...f, verdict: v })),
-  )),
-)
+          { label: `refute:${f.file}${tag}`, phase: 'Verify', schema: VERDICT },
+        ).then((v) => ({ lens: l.key, ...f, verdict: v })),
+    )),
+  )
+  const [checks, reviewed] = await Promise.all([checksRun, reviewRun])
+  const findings = reviewed.filter(Boolean).flat().filter(Boolean)
+  return {
+    checks,
+    confirmed: findings.filter((f) => f.severity === 'blocking' && f.verdict && f.verdict.real),
+    dismissed: findings.filter((f) => f.severity === 'blocking' && !(f.verdict && f.verdict.real)),
+    minor: findings.filter((f) => f.severity === 'minor'),
+    failed: (checks ? checks.results : []).filter((c) => c.status === 'fail'),
+  }
+}
 
-const [checks, reviewed] = await Promise.all([checksRun, reviewRun])
-const findings = reviewed.filter(Boolean).flat().filter(Boolean)
-const confirmed = findings.filter((f) => f.severity === 'blocking' && f.verdict && f.verdict.real)
-const dismissed = findings.filter((f) => f.severity === 'blocking' && !(f.verdict && f.verdict.real))
-const minor = findings.filter((f) => f.severity === 'minor')
-const failed = (checks ? checks.results : []).filter((c) => c.status === 'fail')
+let v = await verify(1)
+
+// One fix attempt: failed commands and confirmed blocking findings go back to a
+// fixer inside the plan's fences, then everything is checked again. Minor and
+// dismissed findings are not sent back. A second failure goes to the owner.
+let fixRound = null
+if (v.failed.length || v.confirmed.length) {
+  const fence = [...new Set([...plan.tasks.flatMap((t) => t.files), ...done.flatMap((d) => d.files_changed)])]
+  const protectedWork = plan.tasks.some((t) => t.protected)
+  log(`${v.failed.length} failed check(s) and ${v.confirmed.length} blocking finding(s); one fix attempt`)
+  const fix = await agent(
+    `Fix the problems below in the uncommitted Ceaute change, and nothing else.
+
+Failed checks:
+${json(v.failed)}
+
+Confirmed blocking review findings:
+${json(v.confirmed.map((f) => ({ file: f.file, line: f.line, claim: f.claim, evidence: f.evidence })))}
+
+Files you may touch (the fence): ${fence.join(', ')}
+
+Product brief, for context only; do not add to it:
+${json({ changes: brief.changes, preserve: brief.preserve })}
+
+Read each file in full before editing it. Make the smallest fix for each problem. If a fix needs a decision the brief and plan do not make, or a file outside the fence, stop and report instead of guessing. Never edit an existing migration, run db push, db reset, link, deploy, change env vars, commit or push. Run the relevant unit tests before returning.`,
+    {
+      label: 'fix',
+      phase: 'Verify',
+      // Same model rule as Implement: any protected task keeps the fix on the session model.
+      agentType: protectedWork ? undefined : 'bounded-implementer',
+      effort: protectedWork ? 'high' : undefined,
+      schema: DONE,
+    },
+  )
+  fixRound = {
+    first_round: { failed_checks: v.failed, blocking_findings: v.confirmed },
+    fix: fix || { status: 'stopped', files_changed: [], summary: '', stop_reason: 'fixer returned nothing' },
+  }
+  if (fix && fix.status === 'done') v = await verify(2)
+}
+
+const { checks, confirmed, dismissed, minor, failed } = v
 
 return {
   status: failed.length || confirmed.length ? 'needs-fixes' : 'ready-for-acceptance',
   tasks: done,
+  // null when round 1 passed; otherwise what round 1 found and what the fixer did.
+  fix_round: fixRound,
   checks: checks ? checks.results : 'checks agent returned nothing',
   blocking_findings: confirmed,
   dismissed_findings: dismissed,
