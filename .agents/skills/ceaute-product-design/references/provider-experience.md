@@ -21,7 +21,7 @@ A provider needs the following before going live:
 
 - at least one Treatment
 - Location
-- Availability
+- Availability: at least one date from today on with times, even if its drop has not opened
 - Payments configured
 - provider/business Category
 
@@ -254,53 +254,29 @@ The provider nickname is a provider-management aid, not a public substitute for 
 
 ## Availability
 
-Availability consists of:
+Decided 27 September 2026 by the product owner
+(`docs/decisions/007-availability-released-in-drops.md`): providers release
+their time in drops. This replaces weekly hours and blocked dates. The current
+weekly-hours screen is legacy until it is rebuilt.
 
-1. normal weekly working hours
-2. blocked dates
+The provider's task, done easily on a phone:
 
-### Weekly hours
+1. pick dates, usually in one month, by tapping them;
+2. give the chosen dates their times together, then change single dates if needed;
+3. choose when those dates drop: a date and a time, or now.
 
-The normal state should be easy to scan.
+Each date has either:
 
-Example:
+- **hours**: one range, such as 10 am to 5 pm; Ceaute offers every start that fits
+- **start times**: exact times, such as 10 am, 12 pm and 3 pm; only those are offered
 
-Monday 9 am to 5 pm
-──────────────────────────────────────────
-Tuesday 9 am to 5 pm
-──────────────────────────────────────────
-Wednesday Closed
-──────────────────────────────────────────
+Never both on one date. The provider never types individual 15-minute starts.
 
-Selecting a weekday expands its editing controls.
+A **drop** is a group of dates with one **drop time**. Until the drop time nobody else can see or book those dates. A provider can have several drops, for example 1–14 November and 15–30 November. Ceaute names a drop by its dates; there is no name to type.
 
-Example:
+Everything stays editable after a drop opens: dates, times and the drop time. Moving the drop time later hides the dates again. Bookings already made never change.
 
-Monday 9 am to 5 pm
-
-☑ Open on Monday
-
-Opens Closes
-9 am 5 pm
-──────────────────────────────────────────
-
-A provider can:
-
-- mark a weekday open/closed
-- choose start time
-- choose end time
-
-Changes are explicitly saved.
-
-For the MVP, a simple divider beneath weekday rows is acceptable.
-
-This divider is an MVP presentation choice, not a permanent brand rule.
-
-### Blocked dates
-
-Blocked dates are exceptions to normal weekly availability.
-
-If the provider normally works Friday but is unavailable on one particular Friday, they can block that calendar date.
+There is no usual week and no blocked-dates list. A date without times is closed.
 
 Do not turn the MVP into complex calendar-management software.
 

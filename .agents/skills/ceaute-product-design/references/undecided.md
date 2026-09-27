@@ -179,6 +179,20 @@ Any broader category taxonomy/discovery behaviour not explicitly defined elsewhe
 
 Do not invent additional Treatment category systems from legacy code or documentation.
 
+## Drops: later
+
+Left out of the first drops release on 27 September 2026 (`docs/decisions/007-availability-released-in-drops.md`).
+
+The drop kit (idea #6), a share image and link for a drop, is approved as its own change straight after drops. What it says and how it looks are UNDECIDED.
+
+Do not build without a new decision:
+
+- messaging customers in the app: no
+- an email to customers when a drop opens: only if it adds MVP value
+- reminders to the provider, such as "nothing open after 31 October": only if they add MVP value
+- an "always open" option that creates dates by itself
+- several time ranges on one date
+
 ## Future functionality generally
 
 A future idea is not an MVP requirement.

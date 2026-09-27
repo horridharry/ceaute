@@ -93,7 +93,7 @@ Reviews should be sorted most recent first unless product direction changes.
 
 ## Availability
 
-The public provider page should expose the provider's normal opening hours.
+Decided 27 September 2026 by the product owner (`docs/decisions/007-availability-released-in-drops.md`): the page says what is open for booking and when the next drop opens, for example "October is open for booking" and "November opens on 15 October at 7 pm". Providers no longer have weekly opening hours, so the page does not show them. It never shows the dates of a drop before its drop time.
 
 This is customer-readable availability information rather than provider editing controls.
 
@@ -125,6 +125,8 @@ They should be able to move through dates easily, including swiping where approp
 If the selected date has no availability, provide a clear way to go to the next available date.
 
 The customer should not have to manually hunt through empty dates.
+
+When nothing is open, say when the next drop opens instead of showing closed days. At the drop time the dates appear without the customer reloading (decided 27 September 2026, decision 007).
 
 ## Review
 
