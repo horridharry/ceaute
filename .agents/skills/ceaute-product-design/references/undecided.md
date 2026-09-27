@@ -197,6 +197,11 @@ Do not build without a new decision:
 - an "always open" option that creates dates by itself
 - several time ranges on one date
 
+Raised in the 27 September 2026 usability test (`docs/reports/2026-09-27-availability-usability-test.md`), to research before any design:
+
+- premium slots: early times kept for chosen customers, or times anyone can book for a higher price. One provider asked once.
+- seeing the result after saving a drop: whether the provider means the storefront, the booking screen or a summary, and whether the link to their own page already covers it.
+
 ## Future functionality generally
 
 A future idea is not an MVP requirement.

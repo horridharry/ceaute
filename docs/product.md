@@ -337,12 +337,20 @@ hold is created, so changing the JavaScript calculator alone does not change
 the accepted booking rules.
 
 Providers manage availability at `/dashboard/availability` in drops: a group
-of dates with one drop time. The provider picks dates on a month grid, gives
-the chosen dates their times together with "Set times" (hours or start
-times, never both), and chooses the drop time, "Now" or "Later". One Save
-covers a drop's dates, times and drop time. Leaving with unsaved changes asks
-first, whether through Ceaute's links or browser back/forward; reload and
-closing the tab use the browser's own prompt, which iOS Safari never shows,
+of dates with one drop time. The list shows one card per drop with an "Edit"
+link, and "Add dates" below the list (or in the empty state). Adding dates
+opens `/dashboard/availability/new` (titled "Add dates") and editing a drop
+opens `/dashboard/availability/[dropId]/edit` (titled with the drop's name and
+its status line), each with a back link to Availability, so browser Back
+returns to the list. An unknown drop, another provider's drop or a drop whose
+dates have all passed is not found. On the editor the provider picks dates on
+a month grid, gives the chosen dates their times together with "Set times"
+(hours or start times, never both), and chooses the drop time, "Now" or
+"Later". One Save covers a drop's dates, times and drop time and returns to
+the list; a failed save keeps the provider's input and shows why. Cancel
+returns to the list. Leaving with unsaved changes asks first, whether
+through Ceaute's links (Cancel and the back link included) or browser
+back/forward; reload and closing the tab use the browser's own prompt, which iOS Safari never shows,
 so those two cases are unprotected on iPhone (a browser limitation). After a
 drop opens, adding or removing dates, changing times or moving the drop time
 asks for no confirmation; moving it later hides the dates again, and bookings
