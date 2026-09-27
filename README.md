@@ -1,10 +1,12 @@
 # Ceaute
 
-Ceaute is a marketplace for independent beauty providers. A provider publishes
-a public page containing their treatments, portfolio, location area,
-availability, and booking terms. A customer can discover that page, choose a
-treatment and time, pay through Stripe, manage the booking, and review a
-completed appointment.
+Ceaute gives independent beauty providers their own booking page and link to
+share with the clients they already have. A provider publishes a public page
+containing their treatments, portfolio, location area, availability, and
+booking terms. A customer opens that page, chooses a treatment and time, pays
+through Stripe, manages the booking, and reviews a completed appointment.
+Discover, where customers browse providers, exists but comes later in the pitch,
+until an area has enough providers to browse.
 
 One signed-in person may use both sides of the product. Creating a provider page
 does not create a second account or a separate provider user type.
@@ -43,6 +45,7 @@ it rather than repeating it.
 | [Architecture](docs/architecture.md) | Where behaviour lives, which boundary is authoritative, where a change belongs | A boundary, integration, or slice changes |
 | [Design system](docs/design-system.md) | Colour tokens, the light-only baseline, the shared UI primitives and their accessibility conventions | A token, primitive or UI convention changes |
 | [Provider agreement (draft)](docs/provider-agreement-draft.md) | What providers accept before taking paid bookings, and the version acceptance is recorded against | The agreement's substance changes — bump the version with it |
+| [Pilot](docs/pilot.md) | How the first real providers are brought on: the pilot price and start dates | A pilot provider's terms, order or dates change |
 | [Dispute response](docs/dispute-response.md) | What happens when a customer disputes a payment, and what a person must do by hand | The dispute flow or its limitations change |
 | [Releasing](docs/release.md) | How a change reaches Preview and production, when to promote, what is still open before the first alpha invitation, how production migrations are applied | The release path or promotion trigger changes, or a before-alpha item opens or closes |
 | [Verification](docs/verification.md) | How acceptance is run and reported beyond the automated tests: statuses, database tests, local and Preview browser checks | A verification method or reporting rule changes |

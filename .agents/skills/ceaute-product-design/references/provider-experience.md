@@ -338,9 +338,7 @@ Provider chooses:
 
 If Deposit is selected, the provider sets a percentage of the Treatment price to be paid online.
 
-Fixed-amount deposits are not currently part of the intended MVP model.
-
-They may be considered later if provider feedback indicates a need.
+Decided 27 September 2026 by the product owner (`docs/decisions/008-flat-deposit.md`): a Deposit is either a flat amount, one £ figure for the whole business, or a percentage. Flat is offered first and is the default. A late cancellation keeps the whole flat deposit. Full payment is unchanged.
 
 ### Cancellation window
 
@@ -353,6 +351,14 @@ Provider chooses free cancellation up to:
 Do not expose underlying refund-processing mechanics here.
 
 The provider is choosing a business policy, not configuring payment infrastructure.
+
+### House rules
+
+Decided 27 September 2026 by the product owner: the one written-policy box becomes house rules under fixed headings that Ceaute sets, such as Guests, Lateness, Preparation, Aftercare and Other. Each heading is optional free text in the provider's own words. It is text only: Ceaute does not charge a late fee written there, and adds no tick box, because every booking already keeps a copy of what the customer saw.
+
+Text in today's single written-policy box is not carried over: a provider starts their house rules afresh. Production has no providers, and bookings already made keep their copy.
+
+This follows the rule that platform rules (money, time, access) stay standard and Ceaute enforces them, while the provider's own words fit inside a fixed structure.
 
 ## Payments
 
