@@ -15,16 +15,55 @@ still unverified before the first alpha invitation is in
 - Keyboard activation is verified by the owner with a real keyboard. Agent
   browser tools cannot trigger the default action of Enter, Space or Escape,
   so keyboard activation stays unverified until the owner reports it.
-- Records are never created or edited on production for testing, and dev data
-  is not manufactured just to close an acceptance gap. Record the gap instead.
-- Agents never sign in with a password or email code. The owner signs in to
-  the browser themselves.
+- Records are never created or edited on production for testing, and
+  `ceaute-dev` data is not manufactured just to close an acceptance gap.
+  Record the gap instead. The local stack is disposable and is seeded on
+  purpose (see [Local agent runs](#local-agent-runs)).
+- On Preview and production, agents never sign in; the owner signs in to the
+  browser themselves. On the local stack, agents sign in to the seeded
+  `@ceaute.test` accounts with `npm run local:sign-in` (decided by the owner on
+  28 September 2026). Never with a password, an email code or a real person's
+  account.
+- A booking or payment step is verified by the records it leaves, not by the
+  screen that follows it. On the local stack that is `npm run local:timeline`
+  with its checks agreeing; a confirmation page alone is unverified.
 
 ## Database tests
 
 Run `npm run test:db` on a freshly reset local database
 (`npx supabase db reset`). The pgTAP tests use fixed ids, so they fail with
 collisions on a local database that already holds hand-made data.
+
+## Local agent runs
+
+The local stack lets an agent run a whole journey without the owner: publish,
+book, pay, cancel and refund, then read the result from the database and from
+Stripe. Everything in `scripts/local/` refuses to run unless Supabase is the
+local stack, so none of it can reach `ceaute-dev` or production.
+
+| Command | What it does |
+| --- | --- |
+| `npx supabase db reset && npm run local:seed` | A clean database with `provider@ceaute.test` (page `@local.nails`, draft, ready to publish once payments are set up) and `customer@ceaute.test` |
+| `npm run local:start` (or preview_start `ceaute-local`) | Builds and serves the app on `http://localhost:3100` against the local stack and the local Stripe sandbox, with Stripe events forwarded by the Stripe CLI. `-- --no-build` reuses the last build; `-- --no-stripe` runs without a sandbox key, so payments fail |
+| `npm run local:sign-in -- provider [path]` | Prints a one-time sign-in link for a seeded account (`provider`, `customer` or any `@ceaute.test` user); open it in the browser pane |
+| `npm run local:timeline -- latest [--stripe]` | One booking's history in time order and checks that its records agree; `--stripe` also compares amounts with the Stripe sandbox. Exits 1 on a disagreement |
+
+One-time setup by the owner:
+
+1. Create a Stripe test sandbox used only for local runs, never the sandbox
+   Preview uses, so local Checkout events never reach Preview's webhook.
+2. Put its test secret key in `.env.localstack` (gitignored) as
+   `STRIPE_SECRET_KEY=sk_test_…`.
+3. Start the app, sign in as the provider, set up payments on Settings →
+   Payments and finish Stripe's test onboarding in the browser.
+4. Run `npm run local:seed -- --remember-stripe-account`. Every later seed then
+   starts with payments ready.
+
+What a local run does not cover: emails are queued in the outbox but not sent
+(the Resend key is a placeholder), Supabase Cron does not call the app, and
+Preview's own configuration (domains, protection, webhook destinations) is not
+exercised. Keyboard activation still needs the owner. `npm run test:db` needs
+a reset without the seed, so reset again before running it.
 
 ## Browser acceptance on this machine
 

@@ -48,7 +48,8 @@ it rather than repeating it.
 | [Pilot](docs/pilot.md) | How the first real providers are brought on: the pilot price and start dates | A pilot provider's terms, order or dates change |
 | [Dispute response](docs/dispute-response.md) | What happens when a customer disputes a payment, and what a person must do by hand | The dispute flow or its limitations change |
 | [Releasing](docs/release.md) | How a change reaches Preview and production, when to promote, what is still open before the first alpha invitation, how production migrations are applied | The release path or promotion trigger changes, or a before-alpha item opens or closes |
-| [Verification](docs/verification.md) | How acceptance is run and reported beyond the automated tests: statuses, database tests, local and Preview browser checks | A verification method or reporting rule changes |
+| [Verification](docs/verification.md) | How acceptance is run and reported beyond the automated tests: statuses, database tests, local agent runs, local and Preview browser checks | A verification method or reporting rule changes |
+| [Rules and evidence](docs/rules-and-evidence.md) | Which check proves each rule that protects money, bookings or privacy, and which rules have none | A protected rule or its check changes |
 | [Stripe Preview testing](docs/stripe-preview-testing.md) | How Stripe Test webhooks are routed to the designated Vercel Preview | Preview integration routing or webhook assumptions change |
 | [Stripe Live activation](docs/stripe-live-activation.md) | What the owner must do to switch Stripe from Test to Live | An activation step is completed or a new one is found |
 | [Decisions](docs/decisions/) | Why the few non-obvious choices were made and what reversing them costs | A one-way-door decision is made or revisited |

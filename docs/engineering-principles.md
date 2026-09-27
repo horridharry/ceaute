@@ -127,6 +127,8 @@ Before opening a pull request:
   authentication, because those paths have no automated end-to-end test.
 - `docs/product.md` or `docs/architecture.md` is updated when observable
   behaviour or a boundary changed.
+- `docs/rules-and-evidence.md` is updated when a money, booking or privacy
+  rule, or the test that proves it, changed.
 
 ## When to write a decision record
 

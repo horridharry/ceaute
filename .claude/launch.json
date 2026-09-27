@@ -10,6 +10,15 @@
       ],
       "port": 3000,
       "autoPort": true
+    },
+    {
+      "name": "ceaute-local",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "local:start"
+      ],
+      "port": 3100
     }
   ]
 }
