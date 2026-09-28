@@ -88,7 +88,7 @@ is real money:
 | | Can it be assigned to the provider? | Can Stripe recover it? |
 | --- | --- | --- |
 | The disputed amount | Yes, by agreement | Only by a **manual transfer reversal**, which needs funds still in the connected account and **fails once the provider has been paid out** |
-| Stripe's £15 dispute fee | In principle | **No.** Stripe's Connect terms forbid passing a dispute fee to a connected account |
+| Stripe's £15 dispute fee | In principle | **No.** Ceaute carries it. Stripe's private-preview [cost passthrough](https://docs.stripe.com/connect/cost-passthrough) could pass it on; Ceaute does not use it |
 | The original processing fee | Yes, by agreement | No — it is never returned |
 
 On a disputed £10.00 deposit, Ceaute is out **£24.80** if nothing is clawed

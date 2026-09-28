@@ -207,15 +207,14 @@ test("only an attempt that took money counts as paid", () => {
   );
 });
 
-test("checkout names the trader and links the Terms and Privacy Notice before payment", () => {
+// For the pilot, checkout carries no agreement line and no trader details
+// (docs/product.md, decided 28 September 2026).
+test("checkout states the hold and leaves out the agreement line and trader details", () => {
   const html = renderToStaticMarkup(h(CheckoutFinePrint));
-  assert.match(html, /href="\/terms"/);
-  assert.match(html, /href="\/privacy"/);
   assert.match(html, /We hold this time for 10 minutes/);
-  assert.match(html, /Trader details/);
-  assert.ok(html.includes(legalIdentity.operatorName));
-  assert.ok(html.includes(legalIdentity.businessAddress));
-  assert.ok(html.includes(legalIdentity.contactEmail));
+  assert.doesNotMatch(html, /By continuing you agree/);
+  assert.doesNotMatch(html, /Trader details/);
+  assert.ok(!html.includes(legalIdentity.businessAddress));
 });
 
 test("cancelling and reviewing report their outcome in the customer's words", () => {

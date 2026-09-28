@@ -46,18 +46,13 @@ private-alpha invitation. Delete an item when it closes; mark it
 verified and reported is in [Verification](verification.md).
 
 - Owner: a real-keyboard pass across all new screens (unverified).
-- Owner: the contact inbox and business address are real (the support email
-  must not be a placeholder), and the full provider agreement is shown before
-  acceptance.
+- Accepted risk for the pilot: the full provider agreement is not shown
+  before acceptance (see [Pilot](pilot.md#legal-during-the-pilot)).
 - Owner: tell any pilot provider that their weekly hours and blocked dates
   are deleted when drops ship.
 - Owner and agent on Preview: rehearse a full drop before a pilot provider's
   first one (the owner signs in for the provider side), watching the reload
   of waiting booking screens.
-- Agent: confirm the Preview environment variables and Stripe mode
-  (`vercel env ls`), and run the deployed smoke tests on Preview that were
-  blocked by the login wall: storefront gallery, treatments, reviews,
-  availability, closure, and the design-system pages (`vercel curl`).
 - Flat deposit on Preview: a late customer cancellation and a provider
   cancellation of a flat-deposit booking, and the setup, pause and pre-006
   notice wording (database and unit tests only; see

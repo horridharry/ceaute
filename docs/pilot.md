@@ -19,10 +19,26 @@ while Stripe charges Ceaute about £2 a month for each active provider. That
 loss is accepted for the pilot. Every provider interview asks what they pay
 today and what they would pay, so the pilot ends with a price.
 
+## Legal during the pilot
+
+Decided 28 September 2026 by the product owner. While every pilot provider is
+a personal connection, Ceaute carries the minimum legal detail:
+
+- `/terms` and `/privacy` are short versions, linked from the footer.
+- Checkout has no "By continuing you agree" line and no trader details.
+- Providers still accept the provider agreement before publishing, because it
+  is what makes a lost dispute the provider's cost. The full agreement text is
+  not shown in the product and no solicitor has read it (accepted risk).
+
+Before the first provider who is not a personal connection joins, bring back
+the full Terms and Privacy pages and the checkout line and trader details
+(`git log` on those files has the full versions).
+
 ## Start dates
 
-UNDECIDED: which provider starts first, and when. No provider is starting
-now, and there is no set point for choosing.
+Decided 28 September 2026 by the product owner: C starts first, the provider
+who takes bookings by Instagram DM and has no booking system. The start date
+is UNDECIDED.
 
 The interview report says C "could start now". That misreads the interview:
 C was asked a hypothetical question ("imagine you started today, what would

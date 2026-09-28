@@ -25,9 +25,9 @@ function toPence(value) {
 // The debt a lost dispute creates. Deliberately narrow:
 //
 //   * the reversed payment amount is the provider's, per the settled rule;
-//   * Stripe's dispute fee is NOT included — Stripe's Connect terms forbid
-//     passing it to a connected account, so it is Ceaute's cost and recording
-//     it as provider debt would be recording a debt Ceaute may not collect;
+//   * Stripe's dispute fee is NOT included — the provider agreement makes it
+//     Ceaute's cost (Stripe's private-preview cost passthrough could pass it
+//     on, but Ceaute does not use it);
 //   * the non-refundable processing cost is NOT included — the settled rule
 //     puts that with Ceaute on a dispute;
 //   * a Ceaute-caused dispute creates no provider debt at all.

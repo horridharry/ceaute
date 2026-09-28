@@ -19,14 +19,12 @@ deliberately. Ceaute refuses to make a Stripe call when `STRIPE_MODE` and
       One residual exposure remains, recorded there: the processing component
       is an estimate at Stripe's published UK rate, so a commercial or non-UK
       card costs more than was retained and Ceaute absorbs the difference.
-- [ ] **Decide who absorbs refunds and chargebacks.** Now modelled on all four
-      scenarios in
-      [the refund economics report](reports/2026-09-18-refund-economics-and-provider-liability.md),
-      which sets out the three coherent answers and the draft agreement
-      wording. Today Ceaute absorbs 35p on every fully refunded £10 deposit and
-      goes negative on any partial refund above ~37%. A provider agreement can
-      allocate the liability but cannot create a way to collect it: there is no
-      set-off against future payouts.
+- [x] **Decide who absorbs refunds and chargebacks.** Decided 28 September
+      2026 by the owner: Ceaute absorbs the cost of refunds (today about 35p
+      on every fully refunded £10 deposit, more on partial refunds; see
+      [the refund economics report](reports/2026-09-18-refund-economics-and-provider-liability.md)).
+      The provider is liable for chargebacks, through the provider agreement
+      and the provider debt below.
 - [x] **Handle dispute events.** Done, at the minimum useful level: all five
       `charge.dispute.*` events are recorded idempotently, the operator is
       emailed on every material moment, and `GET /api/operator/disputes` lists
@@ -37,19 +35,29 @@ deliberately. Ceaute refuses to make a Stripe call when `STRIPE_MODE` and
       dispute records the reversed amount as provider debt; an operator can
       recover what the connected account still covers and the rest stays
       outstanding; a provider with outstanding debt cannot take new paid
-      bookings. Stripe's dispute fee is excluded, because Stripe's Connect
-      terms forbid passing it on. See
+      bookings. Stripe's dispute fee is excluded: Ceaute carries it. Stripe
+      offers a private-preview feature that passes dispute fees to connected
+      accounts ([cost passthrough](https://docs.stripe.com/connect/cost-passthrough));
+      Ceaute does not use it yet. See
       [the provider agreement draft](provider-agreement-draft.md).
-- [ ] **Have the provider agreement reviewed.** Providers accept version
-      2026-09-18 in the product before taking paid bookings, and no solicitor
-      has read it.
-- [ ] **Decide what Ceaute does about the money in a dispute.** Recording it
-      does not recover it. A disputed £10.00 deposit costs Ceaute **£24.80**
+- [x] **Have the provider agreement reviewed.** Accepted risk for the
+      pilot (owner, 28 September 2026): providers accept version 2026-09-18 in
+      the product before taking paid bookings, and no solicitor has read it.
+- [x] **Decide what Ceaute does about the money in a dispute.** Decided 28
+      September 2026 by the owner: for the pilot Ceaute carries Stripe's
+      dispute fee and recovers the disputed amount from the provider by hand.
+      Stripe debits a destination charge's disputed amount and fee from the
+      platform balance, so a disputed £10.00 deposit costs Ceaute **£24.80**
       with no clawback and still **£15.35** after a perfect manual transfer
-      reversal, because Stripe's Connect terms forbid passing the £15.00
-      dispute fee to a connected account. Nothing reverses a transfer
-      automatically and there is no set-off against future payouts.
-- [ ] **Decide what happens to existing Test-mode data.** Stored `acct_*` and
+      reversal. Nothing reverses a transfer automatically and there is no
+      set-off against future payouts. Before providers who are not personal
+      connections join, ask Stripe for access to
+      [cost passthrough](https://docs.stripe.com/connect/cost-passthrough),
+      which can pass the dispute fee on; that also needs a new provider
+      agreement version.
+- [x] **Decide what happens to existing Test-mode data.** Not applicable
+      (owner, 28 September 2026): production has never held test data, so
+      nothing is reset. The risk below applies only to a database that has. Stored `acct_*` and
       `pi_*` identifiers are UNIQUE with no mode column. After the switch every
       one of them refers to a non-existent Live object: provider accounts will
       fail to re-fetch while their cached row still reads `ready`, and any

@@ -451,10 +451,11 @@ operation. Webhook events and payment attempts are designed for replay because
 Stripe delivery and network outcomes are not exactly-once.
 
 Review and pay and the held page show the cancellation deadline, what a late
-cancellation keeps, and any written policy; both link to `/terms` and
-`/privacy` and give the trader details. There is no separate policy-version record or
-acceptance checkbox: continuing to payment is the current acceptance
-interaction, and the displayed terms are preserved in the booking snapshot.
+cancellation keeps, and any written policy, and the displayed terms are
+preserved in the booking snapshot. For the pilot (decided 28 September 2026)
+checkout has no "By continuing you agree" line and no trader details, and
+`/terms` and `/privacy` are short versions reached from the footer; the full
+versions come back before providers who are not personal connections join.
 
 The booking snapshots the customer contact details and the selected provider,
 treatment, add-ons, price, duration, location, address, booking terms, and
