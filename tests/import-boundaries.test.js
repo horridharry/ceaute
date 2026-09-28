@@ -8,8 +8,9 @@ import { fileURLToPath } from "node:url";
 // docs/architecture.md: no "@/app/" specifier anywhere, src/features,
 // src/components and src/lib never reach into src/app, provider-dashboard
 // sections stay independent of one another, route groups do not import each
-// other's route-private modules, and the removed "catalog" umbrella concept
-// does not reappear. The checks are written as small pure functions over
+// other's route-private modules, the removed "catalog" umbrella concept
+// does not reappear, and no "use client" file imports the service-role
+// Supabase client (docs/engineering-principles.md invariant 3). The checks are written as small pure functions over
 // plain data (file path + source text) so each rule can be proven with an
 // in-test fixture before it is run against the real tree.
 
@@ -193,6 +194,29 @@ function ruleNoCatalogWord(files) {
   return violations;
 }
 
+// --- rule 6: client modules never import the service-role client --------
+
+const SERVICE_ROLE_MODULE = "src/lib/supabase/service-role";
+// A directive only counts before the first statement, so allow leading
+// comments and whitespace but nothing else.
+const USE_CLIENT_DIRECTIVE_PATTERN =
+  /^(?:\s|\/\/[^\n]*|\/\*[\s\S]*?\*\/)*["']use client["']/;
+
+function ruleClientCodeDoesNotImportServiceRole(files) {
+  const violations = [];
+  for (const file of files) {
+    if (!USE_CLIENT_DIRECTIVE_PATTERN.test(file.source)) continue;
+    for (const specifier of file.specifiers) {
+      const resolved = resolveSpecifier(specifier, file.path);
+      if (!resolved) continue;
+      if (resolved.replace(CODE_EXTENSION_PATTERN, "") === SERVICE_ROLE_MODULE) {
+        violations.push(`${file.path} -> ${specifier}`);
+      }
+    }
+  }
+  return violations;
+}
+
 // --- real tree loading -----------------------------------------------------
 
 function walkFiles(absDir, relDir) {
@@ -353,6 +377,45 @@ test("rule 5 fixture: catches the umbrella word in a name or in source", () => {
   ]);
 });
 
+test("rule 6 fixture: catches a client module importing the service-role client", () => {
+  const importLine = 'import { createServiceRoleClient } from "@/lib/supabase/service-role";';
+  const clean = [
+    {
+      path: "src/app/(site)/discover/queries.js",
+      source: importLine,
+      specifiers: ["@/lib/supabase/service-role"],
+    },
+    {
+      path: "src/features/x/form.jsx",
+      source: '"use client";\nimport { createClient } from "@/lib/supabase/client";',
+      specifiers: ["@/lib/supabase/client"],
+    },
+    {
+      path: "src/lib/x/notes.js",
+      source: `${importLine}\n// A "use client" file must not import this.`,
+      specifiers: ["@/lib/supabase/service-role"],
+    },
+  ];
+  const dirty = [
+    {
+      path: "src/features/x/form.jsx",
+      source: `"use client";\n${importLine}`,
+      specifiers: ["@/lib/supabase/service-role"],
+    },
+    {
+      path: "src/lib/supabase/widget.tsx",
+      source: "// Browser widget.\n'use client'\nimport x from './service-role.ts';",
+      specifiers: ["./service-role.ts"],
+    },
+  ];
+
+  assert.deepEqual(ruleClientCodeDoesNotImportServiceRole(clean), []);
+  assert.deepEqual(ruleClientCodeDoesNotImportServiceRole(dirty), [
+    "src/features/x/form.jsx -> @/lib/supabase/service-role",
+    "src/lib/supabase/widget.tsx -> ./service-role.ts",
+  ]);
+});
+
 // --- the real tree ----------------------------------------------------
 
 const allFiles = loadFiles(walkFiles(path.join(REPO_ROOT, "src"), "src"));
@@ -407,5 +470,14 @@ test("real tree: no source file uses the removed catalog umbrella word", () => {
     violations,
     [],
     violationMessage('Files using "catalog"', violations),
+  );
+});
+
+test("real tree: no \"use client\" file imports the service-role client", () => {
+  const violations = ruleClientCodeDoesNotImportServiceRole(allFiles);
+  assert.deepEqual(
+    violations,
+    [],
+    violationMessage("Client modules importing the service-role client", violations),
   );
 });

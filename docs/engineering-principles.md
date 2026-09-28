@@ -106,6 +106,10 @@ These come first when a principle above conflicts with them:
    return URL.
 3. Row Level Security is not weakened, and `SUPABASE_SERVICE_ROLE_KEY` is
    never exposed to client code or a public environment variable.
+   `src/lib/supabase/service-role.ts` imports `server-only`, so the build
+   fails if a Client Component pulls it in, and rule 6 in
+   `tests/import-boundaries.test.js` fails `npm test` when a `"use client"`
+   file imports it.
 4. External work (Stripe, Resend) is claimed in the database before it is
    requested, with a stable idempotency key.
 
