@@ -61,16 +61,38 @@ export async function acceptProviderAgreement() {
 // reject a request. Those outcomes are returned to the payments screen as
 // messages; anything that is not a Stripe error keeps propagating so
 // programming mistakes still surface as errors.
+//
+// Each refresh logs how long its steps took. One local refresh on 28 September
+// 2026 spent 35 seconds in the Stripe retrieve, which normally takes half a
+// second, and the SDK retries failed calls silently. The attempt count and
+// Stripe's request id tell a slow Stripe response from a retried connection.
 export async function refreshPaymentStatus() {
-  const { supabase, providerPage } = await getSignedInProvider({
-    next: PAYMENTS_PATH,
-  });
-  const { data: paymentAccount, error } = await supabase
-    .schema("ceaute")
-    .from("provider_payment_account")
-    .select("stripe_account_id")
-    .eq("provider_page_id", providerPage.id)
-    .maybeSingle();
+  const actionStartedAt = performance.now();
+  const timingsMs = {};
+  const time = async (name, operation) => {
+    const startedAt = performance.now();
+
+    try {
+      return await operation();
+    } finally {
+      timingsMs[name] = Math.round(performance.now() - startedAt);
+    }
+  };
+
+  const { supabase, providerPage } = await time(
+    "authenticate_and_load_provider",
+    () => getSignedInProvider({ next: PAYMENTS_PATH }),
+  );
+  const { data: paymentAccount, error } = await time(
+    "load_payment_account",
+    () =>
+      supabase
+        .schema("ceaute")
+        .from("provider_payment_account")
+        .select("stripe_account_id")
+        .eq("provider_page_id", providerPage.id)
+        .maybeSingle(),
+  );
 
   if (error) {
     throw new Error("Could not load Stripe account.");
@@ -81,12 +103,18 @@ export async function refreshPaymentStatus() {
   }
 
   const stripe = getStripe();
+  const stripeCall = { attempts: 0, requestId: null };
+  stripe.on("request", () => {
+    stripeCall.attempts += 1;
+  });
+  stripe.on("response", (response) => {
+    stripeCall.requestId = response.request_id ?? null;
+  });
   let account;
 
   try {
-    account = await retrieveStripeAccount(
-      stripe,
-      paymentAccount.stripe_account_id,
+    account = await time("retrieve_stripe_account", () =>
+      retrieveStripeAccount(stripe, paymentAccount.stripe_account_id),
     );
   } catch (stripeError) {
     if (!isStripeError(stripeError)) {
@@ -96,6 +124,8 @@ export async function refreshPaymentStatus() {
     console.error("Stripe account refresh failed", {
       providerPageId: providerPage.id,
       stripeAccountId: paymentAccount.stripe_account_id,
+      stripeAttempts: stripeCall.attempts,
+      timingsMs,
       ...describeStripeError(stripeError),
     });
 
@@ -104,9 +134,18 @@ export async function refreshPaymentStatus() {
     );
   }
 
-  await syncProviderPaymentAccount({
-    providerPageId: providerPage.id,
-    account,
+  await time("sync_payment_account", () =>
+    syncProviderPaymentAccount({
+      providerPageId: providerPage.id,
+      account,
+    }),
+  );
+
+  console.info("Stripe status refreshed", {
+    stripeAttempts: stripeCall.attempts,
+    stripeRequestId: stripeCall.requestId,
+    timingsMs,
+    totalMs: Math.round(performance.now() - actionStartedAt),
   });
 
   revalidatePath("/dashboard", "layout");
