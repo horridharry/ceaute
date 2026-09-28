@@ -399,7 +399,9 @@ screens must not infer external completion from booking status alone.
 The transition to confirmed and the transition from confirmed to cancelled
 enqueue transactional email in a database outbox through a constraint trigger,
 and so does a late-payment refund operation (the customer is told their payment
-is being refunded); completion sends nothing. The webhook and cancellation paths
+is being refunded); completion sends nothing. `record_booking_refund_state`
+enqueues one operator email when a refund first becomes failed or cancelled,
+including after Stripe first reported success. The webhook and cancellation paths
 that cause an enqueue run a delivery pass with Next's `after()` once their
 response is sent (the fast path), and secret-protected cron routes claim and
 process email batches every 10 minutes as the safety net and complete elapsed

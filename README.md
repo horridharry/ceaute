@@ -47,6 +47,7 @@ it rather than repeating it.
 | [Provider agreement (draft)](docs/provider-agreement-draft.md) | What providers accept before taking paid bookings, and the version acceptance is recorded against | The agreement's substance changes — bump the version with it |
 | [Pilot](docs/pilot.md) | How the first real providers are brought on: the pilot price and start dates | A pilot provider's terms, order or dates change |
 | [Dispute response](docs/dispute-response.md) | What happens when a customer disputes a payment, and what a person must do by hand | The dispute flow or its limitations change |
+| [Failed refund response](docs/refund-failure-response.md) | What happens when Stripe cannot return a customer's refund, and what a person must do by hand | The failed-refund flow or its limitations change |
 | [Releasing](docs/release.md) | How a change reaches Preview and production, when to promote, what is still open before the first alpha invitation, how production migrations are applied | The release path or promotion trigger changes, or a before-alpha item opens or closes |
 | [Verification](docs/verification.md) | How acceptance is run and reported beyond the automated tests: statuses, database tests, local agent runs, local and Preview browser checks | A verification method or reporting rule changes |
 | [Rules and evidence](docs/rules-and-evidence.md) | Which check proves each rule that protects money, bookings or privacy, and which rules have none | A protected rule or its check changes |

@@ -176,6 +176,8 @@ async function processRefundEvent(refund: Stripe.Refund, eventCreatedAt: number)
     refund,
     eventCreatedAt,
   });
+  // A failed refund queues an operator email when this RPC commits.
+  sendBookingEmailsAfterResponse();
 }
 
 async function processFailureEvent(event: Stripe.Event) {

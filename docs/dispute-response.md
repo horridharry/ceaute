@@ -122,7 +122,7 @@ not a feature.
 
 | Variable | Purpose |
 | --- | --- |
-| `CEAUTE_OPERATOR_EMAIL` | Where dispute alerts go. Falls back to the published contact address, so alerts are never silently dropped. |
+| `CEAUTE_OPERATOR_EMAIL` | Where dispute alerts (and [failed-refund alerts](refund-failure-response.md)) go. Falls back to the published contact address, so alerts are never silently dropped. |
 | `CEAUTE_OPERATOR_SECRET` | Bearer token for `GET /api/operator/disputes`. Separate from `CRON_SECRET` on purpose: that one is a machine token in Supabase Vault, this one is read by a person. |
 
 The webhook endpoint must also subscribe to the five `charge.dispute.*` events

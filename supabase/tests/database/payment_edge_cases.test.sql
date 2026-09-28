@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions, ceaute;
 
-select plan(25);
+select plan(34);
 
 create temp table tap_results (result text);
 grant insert, select on table tap_results to authenticated, service_role;
@@ -214,19 +214,100 @@ insert into tap_results select is(
     where id = (select refund_operation_id from cancellation)),
   'succeeded', 'A stale event cannot regress refund success');
 
+-- A refund can report success and fail later (Stripe's card ending 5126).
+-- The ordering rule still comes first: a failure older than the success
+-- changes nothing.
 set local role service_role;
 select set_config('request.jwt.claim.role', 'service_role', true);
 insert into tap_results select lives_ok(
   $$select ceaute.record_booking_refund_state(
     (select refund_operation_id from cancellation), 're_edge', 'pi_edge_primary',
-    'ch_edge_primary', 5000, 'failed', 'late failure', 300
-  )$$, 'A later terminal replay remains idempotent');
+    'ch_edge_primary', 5000, 'failed', 'stale failure', 150, 'operator@example.test'
+  )$$, 'A stale failed refund event is ignored');
 
 reset role;
 insert into tap_results select is(
   (select status from ceaute.booking_refund_operation
     where id = (select refund_operation_id from cancellation)),
-  'succeeded', 'Succeeded refunds never regress');
+  'succeeded', 'A stale failure cannot undo refund success');
+
+set local role service_role;
+select set_config('request.jwt.claim.role', 'service_role', true);
+insert into tap_results select lives_ok(
+  $$select ceaute.record_booking_refund_state(
+    (select refund_operation_id from cancellation), 're_edge', 'pi_edge_primary',
+    'ch_edge_primary', 5000, 'failed', 'expired_or_canceled_card', 300,
+    'operator@example.test'
+  )$$, 'A newer failed refund event after success is accepted');
+
+reset role;
+insert into tap_results select is(
+  (select status from ceaute.booking_refund_operation
+    where id = (select refund_operation_id from cancellation)),
+  'failed', 'A refund that fails after succeeding is recorded as failed');
+insert into tap_results select is(
+  (select payment_status from ceaute.booking_payment_attempt
+    where id = (select payment_attempt_id from first_claim)),
+  'refund_failed', 'The payment no longer says the customer was refunded');
+insert into tap_results select ok(
+  (select refunded_at is null and refund_failed_at is not null
+      and failure_reason = 'expired_or_canceled_card'
+    from ceaute.booking_payment_attempt
+    where id = (select payment_attempt_id from first_claim)),
+  'The payment keeps no refunded time and records Stripe''s reason');
+insert into tap_results select ok(
+  (select succeeded_at is not null and failed_at is not null
+    from ceaute.booking_refund_operation
+    where id = (select refund_operation_id from cancellation)),
+  'The refund operation keeps when Stripe first reported success');
+insert into tap_results select is(
+  (select count(*)::integer from ceaute.booking_email_outbox
+    where booking_id = '32000000-0000-0000-0000-000000000001'
+      and event_type = 'refund_failed_operator'
+      and recipient_email = 'operator@example.test'
+      and recipient_role = 'operator'
+      and (payload ->> 'reported_success_first')::boolean
+      and (payload ->> 'refund_amount_pence')::bigint = 5000),
+  1, 'The late failure queues one operator email');
+insert into tap_results select ok(
+  (select not (payload ?| array[
+      'customer_email', 'customer_phone', 'address_line_1', 'postcode'
+    ])
+    from ceaute.booking_email_outbox
+    where booking_id = '32000000-0000-0000-0000-000000000001'
+      and event_type = 'refund_failed_operator'),
+  'The operator email carries no customer contact details or address');
+
+set local role service_role;
+select set_config('request.jwt.claim.role', 'service_role', true);
+insert into tap_results select lives_ok(
+  $$select ceaute.record_booking_refund_state(
+    (select refund_operation_id from cancellation), 're_edge', 'pi_edge_primary',
+    'ch_edge_primary', 5000, 'failed', 'expired_or_canceled_card', 300,
+    'operator@example.test'
+  );
+  select ceaute.record_booking_refund_state(
+    (select refund_operation_id from cancellation), 're_edge', 'pi_edge_primary',
+    'ch_edge_primary', 5000, 'succeeded', null, 250, 'operator@example.test'
+  );
+  select ceaute.record_booking_refund_state(
+    (select refund_operation_id from cancellation), 're_edge', 'pi_edge_primary',
+    'ch_edge_primary', 5000, 'succeeded', null, null, 'operator@example.test'
+  )$$, 'A replayed failure and an out-of-date success are accepted');
+
+reset role;
+insert into tap_results select ok(
+  (select refund_operation.status = 'failed'
+      and payment_attempt.payment_status = 'refund_failed'
+      and payment_attempt.refunded_at is null
+    from ceaute.booking_refund_operation as refund_operation
+    join ceaute.booking_payment_attempt as payment_attempt
+      on payment_attempt.id = refund_operation.booking_payment_attempt_id
+    where refund_operation.id = (select refund_operation_id from cancellation))
+  and (select count(*) = 1 from ceaute.booking_email_outbox
+    where booking_id = '32000000-0000-0000-0000-000000000001'
+      and event_type = 'refund_failed_operator'),
+  'A failed refund stays failed and emails the operator once');
 
 insert into tap_results select throws_matching(
   $$insert into ceaute.booking_refund_operation (
