@@ -1,6 +1,6 @@
 # How agents work on Ceaute — plan, 28 September 2026
 
-Status: **step 1 built on branch `agent-local-journey`; steps 2–6 not started.**
+Status: **steps 1 and 2 done and step 1 verified end to end on 28 September 2026; steps 3–6 not started.**
 
 The aim is for each week to show three things: something a provider can now
 do, the evidence that it works, and one piece of recurring work the owner no
@@ -50,12 +50,39 @@ The gaps:
 
 | # | Step | Required result | Status |
 | --- | --- | --- | --- |
-| 1 | Make one journey runnable by an agent: provider publishes → customer books and pays → provider cancels → customer is refunded | An agent runs it on the local stack and shows `local:timeline --stripe` with every check agreeing | Built. Sign-in, seed and timeline verified locally. Payment steps wait for the owner's sandbox setup |
+| 1 | Make one journey runnable by an agent: provider publishes → customer books and pays → provider cancels → customer is refunded | An agent runs it on the local stack and shows `local:timeline --stripe` with every check agreeing | Verified (see below) |
 | 2 | Link each important rule to its check ([rules and evidence](../rules-and-evidence.md)) | Every rule shows its test or says "no check" | Built with step 1 |
 | 3 | Test event orders, not single steps: hold expires, then a late payment arrives, then the event is retried, then the booking is cancelled | A script that runs these orders on the local stack and fails on any broken rule | Not started |
 | 4 | Make review independent: a reviewer that gets only the requirement and the code must give a reproducible counterexample, and a planted defect (for example, removing duplicate-event protection on a scratch branch) must be caught | One planted defect per money path, and each is caught | Not started |
 | 5 | Measure: for the next ten tasks, note the owner's active minutes, elapsed time to an accepted result, defects found later, and model cost | Ten rows, then compare | Not started |
 | 6 | Watch a real provider try one journey. An agent analyses the notes: each observation tied to evidence, competing explanations, and the cheapest test that tells them apart | One observed session and one decision it changed | Not started (owner-led) |
+
+### Step 1 result, 28 September 2026
+
+An agent ran the whole journey on the local stack against the "Ceaute Local"
+Stripe sandbox. It signed in with `local:sign-in` and published `@local.nails`.
+Casey booked a £35 Gel manicure with a £15 flat deposit, paying with Stripe's
+test card, and the provider then cancelled. `npm run local:timeline -- <id> --stripe`
+showed the following, with every check agreeing:
+
+- the booking was confirmed by `checkout.session.completed`, not by the return URL;
+- the provider cancellation recorded a £15.00 refund and kept £0.00;
+- the Stripe refund succeeded, and `refund.updated` was processed once;
+- Stripe received £15.00 and refunded £15.00, matching the database.
+
+Unverified: email delivery (sends fail on purpose with the placeholder Resend
+key), the owner's keyboard pass, and the same journey on Preview.
+
+Found on the way:
+
+- **Ceaute bug:** Ceaute reads a v2 account's outstanding requirements from
+  `requirements.summary`, but this API version lists them in
+  `requirements.entries`. A restricted account therefore looks
+  non-actionable, and a provider whose onboarding link expires has no way
+  back to Stripe. It is being fixed in a separate session.
+- **Script bug, fixed:** Stripe CLI 1.51 needs the forwarded events named.
+- **Script bug, fixed:** the `@/` test loader stubs `@/lib/stripe/server`,
+  so the scripts now import the real module by relative path.
 
 Tooling is capped: steps 1–4 get about a week in total. Providers do not wait
 for tooling.
