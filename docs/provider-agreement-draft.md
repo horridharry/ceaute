@@ -141,9 +141,11 @@ Three things a reviewer should look at first:
 3. **Clause 4's split follows the settled liability policy** in
    [decision 004](decisions/004-providers-bear-stripe-processing-fees.md) and
    [the refund economics report](reports/2026-09-18-refund-economics-and-provider-liability.md).
-   The exclusion of Stripe's dispute fee is not a drafting choice: Stripe's
-   Connect terms forbid passing it on, and the ledger refuses to record it as
-   provider debt.
+   Stripe's dispute fee is excluded and the ledger refuses to record it as
+   provider debt. The clause 4 reason (Stripe does not permit passing it on)
+   is out of date: Stripe's private-preview
+   [cost passthrough](https://docs.stripe.com/connect/cost-passthrough) can
+   pass it on. Correct clause 4 in the next agreement version.
 
 Unresolved, and recorded rather than drafted around: Ceaute still has no
 mechanism to compel payment of an outstanding balance beyond pausing bookings
