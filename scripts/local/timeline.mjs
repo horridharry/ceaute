@@ -114,7 +114,8 @@ if (withStripe) {
   const local = localEnv();
   process.env.STRIPE_MODE = "test";
   process.env.STRIPE_SECRET_KEY = local.STRIPE_SECRET_KEY;
-  const { getStripe } = await import("@/lib/stripe/server");
+  // By relative path: the test loader stubs "@/lib/stripe/server".
+  const { getStripe } = await import("../../src/lib/stripe/server.js");
   const stripe = getStripe();
   let refundedInStripe = 0;
   for (const a of attempts.filter((attempt) => attempt.stripe_payment_intent_id)) {

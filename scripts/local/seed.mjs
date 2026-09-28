@@ -134,7 +134,8 @@ if (local.LOCAL_STRIPE_ACCOUNT_ID) {
   if (!/^(sk|rk)_test_/.test(local.STRIPE_SECRET_KEY ?? "")) fail("LOCAL_STRIPE_ACCOUNT_ID needs the sandbox key too.");
   process.env.STRIPE_MODE = "test";
   process.env.STRIPE_SECRET_KEY = local.STRIPE_SECRET_KEY;
-  const { getStripe, retrieveStripeAccount, stripeAccountToPaymentAccount } = await import("@/lib/stripe/server");
+  // By relative path: the test loader stubs "@/lib/stripe/server".
+  const { getStripe, retrieveStripeAccount, stripeAccountToPaymentAccount } = await import("../../src/lib/stripe/server.js");
   const account = stripeAccountToPaymentAccount(await retrieveStripeAccount(getStripe(), local.LOCAL_STRIPE_ACCOUNT_ID));
   const text = (value) => (value === null || value === undefined ? "null" : `'${String(value).replaceAll("'", "''")}'`);
   const array = (values) => `array[${values.map((v) => text(typeof v === "string" ? v : JSON.stringify(v))).join(",")}]::text[]`;
