@@ -13,6 +13,7 @@ import { describeRestrictionForProvider } from "@/lib/payments/provider-liabilit
 import { calculateBookingFeeSplit } from "@/lib/payments/booking-payments";
 import { DashboardPage } from "../../_components/dashboard-page";
 import { PaymentActions } from "./_components/payment-actions";
+import { describeStripeRequirements } from "./_lib/requirement-labels";
 
 const money = new Intl.NumberFormat("en-GB", {
   style: "currency",
@@ -105,10 +106,10 @@ export default async function DashboardPaymentSettingsPage() {
   } = await getPaymentSettings();
   const restrictionMessage = describeRestrictionForProvider(restriction);
   const hasAccount = Boolean(paymentAccount?.stripe_account_id);
-  const requirements = [
+  const requirements = describeStripeRequirements([
     ...(paymentAccount?.requirements_past_due ?? []),
     ...(paymentAccount?.requirements_currently_due ?? []),
-  ];
+  ]);
   const status = {
     needs_information: hasAccount
       ? { label: "Action required", tone: "attention" }
