@@ -489,6 +489,13 @@ releases the appointment interval while the separately recorded refund may still
 be pending, retrying, failed, or awaiting manual review. A scheduled recovery
 pass retries refund operations that were recorded but never completed, so a
 Stripe outage during cancellation delays a refund rather than losing it.
+A card refund can report success and fail days later (for example an expired
+card). Stripe's later failure wins over its earlier success, so the booking
+then says the refund failed rather than refunded, while an out-of-date Stripe
+message still changes nothing. A failed refund is not retried; the operator is
+emailed and pays the customer another way by hand, and the customer is not
+emailed (decided by the owner on 28 September 2026; see
+[the failed refund runbook](refund-failure-response.md)).
 
 A protected scheduled route marks confirmed bookings completed after their end
 time. The customer attached to a completed booking may leave one 1–5 rating and
@@ -524,7 +531,8 @@ see [the dispute runbook](dispute-response.md).
 
 Transactional confirmation and cancellation email, and the email telling a
 customer their late payment is being refunded in full (no address, no timing
-promise), is written to a database outbox and sent through Resend straight away
+promise), and the operator's failed-refund alert, are written to a database
+outbox and sent through Resend straight away
 after the event that causes it; a scheduled pass every 10 minutes retries
 anything not yet sent, and the outbox's unique key sends each once. Delivery is
 claim-and-retry based. Appointment reminders, SMS, provider replies, distance

@@ -20,6 +20,7 @@ const EVENT_TITLES = {
   dispute_funds_withdrawn_operator: "Disputed funds were withdrawn",
   dispute_funds_reinstated_operator: "Disputed funds were reinstated",
   dispute_closed_operator: "A payment dispute closed",
+  refund_failed_operator: "Action needed: a refund didn’t reach the customer",
 };
 
 // HTML-only opening sentence; the plain-text alternative stays a list of facts.
@@ -44,6 +45,8 @@ const EVENT_INTROS = {
     "The dispute was resolved in Ceaute's favour and the funds have been returned.",
   dispute_closed_operator:
     "This dispute is now closed. The final status is below.",
+  refund_failed_operator:
+    "Stripe couldn’t return this refund to the customer’s card, so the money is back in Ceaute’s Stripe balance. Pay the customer another way and tell them yourself: Ceaute has not emailed them. See docs/refund-failure-response.md.",
 };
 
 export function bookingEmailSubject(email) {
@@ -174,6 +177,44 @@ function buildDisputeEmailContent(email, appUrl) {
   };
 }
 
+// Stripe failed a refund, possibly after first reporting success. Like a
+// dispute alert it is about money, not the appointment: no customer contact
+// details and no address. There is no booking link, because the booking
+// pages belong to the customer and the provider, not the operator.
+function buildRefundFailedEmailContent(email) {
+  const payload = email.payload ?? {};
+
+  return {
+    title: bookingEmailSubject(email),
+    intro: EVENT_INTROS[email.event_type] ?? "",
+    textIntro: EVENT_INTROS[email.event_type] ?? "",
+    badge: "Refund failed",
+    tone: "neutral",
+    sections: [
+      section(
+        "Refund",
+        [
+          row("Amount owed to the customer", formatMoneyFromPence(payload.refund_amount_pence)),
+          row("Stripe status", payload.refund_status),
+          row("Stripe’s reason", payload.failure_reason),
+          row("Reported as refunded first", payload.reported_success_first ? "Yes" : "No"),
+          row("Stripe refund", payload.stripe_refund_id),
+          row("Stripe payment", payload.stripe_payment_intent_id),
+        ],
+        { highlight: true },
+      ),
+      section("Booking", [
+        row("Provider", payload.provider_name),
+        row("Treatment", payload.treatment_name),
+        row("Appointment", formatSingleDateTime(payload.start_at)),
+        row("Cancelled by", payload.cancelled_by),
+        row("Booking", payload.booking_id),
+      ]),
+    ],
+    bookingUrl: "",
+  };
+}
+
 // A payment that arrived after the customer's held time ended: no booking was
 // made and the whole amount is refunded (Specification §13). It never carries
 // the provider's address and promises no refund timing.
@@ -212,6 +253,10 @@ function buildLatePaymentEmailContent(email, appUrl) {
 export function buildBookingEmailContent(email, appUrl) {
   if (String(email.event_type ?? "").startsWith("dispute_")) {
     return buildDisputeEmailContent(email, appUrl);
+  }
+
+  if (email.event_type === "refund_failed_operator") {
+    return buildRefundFailedEmailContent(email);
   }
 
   if (email.event_type === "late_payment_refunded_customer") {

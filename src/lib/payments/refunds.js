@@ -8,6 +8,7 @@ import {
   decideRefundSettlement,
   describeCancellationCause,
 } from "@/lib/payments/settlement-rules";
+import { resolveOperatorEmail } from "@/lib/payments/disputes";
 
 export function getStripeObjectId(value) {
   if (!value) {
@@ -51,6 +52,9 @@ export async function recordBookingRefundState({
       target_status: refund.status ?? "pending",
       target_failure_reason: refund.failure_reason ?? null,
       target_event_created_at: eventCreatedAt,
+      // Told when a refund fails, including one that first reported success,
+      // because a person must then pay the customer another way.
+      target_operator_email: resolveOperatorEmail(),
     },
   );
 

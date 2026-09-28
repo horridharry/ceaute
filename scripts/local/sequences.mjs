@@ -359,10 +359,14 @@ const SEQUENCES = {
       check(`the refund recovery job runs (${recover.status})`, recover.ok);
       const op = refundOps(id)[0];
       const stripeRefunds = await stripe.refunds.list({ payment_intent: intent.id });
-      check(`the refund is failed or waiting for review, never succeeded (${op.status})`, ["failed", "requires_review"].includes(op.status));
+      check(`the refund is recorded as failed (${op.status})`, op.status === "failed");
       check(`Stripe holds exactly one refund (${stripeRefunds.data.map((r) => r.status).join(", ")})`, stripeRefunds.data.length === 1);
-      check("the payment is not shown as refunded", attempts(id)[0].payment_status !== "refunded");
+      const attempt = attempts(id)[0];
+      check(`the payment shows the refund failed (${attempt.payment_status})`, attempt.payment_status === "refund_failed" && !attempt.refunded_at);
       check("no email says the refund went through", emails(id).every((e) => !/refund(ed|_succeeded)/.test(e.event_type)));
+      check("one operator email says the refund failed", emails(id).filter((e) => e.event_type === "refund_failed_operator" && e.recipient_role === "operator").length === 1);
+      // local:timeline still flags the failed refund, as it should; its
+      // Stripe comparison agrees (£0 refunded on both sides).
       return { ids: [id], timelineMayDisagree: true };
     },
   },

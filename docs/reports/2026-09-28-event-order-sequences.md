@@ -47,7 +47,7 @@ flat deposit, free cancellation up to 24 hours before) and Casey.
 | S3 | Pass |
 | S4 | **Fail: bug 1**. Pass after the fix |
 | S5 | **Fail: bug 1**. Without a recorded decline, Ceaute reuses the first page, so the premise never happens. Pass after the fix |
-| S6 | **Fail: bug 2** |
+| S6 | **Fail: bug 2**. Pass after the fix |
 | S7, S8, S9 | Pass |
 
 **Bug 1: Ceaute rejects Stripe's "card declined" message.** Stripe creates
@@ -80,6 +80,23 @@ operation is `succeeded`, so the later `refund.failed` is accepted and
 dropped. Ceaute keeps saying the customer was refunded, and nothing is
 flagged for review. `local:timeline --stripe` shows the disagreement:
 Stripe refunded £0, the database £15.
+
+**Bug 2 fixed, 28 September 2026** (migration
+`202609280002_record_refund_failure_after_success`). A `failed` or
+`canceled` refund from Stripe now moves a succeeded operation to `failed`
+(not `requires_review`: Stripe is definite, and neither state is retried),
+the payment to `refund_failed` with no refunded time, and queues one
+operator email; the customer is not emailed (owner decision). An older event
+than the last one recorded is still ignored. The earlier `refund.updated`
+in S6 still says `succeeded` (only the card reference changed); the failure
+arrives in `refund.failed`. In the sandbox after the failure, the transfer
+reversal from the provider and the 30p fee refund to them both stood, and
+Stripe returned £15 to Ceaute's balance as a `refund_failure`, so nothing is
+undone and Ceaute pays the customer by hand
+([runbook](../refund-failure-response.md)). S6 then passed, with its checks
+tightened to require `failed` and the operator email; `local:timeline
+--stripe` agrees that £0 was refunded and, correctly, still flags the failed
+refund.
 
 Also found: the local stack is shared, and another session changing the test
 provider mid-run made S6–S9 fail once. The runner now stops when that
