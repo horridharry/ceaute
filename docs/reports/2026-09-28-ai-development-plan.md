@@ -1,6 +1,6 @@
 # How agents work on Ceaute — plan, 28 September 2026
 
-Status: **steps 1–3 done on 28 September 2026 (step 3 found two payment bugs); steps 4–6 not started.**
+Status: **steps 1–4 done on 28 September 2026 (step 3 found two payment bugs; step 4 found review catches planted money bugs); steps 5–6 not started.**
 
 The aim is for each week to show three things: something a provider can now
 do, the evidence that it works, and one piece of recurring work the owner no
@@ -53,7 +53,7 @@ The gaps:
 | 1 | Make one journey runnable by an agent: provider publishes → customer books and pays → provider cancels → customer is refunded | An agent runs it on the local stack and shows `local:timeline --stripe` with every check agreeing | Verified (see below) |
 | 2 | Link each important rule to its check ([rules and evidence](../rules-and-evidence.md)) | Every rule shows its test or says "no check" | Built with step 1 |
 | 3 | Test event orders, not single steps: hold expires, then a late payment arrives, then the event is retried, then the booking is cancelled | A script that runs these orders on the local stack and fails on any broken rule | Built: `npm run local:sequences` ([report](2026-09-28-event-order-sequences.md)). Found two payment bugs |
-| 4 | Make review independent: a reviewer that gets only the requirement and the code must give a reproducible counterexample, and a planted defect (for example, removing duplicate-event protection on a scratch branch) must be caught | One planted defect per money path, and each is caught | Not started |
+| 4 | Make review independent: a reviewer that gets only the requirement and the code must give a reproducible counterexample, and a planted defect (for example, removing duplicate-event protection on a scratch branch) must be caught | One planted defect per money path, and each is caught | Done. Seven defects, one per money path (payment match, event replay, late payment, cancellation refund, deposit rounding, refund retry, webhook signature), each hidden in a small plausible change. The `ceaute-change` review caught all seven and the refute step confirmed each, so no second-model reviewer is needed for now |
 | 5 | Measure: for the next ten tasks, note the owner's active minutes, elapsed time to an accepted result, defects found later, and model cost | Ten rows, then compare | Not started |
 | 6 | Watch a real provider try one journey. An agent analyses the notes: each observation tied to evidence, competing explanations, and the cheapest test that tells them apart | One observed session and one decision it changed | Not started (owner-led) |
 
