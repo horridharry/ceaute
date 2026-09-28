@@ -1,6 +1,6 @@
 # Event-order sequences — proposal, 28 September 2026
 
-Status: **approved by the owner and built on 28 September 2026 as `npm run local:sequences`; 7 of 10 pass, and the 3 failures are two Ceaute bugs (see Results).** This is step 3 of
+Status: **approved by the owner and built on 28 September 2026 as `npm run local:sequences`; 7 of 10 passed at first, and the 3 failures were two Ceaute bugs (see Results). Bug 1 is fixed (migration `202609280001`); 9 of 10 now pass.** This is step 3 of
 the [agent development plan](2026-09-28-ai-development-plan.md).
 
 Each sequence is a set of things happening in an awkward order. The "must be
@@ -45,8 +45,8 @@ flat deposit, free cancellation up to 24 hours before) and Casey.
 | S1 (before and after the deadline) | Pass. One cancellation won each time and the other was told "already cancelled" |
 | S2 | Pass |
 | S3 | Pass |
-| S4 | **Fail: bug 1** |
-| S5 | **Fail: bug 1**. Without a recorded decline, Ceaute reuses the first page, so the premise never happens |
+| S4 | **Fail: bug 1**. Pass after the fix |
+| S5 | **Fail: bug 1**. Without a recorded decline, Ceaute reuses the first page, so the premise never happens. Pass after the fix |
 | S6 | **Fail: bug 2** |
 | S7, S8, S9 | Pass |
 
@@ -60,6 +60,18 @@ three days, every time failing. In live mode a failing endpoint can be
 disabled by Stripe, which would also stop payment confirmations. The
 customer can still retry on the same page, so no booking is lost today.
 `payment_intent.canceled` goes through the same check.
+
+**Bug 1 fixed, 28 September 2026** (migration
+`202609280001_accept_declines_before_payment_intent`). A failure message is
+now accepted while the attempt has no PaymentIntent, and the attempt is
+marked failed. The declined PaymentIntent is not stored on the attempt:
+Stripe's docs promise only that a declined PaymentIntent can be retried, not
+that a Checkout Session keeps it, and payment completion rejects a
+PaymentIntent that differs from a stored one, so storing it could block a
+later successful payment on the same page. The event record keeps it. A
+PaymentIntent that differs from one already stored is still rejected. Tested
+in `payment_declines`; a full `local:sequences` run then passed 9 of 10, all
+but S6.
 
 **Bug 2: a refund that fails after first succeeding is never recorded.**
 Some refunds report `succeeded` and later fail (Stripe's test card ending
