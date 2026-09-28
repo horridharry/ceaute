@@ -16,9 +16,11 @@ export const LOCAL_ENV_FILE = join(ROOT, ".env.localstack");
 export const SEED = {
   providerUserId: "5eed0000-0000-0000-0000-000000000001",
   customerUserId: "5eed0000-0000-0000-0000-000000000002",
+  secondCustomerUserId: "5eed0000-0000-0000-0000-000000000003",
   providerPageId: "5eed0000-0000-0000-0000-000000000010",
   providerEmail: "provider@ceaute.test",
   customerEmail: "customer@ceaute.test",
+  secondCustomerEmail: "jo@ceaute.test",
   username: "local.nails",
 };
 
@@ -105,4 +107,49 @@ export function localEnv({ requireStripe = true } = {}) {
   }
 
   return values;
+}
+
+// Every variable the app needs on the local stack, so nothing is read from
+// .env.local (which points at ceaute-dev). Emails are queued but never sent:
+// the Resend key is a placeholder.
+export function appEnv({ stack, stripeKey, webhookSecret }) {
+  const values = {
+    NEXT_PUBLIC_SUPABASE_URL: stack.apiUrl,
+    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: stack.publishableKey,
+    SUPABASE_SERVICE_ROLE_KEY: stack.serviceRoleKey,
+    STRIPE_MODE: "test",
+    STRIPE_SECRET_KEY: stripeKey,
+    STRIPE_PAYMENT_WEBHOOK_SECRET: webhookSecret,
+    STRIPE_CONNECT_WEBHOOK_SECRET: webhookSecret,
+    RESEND_API_KEY: "re_local_emails_are_not_sent",
+    CEAUTE_EMAIL_FROM: "Ceaute Local <local@ceaute.test>",
+    CEAUTE_APP_URL: APP_ORIGIN,
+    CRON_SECRET: "local-cron-secret",
+    CEAUTE_OPERATOR_EMAIL: "operator@ceaute.test",
+    CEAUTE_OPERATOR_SECRET: "local-operator-secret",
+  };
+
+  // If .env.example gains a variable, this fails rather than letting the
+  // value from .env.local leak into a local run.
+  const required = [...readFileSync(join(ROOT, ".env.example"), "utf8").matchAll(/^([A-Z0-9_]+)=/gm)]
+    .map((match) => match[1]);
+  const missing = required.filter((name) => !(name in values));
+  if (missing.length) fail(`scripts/local/stack.mjs appEnv does not set: ${missing.join(", ")}`);
+
+  return values;
+}
+
+// The Stripe CLI's signing secret for this sandbox key: the app verifies
+// forwarded events with it, and the sequences sign their own with it. The key
+// goes in STRIPE_API_KEY, not --api-key, so it never shows in `ps`.
+export function stripeWebhookSecret(stripeKey) {
+  try {
+    return execFileSync("stripe", ["listen", "--print-secret"], {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+      env: { ...process.env, STRIPE_API_KEY: stripeKey },
+    }).trim();
+  } catch (error) {
+    fail(`The Stripe CLI could not print its signing secret: ${error.stderr || error.message}`);
+  }
 }

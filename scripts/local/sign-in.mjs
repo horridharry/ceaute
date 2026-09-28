@@ -11,7 +11,7 @@ import { createClient } from "@supabase/supabase-js";
 import { APP_ORIGIN, SEED, fail, localStack } from "./stack.mjs";
 
 const [who = "", next = ""] = process.argv.slice(2);
-const email = { provider: SEED.providerEmail, customer: SEED.customerEmail }[who] ?? who;
+const email = { provider: SEED.providerEmail, customer: SEED.customerEmail, jo: SEED.secondCustomerEmail }[who] ?? who;
 if (!email.endsWith("@ceaute.test")) fail("Usage: npm run local:sign-in -- provider|customer|<name>@ceaute.test [next-path]");
 if (next && !/^\/(?!\/)/.test(next)) fail("The next path must start with a single /.");
 

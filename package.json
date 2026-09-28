@@ -15,9 +15,10 @@
     "typecheck": "tsc --noEmit",
     "check:legal": "node scripts/assert-legal-identity.mjs",
     "local:start": "node scripts/local/start.mjs",
-    "local:seed": "node --import ./tests/_support/register-alias.mjs scripts/local/seed.mjs",
+    "local:seed": "node --import ./scripts/local/loader/register.mjs scripts/local/seed.mjs",
     "local:sign-in": "node scripts/local/sign-in.mjs",
-    "local:timeline": "node --import ./tests/_support/register-alias.mjs scripts/local/timeline.mjs"
+    "local:timeline": "node --import ./scripts/local/loader/register.mjs scripts/local/timeline.mjs",
+    "local:sequences": "node --import ./scripts/local/loader/register.mjs scripts/local/sequences.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.6",

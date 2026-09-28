@@ -17,7 +17,10 @@ import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { LOCAL_ENV_FILE, SEED, fail, localEnv, localStack, psql } from "./stack.mjs";
 
 const stack = localStack();
-const { providerUserId, customerUserId, providerPageId, providerEmail, customerEmail, username } = SEED;
+const {
+  providerUserId, customerUserId, secondCustomerUserId, providerPageId,
+  providerEmail, customerEmail, secondCustomerEmail, username,
+} = SEED;
 
 if (process.argv.includes("--remember-stripe-account")) {
   const accountId = psql(
@@ -39,7 +42,11 @@ const existing = psql(stack, `select count(*) from auth.users where email like '
 if (existing !== "0") fail("Already seeded. Run `npx supabase db reset` first for a clean start.");
 
 const admin = createClient(stack.apiUrl, stack.serviceRoleKey, { auth: { persistSession: false } });
-for (const [id, email] of [[providerUserId, providerEmail], [customerUserId, customerEmail]]) {
+for (const [id, email] of [
+  [providerUserId, providerEmail],
+  [customerUserId, customerEmail],
+  [secondCustomerUserId, secondCustomerEmail],
+]) {
   const { error } = await admin.auth.admin.createUser({ id, email, email_confirm: true });
   if (error) fail(`Could not create ${email}: ${error.message}`);
 }
@@ -49,6 +56,7 @@ psql(
   `
 update ceaute.profile set full_name = 'Pat Provider', phone_e164 = '+447700900101' where id = '${providerUserId}';
 update ceaute.profile set full_name = 'Casey Customer', phone_e164 = '+447700900102' where id = '${customerUserId}';
+update ceaute.profile set full_name = 'Jo Second', phone_e164 = '+447700900103' where id = '${secondCustomerUserId}';
 
 insert into ceaute.provider_page (id, owner_profile_id, username, display_name, provider_category, biography, status)
 values ('${providerPageId}', '${providerUserId}', '${username}', 'Local Test Nails', 'Nails',
@@ -134,8 +142,7 @@ if (local.LOCAL_STRIPE_ACCOUNT_ID) {
   if (!/^(sk|rk)_test_/.test(local.STRIPE_SECRET_KEY ?? "")) fail("LOCAL_STRIPE_ACCOUNT_ID needs the sandbox key too.");
   process.env.STRIPE_MODE = "test";
   process.env.STRIPE_SECRET_KEY = local.STRIPE_SECRET_KEY;
-  // By relative path: the test loader stubs "@/lib/stripe/server".
-  const { getStripe, retrieveStripeAccount, stripeAccountToPaymentAccount } = await import("../../src/lib/stripe/server.js");
+  const { getStripe, retrieveStripeAccount, stripeAccountToPaymentAccount } = await import("@/lib/stripe/server");
   const account = stripeAccountToPaymentAccount(await retrieveStripeAccount(getStripe(), local.LOCAL_STRIPE_ACCOUNT_ID));
   const text = (value) => (value === null || value === undefined ? "null" : `'${String(value).replaceAll("'", "''")}'`);
   const array = (values) => `array[${values.map((v) => text(typeof v === "string" ? v : JSON.stringify(v))).join(",")}]::text[]`;
@@ -164,7 +171,7 @@ const unmet = Object.entries(JSON.parse(checks))
   .filter(([name, value]) => value === false && /^(has_|payments_ready|agreement_accepted)/.test(name))
   .map(([name]) => name);
 
-console.log(`Seeded provider ${providerEmail} (page @${username}, draft) and customer ${customerEmail}.`);
+console.log(`Seeded provider ${providerEmail} (page @${username}, draft) and customers ${customerEmail} and ${secondCustomerEmail}.`);
 console.log(paymentsNote);
 console.log(unmet.length ? `Not yet publishable: ${unmet.join(", ")}.` : "Every publication requirement is met; the page is ready to publish.");
 console.log("Sign in with: npm run local:sign-in -- provider   (or customer)");

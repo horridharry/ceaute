@@ -43,10 +43,11 @@ local stack, so none of it can reach `ceaute-dev` or production.
 
 | Command | What it does |
 | --- | --- |
-| `npx supabase db reset && npm run local:seed` | A clean database with `provider@ceaute.test` (page `@local.nails`, draft, ready to publish once payments are set up) and `customer@ceaute.test` |
+| `npx supabase db reset && npm run local:seed` | A clean database with `provider@ceaute.test` (page `@local.nails`, draft, ready to publish once payments are set up) and two customers, `customer@ceaute.test` (Casey) and `jo@ceaute.test` |
 | `npm run local:start` (or preview_start `ceaute-local`) | Builds and serves the app on `http://localhost:3100` against the local stack and the local Stripe sandbox, with Stripe events forwarded by the Stripe CLI. `-- --no-build` reuses the last build; `-- --no-stripe` runs without a sandbox key, so payments fail |
 | `npm run local:sign-in -- provider [path]` | Prints a one-time sign-in link for a seeded account (`provider`, `customer` or any `@ceaute.test` user); open it in the browser pane |
 | `npm run local:timeline -- latest [--stripe]` | One booking's history in time order and checks that its records agree; `--stripe` also compares amounts with the Stripe sandbox. Exits 1 on a disagreement |
+| `npm run local:sequences [-- S3 S6]` | Resets and seeds the local database, then plays the event-order sequences in [the sequences report](reports/2026-09-28-event-order-sequences.md) against the running app and the Stripe sandbox. Exits 1 if any check fails |
 
 One-time setup by the owner:
 
@@ -64,6 +65,13 @@ What a local run does not cover: emails are queued in the outbox but not sent
 Preview's own configuration (domains, protection, webhook destinations) is not
 exercised. Keyboard activation still needs the owner. `npm run test:db` needs
 a reset without the seed, so reset again before running it.
+
+The local stack is shared by every session on this machine. Run the
+sequences, a seed or a reset from one session at a time: a session that
+changes the test provider mid-run makes another session's checks fail for
+reasons that are not Ceaute's (this happened on 28 September 2026).
+`local:sequences` stops when the test provider stops taking bookings
+outside the run.
 
 ## Browser acceptance on this machine
 

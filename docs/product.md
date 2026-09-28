@@ -356,7 +356,8 @@ back/forward; reload and closing the tab use the browser's own prompt, which iOS
 so those two cases are unprotected on iPhone (a browser limitation). After a
 drop opens, adding or removing dates, changing times or moving the drop time
 asks for no confirmation; moving it later hides the dates again, and bookings
-already made never change. Past dates are not shown or editable; a drop
+already made never change, including one whose customer was already on the
+payment page (decided by the owner on 28 September 2026). Past dates are not shown or editable; a drop
 whose dates have all passed disappears, and a drop with no dates stops
 existing. With no dates the screen says "No dates yet." with an "Add dates"
 action. When a published page has no open and no upcoming dates, Availability
