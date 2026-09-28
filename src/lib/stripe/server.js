@@ -63,9 +63,36 @@ export function retrieveStripeAccount(stripe, accountId) {
   });
 }
 
+// Accounts v2 lists each outstanding item in `requirements.entries`, with its
+// deadline in `minimum_deadline.status`; `requirements.summary` only holds the
+// account's strictest deadline, not the items. Entries Stripe itself is
+// working on (`awaiting_action_from: "stripe"`) are left out: the provider has
+// nothing to do for them, so they must not offer an onboarding link.
+function requirementsByDeadline(requirements) {
+  const due = { currently_due: [], past_due: [], eventually_due: [] };
+
+  for (const entry of requirements?.entries ?? []) {
+    const list = due[entry?.minimum_deadline?.status];
+
+    if (
+      !list ||
+      entry.awaiting_action_from === "stripe" ||
+      !entry.description ||
+      list.includes(entry.description)
+    ) {
+      continue;
+    }
+
+    list.push(entry.description);
+  }
+
+  return due;
+}
+
 export function stripeAccountToPaymentAccount(account) {
   const recipient = account.configuration?.recipient;
   const stripeBalance = recipient?.capabilities?.stripe_balance;
+  const requirements = requirementsByDeadline(account.requirements);
 
   return {
     stripe_account_id: account.id,
@@ -75,11 +102,9 @@ export function stripeAccountToPaymentAccount(account) {
     stripe_transfers_status:
       stripeBalance?.stripe_transfers?.status ?? null,
     payouts_status: stripeBalance?.payouts?.status ?? null,
-    requirements_currently_due:
-      account.requirements?.summary?.currently_due ?? [],
-    requirements_past_due: account.requirements?.summary?.past_due ?? [],
-    requirements_eventually_due:
-      account.requirements?.summary?.eventually_due ?? [],
+    requirements_currently_due: requirements.currently_due,
+    requirements_past_due: requirements.past_due,
+    requirements_eventually_due: requirements.eventually_due,
     last_stripe_update_at: new Date().toISOString(),
   };
 }
