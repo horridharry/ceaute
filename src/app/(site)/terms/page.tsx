@@ -14,7 +14,7 @@ export default function TermsPage() {
     <LegalPage
       title="Terms"
       summary="The terms for using Ceaute as a customer or a provider."
-      updated="28 September 2026"
+      updated="1 October 2026"
     >
       <section>
         <h2>What Ceaute does</h2>

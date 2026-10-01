@@ -45,20 +45,15 @@ private-alpha invitation. Delete an item when it closes; mark it
 **accepted risk** if the owner decides not to verify it. How items are
 verified and reported is in [Verification](verification.md).
 
-- Owner: a real-keyboard pass across all new screens (unverified).
 - Accepted risk for the pilot: the full provider agreement is not shown
   before acceptance (see [Pilot](pilot.md#legal-during-the-pilot)).
-- Owner: tell any pilot provider that their weekly hours and blocked dates
-  are deleted when drops ship.
-- Flat deposit on Preview: a provider cancellation of a flat-deposit booking,
-  and the setup, pause and pre-006 notice wording. The late customer
-  cancellation passed on 30 September
-  ([results](reports/2026-09-30-preview-acceptance-drops-and-flat-deposit.md)).
-- Needs the owner signed in: the provider Portfolio viewer (acceptance was
-  waived), the owner storefront preview, add-on cards and the Archive button
-  with real data, and the form save and submit paths.
-- No test account exists yet: the unpublished-provider states (View your page,
-  storefront 404).
+- Accepted risk (owner, 1 October 2026): the flat-deposit pause and pre-006
+  notice wording, the owner storefront preview, add-on cards, the Archive
+  button, and the unpublished-provider states (View your page, storefront
+  404) were not recorded on Preview. Cancellations passed on 30 September and
+  1 October ([results](reports/2026-10-01-preview-acceptance-payments.md)).
+- Accepted risk (owner, 1 October 2026): the late-payment refund email has
+  not been seen on Preview (database and unit tests only).
 - Production only, after promotion: the published storefront and provider
   metadata (production has no providers yet).
 

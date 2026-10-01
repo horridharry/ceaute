@@ -13,7 +13,7 @@ export default function PrivacyPage() {
     <LegalPage
       title="Privacy"
       summary="What personal information Ceaute holds, why, and what you can do about it."
-      updated="28 September 2026"
+      updated="1 October 2026"
     >
       <section>
         <h2>What we collect and why</h2>

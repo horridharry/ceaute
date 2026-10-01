@@ -96,5 +96,5 @@ test("Terms no longer carries the percentage-only wording and keeps its date", (
     /The\s+percentage\s+is\s+worked\s+out\s+to\s+the\s+nearest\s+penny/,
   );
   assert.doesNotMatch(terms, /Bookings\s+made\s+before\s+percentages\s+were\s+introduced/);
-  assert.match(terms, /updated="28 September 2026"/);
+  assert.match(terms, /updated="1 October 2026"/);
 });
