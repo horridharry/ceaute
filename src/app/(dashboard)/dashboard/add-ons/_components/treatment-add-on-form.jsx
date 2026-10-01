@@ -22,11 +22,13 @@ export function TreatmentAddOnForm({
   const [stateMessage, formAction, pending] = useActionState(action, "");
   const { formProps } = useFormUnsavedGuard({ pending });
   const [name, setName] = useState(addOn?.name ?? "");
+  // Price and time start empty rather than "0"; an empty one means nothing
+  // extra, so a provider fills in only the one the add-on changes.
   const [additionalPrice, setAdditionalPrice] = useState(
-    addOn ? String(addOn.additional_price) : "0",
+    addOn?.additional_price ? String(addOn.additional_price) : "",
   );
   const [additionalDuration, setAdditionalDuration] = useState(
-    addOn ? String(addOn.additional_duration_minutes) : "0",
+    addOn?.additional_duration_minutes ? String(addOn.additional_duration_minutes) : "",
   );
   const [touchedIncrease, setTouchedIncrease] = useState(false);
   const [touchedName, setTouchedName] = useState(false);
@@ -109,7 +111,6 @@ export function TreatmentAddOnForm({
                       .join(" ")}
                     type="text"
                     name="additional_price"
-                    required
                     inputMode="decimal"
                     className="w-full pl-7"
                     value={additionalPrice}
@@ -135,7 +136,6 @@ export function TreatmentAddOnForm({
                     .join(" ")}
                   type="number"
                   name="additional_duration_minutes"
-                  required
                   min="0"
                   step="1"
                   className="w-full"

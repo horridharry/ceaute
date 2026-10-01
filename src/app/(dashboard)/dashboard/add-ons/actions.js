@@ -25,8 +25,9 @@ function refreshAddOnPages() {
 
 function parseAddOnForm(formData) {
   const name = getString(formData, "name");
+  // An empty price or time means nothing extra (the form starts them empty).
   const additionalPricePence = nonNegativePriceToPence(
-    formData.get("additional_price"),
+    String(formData.get("additional_price") ?? "").trim() || "0",
   );
   const additionalDurationMinutes = durationToMinutes(
     formData.get("additional_duration_minutes"),
