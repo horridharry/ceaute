@@ -66,13 +66,17 @@ deliberately. Ceaute refuses to make a Stripe call when `STRIPE_MODE` and
 
 ## Stripe Dashboard
 
-- [ ] Complete Stripe account activation for the business (Live mode requires
-      the full business details Test mode does not).
-- [ ] Confirm the **live** account has access to the `2026-08-26.preview` API
-      version. Two things depend on it: the Accounts v2 surface used for
-      Connect onboarding, and `allowed_payment_method_types` on the Checkout
-      Session payload. Preview access is granted per account and per mode — if
-      the live account lacks it, Checkout creation fails on every booking.
+- [x] Complete Stripe account activation for the business (Live mode requires
+      the full business details Test mode does not). Done: the owner reported
+      the account verified on 30 September 2026.
+- [x] Confirm the **live** account can use the `2026-08-26.preview` API
+      version. No request to Stripe is needed: Stripe's versioning page
+      (docs.stripe.com/sdks/versioning, read 30 September 2026) names it the
+      current *public* preview version, open to every account. Only private
+      preview features need an invitation. Two things depend on it: the
+      Accounts v2 surface used for Connect onboarding, and
+      `allowed_payment_method_types` on the Checkout Session payload. The first
+      real booking after the switch still proves it.
 - [ ] Enable **Connect** in Live and confirm recipient configuration is
       available.
 - [ ] Set the public **statement descriptor**. With destination charges and no

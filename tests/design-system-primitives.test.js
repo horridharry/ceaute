@@ -328,6 +328,12 @@ test("the add-on form proves the form contract without saving anything", () => {
   assert.match(html, /<p id="add_on_increase" class="text-sm text-ink-muted">An add-on must add to the price, the time or both\.<\/p>/);
   assert.ok(findTag(html, "input", { id: "additional_price", "aria-describedby": "add_on_increase" }));
   assert.ok(findTag(html, "input", { id: "additional_duration_minutes", "aria-describedby": "add_on_increase" }));
+  // Price and time start empty, not "0", and either may be left empty.
+  for (const id of ["additional_price", "additional_duration_minutes"]) {
+    const input = findTag(html, "input", { id });
+    assert.equal(input.value, "", `${id} starts empty`);
+    assert.ok(!("required" in input), `${id} is not required`);
+  }
   // Compatible treatments may be left empty (the database accepts none).
   assert.match(html, /<legend class="label">Works with<span class="font-normal text-ink-muted"> \(optional\)<\/span><\/legend>/);
   assert.ok(findTag(html, "input", { type: "checkbox", class: "h-4 w-4", name: "compatibleTreatmentIds", value: "t1" }));
